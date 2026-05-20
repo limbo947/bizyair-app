@@ -1,4 +1,4 @@
-# BizyAir AI 图片生成 App
+# Bizyair Assistant
 
 基于 Expo SDK 54 的图片生成应用，接入了 BizyAir 平台的 10 个图片生成模型，支持文生图和图生图两种模式。
 
@@ -20,11 +20,20 @@ cp .env.example .env
 
 ### 3. 启动 Web 预览
 
-由于 Expo 开发服务器在沙箱环境下受限，使用静态导出 + serve 方式：
+```bash
+npx expo start --web --port 8081
+```
 
+或使用静态导出：
 ```bash
 npx expo export --platform web
 npx serve dist -l 3000
+```
+
+### 4. 构建 APK（EAS Build）
+
+```bash
+npx eas-cli build --platform android --profile preview
 ```
 
 ## 功能
@@ -66,10 +75,28 @@ npx serve dist -l 3000
 ## 项目结构
 
 ```
-├── api.js              # API 层：模型配置、任务提交/轮询、OSS上传、价格计算
-├── App.js              # 主界面：模型选择、参数面板、历史列表、日志弹窗
-├── index.js            # 入口文件
-├── assets/             # 图标资源
-├── bizyair.api.reference/  # BizyAir 各模型 API 文档
-└── .env.example        # 环境变量模板
+├── App.js                    # 主界面入口
+├── api.js                    # API 兼容层（重新导出）
+├── index.js                  # 应用入口
+├── package.json              # 依赖配置
+├── app.json                  # Expo 配置
+├── eas.json                  # EAS Build 配置
+├── src/
+│   ├── constants/            # 常量定义
+│   │   ├── models.js         # 模型配置、状态标签、API 常量
+│   │   └── ratios.js         # 宽高比常量
+│   ├── utils/                # 工具函数
+│   │   ├── modelHelpers.js   # 模型信息、价格计算、分辨率计算
+│   │   └── payloadBuilder.js # API 请求体构建
+│   ├── services/             # API 服务层
+│   │   └── apiClient.js      # 任务提交、轮询、OSS 上传
+│   └── components/           # UI 组件
+│       ├── StatusBadge.js    # 状态徽章组件
+│       └── ParamControls.js  # 参数控制面板组件
+├── assets/                   # 图标资源
+└── .env.example              # 环境变量模板
 ```
+
+## 开发分支
+
+- `EAS-v0.1`：当前开发分支，包含模块化重构和 EAS Build 配置
