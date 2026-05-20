@@ -31,6 +31,16 @@
         "projectId": "14a6a974-5565-4e0e-ad5e-cb467b49b0ab"
       }
     },
-    "owner": "limbo947"
+    "owner": "limbo947",
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "reactNativeArchitectures": ["arm64-v8a"]
+          }
+        }
+      ]
+    ]
   }
 }

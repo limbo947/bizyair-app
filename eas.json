@@ -11,6 +11,10 @@
       "distribution": "internal",
       "android": {
         "buildType": "apk"
+      },
+      "env": {
+        "EXPO_NO_TELEMETRY": "1",
+        "REACT_NATIVE_ARCHITECTURES": "arm64-v8a"
       }
     },
     "production": {}
