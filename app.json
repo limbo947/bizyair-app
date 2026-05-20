@@ -25,6 +25,12 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "14a6a974-5565-4e0e-ad5e-cb467b49b0ab"
+      }
+    },
+    "owner": "limbo947"
   }
 }
