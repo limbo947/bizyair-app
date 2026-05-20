@@ -1,6 +1,7 @@
 import React from 'react';
 import { Text, View, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { QUALITY_LABELS, SIZE_PRESETS } from '../constants/models';
+import { Colors, Shadows, Radius, Spacing } from '../constants/theme';
 
 export function ResolutionRatioControls({ currentResolutions, currentRatios, resolution, aspectRatio, setResolution, setAspectRatio }) {
   return (
@@ -157,29 +158,29 @@ export function WidthHeightControls({ sizePreset, setSizePreset, customWidth, se
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: '#fff', padding: 15, borderRadius: 12, marginBottom: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 4, elevation: 3 },
-  label: { fontSize: 15, fontWeight: 'bold', color: '#333', marginBottom: 8 },
-  selectorRow: { flexDirection: 'row', gap: 8 },
-  selectorButton: { flex: 1, paddingVertical: 10, borderRadius: 8, borderWidth: 1, borderColor: '#e0e0e0', alignItems: 'center' },
-  selectorButtonActive: { backgroundColor: '#4CAF50', borderColor: '#4CAF50' },
-  selectorText: { fontSize: 14, color: '#666' },
-  selectorTextActive: { color: '#fff', fontWeight: 'bold' },
-  priceHint: { fontSize: 12, color: '#999', marginTop: 6 },
-  aspectRatioGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  ratioButton: { width: '22%', paddingVertical: 9, borderRadius: 8, borderWidth: 1, borderColor: '#e0e0e0', alignItems: 'center', justifyContent: 'center' },
-  ratioButtonActive: { backgroundColor: '#4CAF50', borderColor: '#4CAF50' },
-  ratioText: { fontSize: 13, color: '#666' },
-  ratioTextActive: { color: '#fff', fontWeight: 'bold' },
-  presetGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  presetButton: { width: '30%', paddingVertical: 10, borderRadius: 8, borderWidth: 1, borderColor: '#e0e0e0', alignItems: 'center' },
-  presetButtonActive: { backgroundColor: '#4CAF50', borderColor: '#4CAF50' },
-  presetLabel: { fontSize: 14, color: '#666', fontWeight: '500' },
-  presetLabelActive: { color: '#fff', fontWeight: 'bold' },
-  presetDims: { fontSize: 11, color: '#999', marginTop: 2 },
-  presetDimsActive: { color: '#E8F5E9' },
-  dimsRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  card: { backgroundColor: Colors.card, padding: Spacing.lg, borderRadius: Radius.md, marginBottom: Spacing.md, ...Shadows.sm },
+  label: { fontSize: 13, fontWeight: '600', color: Colors.textSecondary, marginBottom: Spacing.sm, textTransform: 'uppercase', letterSpacing: 0.5 },
+  selectorRow: { flexDirection: 'row', gap: Spacing.sm },
+  selectorButton: { flex: 1, paddingVertical: 10, borderRadius: Radius.sm, backgroundColor: Colors.bg, alignItems: 'center' },
+  selectorButtonActive: { backgroundColor: Colors.primary, ...Shadows.sm },
+  selectorText: { fontSize: 14, color: Colors.textSecondary, fontWeight: '500' },
+  selectorTextActive: { color: Colors.textInverse, fontWeight: '600' },
+  priceHint: { fontSize: 12, color: Colors.textTertiary, marginTop: Spacing.sm },
+  aspectRatioGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
+  ratioButton: { width: '22%', paddingVertical: 9, borderRadius: Radius.sm, backgroundColor: Colors.bg, alignItems: 'center', justifyContent: 'center' },
+  ratioButtonActive: { backgroundColor: Colors.primary, ...Shadows.sm },
+  ratioText: { fontSize: 13, color: Colors.textSecondary, fontWeight: '500' },
+  ratioTextActive: { color: Colors.textInverse, fontWeight: '600' },
+  presetGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
+  presetButton: { width: '30%', paddingVertical: 10, borderRadius: Radius.sm, backgroundColor: Colors.bg, alignItems: 'center' },
+  presetButtonActive: { backgroundColor: Colors.primary, ...Shadows.sm },
+  presetLabel: { fontSize: 14, color: Colors.textSecondary, fontWeight: '500' },
+  presetLabelActive: { color: Colors.textInverse, fontWeight: '600' },
+  presetDims: { fontSize: 11, color: Colors.textTertiary, marginTop: 2 },
+  presetDimsActive: { color: Colors.primaryBg },
+  dimsRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
   dimWrap: { flex: 1 },
-  dimLabel: { fontSize: 12, color: '#999', marginBottom: 4 },
-  dimInput: { fontSize: 15, color: '#333', borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 8, padding: 10, textAlign: 'center' },
-  dimX: { fontSize: 20, color: '#999', fontWeight: 'bold' },
+  dimLabel: { fontSize: 12, color: Colors.textTertiary, marginBottom: Spacing.xs },
+  dimInput: { fontSize: 15, color: Colors.textPrimary, borderWidth: 0, borderRadius: Radius.sm, padding: 10, textAlign: 'center', backgroundColor: Colors.bg },
+  dimX: { fontSize: 20, color: Colors.textTertiary, fontWeight: '300' },
 });

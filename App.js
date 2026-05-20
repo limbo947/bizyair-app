@@ -10,6 +10,7 @@ import { TabBar } from './src/components/TabBar';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { HistoryScreen } from './src/screens/HistoryScreen';
 import { TAB_HOME, TAB_FADE_OUT_MS, TAB_FADE_IN_MS } from './src/constants/models';
+import { Colors } from './src/constants/theme';
 
 function AppNavigator() {
   const {
@@ -69,6 +70,6 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
+  container: { flex: 1, backgroundColor: Colors.bg },
   content: { flex: 1 },
 });

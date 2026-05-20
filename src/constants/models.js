@@ -1,4 +1,5 @@
 import { BZA_RATIOS_FULL, BZA_RATIOS_10, BZA_RATIOS_10_ALT, O2_I2I_RATIOS } from './ratios';
+import { STATUS_COLORS as THEME_STATUS_COLORS, STATUS_BG as THEME_STATUS_BG } from './theme';
 
 export const MODELS = {
   'bza-image-b2-base': {
@@ -143,7 +144,8 @@ export const SIZE_PRESETS = [
 ];
 
 export const STATUS_LABELS = { Pending: '排队中', Running: '生成中', Saving: '转存中', Success: '已完成', Failed: '失败' };
-export const STATUS_COLORS = { Pending: '#FF9800', Running: '#2196F3', Saving: '#9C27B0', Success: '#4CAF50', Failed: '#f44336' };
+export const STATUS_COLORS = THEME_STATUS_COLORS;
+export const STATUS_BG = THEME_STATUS_BG;
 export const QUALITY_LABELS = { low: '低', medium: '中', high: '高' };
 
 export const API_HOST = 'https://api.bizyair.cn';

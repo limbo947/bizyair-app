@@ -10,12 +10,14 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
 import { useAppContext } from '../context/AppContext';
 import { submitImageTask, uploadImageFile } from '../services/apiClient';
 import { calculatePrice, getRatios, getResolutions, getModelInfo, getActualResolution } from '../utils/modelHelpers';
 import { buildPayload } from '../utils/payloadBuilder';
 import { MODELS, ENV_API_KEY } from '../constants/models';
+import { Colors, Shadows, Radius, Spacing } from '../constants/theme';
 import {
   ResolutionRatioControls,
   WidthHeightQualityControls,
@@ -269,7 +271,10 @@ export function HomeScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>AI 图片生成</Text>
+        <View style={styles.titleRow}>
+          <Ionicons name="image-outline" size={26} color={Colors.textPrimary} />
+          <Text style={styles.title}>AI 图片生成</Text>
+        </View>
         <View style={styles.modelScroll}>
           <ScrollView
             horizontal
@@ -317,7 +322,10 @@ export function HomeScreen() {
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
         {showApiKeyInput ? (
           <View style={[styles.card, styles.apiKeyCard]}>
-            <Text style={styles.label}>API 密钥</Text>
+            <View style={styles.labelRow}>
+              <Ionicons name="key-outline" size={16} color={Colors.warning} />
+              <Text style={styles.label}>API 密钥</Text>
+            </View>
             <TextInput
               style={styles.apiKeyInput}
               placeholder="输入你的Bizyair API Key"
@@ -325,6 +333,7 @@ export function HomeScreen() {
               onChangeText={setApiKey}
               secureTextEntry
               maxLength={100}
+              placeholderTextColor={Colors.textPlaceholder}
             />
             {apiKey.trim() ? (
               <TouchableOpacity
@@ -340,7 +349,10 @@ export function HomeScreen() {
           </View>
         ) : (
           <View style={styles.card}>
-            <Text style={styles.label}>API 密钥</Text>
+            <View style={styles.labelRow}>
+              <Ionicons name="key-outline" size={16} color={Colors.textTertiary} />
+              <Text style={styles.label}>API 密钥</Text>
+            </View>
             <View style={styles.apiKeyRow}>
               <Text style={styles.apiKeyMasked}>
                 {ENV_API_KEY || apiKey ? '密钥已配置 ●●●●●●●●' : '未配置密钥'}
@@ -369,6 +381,7 @@ export function HomeScreen() {
             onChangeText={setPrompt}
             multiline
             maxLength={currentModel.maxPromptLength}
+            placeholderTextColor={Colors.textPlaceholder}
           />
           <Text style={styles.charCount}>
             {prompt.length} / {currentModel.maxPromptLength}
@@ -384,9 +397,9 @@ export function HomeScreen() {
               disabled={isUploading}
             >
               {isUploading ? (
-                <ActivityIndicator color="#fff" />
+                <ActivityIndicator color={Colors.primary} />
               ) : (
-                <Text style={styles.uploadIcon}>+</Text>
+                <Ionicons name="add-circle-outline" size={24} color={Colors.primary} />
               )}
               <Text style={styles.uploadButtonText}>
                 {isUploading ? '上传中...' : '选择图片上传'}
@@ -421,7 +434,7 @@ export function HomeScreen() {
           disabled={isSubmitting}
         >
           {isSubmitting ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color={Colors.textInverse} />
           ) : null}
           <Text style={styles.generateButtonText}>
             {isSubmitting
@@ -437,48 +450,49 @@ export function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
-  header: { backgroundColor: '#fff', padding: 16, paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: '#e0e0e0' },
-  title: { fontSize: 22, fontWeight: 'bold', color: '#333', textAlign: 'center' },
-  modelScroll: { marginTop: 10 },
-  modelScrollContent: { gap: 6, paddingRight: 16 },
-  modelChip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 16, backgroundColor: '#f0f0f0', borderWidth: 1, borderColor: '#e0e0e0', flexDirection: 'row', alignItems: 'center', gap: 4 },
-  modelChipActive: { backgroundColor: '#3F51B5', borderColor: '#3F51B5' },
+  container: { flex: 1, backgroundColor: Colors.bg },
+  header: { backgroundColor: Colors.card, paddingHorizontal: Spacing.xl, paddingTop: Spacing.xl, paddingBottom: Spacing.md, borderBottomWidth: 0.5, borderBottomColor: Colors.separator },
+  titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: Spacing.sm },
+  title: { fontSize: 22, fontWeight: '700', color: Colors.textPrimary, letterSpacing: -0.5 },
+  modelScroll: { marginTop: Spacing.md },
+  modelScrollContent: { gap: Spacing.sm, paddingRight: Spacing.xl },
+  modelChip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: Radius.full, backgroundColor: Colors.bg, flexDirection: 'row', alignItems: 'center', gap: 4 },
+  modelChipActive: { backgroundColor: Colors.primary, ...Shadows.sm },
   modelChipIcon: { fontSize: 14 },
   modelChipIconActive: { fontSize: 14 },
-  modelChipText: { fontSize: 13, color: '#666', fontWeight: '500' },
-  modelChipTextActive: { color: '#fff', fontWeight: 'bold' },
-  modeToggle: { flexDirection: 'row', marginTop: 8, borderRadius: 8, backgroundColor: '#f0f0f0', padding: 3 },
-  modeButton: { flex: 1, paddingVertical: 7, borderRadius: 6, alignItems: 'center' },
-  modeButtonActive: { backgroundColor: '#fff', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2, elevation: 2 },
-  modeButtonText: { fontSize: 14, color: '#999', fontWeight: '500' },
-  modeButtonTextActive: { color: '#333', fontWeight: 'bold' },
+  modelChipText: { fontSize: 13, color: Colors.textSecondary, fontWeight: '500' },
+  modelChipTextActive: { color: Colors.textInverse, fontWeight: '600' },
+  modeToggle: { flexDirection: 'row', marginTop: Spacing.md, borderRadius: Radius.sm, backgroundColor: Colors.bg, padding: 2 },
+  modeButton: { flex: 1, paddingVertical: 8, borderRadius: Radius.xs, alignItems: 'center' },
+  modeButtonActive: { backgroundColor: Colors.card, ...Shadows.sm },
+  modeButtonText: { fontSize: 14, color: Colors.textTertiary, fontWeight: '500' },
+  modeButtonTextActive: { color: Colors.primary, fontWeight: '600' },
   scroll: { flex: 1 },
-  scrollContent: { padding: 15, paddingBottom: 20 },
-  card: { backgroundColor: '#fff', padding: 15, borderRadius: 12, marginBottom: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 4, elevation: 3 },
-  label: { fontSize: 15, fontWeight: 'bold', color: '#333', marginBottom: 8 },
-  promptInput: { fontSize: 15, color: '#333', minHeight: 70, maxHeight: 140, textAlignVertical: 'top', borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 8, padding: 10 },
-  charCount: { fontSize: 12, color: '#bbb', textAlign: 'right', marginTop: 4 },
-  uploadButton: { backgroundColor: '#4CAF50', paddingVertical: 18, borderRadius: 12, borderWidth: 2, borderColor: '#81C784', borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 },
-  uploadButtonDisabled: { backgroundColor: '#A5D6A7' },
-  uploadIcon: { fontSize: 24, color: '#fff', fontWeight: 'bold' },
-  uploadButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
-  uploadedList: { marginTop: 10, gap: 8 },
-  uploadedItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f9f9f9', borderRadius: 8, padding: 8, gap: 10 },
-  uploadedThumb: { width: 44, height: 44, borderRadius: 6 },
-  uploadedName: { flex: 1, fontSize: 14, color: '#333', fontWeight: '500' },
-  removeUploadedButton: { backgroundColor: '#ff5252', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 4 },
-  removeUploadedButtonText: { color: '#fff', fontSize: 13, fontWeight: 'bold' },
-  generateButton: { backgroundColor: '#2196F3', paddingVertical: 14, borderRadius: 10, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 10, marginBottom: 12 },
-  generateButtonDisabled: { backgroundColor: '#90CAF9' },
-  generateButtonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
-  errorText: { color: '#f44336', textAlign: 'center', marginBottom: 12, fontSize: 14 },
-  apiKeyCard: { borderColor: '#FF9800', borderWidth: 1 },
-  apiKeyInput: { fontSize: 14, color: '#333', borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 8, padding: 10, fontFamily: 'monospace' },
-  saveKeyButton: { backgroundColor: '#FF9800', paddingVertical: 8, borderRadius: 6, alignItems: 'center', marginTop: 8 },
-  saveKeyButtonText: { color: '#fff', fontSize: 14, fontWeight: 'bold' },
+  scrollContent: { padding: Spacing.lg, paddingBottom: Spacing.xxl },
+  card: { backgroundColor: Colors.card, padding: Spacing.lg, borderRadius: Radius.md, marginBottom: Spacing.md, ...Shadows.sm },
+  labelRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, marginBottom: Spacing.sm },
+  label: { fontSize: 13, fontWeight: '600', color: Colors.textSecondary, marginBottom: Spacing.sm, textTransform: 'uppercase', letterSpacing: 0.5 },
+  promptInput: { fontSize: 16, color: Colors.textPrimary, minHeight: 80, maxHeight: 160, textAlignVertical: 'top', borderWidth: 0, borderRadius: Radius.sm, padding: Spacing.md, backgroundColor: Colors.bg },
+  charCount: { fontSize: 12, color: Colors.textTertiary, textAlign: 'right', marginTop: Spacing.xs },
+  uploadButton: { backgroundColor: Colors.primaryBg, paddingVertical: 18, borderRadius: Radius.md, borderWidth: 1.5, borderColor: Colors.primaryBorder, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: Spacing.sm },
+  uploadButtonDisabled: { opacity: 0.6 },
+  uploadButtonText: { color: Colors.primary, fontSize: 15, fontWeight: '600' },
+  uploadedList: { marginTop: Spacing.md, gap: Spacing.sm },
+  uploadedItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.bg, borderRadius: Radius.sm, padding: Spacing.sm, gap: 10 },
+  uploadedThumb: { width: 44, height: 44, borderRadius: Radius.xs },
+  uploadedName: { flex: 1, fontSize: 14, color: Colors.textPrimary, fontWeight: '500' },
+  removeUploadedButton: { backgroundColor: Colors.errorBg, paddingHorizontal: 10, paddingVertical: 5, borderRadius: Radius.xs },
+  removeUploadedButtonText: { color: Colors.error, fontSize: 13, fontWeight: '600' },
+  generateButton: { backgroundColor: Colors.primary, paddingVertical: 16, borderRadius: Radius.md, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 10, marginBottom: Spacing.md, ...Shadows.md },
+  generateButtonDisabled: { backgroundColor: Colors.primaryDisabled },
+  generateButtonText: { color: Colors.textInverse, fontSize: 17, fontWeight: '600', letterSpacing: -0.3 },
+  errorText: { color: Colors.error, textAlign: 'center', marginBottom: Spacing.md, fontSize: 14 },
+  apiKeyCard: { borderColor: Colors.warningBorder, borderWidth: 1 },
+  apiKeyInput: { fontSize: 15, color: Colors.textPrimary, borderWidth: 0, borderRadius: Radius.sm, padding: Spacing.md, fontFamily: 'monospace', backgroundColor: Colors.bg },
+  saveKeyButton: { backgroundColor: Colors.primary, paddingVertical: 10, borderRadius: Radius.sm, alignItems: 'center', marginTop: Spacing.sm },
+  saveKeyButtonText: { color: Colors.textInverse, fontSize: 15, fontWeight: '600' },
   apiKeyRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  apiKeyMasked: { fontSize: 14, color: '#999' },
-  changeKeyButton: { paddingVertical: 4, paddingHorizontal: 10, borderWidth: 1, borderColor: '#2196F3', borderRadius: 4 },
-  changeKeyButtonText: { color: '#2196F3', fontSize: 13 },
+  apiKeyMasked: { fontSize: 14, color: Colors.textTertiary },
+  changeKeyButton: { paddingVertical: 6, paddingHorizontal: 14, backgroundColor: Colors.primaryBg, borderRadius: Radius.full },
+  changeKeyButtonText: { color: Colors.primary, fontSize: 13, fontWeight: '600' },
 });
