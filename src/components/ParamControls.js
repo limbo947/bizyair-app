@@ -179,8 +179,8 @@ const styles = StyleSheet.create({
   presetDims: { fontSize: 11, color: Colors.textTertiary, marginTop: 2 },
   presetDimsActive: { color: Colors.primaryBg },
   dimsRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
-  dimWrap: { flex: 1 },
-  dimLabel: { fontSize: 12, color: Colors.textTertiary, marginBottom: Spacing.xs },
-  dimInput: { fontSize: 15, color: Colors.textPrimary, borderWidth: 0, borderRadius: Radius.sm, padding: 10, textAlign: 'center', backgroundColor: Colors.bg },
-  dimX: { fontSize: 20, color: Colors.textTertiary, fontWeight: '300' },
+  dimWrap: { flex: 1, position: 'relative' },
+  dimLabel: { position: 'absolute', left: 8, top: 0, bottom: 0, textAlignVertical: 'center', fontSize: 13, color: Colors.textTertiary, fontWeight: '500', zIndex: 1, lineHeight: 40 },
+  dimInput: { fontSize: 15, color: Colors.textPrimary, borderWidth: 0, borderRadius: Radius.sm, paddingLeft: 32, paddingRight: 10, paddingVertical: 10, textAlign: 'right', backgroundColor: Colors.bg },
+  dimX: { fontSize: 18, color: Colors.textTertiary, fontWeight: '400', lineHeight: 40 },
 });

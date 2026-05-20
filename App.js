@@ -5,6 +5,7 @@ import {
   SafeAreaView,
   Animated,
 } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 import { AppProvider, useAppContext } from './src/context/AppContext';
 import { TabBar } from './src/components/TabBar';
 import { HomeScreen } from './src/screens/HomeScreen';
@@ -49,6 +50,7 @@ function AppNavigator() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar style="dark" backgroundColor={Colors.bg} />
       <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
         {activeTab === TAB_HOME ? <HomeScreen /> : <HistoryScreen />}
       </Animated.View>

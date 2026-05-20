@@ -13,6 +13,7 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Clipboard from 'expo-clipboard';
 import { StatusBadge } from '../components/StatusBadge';
 import { useAppContext } from '../context/AppContext';
 import { PAGE_SIZE, TAB_HISTORY } from '../constants/models';
@@ -88,8 +89,25 @@ export function HistoryScreen() {
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [isDownloading, setIsDownloading] = useState(false);
   const [deleteConfirmBatch, setDeleteConfirmBatch] = useState(false);
+  const [copied, setCopied] = useState(null);
+  const [toastMsg, setToastMsg] = useState('');
+  const toastTimer = useRef(null);
+  const [tick, setTick] = useState(0);
   const flatListRef = useRef(null);
   const prevActiveTab = useRef(activeTab);
+  const tickRef = useRef(null);
+
+  const hasActiveTasks = history.some((h) => ACTIVE_STATUSES.includes(h.status));
+
+  useEffect(() => {
+    if (hasActiveTasks) {
+      tickRef.current = setInterval(() => setTick((t) => t + 1), 1000);
+    } else if (tickRef.current) {
+      clearInterval(tickRef.current);
+      tickRef.current = null;
+    }
+    return () => { if (tickRef.current) clearInterval(tickRef.current); };
+  }, [hasActiveTasks]);
 
   useEffect(() => {
     if (
@@ -193,13 +211,13 @@ export function HistoryScreen() {
         ) : null}
         <TouchableOpacity
           style={styles.historyCardInner}
-          onPress={() => { if (batchMode) toggleSelect(item.id); else if (item.imageUrl) setPreviewImage(item.imageUrl); }}
+          onPress={() => { if (batchMode) toggleSelect(item.id); else if (item.imageUrl) setPreviewImage({ url: item.imageUrl, prompt: item.prompt }); }}
           disabled={batchMode ? false : !item.imageUrl}
           activeOpacity={batchMode ? 0.6 : 0.7}
         >
           <View style={styles.historyThumbWrap}>
             {item.imageUrl ? (
-              <Image source={{ uri: item.imageUrl }} style={styles.historyThumb} resizeMode="cover" />
+              <Image source={{ uri: item.imageUrl }} style={styles.historyThumb} />
             ) : (
               <View style={styles.historyThumbPlaceholder}>
                 <ActivityIndicator color={Colors.textTertiary} />
@@ -217,6 +235,18 @@ export function HistoryScreen() {
                   <TouchableOpacity style={styles.downloadButton} onPress={() => handleDownload(item)}>
                     <Ionicons name="download-outline" size={14} color={Colors.success} />
                     <Text style={styles.downloadButtonText}>下载</Text>
+                  </TouchableOpacity>
+                ) : null}
+                {!batchMode ? (
+                  <TouchableOpacity style={styles.copyPromptButton} onPress={async () => {
+                    await Clipboard.setStringAsync(item.prompt || '');
+                    setCopied(item.id);
+                    setToastMsg('已复制');
+                    if (toastTimer.current) clearTimeout(toastTimer.current);
+                    toastTimer.current = setTimeout(() => { setCopied(null); setToastMsg(''); }, 2000);
+                  }}>
+                    <Ionicons name={copied === item.id ? 'checkmark-circle' : 'copy-outline'} size={14} color={copied === item.id ? Colors.success : Colors.purple} />
+                    <Text style={[styles.copyPromptButtonText, copied === item.id && { color: Colors.success }]}>{copied === item.id ? '已复制' : '复制'}</Text>
                   </TouchableOpacity>
                 ) : null}
                 <TouchableOpacity style={styles.logButton} onPress={() => setLogModal(item)}>
@@ -310,11 +340,15 @@ export function HistoryScreen() {
         <View style={styles.statItem}><Text style={[styles.statValue, { color: Colors.warning }]}>{history.reduce((sum, h) => sum + (h.price || 0), 0)}</Text><Text style={styles.statLabel}>总金币</Text></View>
       </View>
 
-      <FlatList ref={flatListRef} data={displayedItems} keyExtractor={(item) => item.id} renderItem={renderItem} extraData={selectedIds} ListEmptyComponent={renderEmpty} ListFooterComponent={renderFooter} onEndReached={loadMore} onEndReachedThreshold={0.3} contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false} />
+      <FlatList ref={flatListRef} data={displayedItems} keyExtractor={(item) => item.id} renderItem={renderItem} extraData={{ selectedIds, tick }} ListEmptyComponent={renderEmpty} ListFooterComponent={renderFooter} onEndReached={loadMore} onEndReachedThreshold={0.3} contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false} />
 
-      <Modal visible={!!previewImage} transparent animationType="fade" onRequestClose={() => setPreviewImage(null)}>
-        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setPreviewImage(null)}>
-          <Image source={{ uri: previewImage }} style={styles.modalImage} resizeMode="contain" />
+      <Modal visible={!!previewImage} transparent animationType="fade" onRequestClose={() => { setPreviewImage(null); }}>
+        <TouchableOpacity
+          style={styles.previewOverlay}
+          activeOpacity={1}
+          onPress={() => setPreviewImage(null)}
+        >
+          <Image source={{ uri: previewImage?.url }} style={styles.modalImage} resizeMode="contain" />
         </TouchableOpacity>
       </Modal>
 
@@ -371,6 +405,13 @@ export function HistoryScreen() {
           </View>
         </TouchableOpacity>
       </Modal>
+
+      {toastMsg ? (
+        <View style={styles.toast}>
+          <Ionicons name="checkmark-circle" size={18} color={Colors.textInverse} />
+          <Text style={styles.toastText}>{toastMsg}</Text>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -412,9 +453,9 @@ const styles = StyleSheet.create({
   checkbox: { width: 22, height: 22, borderRadius: Radius.full, borderWidth: 1.5, borderColor: Colors.disabled, alignItems: 'center', justifyContent: 'center' },
   checkboxChecked: { backgroundColor: Colors.primary, borderColor: Colors.primary },
   checkboxMark: { color: Colors.textInverse, fontSize: 14, fontWeight: '600' },
-  historyCardInner: { flex: 1, flexDirection: 'row' },
-  historyThumbWrap: { width: 88, height: 88 },
-  historyThumb: { width: 88, height: 88 },
+  historyCardInner: { flex: 1, flexDirection: 'row', alignItems: 'center' },
+  historyThumbWrap: { width: 88, height: 88, marginLeft: 5 },
+  historyThumb: { width: 88, height: 88, resizeMode: 'contain' },
   historyThumbPlaceholder: { width: 88, height: 88, backgroundColor: Colors.bg, alignItems: 'center', justifyContent: 'center' },
   historyInfo: { flex: 1, padding: Spacing.md, justifyContent: 'space-between' },
   historyPrompt: { fontSize: 14, color: Colors.textPrimary, fontWeight: '500', lineHeight: 18 },
@@ -423,10 +464,12 @@ const styles = StyleSheet.create({
   historyBottomRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 },
   historyPrice: { fontSize: 13, color: Colors.warning, fontWeight: '700' },
   historyActions: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  logButton: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 3, borderRadius: Radius.full, backgroundColor: Colors.primaryBg, gap: 2 },
-  logButtonText: { fontSize: 11, color: Colors.primary, fontWeight: '500' },
   downloadButton: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 3, borderRadius: Radius.full, backgroundColor: Colors.successBg, gap: 2 },
   downloadButtonText: { fontSize: 11, color: Colors.success, fontWeight: '500' },
+  copyPromptButton: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 3, borderRadius: Radius.full, backgroundColor: Colors.purpleBg, gap: 2 },
+  copyPromptButtonText: { fontSize: 11, color: Colors.purple, fontWeight: '500' },
+  logButton: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 3, borderRadius: Radius.full, backgroundColor: Colors.primaryBg, gap: 2 },
+  logButtonText: { fontSize: 11, color: Colors.primary, fontWeight: '500' },
   deleteButton: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 3, borderRadius: Radius.full, backgroundColor: Colors.errorBg, gap: 2 },
   deleteButtonText: { fontSize: 11, color: Colors.error, fontWeight: '500' },
   historyError: { fontSize: 11, color: Colors.error, marginTop: 2 },
@@ -440,6 +483,7 @@ const styles = StyleSheet.create({
   footerLoadingText: { fontSize: 13, color: Colors.textTertiary },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
   modalImage: { width: '100%', height: '80%' },
+  previewOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center' },
   logModalContent: { width: '90%', maxHeight: '80%', backgroundColor: '#1C1C1E', borderRadius: Radius.lg, overflow: 'hidden' },
   logModalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: Spacing.lg, borderBottomWidth: 0.5, borderBottomColor: '#38383A' },
   logModalTitle: { fontSize: 17, fontWeight: '600', color: Colors.textInverse },
@@ -463,4 +507,6 @@ const styles = StyleSheet.create({
   confirmCancelText: { fontSize: 17, color: Colors.primary, fontWeight: '600' },
   confirmDeleteButton: { flex: 1, paddingVertical: 12, borderRadius: Radius.md, backgroundColor: Colors.error, alignItems: 'center' },
   confirmDeleteText: { fontSize: 17, color: Colors.textInverse, fontWeight: '600' },
+  toast: { position: 'absolute', bottom: 100, left: '50%', transform: [{ translateX: -70 }], flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, backgroundColor: 'rgba(28,28,30,0.88)', paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md, borderRadius: Radius.full, ...Shadows.lg },
+  toastText: { color: Colors.textInverse, fontSize: 14, fontWeight: '600' },
 });
