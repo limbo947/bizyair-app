@@ -16,17 +16,19 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as DocumentPicker from 'expo-document-picker';
 import {
   submitImageTask, queryTaskResult, uploadImageFile,
-  buildPayload, calculatePrice, getRatios, getResolutions,
-  getModelInfo, getActualResolution, MODELS, SIZE_PRESETS, ENV_API_KEY
-} from './api';
+} from './src/services/apiClient';
+import { buildPayload, calculatePrice, getRatios, getResolutions, getModelInfo, getActualResolution } from './src/utils/modelHelpers';
+import { MODELS, SIZE_PRESETS, ENV_API_KEY, HISTORY_KEY, API_KEY_STORAGE_KEY, STATUS_COLORS } from './src/constants/models';
+import { StatusBadge } from './src/components/StatusBadge';
+import {
+  ResolutionRatioControls,
+  WidthHeightQualityControls,
+  SizeOnlyControls,
+  WanSizeControls,
+  WidthHeightControls,
+} from './src/components/ParamControls';
 
-const HISTORY_KEY = '@image_history';
-const API_KEY_STORAGE_KEY = '@api_key';
 const MODEL_IDS = Object.keys(MODELS);
-
-const STATUS_LABELS = { Pending: '排队中', Running: '生成中', Saving: '转存中', Success: '已完成', Failed: '失败' };
-const STATUS_COLORS = { Pending: '#FF9800', Running: '#2196F3', Saving: '#9C27B0', Success: '#4CAF50', Failed: '#f44336' };
-const QUALITY_LABELS = { low: '低', medium: '中', high: '高' };
 
 export default function App() {
   const [modelId, setModelId] = useState('bza-image-b2-base');
@@ -171,174 +173,67 @@ export default function App() {
     Keyboard.dismiss();
   };
 
-  const renderStatusBadge = (item) => {
-    const label = STATUS_LABELS[item.status] || item.status;
-    const color = STATUS_COLORS[item.status] || '#999';
-    const isActive = ['Pending', 'Running', 'Saving'].includes(item.status);
-    return (
-      <View style={[styles.statusBadge, { borderColor: color }]}>
-        {isActive && <ActivityIndicator size="small" color={color} style={styles.statusSpinner} />}
-        <Text style={[styles.statusText, { color }]}>{label}</Text>
-      </View>
-    );
-  };
-
   const renderParamControls = () => {
-    if (paramType === 'resolution-ratio') {
-      return (
-        <>
-          <View style={styles.card}>
-            <Text style={styles.label}>分辨率</Text>
-            <View style={styles.selectorRow}>
-              {currentResolutions.map((r) => (
-                <TouchableOpacity key={r} style={[styles.selectorButton, resolution === r && styles.selectorButtonActive]} onPress={() => setResolution(r)}>
-                  <Text style={[styles.selectorText, resolution === r && styles.selectorTextActive]}>{r}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-          {currentRatios.length > 0 && (
-            <View style={styles.card}>
-              <Text style={styles.label}>宽高比</Text>
-              <View style={styles.aspectRatioGrid}>
-                {currentRatios.map((r) => (
-                  <TouchableOpacity key={r} style={[styles.ratioButton, aspectRatio === r && styles.ratioButtonActive]} onPress={() => setAspectRatio(r)}>
-                    <Text style={[styles.ratioText, aspectRatio === r && styles.ratioTextActive]}>{r}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-          )}
-        </>
-      );
+    switch (paramType) {
+      case 'resolution-ratio':
+        return (
+          <ResolutionRatioControls
+            currentResolutions={currentResolutions}
+            currentRatios={currentRatios}
+            resolution={resolution}
+            aspectRatio={aspectRatio}
+            setResolution={setResolution}
+            setAspectRatio={setAspectRatio}
+          />
+        );
+      case 'width-height-quality':
+        return (
+          <WidthHeightQualityControls
+            sizePreset={sizePreset}
+            setSizePreset={setSizePreset}
+            customWidth={customWidth}
+            setCustomWidth={setCustomWidth}
+            customHeight={customHeight}
+            setCustomHeight={setCustomHeight}
+            quality={quality}
+            setQuality={setQuality}
+            modelQualities={currentModel.qualities}
+          />
+        );
+      case 'size-only':
+        return (
+          <SizeOnlyControls
+            currentResolutions={currentResolutions}
+            resolution={resolution}
+            setResolution={setResolution}
+          />
+        );
+      case 'wan-size':
+        return (
+          <WanSizeControls
+            currentResolutions={currentResolutions}
+            resolution={resolution}
+            setResolution={setResolution}
+            customWidth={customWidth}
+            setCustomWidth={setCustomWidth}
+            customHeight={customHeight}
+            setCustomHeight={setCustomHeight}
+          />
+        );
+      case 'width-height':
+        return (
+          <WidthHeightControls
+            sizePreset={sizePreset}
+            setSizePreset={setSizePreset}
+            customWidth={customWidth}
+            setCustomWidth={setCustomWidth}
+            customHeight={customHeight}
+            setCustomHeight={setCustomHeight}
+          />
+        );
+      default:
+        return null;
     }
-
-    if (paramType === 'width-height-quality') {
-      return (
-        <>
-          <View style={styles.card}>
-            <Text style={styles.label}>尺寸预设</Text>
-            <View style={styles.presetGrid}>
-              {SIZE_PRESETS.map((p, i) => (
-                <TouchableOpacity key={i} style={[styles.presetButton, sizePreset === i && styles.presetButtonActive]}
-                  onPress={() => { setSizePreset(i); setCustomWidth(String(p.width)); setCustomHeight(String(p.height)); }}>
-                  <Text style={[styles.presetLabel, sizePreset === i && styles.presetLabelActive]}>{p.label}</Text>
-                  <Text style={[styles.presetDims, sizePreset === i && styles.presetDimsActive]}>{p.width}×{p.height}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-          <View style={styles.card}>
-            <Text style={styles.label}>自定义尺寸</Text>
-            <View style={styles.dimsRow}>
-              <View style={styles.dimWrap}>
-                <Text style={styles.dimLabel}>宽</Text>
-                <TextInput style={styles.dimInput} value={customWidth} onChangeText={setCustomWidth} keyboardType="numeric" />
-              </View>
-              <Text style={styles.dimX}>×</Text>
-              <View style={styles.dimWrap}>
-                <Text style={styles.dimLabel}>高</Text>
-                <TextInput style={styles.dimInput} value={customHeight} onChangeText={setCustomHeight} keyboardType="numeric" />
-              </View>
-            </View>
-          </View>
-          <View style={styles.card}>
-            <Text style={styles.label}>质量</Text>
-            <View style={styles.selectorRow}>
-              {(currentModel.qualities || []).map((q) => (
-                <TouchableOpacity key={q} style={[styles.selectorButton, quality === q && styles.selectorButtonActive]} onPress={() => setQuality(q)}>
-                  <Text style={[styles.selectorText, quality === q && styles.selectorTextActive]}>{QUALITY_LABELS[q] || q}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        </>
-      );
-    }
-
-    if (paramType === 'size-only') {
-      return (
-        <View style={styles.card}>
-          <Text style={styles.label}>尺寸</Text>
-          <View style={styles.selectorRow}>
-            {currentResolutions.map((r) => (
-              <TouchableOpacity key={r} style={[styles.selectorButton, resolution === r && styles.selectorButtonActive]} onPress={() => setResolution(r)}>
-                <Text style={[styles.selectorText, resolution === r && styles.selectorTextActive]}>{r}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-      );
-    }
-
-    if (paramType === 'wan-size') {
-      return (
-        <>
-          <View style={styles.card}>
-            <Text style={styles.label}>尺寸</Text>
-            <View style={styles.selectorRow}>
-              {currentResolutions.map((r) => (
-                <TouchableOpacity key={r} style={[styles.selectorButton, resolution === r && styles.selectorButtonActive]} onPress={() => setResolution(r)}>
-                  <Text style={[styles.selectorText, resolution === r && styles.selectorTextActive]}>{r === 'Custom' ? '自定义' : r}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-          {resolution === 'Custom' && (
-            <View style={styles.card}>
-              <Text style={styles.label}>自定义尺寸</Text>
-              <View style={styles.dimsRow}>
-                <View style={styles.dimWrap}>
-                  <Text style={styles.dimLabel}>宽</Text>
-                  <TextInput style={styles.dimInput} value={customWidth} onChangeText={setCustomWidth} keyboardType="numeric" />
-                </View>
-                <Text style={styles.dimX}>×</Text>
-                <View style={styles.dimWrap}>
-                  <Text style={styles.dimLabel}>高</Text>
-                  <TextInput style={styles.dimInput} value={customHeight} onChangeText={setCustomHeight} keyboardType="numeric" />
-                </View>
-              </View>
-              <Text style={styles.priceHint}>宽高范围: 768~4096，宽高比1:8~8:1</Text>
-            </View>
-          )}
-        </>
-      );
-    }
-
-    if (paramType === 'width-height') {
-      return (
-        <>
-          <View style={styles.card}>
-            <Text style={styles.label}>尺寸预设</Text>
-            <View style={styles.presetGrid}>
-              {SIZE_PRESETS.map((p, i) => (
-                <TouchableOpacity key={i} style={[styles.presetButton, sizePreset === i && styles.presetButtonActive]}
-                  onPress={() => { setSizePreset(i); setCustomWidth(String(p.width)); setCustomHeight(String(p.height)); }}>
-                  <Text style={[styles.presetLabel, sizePreset === i && styles.presetLabelActive]}>{p.label}</Text>
-                  <Text style={[styles.presetDims, sizePreset === i && styles.presetDimsActive]}>{p.width}×{p.height}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-          <View style={styles.card}>
-            <Text style={styles.label}>自定义尺寸</Text>
-            <View style={styles.dimsRow}>
-              <View style={styles.dimWrap}>
-                <Text style={styles.dimLabel}>宽</Text>
-                <TextInput style={styles.dimInput} value={customWidth} onChangeText={setCustomWidth} keyboardType="numeric" />
-              </View>
-              <Text style={styles.dimX}>×</Text>
-              <View style={styles.dimWrap}>
-                <Text style={styles.dimLabel}>高</Text>
-                <TextInput style={styles.dimInput} value={customHeight} onChangeText={setCustomHeight} keyboardType="numeric" />
-              </View>
-            </View>
-          </View>
-        </>
-      );
-    }
-
-    return null;
   };
 
   return (
@@ -448,7 +343,7 @@ export default function App() {
                     <TouchableOpacity style={styles.logButton} onPress={(e) => { e.stopPropagation(); setLogModal(item); }}>
                       <Text style={styles.logButtonText}>日志</Text>
                     </TouchableOpacity>
-                    {renderStatusBadge(item)}
+                    <StatusBadge status={item.status} />
                   </View>
                 </View>
                 {item.status === 'Failed' && item.errorMessage ? (<Text style={styles.historyError} numberOfLines={1}>{item.errorMessage}</Text>) : null}
@@ -508,29 +403,6 @@ const styles = StyleSheet.create({
   card: { backgroundColor: '#fff', padding: 15, borderRadius: 12, marginBottom: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 4, elevation: 3 },
   label: { fontSize: 15, fontWeight: 'bold', color: '#333', marginBottom: 8 },
   promptInput: { fontSize: 15, color: '#333', minHeight: 70, maxHeight: 140, textAlignVertical: 'top', borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 8, padding: 10 },
-  selectorRow: { flexDirection: 'row', gap: 8 },
-  selectorButton: { flex: 1, paddingVertical: 10, borderRadius: 8, borderWidth: 1, borderColor: '#e0e0e0', alignItems: 'center' },
-  selectorButtonActive: { backgroundColor: '#4CAF50', borderColor: '#4CAF50' },
-  selectorText: { fontSize: 14, color: '#666' },
-  selectorTextActive: { color: '#fff', fontWeight: 'bold' },
-  priceHint: { fontSize: 12, color: '#999', marginTop: 6 },
-  aspectRatioGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  ratioButton: { width: '22%', paddingVertical: 9, borderRadius: 8, borderWidth: 1, borderColor: '#e0e0e0', alignItems: 'center', justifyContent: 'center' },
-  ratioButtonActive: { backgroundColor: '#4CAF50', borderColor: '#4CAF50' },
-  ratioText: { fontSize: 13, color: '#666' },
-  ratioTextActive: { color: '#fff', fontWeight: 'bold' },
-  presetGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  presetButton: { width: '30%', paddingVertical: 10, borderRadius: 8, borderWidth: 1, borderColor: '#e0e0e0', alignItems: 'center' },
-  presetButtonActive: { backgroundColor: '#4CAF50', borderColor: '#4CAF50' },
-  presetLabel: { fontSize: 14, color: '#666', fontWeight: '500' },
-  presetLabelActive: { color: '#fff', fontWeight: 'bold' },
-  presetDims: { fontSize: 11, color: '#999', marginTop: 2 },
-  presetDimsActive: { color: '#E8F5E9' },
-  dimsRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  dimWrap: { flex: 1 },
-  dimLabel: { fontSize: 12, color: '#999', marginBottom: 4 },
-  dimInput: { fontSize: 15, color: '#333', borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 8, padding: 10, textAlign: 'center' },
-  dimX: { fontSize: 20, color: '#999', fontWeight: 'bold' },
   uploadButton: { backgroundColor: '#4CAF50', paddingVertical: 18, borderRadius: 12, borderWidth: 2, borderColor: '#81C784', borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 },
   uploadButtonDisabled: { backgroundColor: '#A5D6A7' },
   uploadIcon: { fontSize: 24, color: '#fff', fontWeight: 'bold' },
@@ -559,9 +431,6 @@ const styles = StyleSheet.create({
   historyActions: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   logButton: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8, backgroundColor: '#E3F2FD', borderWidth: 1, borderColor: '#90CAF9' },
   logButtonText: { fontSize: 11, color: '#1976D2', fontWeight: '500' },
-  statusBadge: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2, gap: 4 },
-  statusSpinner: { marginRight: 0 },
-  statusText: { fontSize: 11, fontWeight: 'bold' },
   historyError: { fontSize: 11, color: '#f44336', marginTop: 2 },
   apiKeyCard: { borderColor: '#FF9800', borderWidth: 1 },
   apiKeyInput: { fontSize: 14, color: '#333', borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 8, padding: 10, fontFamily: 'monospace' },
