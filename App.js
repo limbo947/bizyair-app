@@ -17,7 +17,8 @@ import * as DocumentPicker from 'expo-document-picker';
 import {
   submitImageTask, queryTaskResult, uploadImageFile,
 } from './src/services/apiClient';
-import { buildPayload, calculatePrice, getRatios, getResolutions, getModelInfo, getActualResolution } from './src/utils/modelHelpers';
+import { calculatePrice, getRatios, getResolutions, getModelInfo, getActualResolution } from './src/utils/modelHelpers';
+import { buildPayload } from './src/utils/payloadBuilder';
 import { MODELS, SIZE_PRESETS, ENV_API_KEY, HISTORY_KEY, API_KEY_STORAGE_KEY, STATUS_COLORS } from './src/constants/models';
 import { StatusBadge } from './src/components/StatusBadge';
 import {
