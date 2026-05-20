@@ -1,5 +1,6 @@
 const API_BASE = 'https://api.bizyair.cn/x/v1/modelzoo/tasks/openapi';
 const ENV_API_KEY = process.env.EXPO_PUBLIC_BIZYAIR_API_KEY || '';
+const jsSHA = require('jssha');
 
 const BZA_RATIOS_FULL = ['16:9','4:3','1:1','3:4','9:16','21:9','3:2','2:3','5:4','4:5','4:1','1:4','8:1','1:8'];
 const BZA_RATIOS_10 = ['16:9','4:3','1:1','3:4','9:16','21:9','3:2','2:3','5:4','4:5'];
@@ -323,7 +324,8 @@ async function commitResource(apiKey, name, objectKey) {
 }
 
 async function uploadImageFile(apiKey, file) {
-  const uploadInfo = await getUploadToken(apiKey, file.name);
+  const fileName = file.name || 'upload.jpg';
+  const uploadInfo = await getUploadToken(apiKey, fileName);
   const fileInfo = uploadInfo.file;
   const storageInfo = uploadInfo.storage;
   const objectKey = fileInfo.object_key;
@@ -339,14 +341,21 @@ async function uploadImageFile(apiKey, file) {
 
   const stringToSign = `PUT\n\n${contentType}\n${date}\nx-oss-date:${date}\nx-oss-security-token:${securityToken}\n/${bucket}/${objectKey}`;
 
-  const encoder = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    'raw', encoder.encode(accessKeySecret),
-    { name: 'HMAC', hash: 'SHA-1' }, false, ['sign']
-  );
-  const sigBytes = await crypto.subtle.sign('HMAC', key, encoder.encode(stringToSign));
-  const signature = btoa(String.fromCharCode(...new Uint8Array(sigBytes)));
+  const shaObj = new jsSHA('SHA-1', 'TEXT');
+  shaObj.setHMACKey(accessKeySecret, 'TEXT');
+  shaObj.update(stringToSign);
+  const signature = shaObj.getHMAC('B64');
   const authorization = `OSS ${accessKeyId}:${signature}`;
+
+  let body;
+  if (file.uri) {
+    const fetchResponse = await fetch(file.uri);
+    body = await fetchResponse.arrayBuffer();
+  } else if (file instanceof ArrayBuffer || ArrayBuffer.isView(file)) {
+    body = file;
+  } else {
+    body = file;
+  }
 
   const response = await fetch(uploadUrl, {
     method: 'PUT',
@@ -356,7 +365,7 @@ async function uploadImageFile(apiKey, file) {
       'x-oss-date': date,
       'Content-Type': contentType,
     },
-    body: file
+    body: body
   });
 
   if (!response.ok) {
@@ -364,7 +373,7 @@ async function uploadImageFile(apiKey, file) {
     throw new Error(`OSS上传失败: ${response.status} - ${errText}`);
   }
 
-  await commitResource(apiKey, file.name, objectKey);
+  await commitResource(apiKey, fileName, objectKey);
   return uploadUrl;
 }
 

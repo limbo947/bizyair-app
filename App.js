@@ -13,6 +13,7 @@ import {
   Modal,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as DocumentPicker from 'expo-document-picker';
 import {
   submitImageTask, queryTaskResult, uploadImageFile,
   buildPayload, calculatePrice, getRatios, getResolutions,
@@ -46,7 +47,6 @@ export default function App() {
   const [history, setHistory] = useState([]);
   const [previewImage, setPreviewImage] = useState(null);
   const [logModal, setLogModal] = useState(null);
-  const fileInputRef = useRef(null);
   const pollingRef = useRef({});
 
   const currentModel = getModelInfo(modelId);
@@ -105,17 +105,18 @@ export default function App() {
     pollingRef.current[id] = interval;
   }, [updateHistoryItem]);
 
-  const handleFileSelect = async (event) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  const handleFileSelect = async () => {
     const ek = apiKey.trim() || ENV_API_KEY;
     if (!ek) { setShowApiKeyInput(true); setError('请先配置API密钥'); return; }
     setIsUploading(true); setError('');
     try {
-      const url = await uploadImageFile(ek, file);
-      setImageUrls([...imageUrls, url]);
+      const result = await DocumentPicker.getDocumentAsync({ type: 'image/*', copyToCacheDirectory: true });
+      if (result.canceled || !result.assets?.length) { setIsUploading(false); return; }
+      const file = result.assets[0];
+      const uploadResult = await uploadImageFile(ek, { uri: file.uri, name: file.name, type: file.mimeType || 'image/jpeg' });
+      setImageUrls([...imageUrls, uploadResult]);
     } catch (err) { setError(err.message || '上传失败'); }
-    finally { setIsUploading(false); if (fileInputRef.current) fileInputRef.current.value = ''; }
+    finally { setIsUploading(false); }
   };
 
   const getPayloadParams = () => {
@@ -399,8 +400,7 @@ export default function App() {
         {mode === 'image-to-image' && (
           <View style={styles.card}>
             <Text style={styles.label}>参考图片</Text>
-            <input type="file" accept="image/*" ref={fileInputRef} style={{ display: 'none' }} onChange={handleFileSelect} />
-            <TouchableOpacity style={[styles.uploadButton, isUploading && styles.uploadButtonDisabled]} onPress={() => fileInputRef.current?.click()} disabled={isUploading}>
+            <TouchableOpacity style={[styles.uploadButton, isUploading && styles.uploadButtonDisabled]} onPress={handleFileSelect} disabled={isUploading}>
               {isUploading ? (<><ActivityIndicator color="#fff" /><Text style={styles.uploadButtonText}>上传中...</Text></>)
                 : (<><Text style={styles.uploadIcon}>+</Text><Text style={styles.uploadButtonText}>选择图片上传</Text></>)}
             </TouchableOpacity>
