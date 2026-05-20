@@ -1,17 +1,67 @@
-const jsSHA = require('jssha');
-import { API_BASE, ENV_API_KEY } from '../constants/models';
+import jsSHA from 'jssha';
+import {
+  API_BASE,
+  UPLOAD_TOKEN_URL,
+  COMMIT_RESOURCE_URL,
+  ENV_API_KEY,
+  REQUEST_TIMEOUT_MS,
+  MAX_RETRIES,
+  RETRY_DELAY_MS,
+} from '../constants/models';
+
+async function request(url, options = {}) {
+  const { retries = 0, ...fetchOptions } = options;
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(url, {
+      ...fetchOptions,
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const body = await response.text().catch(() => '');
+      throw new Error(`[${response.status}] ${body || response.statusText}`);
+    }
+
+    const result = await response.json();
+    return result;
+  } catch (err) {
+    clearTimeout(timeoutId);
+
+    if (err.name === 'AbortError') {
+      throw new Error('请求超时，请检查网络连接后重试');
+    }
+
+    const isRetryable =
+      retries < MAX_RETRIES &&
+      (err.message.includes('超时') ||
+       err.message.startsWith('[5') ||
+       err.message === 'Network request failed');
+
+    if (isRetryable) {
+      await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS * Math.pow(2, retries)));
+      return request(url, { ...options, retries: retries + 1 });
+    }
+
+    throw err;
+  }
+}
 
 async function submitTask(apiKey, modelId, mode, payload) {
   const url = `${API_BASE}/${modelId}/${mode}`;
-  const response = await fetch(url, {
+  const result = await request(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
+      'Authorization': `Bearer ${apiKey}`,
     },
-    body: JSON.stringify(payload)
+    body: JSON.stringify(payload),
   });
-  const result = await response.json();
+
   const data = result.data || result;
   const id = data.request_id || data.task_id || data.id;
   if (!id) {
@@ -22,13 +72,12 @@ async function submitTask(apiKey, modelId, mode, payload) {
 
 async function queryTaskResult(apiKey, requestId) {
   const url = `${API_BASE}/${requestId}`;
-  const response = await fetch(url, {
+  const result = await request(url, {
     method: 'GET',
     headers: {
-      'Authorization': `Bearer ${apiKey}`
-    }
+      'Authorization': `Bearer ${apiKey}`,
+    },
   });
-  const result = await response.json();
   return result.data || result;
 }
 
@@ -40,20 +89,19 @@ async function submitImageTask(apiKey, modelId, mode, payload) {
 
 async function getUploadToken(apiKey, fileName) {
   const params = new URLSearchParams({ file_name: fileName, file_type: 'inputs' });
-  const url = `https://api.bizyair.cn/x/v1/upload/token?${params}`;
-  const response = await fetch(url, { headers: { 'Authorization': `Bearer ${apiKey}` } });
-  const raw = await response.json();
+  const url = `${UPLOAD_TOKEN_URL}?${params}`;
+  const raw = await request(url, {
+    headers: { 'Authorization': `Bearer ${apiKey}` },
+  });
   return raw.data || raw;
 }
 
 async function commitResource(apiKey, name, objectKey) {
-  const url = 'https://api.bizyair.cn/x/v1/input_resource/commit';
-  const response = await fetch(url, {
+  const result = await request(COMMIT_RESOURCE_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-    body: JSON.stringify({ name, object_key: objectKey })
+    body: JSON.stringify({ name, object_key: objectKey }),
   });
-  const result = await response.json();
   return result.data || result;
 }
 
@@ -99,7 +147,7 @@ async function uploadImageFile(apiKey, file) {
       'x-oss-date': date,
       'Content-Type': contentType,
     },
-    body: body
+    body,
   });
 
   if (!response.ok) {
@@ -111,4 +159,12 @@ async function uploadImageFile(apiKey, file) {
   return uploadUrl;
 }
 
-export { submitImageTask, queryTaskResult, uploadImageFile, submitTask, getUploadToken, commitResource };
+export {
+  submitImageTask,
+  queryTaskResult,
+  uploadImageFile,
+  submitTask,
+  getUploadToken,
+  commitResource,
+  request,
+};

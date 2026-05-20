@@ -146,8 +146,22 @@ export const STATUS_LABELS = { Pending: '排队中', Running: '生成中', Savin
 export const STATUS_COLORS = { Pending: '#FF9800', Running: '#2196F3', Saving: '#9C27B0', Success: '#4CAF50', Failed: '#f44336' };
 export const QUALITY_LABELS = { low: '低', medium: '中', high: '高' };
 
-export const API_BASE = 'https://api.bizyair.cn/x/v1/modelzoo/tasks/openapi';
+export const API_HOST = 'https://api.bizyair.cn';
+export const API_BASE = `${API_HOST}/x/v1/modelzoo/tasks/openapi`;
+export const UPLOAD_TOKEN_URL = `${API_HOST}/x/v1/upload/token`;
+export const COMMIT_RESOURCE_URL = `${API_HOST}/x/v1/input_resource/commit`;
 export const ENV_API_KEY = process.env.EXPO_PUBLIC_BIZYAIR_API_KEY || '';
+
+export const REQUEST_TIMEOUT_MS = 15000;
+export const MAX_RETRIES = 3;
+export const RETRY_DELAY_MS = 1000;
+export const POLLING_INTERVAL_MS = 3000;
+export const TAB_FADE_OUT_MS = 120;
+export const TAB_FADE_IN_MS = 180;
 
 export const HISTORY_KEY = '@image_history';
 export const API_KEY_STORAGE_KEY = '@api_key';
+export const ACTIVE_TAB_KEY = '@active_tab';
+export const TAB_HOME = 'home';
+export const TAB_HISTORY = 'history';
+export const PAGE_SIZE = 20;
