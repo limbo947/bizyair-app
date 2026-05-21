@@ -37,11 +37,12 @@ export const Colors = {
 };
 
 export const Radius = {
-  xs: 8,
-  sm: 10,
-  md: 14,
-  lg: 18,
-  xl: 22,
+  xs: 6,
+  sm: 8,
+  md: 10,
+  lg: 14,
+  xl: 18,
+  xxl: 22,
   full: 999,
 };
 
