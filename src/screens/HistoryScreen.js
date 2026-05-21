@@ -14,7 +14,6 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
-import { StatusBadge } from '../components/StatusBadge';
 import { useAppContext } from '../context/AppContext';
 import { PAGE_SIZE, TAB_HISTORY } from '../constants/models';
 import { Colors, Shadows, Radius, Spacing } from '../constants/theme';
@@ -260,7 +259,27 @@ export function HistoryScreen() {
                     <Ionicons name="trash-outline" size={18} color={Colors.error} />
                   </TouchableOpacity>
                 ) : null}
-                <StatusBadge status={item.status} />
+                {item.status === 'Pending' ? (
+                  <View style={[styles.iconButton, styles.iconButtonWarning]}>
+                    <Ionicons name="time-outline" size={16} color={Colors.warning} />
+                  </View>
+                ) : item.status === 'Running' ? (
+                  <View style={[styles.iconButton, styles.iconButtonRunning]}>
+                    <ActivityIndicator size="small" color={Colors.primary} />
+                  </View>
+                ) : item.status === 'Saving' ? (
+                  <View style={[styles.iconButton, styles.iconButtonPurple]}>
+                    <Ionicons name="cloud-upload-outline" size={16} color={Colors.purple} />
+                  </View>
+                ) : item.status === 'Success' ? (
+                  <View style={[styles.iconButton, styles.iconButtonSuccess]}>
+                    <Ionicons name="checkmark-circle-outline" size={16} color={Colors.success} />
+                  </View>
+                ) : (
+                  <View style={[styles.iconButton, styles.iconButtonError]}>
+                    <Ionicons name="close-circle-outline" size={16} color={Colors.error} />
+                  </View>
+                )}
               </View>
             </View>
             {item.status === 'Failed' && item.errorMessage ? (
@@ -454,23 +473,25 @@ const styles = StyleSheet.create({
   checkbox: { width: 22, height: 22, borderRadius: Radius.full, borderWidth: 1.5, borderColor: Colors.disabled, alignItems: 'center', justifyContent: 'center' },
   checkboxChecked: { backgroundColor: Colors.primary, borderColor: Colors.primary },
   checkboxMark: { color: Colors.textInverse, fontSize: 14, fontWeight: '600' },
-  historyCardInner: { flex: 1, flexDirection: 'row', alignItems: 'center' },
-  historyThumbWrap: { marginLeft: 5, marginTop: 5, marginBottom: 5, flex: 1, maxWidth: 120 },
-  historyThumb: { width: '100%', height: '100%', resizeMode: 'cover', borderRadius: Radius.xs },
-  historyThumbPlaceholder: { width: 88, height: 88, backgroundColor: Colors.bg, alignItems: 'center', justifyContent: 'center' },
+  historyCardInner: { flex: 1, flexDirection: 'row', alignItems: 'stretch' },
+  historyThumbWrap: { marginLeft: 6, marginVertical: 6, width: 88 },
+  historyThumb: { width: '100%', flex: 1, resizeMode: 'cover', borderRadius: Radius.xs },
+  historyThumbPlaceholder: { flex: 1, width: '100%', backgroundColor: Colors.bg, alignItems: 'center', justifyContent: 'center' },
   historyThumbFailed: { backgroundColor: Colors.errorBg },
-  historyInfo: { flex: 1, padding: Spacing.md, justifyContent: 'space-between' },
+  historyInfo: { flex: 1, padding: Spacing.md, justifyContent: 'space-between', alignSelf: 'center' },
   historyPrompt: { fontSize: 14, color: Colors.textPrimary, fontWeight: '500', lineHeight: 18 },
   historyMeta: { fontSize: 12, color: Colors.textTertiary, marginTop: 3 },
   historyDuration: { fontSize: 12, color: Colors.success, marginTop: 2, fontWeight: '500' },
   historyBottomRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 },
   historyPrice: { fontSize: 13, color: Colors.warning, fontWeight: '700' },
-  historyActions: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  iconButton: { width: 32, height: 32, borderRadius: Radius.full, alignItems: 'center', justifyContent: 'center' },
+  historyActions: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  iconButton: { width: 28, height: 28, borderRadius: Radius.xs, alignItems: 'center', justifyContent: 'center' },
   iconButtonSuccess: { backgroundColor: Colors.successBg },
   iconButtonPurple: { backgroundColor: Colors.purpleBg },
   iconButtonPrimary: { backgroundColor: Colors.primaryBg },
   iconButtonError: { backgroundColor: Colors.errorBg },
+  iconButtonWarning: { backgroundColor: Colors.warningBg },
+  iconButtonRunning: { backgroundColor: Colors.primaryBg },
   historyError: { fontSize: 11, color: Colors.error, marginTop: 2 },
   emptyContainer: { alignItems: 'center', justifyContent: 'center', paddingTop: 60 },
   emptyIcon: { fontSize: 48, marginBottom: Spacing.md },
