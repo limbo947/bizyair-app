@@ -15,24 +15,28 @@
 ├── eas.json                  # EAS Build 配置
 ├── src/
 │   ├── context/              # 全局状态管理
-│   │   └── AppContext.js     # React Context Provider + Hook（历史/密钥/轮询）
+│   │   └── AppContext.js     # React Context Provider + Hook（历史/密钥/轮询/用户信息）
 │   ├── screens/              # 页面级组件
 │   │   ├── HomeScreen.js     # 主页：模型选择、参数配置、图片生成
 │   │   └── HistoryScreen.js  # 历史记录：搜索/筛选/排序/批量操作/分页
 │   ├── components/           # UI 组件
+│   │   ├── ModelSelector.js  # 模型选择器（按钮+下拉菜单）
+│   │   ├── UserInfoCard.js   # 用户信息卡片（头像/余额/API密钥管理）
 │   │   ├── TabBar.js         # 底部导航栏（带角标和切换动画）
 │   │   ├── ParamControls.js  # 参数控制面板（5 种参数类型自适应）
 │   │   └── StatusBadge.js    # 任务状态徽章
 │   ├── constants/            # 常量定义
 │   │   ├── models.js         # 模型配置、状态标签、API/存储常量
+│   │   ├── theme.js          # 设计令牌（色彩/间距/圆角/阴影）
 │   │   └── ratios.js         # 宽高比常量
 │   ├── utils/                # 工具函数
+│   │   ├── helpers.js        # 通用工具（generateId 等）
 │   │   ├── modelHelpers.js   # 模型信息、价格计算、分辨率计算
 │   │   └── payloadBuilder.js # API 请求体构建
 │   └── services/             # API 服务层
 │       └── apiClient.js      # 统一请求封装（超时+重试）、任务提交/轮询、OSS 上传
 ├── assets/                   # 图标资源
-├── bizyair.api.reference/    # BizyAir 平台 API 文档（按模型分类）
+├── bizyair.api.reference/    # BizyAir 平台 API 参考文档（按模型分类）
 └── .env.example              # 环境变量模板
 ```
 
@@ -41,7 +45,7 @@
 - 组件不写 API 调用，服务文件不写 UI 代码，常量文件不定义函数
 - 文件名使用 kebab-case
 - 修改已有功能优先复用现有模块
-- 单文件有效代码行数（不含空行/注释）不得超过 **500 行**，新文件预估超 250 行时即拆分为多个文件
+- 单文件有效代码行数（不含空行/注释）不得超过 **800 行**，新文件预估超 700 行时即拆分为多个文件
 - 修改代码时遵循最小改动原则，尽量保持原有接口不变
 
 ## BizyAir API 目录规范

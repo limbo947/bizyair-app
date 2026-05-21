@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   StyleSheet,
   Text,
@@ -9,8 +9,6 @@ import {
   Image,
   ScrollView,
   ActivityIndicator,
-  Modal,
-  Pressable,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
@@ -18,7 +16,8 @@ import { useAppContext } from '../context/AppContext';
 import { submitImageTask, uploadImageFile } from '../services/apiClient';
 import { calculatePrice, getRatios, getResolutions, getModelInfo, getActualResolution } from '../utils/modelHelpers';
 import { buildPayload } from '../utils/payloadBuilder';
-import { MODELS, ENV_API_KEY } from '../constants/models';
+import { generateId } from '../utils/helpers';
+import { ENV_API_KEY } from '../constants/models';
 import { Colors, Shadows, Radius, Spacing } from '../constants/theme';
 import {
   ResolutionRatioControls,
@@ -27,12 +26,8 @@ import {
   WanSizeControls,
   WidthHeightControls,
 } from '../components/ParamControls';
-
-const MODEL_IDS = Object.keys(MODELS);
-
-function generateId() {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-}
+import { UserInfoCard } from '../components/UserInfoCard';
+import { ModelSelector } from '../components/ModelSelector';
 
 export function HomeScreen() {
   const {
@@ -73,8 +68,6 @@ export function HomeScreen() {
   const currentRatios = getRatios(modelId, mode);
   const currentResolutions = getResolutions(modelId, mode);
   const paramType = currentModel.paramType;
-  const dropdownButtonRef = useRef(null);
-  const [dropdownPosition, setDropdownPosition] = useState({ x: 0, y: 0 });
 
   const persistCurrentState = useCallback(() => {
     saveHomeState({
@@ -125,11 +118,6 @@ export function HomeScreen() {
   const handleModelSelect = (id) => {
     setModelId(id);
     setShowModelDropdown(false);
-  };
-
-  const handleDropdownButtonLayout = (event) => {
-    const { x, y, height } = event.nativeEvent.layout;
-    setDropdownPosition({ x, y: y + height + 4 });
   };
 
   const handleFileSelect = async () => {
@@ -328,17 +316,13 @@ export function HomeScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.headerTop}>
-          <TouchableOpacity
-            ref={dropdownButtonRef}
-            style={styles.modelSelector}
-            onPress={() => setShowModelDropdown(!showModelDropdown)}
-            onLayout={handleDropdownButtonLayout}
-            activeOpacity={0.7}
-          >
-            <Ionicons name={currentModel.icon.name} size={18} color={currentModel.icon.color} />
-            <Text style={styles.modelSelectorText}>{currentModel.name}</Text>
-            <Text style={styles.modelSelectorArrow}>⌄</Text>
-          </TouchableOpacity>
+          <ModelSelector
+            currentModel={currentModel}
+            modelId={modelId}
+            showDropdown={showModelDropdown}
+            onToggleDropdown={() => setShowModelDropdown(!showModelDropdown)}
+            onSelectModel={handleModelSelect}
+          />
           
           <View style={styles.modeToggle}>
             <TouchableOpacity
@@ -363,209 +347,19 @@ export function HomeScreen() {
         </View>
       </View>
 
-      <Modal
-        visible={showModelDropdown}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setShowModelDropdown(false)}
-      >
-        <Pressable style={styles.modalOverlay} onPress={() => setShowModelDropdown(false)}>
-          <View style={[styles.dropdownContainer, { top: dropdownPosition.y, left: dropdownPosition.x }]}>
-            <View style={styles.dropdown}>
-              <ScrollView style={styles.dropdownList} showsVerticalScrollIndicator={false}>
-                {MODEL_IDS.map((id, index) => {
-                  const model = MODELS[id];
-                  const isActive = modelId === id;
-                  return (
-                    <TouchableOpacity
-                      key={id}
-                      style={[
-                        styles.dropdownItem,
-                        isActive && styles.dropdownItemActive,
-                        index < MODEL_IDS.length - 1 && styles.dropdownItemBorder,
-                      ]}
-                      onPress={() => handleModelSelect(id)}
-                      activeOpacity={0.7}
-                    >
-                      <Ionicons name={model.icon.name} size={18} color={isActive ? Colors.primary : model.icon.color} style={styles.dropdownItemIcon} />
-                      <Text style={[styles.dropdownItemText, isActive && styles.dropdownItemTextActive]}>
-                        {model.name}
-                      </Text>
-                      {isActive && (
-                        <Ionicons name="checkmark-circle" size={18} color={Colors.primary} style={styles.dropdownItemCheck} />
-                      )}
-                    </TouchableOpacity>
-                  );
-                })}
-              </ScrollView>
-            </View>
-          </View>
-        </Pressable>
-      </Modal>
-
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
-        {userInfo && (apiKey || ENV_API_KEY) && !showApiKeyInput ? (
-          <View style={[styles.card, styles.userCard]}>
-            <TouchableOpacity
-              style={styles.userCardTop}
-              onPress={() => setUserCardExpanded(!userCardExpanded)}
-              activeOpacity={0.7}
-            >
-              <Image source={{ uri: userInfo.avatar }} style={styles.userAvatar} />
-              <View style={styles.userInfoText}>
-                <Text style={styles.userName}>{userInfo.name}</Text>
-                <View style={styles.userLevelRow}>
-                  <Ionicons name="shield-checkmark" size={12} color={Colors.success} />
-                  <Text style={styles.userLevel}>{userInfo.user_level_str}</Text>
-                </View>
-              </View>
-              {userCardExpanded ? (
-                <View style={styles.userBalanceBlock}>
-                  <Text style={styles.userBalanceLabel}>BZ币余额</Text>
-                  <Text style={styles.userBalanceValue}>
-                    {walletBalance?.total_balance || '--'}
-                  </Text>
-                </View>
-              ) : (
-                <View style={styles.userCollapsedBalances}>
-                  <Ionicons name="star" size={14} color={Colors.warning} />
-                  <Text style={styles.userCollapsedBalanceText}>
-                    {walletBalance?.charge_balance || '--'}
-                  </Text>
-                  <Ionicons name="star-outline" size={14} color={Colors.textTertiary} style={{ marginLeft: 10 }} />
-                  <Text style={styles.userCollapsedBalanceText}>
-                    {walletBalance?.gift_balance || '--'}
-                  </Text>
-                </View>
-              )}
-              <Ionicons
-                name={userCardExpanded ? 'chevron-up' : 'chevron-down'}
-                size={18}
-                color={Colors.textTertiary}
-                style={{ marginLeft: Spacing.sm }}
-              />
-            </TouchableOpacity>
-
-            {userCardExpanded ? (
-              <>
-                {walletBalance ? (
-                  <View style={styles.userBalanceDetail}>
-                    <View style={styles.userBalanceItem}>
-                      <View style={styles.userBalanceItemHeader}>
-                        <Ionicons name="star" size={14} color={Colors.warning} />
-                        <Text style={[styles.userBalanceItemLabel, { color: Colors.warning }]}>充值金币</Text>
-                      </View>
-                      <Text style={styles.userBalanceItemValue}>{walletBalance.charge_balance}</Text>
-                    </View>
-                    <View style={styles.userBalanceDivider} />
-                    <View style={styles.userBalanceItem}>
-                      <View style={styles.userBalanceItemHeader}>
-                        <Ionicons name="star-outline" size={14} color={Colors.textTertiary} />
-                        <Text style={[styles.userBalanceItemLabel, { color: Colors.textTertiary }]}>赠送银币</Text>
-                      </View>
-                      <Text style={styles.userBalanceItemValue}>{walletBalance.gift_balance}</Text>
-                    </View>
-                  </View>
-                ) : null}
-
-                <View style={styles.userApiKeySection}>
-                  <View style={styles.labelRow}>
-                    <Ionicons name="key" size={16} color={Colors.textTertiary} />
-                    <Text style={styles.label}>API 密钥</Text>
-                  </View>
-                  <View style={styles.apiKeyRow}>
-                    <Text style={styles.apiKeyMasked}>
-                      {ENV_API_KEY || apiKey ? '密钥已配置 ●●●●●●●●' : '未配置密钥'}
-                    </Text>
-                    <View style={styles.apiKeyActions}>
-                      {apiKey || ENV_API_KEY ? (
-                        <TouchableOpacity
-                          style={styles.refreshKeyButton}
-                          onPress={() => refreshUserInfo(apiKey || ENV_API_KEY)}
-                        >
-                          <Ionicons name="refresh-outline" size={16} color={Colors.primary} />
-                        </TouchableOpacity>
-                      ) : null}
-                      <TouchableOpacity
-                        style={styles.changeKeyButton}
-                        onPress={() => {
-                          if (!apiKey) setApiKey(ENV_API_KEY);
-                          setShowApiKeyInput(true);
-                        }}
-                      >
-                        <Text style={styles.changeKeyButtonText}>
-                          {apiKey || ENV_API_KEY ? '更换' : '输入'}
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                </View>
-              </>
-            ) : null}
-          </View>
-        ) : null}
-
-        {showApiKeyInput ? (
-          <View style={[styles.card, styles.apiKeyCard]}>
-            <View style={styles.labelRow}>
-              <Ionicons name="key" size={16} color={Colors.warning} />
-              <Text style={styles.label}>API 密钥</Text>
-            </View>
-            <TextInput
-              style={styles.apiKeyInput}
-              placeholder="输入你的Bizyair API Key"
-              value={apiKey}
-              onChangeText={setApiKey}
-              secureTextEntry
-              maxLength={100}
-              placeholderTextColor={Colors.textPlaceholder}
-            />
-            {apiKey.trim() ? (
-              <TouchableOpacity
-                style={styles.saveKeyButton}
-                onPress={() => {
-                  saveApiKey(apiKey);
-                  setShowApiKeyInput(false);
-                }}
-              >
-                <Text style={styles.saveKeyButtonText}>保存密钥</Text>
-              </TouchableOpacity>
-            ) : null}
-          </View>
-        ) : !userInfo ? (
-          <View style={styles.card}>
-            <View style={styles.labelRow}>
-              <Ionicons name="key" size={16} color={Colors.textTertiary} />
-              <Text style={styles.label}>API 密钥</Text>
-            </View>
-            <View style={styles.apiKeyRow}>
-              <Text style={styles.apiKeyMasked}>
-                {ENV_API_KEY || apiKey ? '密钥已配置 ●●●●●●●●' : '未配置密钥'}
-              </Text>
-              <View style={styles.apiKeyActions}>
-                {apiKey || ENV_API_KEY ? (
-                  <TouchableOpacity
-                    style={styles.refreshKeyButton}
-                    onPress={() => refreshUserInfo(apiKey || ENV_API_KEY)}
-                  >
-                    <Ionicons name="refresh-outline" size={16} color={Colors.primary} />
-                  </TouchableOpacity>
-                ) : null}
-                <TouchableOpacity
-                  style={styles.changeKeyButton}
-                  onPress={() => {
-                    if (!apiKey) setApiKey(ENV_API_KEY);
-                    setShowApiKeyInput(true);
-                  }}
-                >
-                  <Text style={styles.changeKeyButtonText}>
-                    {apiKey || ENV_API_KEY ? '更换' : '输入'}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        ) : null}
+        <UserInfoCard
+          userInfo={userInfo}
+          walletBalance={walletBalance}
+          apiKey={apiKey}
+          showApiKeyInput={showApiKeyInput}
+          userCardExpanded={userCardExpanded}
+          onToggleExpand={() => setUserCardExpanded(!userCardExpanded)}
+          onApiKeyChange={setApiKey}
+          onSaveApiKey={() => { saveApiKey(apiKey); setShowApiKeyInput(false); }}
+          onShowApiKeyInput={() => { if (!apiKey) setApiKey(ENV_API_KEY); setShowApiKeyInput(true); }}
+          onRefresh={() => refreshUserInfo(apiKey || ENV_API_KEY)}
+        />
 
         <View style={styles.card}>
           <Text style={styles.label}>提示词</Text>
@@ -648,27 +442,11 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bg },
   header: { backgroundColor: Colors.card, paddingHorizontal: Spacing.xl, paddingTop: Spacing.sm, paddingBottom: Spacing.md, borderBottomWidth: 0.5, borderBottomColor: Colors.separator },
   headerTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  modelSelector: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.bg, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, borderRadius: Radius.sm, gap: Spacing.xs },
-  modelSelectorIcon: { fontSize: 16 },
-  modelSelectorText: { fontSize: 14, color: Colors.textPrimary, fontWeight: '600' },
-  modelSelectorArrow: { fontSize: 16, color: Colors.textSecondary, marginTop: -4 },
   modeToggle: { flexDirection: 'row', borderRadius: Radius.sm, backgroundColor: Colors.bg, padding: 2 },
   modeButton: { paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, borderRadius: Radius.xs, alignItems: 'center' },
   modeButtonActive: { backgroundColor: Colors.card },
   modeButtonText: { fontSize: 13, color: Colors.textTertiary, fontWeight: '500' },
   modeButtonTextActive: { color: Colors.primary, fontWeight: '600' },
-  modalOverlay: { flex: 1, backgroundColor: 'transparent' },
-  dropdownContainer: { position: 'absolute', zIndex: 1000 },
-  dropdown: { backgroundColor: Colors.card, borderRadius: Radius.md, ...Shadows.lg, maxHeight: 320, minWidth: 180, overflow: 'hidden' },
-  dropdownList: { maxHeight: 320 },
-  dropdownItem: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.md, paddingVertical: Spacing.md, gap: Spacing.sm },
-  dropdownItemActive: { backgroundColor: Colors.primaryBg },
-  dropdownItemBorder: { borderBottomWidth: 0.5, borderBottomColor: Colors.separator },
-  dropdownItemIcon: { fontSize: 16, width: 24, textAlign: 'center' },
-  dropdownItemIconActive: {},
-  dropdownItemText: { flex: 1, fontSize: 14, color: Colors.textPrimary, fontWeight: '500' },
-  dropdownItemTextActive: { color: Colors.primary, fontWeight: '600' },
-  dropdownItemCheck: { marginLeft: Spacing.sm },
   scroll: { flex: 1 },
   scrollContent: { padding: Spacing.lg, paddingBottom: Spacing.xxl },
   card: { backgroundColor: Colors.card, padding: Spacing.lg, borderRadius: Radius.md, marginBottom: Spacing.md, ...Shadows.sm },
@@ -689,33 +467,4 @@ const styles = StyleSheet.create({
   generateButtonDisabled: { backgroundColor: Colors.primaryDisabled },
   generateButtonText: { color: Colors.textInverse, fontSize: 17, fontWeight: '600', letterSpacing: -0.3 },
   errorText: { color: Colors.error, textAlign: 'center', marginBottom: Spacing.md, fontSize: 14 },
-  apiKeyCard: { borderColor: Colors.warningBorder, borderWidth: 1 },
-  apiKeyInput: { fontSize: 15, color: Colors.textPrimary, borderWidth: 0, borderRadius: Radius.sm, padding: Spacing.md, fontFamily: 'monospace', backgroundColor: Colors.bg },
-  saveKeyButton: { backgroundColor: Colors.primary, paddingVertical: 10, borderRadius: Radius.sm, alignItems: 'center', marginTop: Spacing.sm },
-  saveKeyButtonText: { color: Colors.textInverse, fontSize: 15, fontWeight: '600' },
-  apiKeyRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  apiKeyMasked: { fontSize: 14, color: Colors.textTertiary },
-  changeKeyButton: { paddingVertical: 6, paddingHorizontal: 14, backgroundColor: Colors.primaryBg, borderRadius: Radius.full },
-  changeKeyButtonText: { color: Colors.primary, fontSize: 13, fontWeight: '600' },
-  apiKeyActions: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
-  refreshKeyButton: { padding: 6, backgroundColor: Colors.primaryBg, borderRadius: Radius.full },
-  userCard: { paddingVertical: Spacing.md, paddingHorizontal: Spacing.lg },
-  userCardTop: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
-  userAvatar: { width: 44, height: 44, borderRadius: 22 },
-  userInfoText: { flex: 1 },
-  userName: { fontSize: 16, color: Colors.textPrimary, fontWeight: '600', letterSpacing: -0.3 },
-  userLevelRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
-  userLevel: { fontSize: 12, color: Colors.textTertiary },
-  userBalanceBlock: { alignItems: 'flex-end' },
-  userBalanceLabel: { fontSize: 11, color: Colors.textTertiary, textTransform: 'uppercase', letterSpacing: 0.5 },
-  userBalanceValue: { fontSize: 20, color: Colors.textPrimary, fontWeight: '700', letterSpacing: -0.5, marginTop: 2 },
-  userCollapsedBalances: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  userCollapsedBalanceText: { fontSize: 15, color: Colors.textPrimary, fontWeight: '600' },
-  userBalanceDetail: { flexDirection: 'row', marginTop: Spacing.md, paddingTop: Spacing.md, paddingBottom: Spacing.md, borderTopWidth: 0.5, borderTopColor: Colors.divider, borderBottomWidth: 0.5, borderBottomColor: Colors.divider },
-  userBalanceItem: { flex: 1, alignItems: 'center' },
-  userBalanceItemHeader: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  userBalanceItemLabel: { fontSize: 12, color: Colors.textTertiary },
-  userBalanceItemValue: { fontSize: 15, color: Colors.textPrimary, fontWeight: '600', marginTop: 4 },
-  userBalanceDivider: { width: 0.5, backgroundColor: Colors.divider },
-  userApiKeySection: { marginTop: Spacing.md },
 });
