@@ -4,7 +4,7 @@ import { STATUS_COLORS as THEME_STATUS_COLORS, STATUS_BG as THEME_STATUS_BG } fr
 export const MODELS = {
   'bza-image-b2-base': {
     name: 'B.2 渠道版',
-    icon: '🍌',
+    icon: { name: 'color-palette-outline', color: '#FF9500' },
     manufacturer: '谷歌',
     paramType: 'resolution-ratio',
     prices: { '1K': 200, '2K': 200, '4K': 250 },
@@ -18,7 +18,7 @@ export const MODELS = {
   },
   'bza-image-b2-official': {
     name: 'B.2 官方版',
-    icon: '🍌',
+    icon: { name: 'color-palette-outline', color: '#FF9500' },
     manufacturer: '谷歌',
     paramType: 'resolution-ratio',
     prices: { '0.5K': 550, '1K': 550, '2K': 850, '4K': 1100 },
@@ -32,7 +32,7 @@ export const MODELS = {
   },
   'bza-image-b-pro-base': {
     name: 'B.Pro 渠道版',
-    icon: '🍌',
+    icon: { name: 'color-palette-outline', color: '#FF9500' },
     manufacturer: '谷歌',
     paramType: 'resolution-ratio',
     prices: { '1K': 400, '2K': 400, '4K': 500 },
@@ -46,7 +46,7 @@ export const MODELS = {
   },
   'bza-image-b-pro-official': {
     name: 'B.Pro 官方版',
-    icon: '🍌',
+    icon: { name: 'color-palette-outline', color: '#FF9500' },
     manufacturer: '谷歌',
     paramType: 'resolution-ratio',
     prices: { '1K': 700, '2K': 1000, '4K': 1300 },
@@ -60,7 +60,7 @@ export const MODELS = {
   },
   'bza-image-o2-base': {
     name: 'O.2 渠道版',
-    icon: '🤖',
+    icon: { name: 'hardware-chip-outline', color: '#5AC8FA' },
     manufacturer: 'OpenAI',
     paramType: 'resolution-ratio',
     prices: { '1K': 100, '2K': 100, '4K': 100 },
@@ -74,7 +74,7 @@ export const MODELS = {
   },
   'bza-image-o2-official': {
     name: 'O.2 官方版',
-    icon: '🤖',
+    icon: { name: 'hardware-chip-outline', color: '#5AC8FA' },
     manufacturer: 'OpenAI',
     paramType: 'width-height-quality',
     qualities: ['low', 'medium', 'high'],
@@ -86,7 +86,7 @@ export const MODELS = {
   },
   'seedream-5-0-official': {
     name: 'Seedream 5.0',
-    icon: '🌱',
+    icon: { name: 'leaf-outline', color: '#34C759' },
     manufacturer: '字节',
     paramType: 'size-only',
     prices: { '2K': 220, '3K': 220, '4K': 220 },
@@ -98,7 +98,7 @@ export const MODELS = {
   },
   'wan-2-7-image-official': {
     name: '万相2.7',
-    icon: '🌐',
+    icon: { name: 'grid-outline', color: '#007AFF' },
     manufacturer: '阿里',
     paramType: 'wan-size',
     prices: { '1K': 200, '2K': 200, '4K': 200 },
@@ -111,7 +111,7 @@ export const MODELS = {
   },
   'wan-2-7-image-pro-offcial': {
     name: '万相2.7 Pro',
-    icon: '🌐',
+    icon: { name: 'grid-outline', color: '#007AFF' },
     manufacturer: '阿里',
     paramType: 'wan-size',
     prices: { '1K': 500, '2K': 500, '4K': 500 },
@@ -124,7 +124,7 @@ export const MODELS = {
   },
   'z-image-turbo': {
     name: 'Z-Image Turbo',
-    icon: '⚡',
+    icon: { name: 'flash-outline', color: '#AF52DE' },
     manufacturer: '硅基流动',
     paramType: 'width-height',
     prices: { '1024': 5, '2048': 10 },

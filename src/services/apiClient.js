@@ -159,6 +159,22 @@ async function uploadImageFile(apiKey, file) {
   return uploadUrl;
 }
 
+async function fetchUserInfo(apiKey) {
+  const result = await request('https://api.bizyair.cn/x/v1/user/metadata', {
+    method: 'GET',
+    headers: { 'Authorization': `Bearer ${apiKey}` },
+  });
+  return result.data || result;
+}
+
+async function fetchWalletBalance(apiKey) {
+  const result = await request('https://api.bizyair.cn/y/v1/wallet', {
+    method: 'GET',
+    headers: { 'Authorization': `Bearer ${apiKey}` },
+  });
+  return result.data || result;
+}
+
 export {
   submitImageTask,
   queryTaskResult,
@@ -167,4 +183,6 @@ export {
   getUploadToken,
   commitResource,
   request,
+  fetchUserInfo,
+  fetchWalletBalance,
 };

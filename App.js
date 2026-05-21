@@ -63,7 +63,7 @@ function AppNavigator() {
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
       <StatusBar style="dark" backgroundColor={Colors.card} />
-      <View style={styles.statusBarPadding} />
+      <View style={{ height: statusBarHeight, backgroundColor: Colors.card }} />
       <View style={styles.contentWrapper}>
         <Animated.View style={[styles.content, { opacity: fadeAnim, overflow: 'hidden' }]}>
           {activeTab === TAB_HOME ? <HomeScreen /> : <HistoryScreen />}
@@ -90,10 +90,6 @@ export default function App() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bg },
-  statusBarPadding: { 
-    height: statusBarHeight,
-    backgroundColor: Colors.card,
-  },
   contentWrapper: { flex: 1, overflow: 'hidden' },
   content: { flex: 1 },
 });

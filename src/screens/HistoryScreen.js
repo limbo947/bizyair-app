@@ -237,7 +237,7 @@ export function HistoryScreen() {
               <View style={styles.historyActions}>
                 {item.imageUrl && !batchMode ? (
                   <TouchableOpacity style={[styles.iconButton, styles.iconButtonSuccess]} onPress={() => handleDownload(item)}>
-                    <Ionicons name="download-outline" size={18} color={Colors.success} />
+                    <Ionicons name="download" size={18} color={Colors.success} />
                   </TouchableOpacity>
                 ) : null}
                 {!batchMode ? (
@@ -248,20 +248,20 @@ export function HistoryScreen() {
                     if (toastTimer.current) clearTimeout(toastTimer.current);
                     toastTimer.current = setTimeout(() => { setCopied(null); setToastMsg(''); }, 2000);
                   }}>
-                    <Ionicons name={copied === item.id ? 'checkmark-circle' : 'copy-outline'} size={18} color={copied === item.id ? Colors.success : Colors.purple} />
+                    <Ionicons name={copied === item.id ? 'checkmark-circle' : 'copy'} size={18} color={copied === item.id ? Colors.success : Colors.purple} />
                   </TouchableOpacity>
                 ) : null}
                 <TouchableOpacity style={[styles.iconButton, styles.iconButtonPrimary]} onPress={() => setLogModal(item)}>
-                  <Ionicons name="document-text-outline" size={18} color={Colors.primary} />
+                  <Ionicons name="document-text" size={18} color={Colors.primary} />
                 </TouchableOpacity>
                 {!batchMode ? (
                   <TouchableOpacity style={[styles.iconButton, styles.iconButtonError]} onPress={() => setDeleteConfirmId(item.id)}>
-                    <Ionicons name="trash-outline" size={18} color={Colors.error} />
+                    <Ionicons name="trash" size={18} color={Colors.error} />
                   </TouchableOpacity>
                 ) : null}
                 {item.status === 'Pending' ? (
                   <View style={[styles.iconButton, styles.iconButtonWarning]}>
-                    <Ionicons name="time-outline" size={16} color={Colors.warning} />
+                    <Ionicons name="time" size={16} color={Colors.warning} />
                   </View>
                 ) : item.status === 'Running' ? (
                   <View style={[styles.iconButton, styles.iconButtonRunning]}>
@@ -269,15 +269,15 @@ export function HistoryScreen() {
                   </View>
                 ) : item.status === 'Saving' ? (
                   <View style={[styles.iconButton, styles.iconButtonPurple]}>
-                    <Ionicons name="cloud-upload-outline" size={16} color={Colors.purple} />
+                    <Ionicons name="cloud-upload" size={16} color={Colors.purple} />
                   </View>
                 ) : item.status === 'Success' ? (
                   <View style={[styles.iconButton, styles.iconButtonSuccess]}>
-                    <Ionicons name="checkmark-circle-outline" size={16} color={Colors.success} />
+                    <Ionicons name="checkmark-circle" size={16} color={Colors.success} />
                   </View>
                 ) : (
                   <View style={[styles.iconButton, styles.iconButtonError]}>
-                    <Ionicons name="close-circle-outline" size={16} color={Colors.error} />
+                    <Ionicons name="close-circle" size={16} color={Colors.error} />
                   </View>
                 )}
               </View>
@@ -308,7 +308,7 @@ export function HistoryScreen() {
     <View style={styles.container}>
       <View style={styles.searchBar}>
         <View style={styles.searchInputWrap}>
-          <Ionicons name="search-outline" size={18} color={Colors.textTertiary} />
+          <Ionicons name="search" size={18} color={Colors.textTertiary} />
           <TextInput style={styles.searchInput} placeholder="搜索提示词、模型名..." value={searchText} onChangeText={handleSearch} placeholderTextColor={Colors.textPlaceholder} />
           {searchText.length > 0 ? (
             <TouchableOpacity onPress={() => handleSearch('')}><Text style={styles.clearSearch}>✕</Text></TouchableOpacity>
@@ -325,7 +325,7 @@ export function HistoryScreen() {
           ))}
         </ScrollView>
         <TouchableOpacity style={styles.sortButton} onPress={() => setShowSortPicker(true)}>
-          <Ionicons name="swap-vertical-outline" size={18} color={Colors.textSecondary} />
+          <Ionicons name="funnel-outline" size={18} color={Colors.textSecondary} />
         </TouchableOpacity>
       </View>
 

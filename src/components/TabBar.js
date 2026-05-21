@@ -6,7 +6,7 @@ import { Colors, Shadows, Radius, Spacing } from '../constants/theme';
 
 const TABS = [
   { key: TAB_HOME, label: '主页', icon: 'home-outline', iconActive: 'home' },
-  { key: TAB_HISTORY, label: '历史', icon: 'list-outline', iconActive: 'list' },
+  { key: TAB_HISTORY, label: '历史', icon: 'time-outline', iconActive: 'time' },
 ];
 
 export function TabBar({ activeTab, onTabChange, historyBadge }) {

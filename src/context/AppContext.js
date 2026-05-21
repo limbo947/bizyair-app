@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { queryTaskResult } from '../services/apiClient';
+import { queryTaskResult, fetchUserInfo, fetchWalletBalance } from '../services/apiClient';
 import {
   ENV_API_KEY,
   HISTORY_KEY,
@@ -33,6 +33,8 @@ export function AppProvider({ children }) {
   const [history, setHistory] = useState([]);
   const [homeState, setHomeState] = useState(DEFAULT_HOME_STATE);
   const [totalCoinsSpent, setTotalCoinsSpent] = useState(0);
+  const [userInfo, setUserInfo] = useState(null);
+  const [walletBalance, setWalletBalance] = useState(null);
   const pollingRef = useRef({});
   const historyRef = useRef(history);
 
@@ -57,7 +59,10 @@ export function AppProvider({ children }) {
   const loadApiKey = async () => {
     try {
       const stored = await AsyncStorage.getItem(API_KEY_STORAGE_KEY);
-      if (stored) setApiKey(stored);
+      if (stored) {
+        setApiKey(stored);
+        refreshUserInfo(stored);
+      }
     } catch (e) {
       console.error('加载 API Key 失败:', e);
     }
@@ -89,8 +94,24 @@ export function AppProvider({ children }) {
     try {
       await AsyncStorage.setItem(API_KEY_STORAGE_KEY, key);
       setApiKey(key);
+      refreshUserInfo(key);
     } catch (e) {
       console.error('保存 API Key 失败:', e);
+    }
+  };
+
+  const refreshUserInfo = async (key) => {
+    const ak = key || apiKey || ENV_API_KEY;
+    if (!ak) return;
+    try {
+      const [info, balance] = await Promise.allSettled([
+        fetchUserInfo(ak),
+        fetchWalletBalance(ak),
+      ]);
+      if (info.status === 'fulfilled') setUserInfo(info.value);
+      if (balance.status === 'fulfilled') setWalletBalance(balance.value);
+    } catch (e) {
+      console.error('获取用户信息失败:', e);
     }
   };
 
@@ -294,6 +315,9 @@ export function AppProvider({ children }) {
     saveHomeState,
     totalCoinsSpent,
     addCoinsSpent,
+    userInfo,
+    walletBalance,
+    refreshUserInfo,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
