@@ -75,6 +75,7 @@ export function HistoryScreen() {
     persistHistory,
     activeTab,
     refreshRunningTasks,
+    totalCoinsSpent,
   } = useAppContext();
 
   const [searchText, setSearchText] = useState('');
@@ -218,6 +219,10 @@ export function HistoryScreen() {
           <View style={styles.historyThumbWrap}>
             {item.imageUrl ? (
               <Image source={{ uri: item.imageUrl }} style={styles.historyThumb} />
+            ) : item.status === 'Failed' ? (
+              <View style={[styles.historyThumbPlaceholder, styles.historyThumbFailed]}>
+                <Ionicons name="close-circle-outline" size={32} color={Colors.error} />
+              </View>
             ) : (
               <View style={styles.historyThumbPlaceholder}>
                 <ActivityIndicator color={Colors.textTertiary} />
@@ -232,31 +237,27 @@ export function HistoryScreen() {
               <Text style={styles.historyPrice}>{item.price} 金币</Text>
               <View style={styles.historyActions}>
                 {item.imageUrl && !batchMode ? (
-                  <TouchableOpacity style={styles.downloadButton} onPress={() => handleDownload(item)}>
-                    <Ionicons name="download-outline" size={14} color={Colors.success} />
-                    <Text style={styles.downloadButtonText}>下载</Text>
+                  <TouchableOpacity style={[styles.iconButton, styles.iconButtonSuccess]} onPress={() => handleDownload(item)}>
+                    <Ionicons name="download-outline" size={18} color={Colors.success} />
                   </TouchableOpacity>
                 ) : null}
                 {!batchMode ? (
-                  <TouchableOpacity style={styles.copyPromptButton} onPress={async () => {
+                  <TouchableOpacity style={[styles.iconButton, styles.iconButtonPurple]} onPress={async () => {
                     await Clipboard.setStringAsync(item.prompt || '');
                     setCopied(item.id);
                     setToastMsg('已复制');
                     if (toastTimer.current) clearTimeout(toastTimer.current);
                     toastTimer.current = setTimeout(() => { setCopied(null); setToastMsg(''); }, 2000);
                   }}>
-                    <Ionicons name={copied === item.id ? 'checkmark-circle' : 'copy-outline'} size={14} color={copied === item.id ? Colors.success : Colors.purple} />
-                    <Text style={[styles.copyPromptButtonText, copied === item.id && { color: Colors.success }]}>{copied === item.id ? '已复制' : '复制'}</Text>
+                    <Ionicons name={copied === item.id ? 'checkmark-circle' : 'copy-outline'} size={18} color={copied === item.id ? Colors.success : Colors.purple} />
                   </TouchableOpacity>
                 ) : null}
-                <TouchableOpacity style={styles.logButton} onPress={() => setLogModal(item)}>
-                  <Ionicons name="document-text-outline" size={14} color={Colors.primary} />
-                  <Text style={styles.logButtonText}>日志</Text>
+                <TouchableOpacity style={[styles.iconButton, styles.iconButtonPrimary]} onPress={() => setLogModal(item)}>
+                  <Ionicons name="document-text-outline" size={18} color={Colors.primary} />
                 </TouchableOpacity>
                 {!batchMode ? (
-                  <TouchableOpacity style={styles.deleteButton} onPress={() => setDeleteConfirmId(item.id)}>
-                    <Ionicons name="trash-outline" size={14} color={Colors.error} />
-                    <Text style={styles.deleteButtonText}>删除</Text>
+                  <TouchableOpacity style={[styles.iconButton, styles.iconButtonError]} onPress={() => setDeleteConfirmId(item.id)}>
+                    <Ionicons name="trash-outline" size={18} color={Colors.error} />
                   </TouchableOpacity>
                 ) : null}
                 <StatusBadge status={item.status} />
@@ -269,7 +270,7 @@ export function HistoryScreen() {
         </TouchableOpacity>
       </View>
     );
-  }, [selectedIds, batchMode, toggleSelect, handleDownload]);
+  }, [selectedIds, batchMode, toggleSelect, handleDownload, copied]);
 
   const renderFooter = useCallback(() => {
     if (!hasMore) {
@@ -337,7 +338,7 @@ export function HistoryScreen() {
         <View style={styles.statDivider} />
         <View style={styles.statItem}><Text style={[styles.statValue, { color: Colors.error }]}>{failedCount}</Text><Text style={styles.statLabel}>失败</Text></View>
         <View style={styles.statDivider} />
-        <View style={styles.statItem}><Text style={[styles.statValue, { color: Colors.warning }]}>{history.reduce((sum, h) => sum + (h.price || 0), 0)}</Text><Text style={styles.statLabel}>总金币</Text></View>
+        <View style={styles.statItem}><Text style={[styles.statValue, { color: Colors.warning }]}>{totalCoinsSpent}</Text><Text style={styles.statLabel}>总金币</Text></View>
       </View>
 
       <FlatList ref={flatListRef} data={displayedItems} keyExtractor={(item) => item.id} renderItem={renderItem} extraData={{ selectedIds, tick }} ListEmptyComponent={renderEmpty} ListFooterComponent={renderFooter} onEndReached={loadMore} onEndReachedThreshold={0.3} contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false} />
@@ -457,21 +458,19 @@ const styles = StyleSheet.create({
   historyThumbWrap: { width: 88, height: 88, marginLeft: 5 },
   historyThumb: { width: 88, height: 88, resizeMode: 'contain' },
   historyThumbPlaceholder: { width: 88, height: 88, backgroundColor: Colors.bg, alignItems: 'center', justifyContent: 'center' },
+  historyThumbFailed: { backgroundColor: Colors.errorBg },
   historyInfo: { flex: 1, padding: Spacing.md, justifyContent: 'space-between' },
   historyPrompt: { fontSize: 14, color: Colors.textPrimary, fontWeight: '500', lineHeight: 18 },
   historyMeta: { fontSize: 12, color: Colors.textTertiary, marginTop: 3 },
   historyDuration: { fontSize: 12, color: Colors.success, marginTop: 2, fontWeight: '500' },
   historyBottomRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 },
   historyPrice: { fontSize: 13, color: Colors.warning, fontWeight: '700' },
-  historyActions: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  downloadButton: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 3, borderRadius: Radius.full, backgroundColor: Colors.successBg, gap: 2 },
-  downloadButtonText: { fontSize: 11, color: Colors.success, fontWeight: '500' },
-  copyPromptButton: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 3, borderRadius: Radius.full, backgroundColor: Colors.purpleBg, gap: 2 },
-  copyPromptButtonText: { fontSize: 11, color: Colors.purple, fontWeight: '500' },
-  logButton: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 3, borderRadius: Radius.full, backgroundColor: Colors.primaryBg, gap: 2 },
-  logButtonText: { fontSize: 11, color: Colors.primary, fontWeight: '500' },
-  deleteButton: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 3, borderRadius: Radius.full, backgroundColor: Colors.errorBg, gap: 2 },
-  deleteButtonText: { fontSize: 11, color: Colors.error, fontWeight: '500' },
+  historyActions: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  iconButton: { width: 32, height: 32, borderRadius: Radius.full, alignItems: 'center', justifyContent: 'center' },
+  iconButtonSuccess: { backgroundColor: Colors.successBg },
+  iconButtonPurple: { backgroundColor: Colors.purpleBg },
+  iconButtonPrimary: { backgroundColor: Colors.primaryBg },
+  iconButtonError: { backgroundColor: Colors.errorBg },
   historyError: { fontSize: 11, color: Colors.error, marginTop: 2 },
   emptyContainer: { alignItems: 'center', justifyContent: 'center', paddingTop: 60 },
   emptyIcon: { fontSize: 48, marginBottom: Spacing.md },

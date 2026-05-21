@@ -46,6 +46,7 @@ export function HomeScreen() {
     updateHistoryItem,
     homeState,
     saveHomeState,
+    addCoinsSpent,
   } = useAppContext();
 
   const [modelId, setModelId] = useState(homeState.modelId);
@@ -231,6 +232,8 @@ export function HomeScreen() {
     const updated = [entry, ...history];
     setHistory(updated);
     await persistHistory(updated);
+
+    await addCoinsSpent(price);
 
     try {
       const payload = buildPayload(modelId, mode, params);

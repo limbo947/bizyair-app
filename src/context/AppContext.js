@@ -8,6 +8,7 @@ import {
   ACTIVE_TAB_KEY,
   TAB_HOME,
   HOME_STATE_KEY,
+  TOTAL_COINS_KEY,
   POLLING_INTERVAL_MS,
 } from '../constants/models';
 
@@ -31,6 +32,7 @@ export function AppProvider({ children }) {
   const [apiKey, setApiKey] = useState('');
   const [history, setHistory] = useState([]);
   const [homeState, setHomeState] = useState(DEFAULT_HOME_STATE);
+  const [totalCoinsSpent, setTotalCoinsSpent] = useState(0);
   const pollingRef = useRef({});
   const historyRef = useRef(history);
 
@@ -39,6 +41,7 @@ export function AppProvider({ children }) {
     loadHistory();
     loadActiveTab();
     loadHomeState();
+    loadTotalCoins();
   }, []);
 
   useEffect(() => {
@@ -247,6 +250,31 @@ export function AppProvider({ children }) {
     }
   };
 
+  const loadTotalCoins = async () => {
+    try {
+      const stored = await AsyncStorage.getItem(TOTAL_COINS_KEY);
+      if (stored) {
+        setTotalCoinsSpent(parseInt(stored, 10) || 0);
+      }
+    } catch (e) {
+      console.error('加载总金币失败:', e);
+    }
+  };
+
+  const saveTotalCoins = async (coins) => {
+    try {
+      await AsyncStorage.setItem(TOTAL_COINS_KEY, String(coins));
+      setTotalCoinsSpent(coins);
+    } catch (e) {
+      console.error('保存总金币失败:', e);
+    }
+  };
+
+  const addCoinsSpent = async (amount) => {
+    const newTotal = totalCoinsSpent + amount;
+    await saveTotalCoins(newTotal);
+  };
+
   const value = {
     activeTab,
     setActiveTab,
@@ -264,6 +292,8 @@ export function AppProvider({ children }) {
     resumeRunningPolling,
     homeState,
     saveHomeState,
+    totalCoinsSpent,
+    addCoinsSpent,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
