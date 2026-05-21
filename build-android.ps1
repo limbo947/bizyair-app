@@ -1,0 +1,102 @@
+# BizyAir APK Build Script (arm64-v8a only)
+# Usage: .\build-android.ps1 [-Clean]
+
+param([switch]$Clean)
+
+$ErrorActionPreference = "Stop"
+
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host " BizyAir APK Build (arm64-v8a only)" -ForegroundColor Cyan
+Write-Host "========================================" -ForegroundColor Cyan
+
+# 1. Verify architecture config
+Write-Host "`n[1/5] Verifying architecture config..." -ForegroundColor Yellow
+
+$appJsonRaw = Get-Content app.json -Raw
+if ($appJsonRaw -match '"reactNativeArchitectures"\s*:\s*\[\s*"arm64-v8a"\s*\]') {
+    Write-Host "  app.json: reactNativeArchitectures = arm64-v8a OK" -ForegroundColor Green
+} else {
+    Write-Host "  app.json architecture config error" -ForegroundColor Red
+    exit 1
+}
+
+# 2. Clean (optional)
+if ($Clean) {
+    Write-Host "`n[2/5] Cleaning old build artifacts..." -ForegroundColor Yellow
+    if (Test-Path android) { Remove-Item -Recurse -Force android }
+    Write-Host "  Cleaned" -ForegroundColor Green
+} else {
+    Write-Host "`n[2/5] Skip clean (use -Clean to clean)" -ForegroundColor Gray
+}
+
+# 3. Prebuild
+Write-Host "`n[3/5] Running expo prebuild..." -ForegroundColor Yellow
+npx expo prebuild --platform android --clean 2>&1 | Write-Host
+if ($LASTEXITCODE -ne 0) { Write-Host "  prebuild FAILED!" -ForegroundColor Red; exit 1 }
+Write-Host "  prebuild done" -ForegroundColor Green
+
+# 4. Configure gradle.properties
+Write-Host "`n[4/5] Configuring gradle.properties..." -ForegroundColor Yellow
+$gradlePropsPath = Join-Path $PSScriptRoot "android\gradle.properties"
+if (Test-Path $gradlePropsPath) {
+    $content = Get-Content $gradlePropsPath -Raw
+    $content = $content -replace "react.nativeArchitectures=.*`r?`n?", ""
+    $content = $content -replace "reactNativeArchitectures=.*`r?`n?", ""
+    if (-not $content.EndsWith("`n")) { $content += "`n" }
+    $content += "react.nativeArchitectures=arm64-v8a`n"
+    Set-Content $gradlePropsPath $content -NoNewline
+    Write-Host "  react.nativeArchitectures=arm64-v8a OK" -ForegroundColor Green
+} else {
+    Write-Host "  gradle.properties not found, prebuild may have failed" -ForegroundColor Red
+    exit 1
+}
+
+# 5. Build Release APK
+Write-Host "`n[5/5] Building Release APK..." -ForegroundColor Yellow
+$androidDir = Join-Path $PSScriptRoot "android"
+Push-Location $androidDir
+try {
+    .\gradlew.bat assembleRelease -PreactNativeArchitectures=arm64-v8a 2>&1 | Write-Host
+    if ($LASTEXITCODE -ne 0) { Write-Host "  Build FAILED!" -ForegroundColor Red; exit 1 }
+} finally {
+    Pop-Location
+}
+
+# Verify output
+Write-Host "`n========================================" -ForegroundColor Cyan
+Write-Host " Build Result Verification" -ForegroundColor Cyan
+Write-Host "========================================" -ForegroundColor Cyan
+
+$apkDir = Join-Path $PSScriptRoot "android\app\build\outputs\apk\release"
+$apks = Get-ChildItem -Path $apkDir -Filter "*.apk" -ErrorAction SilentlyContinue
+
+if ($apks.Count -eq 0) {
+    Write-Host "  No APK found!" -ForegroundColor Red
+    exit 1
+}
+
+foreach ($apk in $apks) {
+    $sizeMB = [math]::Round($apk.Length / 1MB, 2)
+    $sizeStr = "$sizeMB MB"
+    Write-Host "  APK: $($apk.Name) $sizeStr" -ForegroundColor White
+
+    Write-Host "  Verifying native lib architectures..." -ForegroundColor Yellow
+    Add-Type -Assembly System.IO.Compression.FileSystem
+    $zip = [System.IO.Compression.ZipFile]::OpenRead($apk.FullName)
+    $libDirs = @()
+    foreach ($entry in $zip.Entries) {
+        if ($entry.FullName -match "^lib/([^/]+)/") {
+            $arch = $Matches[1]
+            if ($libDirs -notcontains $arch) { $libDirs += $arch }
+        }
+    }
+    $zip.Dispose()
+
+    if ($libDirs.Count -eq 1 -and $libDirs[0] -eq "arm64-v8a") {
+        Write-Host "  Architecture OK: arm64-v8a only" -ForegroundColor Green
+    } else {
+        Write-Host "  Architecture FAIL: found $libDirs" -ForegroundColor Red
+    }
+}
+
+Write-Host "`nBuild complete!" -ForegroundColor Green

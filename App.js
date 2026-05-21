@@ -1,9 +1,10 @@
-import { useRef, useCallback } from 'react';
+import { useRef, useCallback, useState, useEffect } from 'react';
 import {
   StyleSheet,
   View,
   Animated,
   Platform,
+  StatusBar as RNStatusBar,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
@@ -22,8 +23,16 @@ function AppNavigator() {
     history,
   } = useAppContext();
 
+  const [statusBarHeight, setStatusBarHeight] = useState(0);
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const tabRef = useRef(activeTab);
+
+  useEffect(() => {
+    // 动态计算状态栏高度（仅 Android）
+    if (Platform.OS === 'android') {
+      setStatusBarHeight(RNStatusBar.currentHeight || 0);
+    }
+  }, []);
 
   const handleTabChange = useCallback((tab) => {
     if (tab === tabRef.current) return;
@@ -82,7 +91,7 @@ export default function App() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bg },
   statusBarPadding: { 
-    height: Platform.OS === 'android' ? 0 : 0,
+    height: statusBarHeight,
     backgroundColor: Colors.card,
   },
   contentWrapper: { flex: 1, overflow: 'hidden' },

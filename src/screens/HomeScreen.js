@@ -541,7 +541,7 @@ const styles = StyleSheet.create({
   modelSelectorArrow: { fontSize: 16, color: Colors.textSecondary, marginTop: -4 },
   modeToggle: { flexDirection: 'row', borderRadius: Radius.sm, backgroundColor: Colors.bg, padding: 2 },
   modeButton: { paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, borderRadius: Radius.xs, alignItems: 'center' },
-  modeButtonActive: { backgroundColor: Colors.card, ...Shadows.sm },
+  modeButtonActive: { backgroundColor: Colors.card },
   modeButtonText: { fontSize: 13, color: Colors.textTertiary, fontWeight: '500' },
   modeButtonTextActive: { color: Colors.primary, fontWeight: '600' },
   modalOverlay: { flex: 1, backgroundColor: 'transparent' },

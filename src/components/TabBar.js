@@ -53,7 +53,6 @@ const styles = StyleSheet.create({
     borderTopColor: Colors.separator,
     paddingBottom: 6,
     paddingTop: 4,
-    ...Shadows.sm,
   },
   tab: {
     flex: 1,
