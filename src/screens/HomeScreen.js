@@ -42,18 +42,20 @@ export function HomeScreen() {
     persistHistory,
     startPolling,
     updateHistoryItem,
+    homeState,
+    saveHomeState,
   } = useAppContext();
 
-  const [modelId, setModelId] = useState('bza-image-b2-base');
-  const [mode, setMode] = useState('text-to-image');
-  const [prompt, setPrompt] = useState('');
-  const [imageUrls, setImageUrls] = useState([]);
-  const [resolution, setResolution] = useState('2K');
-  const [aspectRatio, setAspectRatio] = useState('4:3');
-  const [quality, setQuality] = useState('medium');
-  const [sizePreset, setSizePreset] = useState(0);
-  const [customWidth, setCustomWidth] = useState('1024');
-  const [customHeight, setCustomHeight] = useState('1024');
+  const [modelId, setModelId] = useState(homeState.modelId);
+  const [mode, setMode] = useState(homeState.mode);
+  const [prompt, setPrompt] = useState(homeState.prompt);
+  const [imageUrls, setImageUrls] = useState(homeState.imageUrls);
+  const [resolution, setResolution] = useState(homeState.resolution);
+  const [aspectRatio, setAspectRatio] = useState(homeState.aspectRatio);
+  const [quality, setQuality] = useState(homeState.quality);
+  const [sizePreset, setSizePreset] = useState(homeState.sizePreset);
+  const [customWidth, setCustomWidth] = useState(homeState.customWidth);
+  const [customHeight, setCustomHeight] = useState(homeState.customHeight);
   const [showApiKeyInput, setShowApiKeyInput] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -63,6 +65,33 @@ export function HomeScreen() {
   const currentRatios = getRatios(modelId, mode);
   const currentResolutions = getResolutions(modelId, mode);
   const paramType = currentModel.paramType;
+
+  const persistCurrentState = useCallback(() => {
+    saveHomeState({
+      modelId,
+      mode,
+      prompt,
+      imageUrls,
+      resolution,
+      aspectRatio,
+      quality,
+      sizePreset,
+      customWidth,
+      customHeight,
+    });
+  }, [
+    modelId,
+    mode,
+    prompt,
+    imageUrls,
+    resolution,
+    aspectRatio,
+    quality,
+    sizePreset,
+    customWidth,
+    customHeight,
+    saveHomeState,
+  ]);
 
   useEffect(() => {
     if (paramType === 'resolution-ratio' || paramType === 'wan-size') {
@@ -78,6 +107,14 @@ export function HomeScreen() {
       setMode('text-to-image');
     }
   }, [modelId, mode, paramType, currentResolutions, currentRatios, currentModel.supportsImageToImage]);
+
+  useEffect(() => {
+    persistCurrentState();
+  }, [persistCurrentState]);
+
+  const handleModelSelect = (id) => {
+    setModelId(id);
+  };
 
   const handleFileSelect = async () => {
     const ek = apiKey.trim() || ENV_API_KEY;
@@ -103,7 +140,8 @@ export function HomeScreen() {
         name: file.name,
         type: file.mimeType || 'image/jpeg',
       });
-      setImageUrls([...imageUrls, uploadResult]);
+      const newImageUrls = [...imageUrls, uploadResult];
+      setImageUrls(newImageUrls);
     } catch (err) {
       setError(err.message || '上传失败');
     } finally {
@@ -275,26 +313,36 @@ export function HomeScreen() {
           <Ionicons name="image-outline" size={26} color={Colors.textPrimary} />
           <Text style={styles.title}>AI 图片生成</Text>
         </View>
-        <View style={styles.modelScroll}>
+        <View style={styles.modelGridContainer}>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.modelScrollContent}
+            contentContainerStyle={styles.modelGrid}
           >
-            {MODEL_IDS.map((id) => (
-              <TouchableOpacity
-                key={id}
-                style={[styles.modelChip, modelId === id && styles.modelChipActive]}
-                onPress={() => setModelId(id)}
-              >
-                <Text style={[styles.modelChipIcon, modelId === id && styles.modelChipIconActive]}>
-                  {MODELS[id].icon}
-                </Text>
-                <Text style={[styles.modelChipText, modelId === id && styles.modelChipTextActive]}>
-                  {MODELS[id].name}
-                </Text>
-              </TouchableOpacity>
-            ))}
+            {MODEL_IDS.map((id) => {
+              const model = MODELS[id];
+              const isActive = modelId === id;
+              return (
+                <TouchableOpacity
+                  key={id}
+                  style={[styles.modelCard, isActive && styles.modelCardActive]}
+                  onPress={() => handleModelSelect(id)}
+                  activeOpacity={0.7}
+                >
+                  <View style={[styles.modelIcon, isActive && styles.modelIconActive]}>
+                    <Text style={styles.modelIconText}>{model.icon}</Text>
+                  </View>
+                  <Text style={[styles.modelName, isActive && styles.modelNameActive]}>
+                    {model.name}
+                  </Text>
+                  {isActive && (
+                    <View style={styles.activeIndicator}>
+                      <Ionicons name="checkmark" size={12} color={Colors.textInverse} />
+                    </View>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
           </ScrollView>
         </View>
         <View style={styles.modeToggle}>
@@ -451,17 +499,62 @@ export function HomeScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bg },
-  header: { backgroundColor: Colors.card, paddingHorizontal: Spacing.xl, paddingTop: Spacing.xl, paddingBottom: Spacing.md, borderBottomWidth: 0.5, borderBottomColor: Colors.separator },
-  titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: Spacing.sm },
+  header: { backgroundColor: Colors.card, paddingHorizontal: Spacing.xl, paddingTop: Spacing.sm, paddingBottom: Spacing.md, borderBottomWidth: 0.5, borderBottomColor: Colors.separator },
+  titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: Spacing.sm, marginBottom: Spacing.sm },
   title: { fontSize: 22, fontWeight: '700', color: Colors.textPrimary, letterSpacing: -0.5 },
-  modelScroll: { marginTop: Spacing.md },
-  modelScrollContent: { gap: Spacing.sm, paddingRight: Spacing.xl },
-  modelChip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: Radius.full, backgroundColor: Colors.bg, flexDirection: 'row', alignItems: 'center', gap: 4 },
-  modelChipActive: { backgroundColor: Colors.primary, ...Shadows.sm },
-  modelChipIcon: { fontSize: 14 },
-  modelChipIconActive: { fontSize: 14 },
-  modelChipText: { fontSize: 13, color: Colors.textSecondary, fontWeight: '500' },
-  modelChipTextActive: { color: Colors.textInverse, fontWeight: '600' },
+  modelGridContainer: { marginVertical: Spacing.md },
+  modelGrid: { gap: Spacing.sm, paddingRight: Spacing.xl },
+  modelCard: {
+    width: 120,
+    height: 100,
+    backgroundColor: Colors.bg,
+    borderRadius: Radius.md,
+    padding: Spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: 'transparent',
+    position: 'relative',
+  },
+  modelCardActive: {
+    backgroundColor: Colors.primaryBg,
+    borderColor: Colors.primary,
+    ...Shadows.sm,
+  },
+  modelIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.xs,
+  },
+  modelIconActive: {
+    backgroundColor: Colors.primary,
+  },
+  modelIconText: { fontSize: 20 },
+  modelName: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  modelNameActive: {
+    color: Colors.primary,
+    fontWeight: '600',
+  },
+  activeIndicator: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    width: 20,
+    height: 20,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   modeToggle: { flexDirection: 'row', marginTop: Spacing.md, borderRadius: Radius.sm, backgroundColor: Colors.bg, padding: 2 },
   modeButton: { flex: 1, paddingVertical: 8, borderRadius: Radius.xs, alignItems: 'center' },
   modeButtonActive: { backgroundColor: Colors.card, ...Shadows.sm },

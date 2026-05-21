@@ -2,10 +2,11 @@ import { useRef, useCallback } from 'react';
 import {
   StyleSheet,
   View,
-  SafeAreaView,
   Animated,
+  Platform,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppProvider, useAppContext } from './src/context/AppContext';
 import { TabBar } from './src/components/TabBar';
 import { HomeScreen } from './src/screens/HomeScreen';
@@ -27,11 +28,13 @@ function AppNavigator() {
   const handleTabChange = useCallback((tab) => {
     if (tab === tabRef.current) return;
 
-    Animated.timing(fadeAnim, {
-      toValue: 0,
-      duration: TAB_FADE_OUT_MS,
-      useNativeDriver: true,
-    }).start(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: TAB_FADE_OUT_MS,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
       tabRef.current = tab;
       setActiveTab(tab);
       saveActiveTab(tab);
@@ -49,11 +52,14 @@ function AppNavigator() {
   ).length;
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar style="dark" backgroundColor={Colors.bg} />
-      <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
-        {activeTab === TAB_HOME ? <HomeScreen /> : <HistoryScreen />}
-      </Animated.View>
+    <SafeAreaView style={styles.container} edges={['bottom']}>
+      <StatusBar style="dark" backgroundColor={Colors.card} />
+      <View style={styles.statusBarPadding} />
+      <View style={styles.contentWrapper}>
+        <Animated.View style={[styles.content, { opacity: fadeAnim, overflow: 'hidden' }]}>
+          {activeTab === TAB_HOME ? <HomeScreen /> : <HistoryScreen />}
+        </Animated.View>
+      </View>
       <TabBar
         activeTab={activeTab}
         onTabChange={handleTabChange}
@@ -73,5 +79,10 @@ export default function App() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bg },
+  statusBarPadding: { 
+    height: Platform.OS === 'android' ? 0 : 0,
+    backgroundColor: Colors.card,
+  },
+  contentWrapper: { flex: 1, overflow: 'hidden' },
   content: { flex: 1 },
 });

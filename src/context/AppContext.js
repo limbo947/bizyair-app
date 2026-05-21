@@ -7,15 +7,30 @@ import {
   API_KEY_STORAGE_KEY,
   ACTIVE_TAB_KEY,
   TAB_HOME,
+  HOME_STATE_KEY,
   POLLING_INTERVAL_MS,
 } from '../constants/models';
 
 const AppContext = createContext(null);
 
+const DEFAULT_HOME_STATE = {
+  modelId: 'bza-image-b2-base',
+  mode: 'text-to-image',
+  prompt: '',
+  imageUrls: [],
+  resolution: '2K',
+  aspectRatio: '4:3',
+  quality: 'medium',
+  sizePreset: 0,
+  customWidth: '1024',
+  customHeight: '1024',
+};
+
 export function AppProvider({ children }) {
   const [activeTab, setActiveTab] = useState(TAB_HOME);
   const [apiKey, setApiKey] = useState('');
   const [history, setHistory] = useState([]);
+  const [homeState, setHomeState] = useState(DEFAULT_HOME_STATE);
   const pollingRef = useRef({});
   const historyRef = useRef(history);
 
@@ -23,6 +38,7 @@ export function AppProvider({ children }) {
     loadApiKey();
     loadHistory();
     loadActiveTab();
+    loadHomeState();
   }, []);
 
   useEffect(() => {
@@ -210,6 +226,27 @@ export function AppProvider({ children }) {
     }
   };
 
+  const loadHomeState = async () => {
+    try {
+      const stored = await AsyncStorage.getItem(HOME_STATE_KEY);
+      if (stored) {
+        setHomeState({ ...DEFAULT_HOME_STATE, ...JSON.parse(stored) });
+      }
+    } catch (e) {
+      console.error('加载主页状态失败:', e);
+    }
+  };
+
+  const saveHomeState = async (state) => {
+    try {
+      const updated = { ...homeState, ...state };
+      setHomeState(updated);
+      await AsyncStorage.setItem(HOME_STATE_KEY, JSON.stringify(updated));
+    } catch (e) {
+      console.error('保存主页状态失败:', e);
+    }
+  };
+
   const value = {
     activeTab,
     setActiveTab,
@@ -225,6 +262,8 @@ export function AppProvider({ children }) {
     pollingRef,
     refreshRunningTasks,
     resumeRunningPolling,
+    homeState,
+    saveHomeState,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

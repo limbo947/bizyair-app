@@ -164,6 +164,7 @@ export const TAB_FADE_IN_MS = 180;
 export const HISTORY_KEY = '@image_history';
 export const API_KEY_STORAGE_KEY = '@api_key';
 export const ACTIVE_TAB_KEY = '@active_tab';
+export const HOME_STATE_KEY = '@home_state';
 export const TAB_HOME = 'home';
 export const TAB_HISTORY = 'history';
 export const PAGE_SIZE = 20;
