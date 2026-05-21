@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   StyleSheet,
   Text,
@@ -9,6 +9,8 @@ import {
   Image,
   ScrollView,
   ActivityIndicator,
+  Modal,
+  Pressable,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
@@ -60,11 +62,14 @@ export function HomeScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState('');
+  const [showModelDropdown, setShowModelDropdown] = useState(false);
 
   const currentModel = getModelInfo(modelId);
   const currentRatios = getRatios(modelId, mode);
   const currentResolutions = getResolutions(modelId, mode);
   const paramType = currentModel.paramType;
+  const dropdownButtonRef = useRef(null);
+  const [dropdownPosition, setDropdownPosition] = useState({ x: 0, y: 0 });
 
   const persistCurrentState = useCallback(() => {
     saveHomeState({
@@ -114,6 +119,12 @@ export function HomeScreen() {
 
   const handleModelSelect = (id) => {
     setModelId(id);
+    setShowModelDropdown(false);
+  };
+
+  const handleDropdownButtonLayout = (event) => {
+    const { x, y, height } = event.nativeEvent.layout;
+    setDropdownPosition({ x, y: y + height + 4 });
   };
 
   const handleFileSelect = async () => {
@@ -309,63 +320,83 @@ export function HomeScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <View style={styles.titleRow}>
-          <Ionicons name="image-outline" size={26} color={Colors.textPrimary} />
-          <Text style={styles.title}>AI 图片生成</Text>
-        </View>
-        <View style={styles.modelGridContainer}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.modelGrid}
-          >
-            {MODEL_IDS.map((id) => {
-              const model = MODELS[id];
-              const isActive = modelId === id;
-              return (
-                <TouchableOpacity
-                  key={id}
-                  style={[styles.modelCard, isActive && styles.modelCardActive]}
-                  onPress={() => handleModelSelect(id)}
-                  activeOpacity={0.7}
-                >
-                  <View style={[styles.modelIcon, isActive && styles.modelIconActive]}>
-                    <Text style={styles.modelIconText}>{model.icon}</Text>
-                  </View>
-                  <Text style={[styles.modelName, isActive && styles.modelNameActive]}>
-                    {model.name}
-                  </Text>
-                  {isActive && (
-                    <View style={styles.activeIndicator}>
-                      <Ionicons name="checkmark" size={12} color={Colors.textInverse} />
-                    </View>
-                  )}
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-        </View>
-        <View style={styles.modeToggle}>
+        <View style={styles.headerTop}>
           <TouchableOpacity
-            style={[styles.modeButton, mode === 'text-to-image' && styles.modeButtonActive]}
-            onPress={() => setMode('text-to-image')}
+            ref={dropdownButtonRef}
+            style={styles.modelSelector}
+            onPress={() => setShowModelDropdown(!showModelDropdown)}
+            onLayout={handleDropdownButtonLayout}
+            activeOpacity={0.7}
           >
-            <Text style={[styles.modeButtonText, mode === 'text-to-image' && styles.modeButtonTextActive]}>
-              文生图
-            </Text>
+            <Text style={styles.modelSelectorIcon}>{currentModel.icon}</Text>
+            <Text style={styles.modelSelectorText}>{currentModel.name}</Text>
+            <Text style={styles.modelSelectorArrow}>⌄</Text>
           </TouchableOpacity>
-          {currentModel.supportsImageToImage ? (
+          
+          <View style={styles.modeToggle}>
             <TouchableOpacity
-              style={[styles.modeButton, mode === 'image-to-image' && styles.modeButtonActive]}
-              onPress={() => setMode('image-to-image')}
+              style={[styles.modeButton, mode === 'text-to-image' && styles.modeButtonActive]}
+              onPress={() => setMode('text-to-image')}
             >
-              <Text style={[styles.modeButtonText, mode === 'image-to-image' && styles.modeButtonTextActive]}>
-                图生图
+              <Text style={[styles.modeButtonText, mode === 'text-to-image' && styles.modeButtonTextActive]}>
+                文生图
               </Text>
             </TouchableOpacity>
-          ) : null}
+            {currentModel.supportsImageToImage ? (
+              <TouchableOpacity
+                style={[styles.modeButton, mode === 'image-to-image' && styles.modeButtonActive]}
+                onPress={() => setMode('image-to-image')}
+              >
+                <Text style={[styles.modeButtonText, mode === 'image-to-image' && styles.modeButtonTextActive]}>
+                  图生图
+                </Text>
+              </TouchableOpacity>
+            ) : null}
+          </View>
         </View>
       </View>
+
+      <Modal
+        visible={showModelDropdown}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowModelDropdown(false)}
+      >
+        <Pressable style={styles.modalOverlay} onPress={() => setShowModelDropdown(false)}>
+          <View style={[styles.dropdownContainer, { top: dropdownPosition.y, left: dropdownPosition.x }]}>
+            <View style={styles.dropdown}>
+              <ScrollView style={styles.dropdownList} showsVerticalScrollIndicator={false}>
+                {MODEL_IDS.map((id, index) => {
+                  const model = MODELS[id];
+                  const isActive = modelId === id;
+                  return (
+                    <TouchableOpacity
+                      key={id}
+                      style={[
+                        styles.dropdownItem,
+                        isActive && styles.dropdownItemActive,
+                        index < MODEL_IDS.length - 1 && styles.dropdownItemBorder,
+                      ]}
+                      onPress={() => handleModelSelect(id)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={[styles.dropdownItemIcon, isActive && styles.dropdownItemIconActive]}>
+                        {model.icon}
+                      </Text>
+                      <Text style={[styles.dropdownItemText, isActive && styles.dropdownItemTextActive]}>
+                        {model.name}
+                      </Text>
+                      {isActive && (
+                        <Ionicons name="checkmark" size={18} color={Colors.primary} style={styles.dropdownItemCheck} />
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            </View>
+          </View>
+        </Pressable>
+      </Modal>
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
         {showApiKeyInput ? (
@@ -500,66 +531,28 @@ export function HomeScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bg },
   header: { backgroundColor: Colors.card, paddingHorizontal: Spacing.xl, paddingTop: Spacing.sm, paddingBottom: Spacing.md, borderBottomWidth: 0.5, borderBottomColor: Colors.separator },
-  titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: Spacing.sm, marginBottom: Spacing.sm },
-  title: { fontSize: 22, fontWeight: '700', color: Colors.textPrimary, letterSpacing: -0.5 },
-  modelGridContainer: { marginVertical: Spacing.md },
-  modelGrid: { gap: Spacing.sm, paddingRight: Spacing.xl },
-  modelCard: {
-    width: 120,
-    height: 100,
-    backgroundColor: Colors.bg,
-    borderRadius: Radius.md,
-    padding: Spacing.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: 'transparent',
-    position: 'relative',
-  },
-  modelCardActive: {
-    backgroundColor: Colors.primaryBg,
-    borderColor: Colors.primary,
-    ...Shadows.sm,
-  },
-  modelIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: Radius.full,
-    backgroundColor: Colors.card,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.xs,
-  },
-  modelIconActive: {
-    backgroundColor: Colors.primary,
-  },
-  modelIconText: { fontSize: 20 },
-  modelName: {
-    fontSize: 12,
-    color: Colors.textSecondary,
-    fontWeight: '500',
-    textAlign: 'center',
-  },
-  modelNameActive: {
-    color: Colors.primary,
-    fontWeight: '600',
-  },
-  activeIndicator: {
-    position: 'absolute',
-    top: 6,
-    right: 6,
-    width: 20,
-    height: 20,
-    borderRadius: Radius.full,
-    backgroundColor: Colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  modeToggle: { flexDirection: 'row', marginTop: Spacing.md, borderRadius: Radius.sm, backgroundColor: Colors.bg, padding: 2 },
-  modeButton: { flex: 1, paddingVertical: 8, borderRadius: Radius.xs, alignItems: 'center' },
+  headerTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  modelSelector: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.bg, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, borderRadius: Radius.sm, gap: Spacing.xs },
+  modelSelectorIcon: { fontSize: 16 },
+  modelSelectorText: { fontSize: 14, color: Colors.textPrimary, fontWeight: '600' },
+  modelSelectorArrow: { fontSize: 16, color: Colors.textSecondary, marginTop: -4 },
+  modeToggle: { flexDirection: 'row', borderRadius: Radius.sm, backgroundColor: Colors.bg, padding: 2 },
+  modeButton: { paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, borderRadius: Radius.xs, alignItems: 'center' },
   modeButtonActive: { backgroundColor: Colors.card, ...Shadows.sm },
-  modeButtonText: { fontSize: 14, color: Colors.textTertiary, fontWeight: '500' },
+  modeButtonText: { fontSize: 13, color: Colors.textTertiary, fontWeight: '500' },
   modeButtonTextActive: { color: Colors.primary, fontWeight: '600' },
+  modalOverlay: { flex: 1, backgroundColor: 'transparent' },
+  dropdownContainer: { position: 'absolute', zIndex: 1000 },
+  dropdown: { backgroundColor: Colors.card, borderRadius: Radius.md, ...Shadows.lg, maxHeight: 320, minWidth: 180, overflow: 'hidden' },
+  dropdownList: { maxHeight: 320 },
+  dropdownItem: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.md, paddingVertical: Spacing.md, gap: Spacing.sm },
+  dropdownItemActive: { backgroundColor: Colors.primaryBg },
+  dropdownItemBorder: { borderBottomWidth: 0.5, borderBottomColor: Colors.separator },
+  dropdownItemIcon: { fontSize: 16, width: 24, textAlign: 'center' },
+  dropdownItemIconActive: {},
+  dropdownItemText: { flex: 1, fontSize: 14, color: Colors.textPrimary, fontWeight: '500' },
+  dropdownItemTextActive: { color: Colors.primary, fontWeight: '600' },
+  dropdownItemCheck: { marginLeft: Spacing.sm },
   scroll: { flex: 1 },
   scrollContent: { padding: Spacing.lg, paddingBottom: Spacing.xxl },
   card: { backgroundColor: Colors.card, padding: Spacing.lg, borderRadius: Radius.md, marginBottom: Spacing.md, ...Shadows.sm },
