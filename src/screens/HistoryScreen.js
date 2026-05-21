@@ -448,7 +448,7 @@ const styles = StyleSheet.create({
   statValue: { fontSize: 17, fontWeight: '700', color: Colors.primary },
   statLabel: { fontSize: 10, color: Colors.textTertiary, marginTop: 2 },
   statDivider: { width: 0.5, height: 24, backgroundColor: Colors.separator },
-  listContent: { paddingHorizontal: Spacing.lg, paddingTop: Spacing.md, paddingBottom: Spacing.xxl },
+  listContent: { paddingHorizontal: Spacing.sm, paddingTop: Spacing.md, paddingBottom: Spacing.xxl },
   historyCard: { flexDirection: 'row', backgroundColor: Colors.card, borderRadius: Radius.md, marginBottom: Spacing.sm, overflow: 'hidden', ...Shadows.sm },
   checkboxArea: { width: 44, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.bg },
   checkbox: { width: 22, height: 22, borderRadius: Radius.full, borderWidth: 1.5, borderColor: Colors.disabled, alignItems: 'center', justifyContent: 'center' },
