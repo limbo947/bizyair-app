@@ -455,7 +455,7 @@ const styles = StyleSheet.create({
   checkboxChecked: { backgroundColor: Colors.primary, borderColor: Colors.primary },
   checkboxMark: { color: Colors.textInverse, fontSize: 14, fontWeight: '600' },
   historyCardInner: { flex: 1, flexDirection: 'row', alignItems: 'center' },
-  historyThumbWrap: { marginLeft: 5, marginTop: 5, marginBottom: 5, alignSelf: 'stretch', justifyContent: 'center' },
+  historyThumbWrap: { marginLeft: 5, marginTop: 5, marginBottom: 5, alignSelf: 'stretch' },
   historyThumb: { width: 88, height: 88, resizeMode: 'contain' },
   historyThumbPlaceholder: { width: 88, height: 88, backgroundColor: Colors.bg, alignItems: 'center', justifyContent: 'center' },
   historyThumbFailed: { backgroundColor: Colors.errorBg },
