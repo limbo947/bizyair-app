@@ -12,8 +12,13 @@ import { AppProvider, useAppContext } from './src/context/AppContext';
 import { TabBar } from './src/components/TabBar';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { HistoryScreen } from './src/screens/HistoryScreen';
+import { ModelSelectScreen } from './src/screens/ModelSelectScreen';
 import { TAB_HOME, TAB_FADE_OUT_MS, TAB_FADE_IN_MS } from './src/constants/models';
 import { Colors } from './src/constants/theme';
+
+const PAGE_HOME = 'home';
+const PAGE_HISTORY = 'history';
+const PAGE_MODEL_SELECT = 'model-select';
 
 function AppNavigator() {
   const {
@@ -21,14 +26,16 @@ function AppNavigator() {
     setActiveTab,
     saveActiveTab,
     history,
+    homeState,
+    saveHomeState,
   } = useAppContext();
 
+  const [currentPage, setCurrentPage] = useState(PAGE_HOME);
   const [statusBarHeight, setStatusBarHeight] = useState(0);
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const tabRef = useRef(activeTab);
 
   useEffect(() => {
-    // 动态计算状态栏高度（仅 Android）
     if (Platform.OS === 'android') {
       setStatusBarHeight(RNStatusBar.currentHeight || 0);
     }
@@ -37,16 +44,15 @@ function AppNavigator() {
   const handleTabChange = useCallback((tab) => {
     if (tab === tabRef.current) return;
 
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: TAB_FADE_OUT_MS,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 0,
+      duration: TAB_FADE_OUT_MS,
+      useNativeDriver: true,
+    }).start(() => {
       tabRef.current = tab;
       setActiveTab(tab);
       saveActiveTab(tab);
+      setCurrentPage(tab === TAB_HOME ? PAGE_HOME : PAGE_HISTORY);
 
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -55,6 +61,19 @@ function AppNavigator() {
       }).start();
     });
   }, [fadeAnim, setActiveTab, saveActiveTab]);
+
+  const handleOpenModelSelect = useCallback(() => {
+    setCurrentPage(PAGE_MODEL_SELECT);
+  }, []);
+
+  const handleCloseModelSelect = useCallback(() => {
+    setCurrentPage(activeTab === TAB_HOME ? PAGE_HOME : PAGE_HISTORY);
+  }, [activeTab]);
+
+  const handleSelectModel = useCallback((modelId) => {
+    saveHomeState({ modelId });
+    handleCloseModelSelect();
+  }, [saveHomeState, handleCloseModelSelect]);
 
   const activeCount = history.filter(
     (h) => ['Pending', 'Running', 'Saving'].includes(h.status)
@@ -65,15 +84,28 @@ function AppNavigator() {
       <StatusBar style="dark" backgroundColor={Colors.card} />
       <View style={{ height: statusBarHeight, backgroundColor: Colors.card }} />
       <View style={styles.contentWrapper}>
-        <Animated.View style={[styles.content, { opacity: fadeAnim, overflow: 'hidden' }]}>
-          {activeTab === TAB_HOME ? <HomeScreen /> : <HistoryScreen />}
+        <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
+          {currentPage === PAGE_MODEL_SELECT ? (
+            <ModelSelectScreen
+              currentModelId={homeState.modelId}
+              onSelectModel={handleSelectModel}
+              onBack={handleCloseModelSelect}
+            />
+          ) : activeTab === TAB_HOME ? (
+            <HomeScreen onOpenModelSelect={handleOpenModelSelect} />
+          ) : (
+            <HistoryScreen />
+          )}
         </Animated.View>
       </View>
-      <TabBar
-        activeTab={activeTab}
-        onTabChange={handleTabChange}
-        historyBadge={activeCount}
-      />
+
+      {currentPage !== PAGE_MODEL_SELECT && (
+        <TabBar
+          activeTab={activeTab}
+          onTabChange={handleTabChange}
+          historyBadge={activeCount}
+        />
+      )}
     </SafeAreaView>
   );
 }

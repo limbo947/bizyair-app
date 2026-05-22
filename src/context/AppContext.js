@@ -10,7 +10,9 @@ import {
   HOME_STATE_KEY,
   TOTAL_COINS_KEY,
   POLLING_INTERVAL_MS,
+  MODELS,
 } from '../constants/models';
+import { STORAGE_KEYS, FAVORITES_MAX_COUNT } from '../constants/modelMeta';
 
 const AppContext = createContext(null);
 
@@ -27,6 +29,8 @@ const DEFAULT_HOME_STATE = {
   customHeight: '1024',
 };
 
+const DEFAULT_FAVORITES = ['bza-image-b2-base', 'bza-image-b-pro-official', 'bza-image-o2-official'];
+
 export function AppProvider({ children }) {
   const [activeTab, setActiveTab] = useState(TAB_HOME);
   const [apiKey, setApiKey] = useState('');
@@ -35,6 +39,7 @@ export function AppProvider({ children }) {
   const [totalCoinsSpent, setTotalCoinsSpent] = useState(0);
   const [userInfo, setUserInfo] = useState(null);
   const [walletBalance, setWalletBalance] = useState(null);
+  const [favorites, setFavorites] = useState(DEFAULT_FAVORITES);
   const pollingRef = useRef({});
   const historyRef = useRef(history);
 
@@ -44,6 +49,7 @@ export function AppProvider({ children }) {
     loadActiveTab();
     loadHomeState();
     loadTotalCoins();
+    loadFavorites();
   }, []);
 
   useEffect(() => {
@@ -296,6 +302,57 @@ export function AppProvider({ children }) {
     await saveTotalCoins(newTotal);
   };
 
+  const loadFavorites = async () => {
+    try {
+      const stored = await AsyncStorage.getItem(STORAGE_KEYS.favorites);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        const validModels = parsed.filter((modelId) => MODELS[modelId]);
+        if (validModels.length > 0) {
+          setFavorites(validModels);
+        }
+      }
+    } catch (e) {
+      console.error('加载常用模型失败:', e);
+    }
+  };
+
+  const saveFavorites = async (newFavorites) => {
+    try {
+      const filtered = newFavorites.filter((modelId) => MODELS[modelId]);
+      const limited = filtered.slice(0, FAVORITES_MAX_COUNT);
+      setFavorites(limited);
+      await AsyncStorage.setItem(STORAGE_KEYS.favorites, JSON.stringify(limited));
+    } catch (e) {
+      console.error('保存常用模型失败:', e);
+    }
+  };
+
+  const addFavorite = useCallback((modelId) => {
+    if (!MODELS[modelId]) return;
+    if (favorites.includes(modelId)) return;
+    const newFavorites = [...favorites, modelId].slice(0, FAVORITES_MAX_COUNT);
+    saveFavorites(newFavorites);
+  }, [favorites]);
+
+  const removeFavorite = useCallback((modelId) => {
+    const newFavorites = favorites.filter((id) => id !== modelId);
+    saveFavorites(newFavorites);
+  }, [favorites]);
+
+  const toggleFavorite = useCallback((modelId) => {
+    if (!MODELS[modelId]) return;
+    if (favorites.includes(modelId)) {
+      removeFavorite(modelId);
+    } else {
+      addFavorite(modelId);
+    }
+  }, [favorites, addFavorite, removeFavorite]);
+
+  const isFavorite = useCallback((modelId) => {
+    return favorites.includes(modelId);
+  }, [favorites]);
+
   const value = {
     activeTab,
     setActiveTab,
@@ -318,6 +375,12 @@ export function AppProvider({ children }) {
     userInfo,
     walletBalance,
     refreshUserInfo,
+    favorites,
+    addFavorite,
+    removeFavorite,
+    toggleFavorite,
+    isFavorite,
+    saveFavorites,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

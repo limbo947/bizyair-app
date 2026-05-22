@@ -5,7 +5,8 @@ export const MODELS = {
   'bza-image-b2-base': {
     name: 'B.2 渠道版',
     icon: { name: 'color-palette-outline', color: '#FF9500' },
-    manufacturer: '谷歌',
+    manufacturer: 'google',
+    category: 'text-to-image',
     paramType: 'resolution-ratio',
     prices: { '1K': 200, '2K': 200, '4K': 250 },
     resolutions: ['1K', '2K', '4K'],
@@ -19,7 +20,8 @@ export const MODELS = {
   'bza-image-b2-official': {
     name: 'B.2 官方版',
     icon: { name: 'color-palette-outline', color: '#FF9500' },
-    manufacturer: '谷歌',
+    manufacturer: 'google',
+    category: 'text-to-image',
     paramType: 'resolution-ratio',
     prices: { '0.5K': 550, '1K': 550, '2K': 850, '4K': 1100 },
     resolutions: ['0.5K', '1K', '2K', '4K'],
@@ -33,7 +35,8 @@ export const MODELS = {
   'bza-image-b-pro-base': {
     name: 'B.Pro 渠道版',
     icon: { name: 'color-palette-outline', color: '#FF9500' },
-    manufacturer: '谷歌',
+    manufacturer: 'google',
+    category: 'text-to-image',
     paramType: 'resolution-ratio',
     prices: { '1K': 400, '2K': 400, '4K': 500 },
     resolutions: ['1K', '2K', '4K'],
@@ -47,7 +50,8 @@ export const MODELS = {
   'bza-image-b-pro-official': {
     name: 'B.Pro 官方版',
     icon: { name: 'color-palette-outline', color: '#FF9500' },
-    manufacturer: '谷歌',
+    manufacturer: 'google',
+    category: 'text-to-image',
     paramType: 'resolution-ratio',
     prices: { '1K': 700, '2K': 1000, '4K': 1300 },
     resolutions: ['1K', '2K', '4K'],
@@ -61,7 +65,8 @@ export const MODELS = {
   'bza-image-o2-base': {
     name: 'O.2 渠道版',
     icon: { name: 'hardware-chip-outline', color: '#5AC8FA' },
-    manufacturer: 'OpenAI',
+    manufacturer: 'openai',
+    category: 'text-to-image',
     paramType: 'resolution-ratio',
     prices: { '1K': 100, '2K': 100, '4K': 100 },
     resolutions: ['1K', '2K', '4K'],
@@ -75,7 +80,8 @@ export const MODELS = {
   'bza-image-o2-official': {
     name: 'O.2 官方版',
     icon: { name: 'hardware-chip-outline', color: '#5AC8FA' },
-    manufacturer: 'OpenAI',
+    manufacturer: 'openai',
+    category: 'text-to-image',
     paramType: 'width-height-quality',
     qualities: ['low', 'medium', 'high'],
     priceNote: '按尺寸+质量计费',
@@ -87,7 +93,8 @@ export const MODELS = {
   'seedream-5-0-official': {
     name: 'Seedream 5.0',
     icon: { name: 'leaf-outline', color: '#34C759' },
-    manufacturer: '字节',
+    manufacturer: 'bytedance',
+    category: 'text-to-image',
     paramType: 'size-only',
     prices: { '2K': 220, '3K': 220, '4K': 220 },
     resolutions: ['2K', '3K', '4K'],
@@ -99,7 +106,8 @@ export const MODELS = {
   'wan-2-7-image-official': {
     name: '万相2.7',
     icon: { name: 'grid-outline', color: '#007AFF' },
-    manufacturer: '阿里',
+    manufacturer: 'alibaba',
+    category: 'text-to-image',
     paramType: 'wan-size',
     prices: { '1K': 200, '2K': 200, '4K': 200 },
     resolutions: ['1K', '2K', '4K', 'Custom'],
@@ -112,7 +120,8 @@ export const MODELS = {
   'wan-2-7-image-pro-offcial': {
     name: '万相2.7 Pro',
     icon: { name: 'grid-outline', color: '#007AFF' },
-    manufacturer: '阿里',
+    manufacturer: 'alibaba',
+    category: 'text-to-image',
     paramType: 'wan-size',
     prices: { '1K': 500, '2K': 500, '4K': 500 },
     resolutions: ['1K', '2K', '4K', 'Custom'],
@@ -125,7 +134,8 @@ export const MODELS = {
   'z-image-turbo': {
     name: 'Z-Image Turbo',
     icon: { name: 'flash-outline', color: '#AF52DE' },
-    manufacturer: '硅基流动',
+    manufacturer: 'siliconflow',
+    category: 'text-to-image',
     paramType: 'width-height',
     prices: { '1024': 5, '2048': 10 },
     maxPromptLength: 2500,

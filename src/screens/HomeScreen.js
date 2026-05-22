@@ -28,8 +28,9 @@ import {
 } from '../components/ParamControls';
 import { UserInfoCard } from '../components/UserInfoCard';
 import { ModelSelector } from '../components/ModelSelector';
+import { FavoriteModelsLayer } from '../components/FavoriteModelsLayer';
 
-export function HomeScreen() {
+export function HomeScreen({ onOpenModelSelect }) {
   const {
     apiKey,
     setApiKey,
@@ -45,6 +46,7 @@ export function HomeScreen() {
     userInfo,
     walletBalance,
     refreshUserInfo,
+    favorites,
   } = useAppContext();
 
   const [modelId, setModelId] = useState(homeState.modelId);
@@ -61,7 +63,7 @@ export function HomeScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState('');
-  const [showModelDropdown, setShowModelDropdown] = useState(false);
+  const [showFavorites, setShowFavorites] = useState(false);
   const [userCardExpanded, setUserCardExpanded] = useState(true);
 
   const currentModel = getModelInfo(modelId);
@@ -117,7 +119,16 @@ export function HomeScreen() {
 
   const handleModelSelect = (id) => {
     setModelId(id);
-    setShowModelDropdown(false);
+  };
+
+  const handleOpenFavorites = () => {
+    setShowFavorites(true);
+  };
+
+  const handleOpenAllModels = () => {
+    if (onOpenModelSelect) {
+      onOpenModelSelect();
+    }
   };
 
   const handleFileSelect = async () => {
@@ -319,9 +330,9 @@ export function HomeScreen() {
           <ModelSelector
             currentModel={currentModel}
             modelId={modelId}
-            showDropdown={showModelDropdown}
-            onToggleDropdown={() => setShowModelDropdown(!showModelDropdown)}
             onSelectModel={handleModelSelect}
+            onOpenAllModels={handleOpenAllModels}
+            onOpenFavorites={handleOpenFavorites}
           />
           
           <View style={styles.modeToggle}>
@@ -434,6 +445,15 @@ export function HomeScreen() {
 
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
       </ScrollView>
+
+      <FavoriteModelsLayer
+        visible={showFavorites}
+        onClose={() => setShowFavorites(false)}
+        currentModelId={modelId}
+        onSelectModel={handleModelSelect}
+        onEditFavorites={handleOpenAllModels}
+        favorites={favorites}
+      />
     </View>
   );
 }

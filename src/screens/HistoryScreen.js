@@ -11,12 +11,15 @@ import {
   Modal,
   FlatList,
   Platform,
+  NativeModules,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import { useAppContext } from '../context/AppContext';
 import { PAGE_SIZE, TAB_HISTORY } from '../constants/models';
 import { Colors, Shadows, Radius, Spacing } from '../constants/theme';
+
+const { AndroidDownloadManager } = NativeModules;
 
 const ACTIVE_STATUSES = ['Pending', 'Running', 'Saving'];
 const FINAL_STATUSES = ['Success', 'Failed'];
@@ -61,6 +64,8 @@ function triggerDownload(url, filename) {
     document.body.appendChild(anchor);
     anchor.click();
     document.body.removeChild(anchor);
+  } else if (Platform.OS === 'android' && AndroidDownloadManager) {
+    AndroidDownloadManager.downloadFile(url, filename || 'image.jpg');
   } else {
     const { Linking } = require('react-native');
     Linking.openURL(url);
@@ -89,9 +94,7 @@ export function HistoryScreen() {
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [isDownloading, setIsDownloading] = useState(false);
   const [deleteConfirmBatch, setDeleteConfirmBatch] = useState(false);
-  const [copied, setCopied] = useState(null);
   const [toastMsg, setToastMsg] = useState('');
-  const toastTimer = useRef(null);
   const [tick, setTick] = useState(0);
   const flatListRef = useRef(null);
   const prevActiveTab = useRef(activeTab);
@@ -243,12 +246,8 @@ export function HistoryScreen() {
                 {!batchMode ? (
                   <TouchableOpacity style={[styles.iconButton, styles.iconButtonPurple]} onPress={async () => {
                     await Clipboard.setStringAsync(item.prompt || '');
-                    setCopied(item.id);
-                    setToastMsg('已复制');
-                    if (toastTimer.current) clearTimeout(toastTimer.current);
-                    toastTimer.current = setTimeout(() => { setCopied(null); setToastMsg(''); }, 2000);
                   }}>
-                    <Ionicons name={copied === item.id ? 'checkmark-circle' : 'copy'} size={18} color={copied === item.id ? Colors.success : Colors.purple} />
+                    <Ionicons name="copy" size={18} color={Colors.purple} />
                   </TouchableOpacity>
                 ) : null}
                 <TouchableOpacity style={[styles.iconButton, styles.iconButtonPrimary]} onPress={() => setLogModal(item)}>
@@ -289,7 +288,7 @@ export function HistoryScreen() {
         </TouchableOpacity>
       </View>
     );
-  }, [selectedIds, batchMode, toggleSelect, handleDownload, copied]);
+  }, [selectedIds, batchMode, toggleSelect, handleDownload]);
 
   const renderFooter = useCallback(() => {
     if (!hasMore) {
@@ -425,13 +424,6 @@ export function HistoryScreen() {
           </View>
         </TouchableOpacity>
       </Modal>
-
-      {toastMsg ? (
-        <View style={styles.toast}>
-          <Ionicons name="checkmark-circle" size={18} color={Colors.textInverse} />
-          <Text style={styles.toastText}>{toastMsg}</Text>
-        </View>
-      ) : null}
     </View>
   );
 }
