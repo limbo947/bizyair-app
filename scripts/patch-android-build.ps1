@@ -174,4 +174,25 @@ if ($buildGradle -match "versionCode\s+\d+") {
     Write-Host "  versionCode now reads from gradle.properties" -ForegroundColor Green
 }
 
+# ── 6. 自定义 APK 文件名（含版本号） ─────────────────────────────
+Write-Host "[patch] Configuring APK output filename..." -ForegroundColor Yellow
+$buildGradle = Get-Content $buildGradlePath -Raw
+if ($buildGradle -notmatch 'outputFileName') {
+    $apkNamingBlock = @'
+
+android.applicationVariants.all { variant ->
+    variant.outputs.all { output ->
+        def appName = "bizyair-assistant"
+        def version = variant.versionName
+        output.outputFileName = "${appName}-v${version}-${variant.buildType.name}.apk"
+    }
+}
+'@
+    $buildGradle = $buildGradle -replace '(?=dependencies\s*\{)', ($apkNamingBlock + "`n")
+    Set-Content -Path $buildGradlePath -Value $buildGradle -NoNewline
+    Write-Host "  APK filename will include version number" -ForegroundColor Green
+} else {
+    Write-Host "  APK filename config already present" -ForegroundColor Green
+}
+
 Write-Host "[patch] All patches applied successfully!" -ForegroundColor Green

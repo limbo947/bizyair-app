@@ -43,6 +43,8 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
+# signing keys backup (keep in git)
+!keystore-backup/
 # generated native folders
 /ios
 /android

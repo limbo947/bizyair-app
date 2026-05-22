@@ -10,7 +10,7 @@ Write-Host " BizyAir APK Build (arm64-v8a only)" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 
 # 1. Verify architecture config
-Write-Host "`n[1/7] Verifying architecture config..." -ForegroundColor Yellow
+Write-Host "`n[1/8] Verifying architecture config..." -ForegroundColor Yellow
 
 $appJsonRaw = Get-Content app.json -Raw
 if ($appJsonRaw -match '"reactNativeArchitectures"\s*:\s*\[\s*"arm64-v8a"\s*\]') {
@@ -21,7 +21,7 @@ if ($appJsonRaw -match '"reactNativeArchitectures"\s*:\s*\[\s*"arm64-v8a"\s*\]')
 }
 
 # 2. Auto-increment version
-Write-Host "`n[2/7] Auto-incrementing version..." -ForegroundColor Yellow
+Write-Host "`n[2/8] Auto-incrementing version..." -ForegroundColor Yellow
 $appJsonPath = Join-Path $PSScriptRoot "app.json"
 $appJsonContent = Get-Content $appJsonPath -Raw
 $appJson = $appJsonContent | ConvertFrom-Json
@@ -39,21 +39,56 @@ Write-Host "  Committed version change" -ForegroundColor Green
 
 # 3. Clean (optional)
 if ($Clean) {
-    Write-Host "`n[3/7] Cleaning old build artifacts..." -ForegroundColor Yellow
+    Write-Host "`n[3/8] Cleaning old build artifacts..." -ForegroundColor Yellow
     if (Test-Path android) { Remove-Item -Recurse -Force android }
     Write-Host "  Cleaned" -ForegroundColor Green
 } else {
-    Write-Host "`n[3/7] Skip clean (use -Clean to clean)" -ForegroundColor Gray
+    Write-Host "`n[3/8] Skip clean (use -Clean to clean)" -ForegroundColor Gray
 }
 
-# 4. Prebuild
-Write-Host "`n[4/7] Running expo prebuild..." -ForegroundColor Yellow
+# 4. Backup signing key
+Write-Host "`n[4/8] Backing up signing key..." -ForegroundColor Yellow
+$backupDir = Join-Path $PSScriptRoot "keystore-backup"
+$keystoreSrc = Join-Path $PSScriptRoot "android\app\bizyair-release.keystore"
+$keystorePropsSrc = Join-Path $PSScriptRoot "android\keystore.properties"
+$keystoreDst = Join-Path $backupDir "bizyair-release.keystore"
+$keystorePropsDst = Join-Path $backupDir "keystore.properties"
+if (-not (Test-Path $backupDir)) { New-Item -ItemType Directory -Path $backupDir -Force | Out-Null }
+if (Test-Path $keystoreSrc) {
+    Copy-Item $keystoreSrc $keystoreDst -Force
+    Write-Host "  Keystore backed up" -ForegroundColor Green
+} else {
+    Write-Host "  No existing keystore found in android dir" -ForegroundColor Gray
+}
+if (Test-Path $keystorePropsSrc) {
+    Copy-Item $keystorePropsSrc $keystorePropsDst -Force
+    Write-Host "  keystore.properties backed up" -ForegroundColor Green
+}
+
+# 5. Prebuild
+Write-Host "`n[5/8] Running expo prebuild..." -ForegroundColor Yellow
 npx expo prebuild --platform android --clean 2>&1 | Write-Host
 if ($LASTEXITCODE -ne 0) { Write-Host "  prebuild FAILED!" -ForegroundColor Red; exit 1 }
 Write-Host "  prebuild done" -ForegroundColor Green
 
-# 5. Configure gradle.properties
-Write-Host "`n[5/7] Configuring gradle.properties..." -ForegroundColor Yellow
+# 5.5 Restore signing key
+Write-Host "`n[5.5/8] Restoring signing key..." -ForegroundColor Yellow
+if (Test-Path $keystoreDst) {
+    Copy-Item $keystoreDst "$(Join-Path $PSScriptRoot 'android\app')\" -Force
+    Write-Host "  Keystore restored" -ForegroundColor Green
+} else {
+    Write-Host "  WARNING: No keystore backup found in keystore-backup/" -ForegroundColor Red
+    Write-Host "  Run 'Generate new key' or restore backup manually" -ForegroundColor Red
+}
+if (Test-Path $keystorePropsDst) {
+    Copy-Item $keystorePropsDst (Join-Path $PSScriptRoot "android") -Force
+    Write-Host "  keystore.properties restored" -ForegroundColor Green
+} else {
+    Write-Host "  WARNING: No keystore.properties backup found" -ForegroundColor Red
+}
+
+# 6. Configure gradle.properties
+Write-Host "`n[6/8] Configuring gradle.properties..." -ForegroundColor Yellow
 $gradlePropsPath = Join-Path $PSScriptRoot "android\gradle.properties"
 if (Test-Path $gradlePropsPath) {
     $content = Get-Content $gradlePropsPath -Raw
@@ -66,8 +101,8 @@ if (Test-Path $gradlePropsPath) {
     exit 1
 }
 
-# 6. Apply post-prebuild patches + versionCode sync
-Write-Host "`n[6/7] Applying post-prebuild patches..." -ForegroundColor Yellow
+# 7. Apply post-prebuild patches + versionCode sync
+Write-Host "`n[7/8] Applying post-prebuild patches..." -ForegroundColor Yellow
 & "$PSScriptRoot\scripts\patch-android-build.ps1" -ProjectRoot $PSScriptRoot
 if ($LASTEXITCODE -ne 0) { Write-Host "  Patching FAILED!" -ForegroundColor Red; exit 1 }
 Write-Host "  Patches applied" -ForegroundColor Green
@@ -85,8 +120,8 @@ if ($propsContent -match 'android\.versionCode=(\d+)') {
     Write-Host "  versionCode: $newVersionCode" -ForegroundColor Green
 }
 
-# 7. Build Release APK
-Write-Host "`n[7/7] Building Release APK..." -ForegroundColor Yellow
+# 8. Build Release APK
+Write-Host "`n[8/8] Building Release APK..." -ForegroundColor Yellow
 $androidDir = Join-Path $PSScriptRoot "android"
 Push-Location $androidDir
 try {
