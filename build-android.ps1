@@ -222,5 +222,21 @@ foreach ($apk in $apks) {
     }
 }
 
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  自动复制 APK 到项目 apk/ 目录
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Write-Host "`n  Copying APK to apk/ directory..." -ForegroundColor Yellow
+$outputDir = Join-Path $ScriptDir "apk"
+if (-not (Test-Path $outputDir)) {
+    New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
+    Write-Host "  Created apk/ directory" -ForegroundColor Green
+}
+foreach ($apk in $apks) {
+    $destPath = Join-Path $outputDir $apk.Name
+    Copy-Item $apk.FullName $destPath -Force
+    $sizeMB = [math]::Round((Get-Item $destPath).Length / 1MB, 2)
+    Write-Host "  Copied: apk\$($apk.Name)  $sizeMB MB" -ForegroundColor Green
+}
+
 Write-Host "  Version: $newVersion (versionCode=$newVersionCode)" -ForegroundColor Green
 Write-Host "`nBuild complete!" -ForegroundColor Green
