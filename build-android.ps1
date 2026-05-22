@@ -10,7 +10,7 @@ Write-Host " BizyAir APK Build (arm64-v8a only)" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 
 # 1. Verify architecture config
-Write-Host "`n[1/5] Verifying architecture config..." -ForegroundColor Yellow
+Write-Host "`n[1/7] Verifying architecture config..." -ForegroundColor Yellow
 
 $appJsonRaw = Get-Content app.json -Raw
 if ($appJsonRaw -match '"reactNativeArchitectures"\s*:\s*\[\s*"arm64-v8a"\s*\]') {
@@ -20,23 +20,36 @@ if ($appJsonRaw -match '"reactNativeArchitectures"\s*:\s*\[\s*"arm64-v8a"\s*\]')
     exit 1
 }
 
-# 2. Clean (optional)
+# 2. Auto-increment version
+Write-Host "`n[2/7] Auto-incrementing version..." -ForegroundColor Yellow
+$appJsonPath = Join-Path $PSScriptRoot "app.json"
+$appJsonContent = Get-Content $appJsonPath -Raw
+$appJson = $appJsonContent | ConvertFrom-Json
+$oldVersion = $appJson.expo.version
+$versionParts = $oldVersion -split '\.'
+$versionParts[2] = [int]$versionParts[2] + 1
+$newVersion = $versionParts -join '.'
+$appJson.expo.version = $newVersion
+$appJson | ConvertTo-Json -Depth 10 | Set-Content $appJsonPath -NoNewline
+Write-Host "  Version: $oldVersion -> $newVersion" -ForegroundColor Green
+
+# 3. Clean (optional)
 if ($Clean) {
-    Write-Host "`n[2/5] Cleaning old build artifacts..." -ForegroundColor Yellow
+    Write-Host "`n[3/7] Cleaning old build artifacts..." -ForegroundColor Yellow
     if (Test-Path android) { Remove-Item -Recurse -Force android }
     Write-Host "  Cleaned" -ForegroundColor Green
 } else {
-    Write-Host "`n[2/5] Skip clean (use -Clean to clean)" -ForegroundColor Gray
+    Write-Host "`n[3/7] Skip clean (use -Clean to clean)" -ForegroundColor Gray
 }
 
-# 3. Prebuild
-Write-Host "`n[3/5] Running expo prebuild..." -ForegroundColor Yellow
+# 4. Prebuild
+Write-Host "`n[4/7] Running expo prebuild..." -ForegroundColor Yellow
 npx expo prebuild --platform android --clean 2>&1 | Write-Host
 if ($LASTEXITCODE -ne 0) { Write-Host "  prebuild FAILED!" -ForegroundColor Red; exit 1 }
 Write-Host "  prebuild done" -ForegroundColor Green
 
-# 4. Configure gradle.properties
-Write-Host "`n[4/6] Configuring gradle.properties..." -ForegroundColor Yellow
+# 5. Configure gradle.properties
+Write-Host "`n[5/7] Configuring gradle.properties..." -ForegroundColor Yellow
 $gradlePropsPath = Join-Path $PSScriptRoot "android\gradle.properties"
 if (Test-Path $gradlePropsPath) {
     $content = Get-Content $gradlePropsPath -Raw
@@ -49,14 +62,27 @@ if (Test-Path $gradlePropsPath) {
     exit 1
 }
 
-# 4.5 Apply post-prebuild patches
-Write-Host "`n[5/6] Applying post-prebuild patches..." -ForegroundColor Yellow
+# 6. Apply post-prebuild patches + versionCode sync
+Write-Host "`n[6/7] Applying post-prebuild patches..." -ForegroundColor Yellow
 & "$PSScriptRoot\scripts\patch-android-build.ps1" -ProjectRoot $PSScriptRoot
 if ($LASTEXITCODE -ne 0) { Write-Host "  Patching FAILED!" -ForegroundColor Red; exit 1 }
 Write-Host "  Patches applied" -ForegroundColor Green
 
-# 6. Build Release APK
-Write-Host "`n[6/6] Building Release APK..." -ForegroundColor Yellow
+# Sync versionCode from new version
+$propsContent = Get-Content $gradlePropsPath -Raw
+$newVersionCode = $versionParts[2]
+if ($propsContent -match 'android\.versionCode=(\d+)') {
+    $oldCode = $Matches[1]
+    $propsContent = $propsContent -replace "android\.versionCode=\d+", "android.versionCode=$newVersionCode"
+    Set-Content $gradlePropsPath $propsContent -NoNewline
+    Write-Host "  versionCode: $oldCode -> $newVersionCode" -ForegroundColor Green
+} else {
+    Add-Content $gradlePropsPath "`nandroid.versionCode=$newVersionCode"
+    Write-Host "  versionCode: $newVersionCode" -ForegroundColor Green
+}
+
+# 7. Build Release APK
+Write-Host "`n[7/7] Building Release APK..." -ForegroundColor Yellow
 $androidDir = Join-Path $PSScriptRoot "android"
 Push-Location $androidDir
 try {

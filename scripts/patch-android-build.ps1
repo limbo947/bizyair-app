@@ -74,7 +74,19 @@ $props = $props -replace "react\.nativeArchitectures=.*\r?\n?", ""
 $appendLines = @()
 
 if ($props -notmatch "android\.versionCode=") {
-    $appendLines += "android.versionCode=1"
+    $fallbackCode = "1"
+    $appJsonFile = Join-Path $ProjectRoot "app.json"
+    if (Test-Path $appJsonFile) {
+        try {
+            $appJson = Get-Content $appJsonFile -Raw | ConvertFrom-Json
+            $ver = $appJson.expo.version
+            if ($ver) {
+                $parts = $ver -split '\.'
+                $fallbackCode = $parts[-1]
+            }
+        } catch {}
+    }
+    $appendLines += "android.versionCode=$fallbackCode"
 }
 
 if ($appendLines.Count -gt 0) {
