@@ -36,23 +36,27 @@ if ($LASTEXITCODE -ne 0) { Write-Host "  prebuild FAILED!" -ForegroundColor Red;
 Write-Host "  prebuild done" -ForegroundColor Green
 
 # 4. Configure gradle.properties
-Write-Host "`n[4/5] Configuring gradle.properties..." -ForegroundColor Yellow
+Write-Host "`n[4/6] Configuring gradle.properties..." -ForegroundColor Yellow
 $gradlePropsPath = Join-Path $PSScriptRoot "android\gradle.properties"
 if (Test-Path $gradlePropsPath) {
     $content = Get-Content $gradlePropsPath -Raw
-    $content = $content -replace "react.nativeArchitectures=.*`r?`n?", ""
+    $content = $content -replace "react\.nativeArchitectures=.*`r?`n?", ""
     $content = $content -replace "reactNativeArchitectures=.*`r?`n?", ""
-    if (-not $content.EndsWith("`n")) { $content += "`n" }
-    $content += "react.nativeArchitectures=arm64-v8a`n"
     Set-Content $gradlePropsPath $content -NoNewline
-    Write-Host "  react.nativeArchitectures=arm64-v8a OK" -ForegroundColor Green
+    Write-Host "  Cleaned legacy architecture properties" -ForegroundColor Green
 } else {
     Write-Host "  gradle.properties not found, prebuild may have failed" -ForegroundColor Red
     exit 1
 }
 
-# 5. Build Release APK
-Write-Host "`n[5/5] Building Release APK..." -ForegroundColor Yellow
+# 4.5 Apply post-prebuild patches
+Write-Host "`n[5/6] Applying post-prebuild patches..." -ForegroundColor Yellow
+& "$PSScriptRoot\scripts\patch-android-build.ps1" -ProjectRoot $PSScriptRoot
+if ($LASTEXITCODE -ne 0) { Write-Host "  Patching FAILED!" -ForegroundColor Red; exit 1 }
+Write-Host "  Patches applied" -ForegroundColor Green
+
+# 6. Build Release APK
+Write-Host "`n[6/6] Building Release APK..." -ForegroundColor Yellow
 $androidDir = Join-Path $PSScriptRoot "android"
 Push-Location $androidDir
 try {

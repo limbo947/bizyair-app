@@ -7,6 +7,7 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
+    "jsEngine": "hermes",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -21,7 +22,7 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.anonymous.onesentencediary"
+      "package": "com.bizyair.assistant"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -32,9 +33,15 @@
         "expo-build-properties",
         {
           "android": {
-            "reactNativeArchitectures": [
-              "arm64-v8a"
-            ]
+            "reactNativeArchitectures": ["arm64-v8a"],
+            "compileSdk": 35,
+            "targetSdk": 35,
+            "minSdk": 26,
+            "newArchEnabled": true,
+            "hermesEnabled": true,
+            "enableProguardInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true,
+            "enablePngCrunchInReleaseBuilds": true
           }
         }
       ]

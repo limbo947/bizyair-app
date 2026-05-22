@@ -13,6 +13,15 @@
 ├── package.json              # 依赖配置
 ├── app.json                  # Expo 配置
 ├── eas.json                  # EAS Build 配置
+├── build-android.ps1         # APK 一键构建脚本（prebuild → 修补 → Gradle）
+├── scripts/                  # 构建辅助脚本
+│   └── patch-android-build.ps1  # post-prebuild 配置修补（签名/ProGuard/allowBackup）
+├── android/                  # Android 原生工程（expo prebuild 生成，勿手动修改）
+│   ├── keystore.properties   # 签名密钥配置（不提交 Git）
+│   ├── gradle.properties     # Gradle 构建属性（由 app.json 插件 + 修补脚本管理）
+│   └── app/
+│       ├── build.gradle      # 应用 Gradle 配置
+│       └── src/main/java/com/bizyair/assistant/  # Kotlin 源码（MainActivity/MainApplication）
 ├── src/
 │   ├── context/              # 全局状态管理
 │   │   └── AppContext.js     # React Context Provider + Hook（历史/密钥/轮询/用户信息）
@@ -53,10 +62,37 @@
 - 已接入应用的功能，文件名末尾追加 `[已接入]`
 - 目录内全部接入后，目录名也标记 `[已接入]`
 
-## 禁止修改
-- SDK 版本
-- `eas.json` 中的构建配置
 
 ## 错误处理
 - 所有 API 调用必须处理超时、重试和状态码
 - 网络错误需区分超时、服务端错误、客户端错误，给出明确提示
+
+## 构建（Build）
+- **环境要求**：JDK 17+、Android SDK (build-tools 35+)
+- **一键构建 Release APK**：
+  ```
+  .\build-android.ps1 -Clean
+  ```
+  该脚本执行：prebuild → 修补配置 → 签名注入 → Gradle 构建 → 产物验证
+- **仅增量构建**（不重新 prebuild）：
+  ```
+  cd android && ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a
+  ```
+- **EAS 本地构建**（兜底方案）：
+  ```
+  npx eas build --platform android --profile preview --local
+  ```
+- **签名密钥**：`android/app/bizyair-release.keystore`，密码配置在 `android/keystore.properties`（不提交 Git）
+
+## 版本管理
+- 语义版本：`app.json` → `expo.version`
+- Android versionCode：`android/gradle.properties` → `android.versionCode`（默认 1）
+- 版本递增（CLI 覆盖）：
+  ```
+  ./gradlew assembleRelease -Pandroid.versionCode=2
+  ```
+
+## 构建配置说明
+- **唯一真实来源**：`app.json` 的 `expo-build-properties` 插件
+- **修补脚本**：`scripts/patch-android-build.ps1` 在 prebuild 后应用插件不支持的配置
+- **不要手动修改 `android/` 目录下的文件**（`expo prebuild --clean` 会销毁所有手动修改）
