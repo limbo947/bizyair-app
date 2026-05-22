@@ -1,18 +1,24 @@
 # BizyAir APK Build Script (arm64-v8a only)
-# Usage: .\build-android.ps1 [-Clean]
+# Usage:
+#   .\build-android.ps1              Incremental build, auto-increment version
+#   .\build-android.ps1 -Clean       Full clean build (stop daemon, delete android/, rebuild from scratch)
 
 param([switch]$Clean)
 
 $ErrorActionPreference = "Stop"
+$ScriptDir = $PSScriptRoot
 
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host " BizyAir APK Build (arm64-v8a only)" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 
-# 1. Verify architecture config
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  [1/8] 验证架构配置
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Write-Host "`n[1/8] Verifying architecture config..." -ForegroundColor Yellow
 
-$appJsonRaw = Get-Content app.json -Raw
+$appJsonPath = Join-Path $ScriptDir "app.json"
+$appJsonRaw = Get-Content $appJsonPath -Raw
 if ($appJsonRaw -match '"reactNativeArchitectures"\s*:\s*\[\s*"arm64-v8a"\s*\]') {
     Write-Host "  app.json: reactNativeArchitectures = arm64-v8a OK" -ForegroundColor Green
 } else {
@@ -20,9 +26,11 @@ if ($appJsonRaw -match '"reactNativeArchitectures"\s*:\s*\[\s*"arm64-v8a"\s*\]')
     exit 1
 }
 
-# 2. Auto-increment version
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  [2/8] 自动递增版本号
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Write-Host "`n[2/8] Auto-incrementing version..." -ForegroundColor Yellow
-$appJsonPath = Join-Path $PSScriptRoot "app.json"
+
 $appJsonContent = Get-Content $appJsonPath -Raw
 $appJson = $appJsonContent | ConvertFrom-Json
 $oldVersion = $appJson.expo.version
@@ -37,106 +45,153 @@ git add app.json 2>&1 | Out-Null
 git commit -m "chore: bump version to $newVersion" --no-verify 2>&1 | Out-Null
 Write-Host "  Committed version change" -ForegroundColor Green
 
-# 3. Clean (optional)
-if ($Clean) {
-    Write-Host "`n[3/8] Cleaning old build artifacts..." -ForegroundColor Yellow
-    if (Test-Path android) { Remove-Item -Recurse -Force android }
-    Write-Host "  Cleaned" -ForegroundColor Green
-} else {
-    Write-Host "`n[3/8] Skip clean (use -Clean to clean)" -ForegroundColor Gray
-}
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  [3/8] 备份签名密钥（必须在 Clean/prebuild 之前）
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Write-Host "`n[3/8] Backing up signing key..." -ForegroundColor Yellow
 
-# 4. Backup signing key
-Write-Host "`n[4/8] Backing up signing key..." -ForegroundColor Yellow
-$backupDir = Join-Path $PSScriptRoot "keystore-backup"
-$keystoreSrc = Join-Path $PSScriptRoot "android\app\bizyair-release.keystore"
-$keystorePropsSrc = Join-Path $PSScriptRoot "android\keystore.properties"
+$backupDir = Join-Path $ScriptDir "keystore-backup"
+$keystoreSrc = Join-Path $ScriptDir "android\app\bizyair-release.keystore"
+$keystorePropsSrc = Join-Path $ScriptDir "android\keystore.properties"
 $keystoreDst = Join-Path $backupDir "bizyair-release.keystore"
 $keystorePropsDst = Join-Path $backupDir "keystore.properties"
-if (-not (Test-Path $backupDir)) { New-Item -ItemType Directory -Path $backupDir -Force | Out-Null }
+
+if (-not (Test-Path $backupDir)) {
+    New-Item -ItemType Directory -Path $backupDir -Force | Out-Null
+    Write-Host "  Created keystore-backup/ directory" -ForegroundColor Green
+}
+
 if (Test-Path $keystoreSrc) {
     Copy-Item $keystoreSrc $keystoreDst -Force
     Write-Host "  Keystore backed up" -ForegroundColor Green
 } else {
-    Write-Host "  No existing keystore found in android dir" -ForegroundColor Gray
+    if ($Clean) {
+        Write-Host "  No existing keystore, but backup exists — will restore after prebuild" -ForegroundColor Gray
+    } else {
+        Write-Host "  No existing keystore found in android dir" -ForegroundColor Gray
+    }
 }
+
 if (Test-Path $keystorePropsSrc) {
     Copy-Item $keystorePropsSrc $keystorePropsDst -Force
     Write-Host "  keystore.properties backed up" -ForegroundColor Green
 }
 
-# 5. Prebuild
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  [4/8] Clean 模式（可选）
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+if ($Clean) {
+    Write-Host "`n[4/8] Full clean build..." -ForegroundColor Yellow
+
+    # 先停止 Gradle daemon，避免文件锁冲突
+    $gradlewBat = Join-Path $ScriptDir "android\gradlew.bat"
+    if (Test-Path $gradlewBat) {
+        Push-Location (Join-Path $ScriptDir "android")
+        try { .\gradlew.bat --stop 2>&1 | Out-Null } catch {}
+        Pop-Location
+    }
+
+    Write-Host "  Deleting android/ directory..." -ForegroundColor Gray
+    if (Test-Path (Join-Path $ScriptDir "android")) {
+        [System.IO.Directory]::Delete((Join-Path $ScriptDir "android"), $true)
+    }
+    Write-Host "  Cleaned" -ForegroundColor Green
+} else {
+    Write-Host "`n[4/8] Skip clean (use -Clean for full rebuild)" -ForegroundColor Gray
+}
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  [5/8] expo prebuild
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Write-Host "`n[5/8] Running expo prebuild..." -ForegroundColor Yellow
 npx expo prebuild --platform android --clean
-if ($LASTEXITCODE -ne 0) { Write-Host "  prebuild FAILED!" -ForegroundColor Red; exit 1 }
-Write-Host "  prebuild done" -ForegroundColor Green
-
-# 5.5 Restore signing key
-Write-Host "`n[5.5/8] Restoring signing key..." -ForegroundColor Yellow
-if (Test-Path $keystoreDst) {
-    Copy-Item $keystoreDst "$(Join-Path $PSScriptRoot 'android\app')\" -Force
-    Write-Host "  Keystore restored" -ForegroundColor Green
-} else {
-    Write-Host "  WARNING: No keystore backup found in keystore-backup/" -ForegroundColor Red
-    Write-Host "  Run 'Generate new key' or restore backup manually" -ForegroundColor Red
-}
-if (Test-Path $keystorePropsDst) {
-    Copy-Item $keystorePropsDst (Join-Path $PSScriptRoot "android") -Force
-    Write-Host "  keystore.properties restored" -ForegroundColor Green
-} else {
-    Write-Host "  WARNING: No keystore.properties backup found" -ForegroundColor Red
-}
-
-# 6. Configure gradle.properties
-Write-Host "`n[6/8] Configuring gradle.properties..." -ForegroundColor Yellow
-$gradlePropsPath = Join-Path $PSScriptRoot "android\gradle.properties"
-if (Test-Path $gradlePropsPath) {
-    $content = Get-Content $gradlePropsPath -Raw
-    $content = $content -replace "react\.nativeArchitectures=.*`r?`n?", ""
-    $content = $content -replace "reactNativeArchitectures=.*`r?`n?", ""
-    [System.IO.File]::WriteAllText($gradlePropsPath, $content)
-    Write-Host "  Cleaned legacy architecture properties" -ForegroundColor Green
-} else {
-    Write-Host "  gradle.properties not found, prebuild may have failed" -ForegroundColor Red
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "  prebuild FAILED!" -ForegroundColor Red
     exit 1
 }
+Write-Host "  prebuild done" -ForegroundColor Green
 
-# 7. Apply post-prebuild patches + versionCode sync
-Write-Host "`n[7/8] Applying post-prebuild patches..." -ForegroundColor Yellow
-& "$PSScriptRoot\scripts\patch-android-build.ps1" -ProjectRoot $PSScriptRoot
-if ($LASTEXITCODE -ne 0) { Write-Host "  Patching FAILED!" -ForegroundColor Red; exit 1 }
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  [5.5/8] 恢复签名密钥
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Write-Host "`n[5.5/8] Restoring signing key..." -ForegroundColor Yellow
+
+$keystoreRestored = $false
+if (Test-Path $keystoreDst) {
+    Copy-Item $keystoreDst (Join-Path $ScriptDir "android\app\") -Force
+    Write-Host "  Keystore restored from backup" -ForegroundColor Green
+    $keystoreRestored = $true
+} else {
+    Write-Host "  WARNING: No keystore backup in keystore-backup/" -ForegroundColor Red
+    Write-Host "  APK will be signed with debug key — cannot overwrite previous installs" -ForegroundColor Red
+}
+
+if (Test-Path $keystorePropsDst) {
+    Copy-Item $keystorePropsDst (Join-Path $ScriptDir "android") -Force
+    Write-Host "  keystore.properties restored" -ForegroundColor Green
+}
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  [6/8] 应用 post-prebuild 补丁
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Write-Host "`n[6/8] Applying post-prebuild patches..." -ForegroundColor Yellow
+
+$patchScript = Join-Path $ScriptDir "scripts\patch-android-build.ps1"
+& $patchScript -ProjectRoot $ScriptDir
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "  Patching FAILED!" -ForegroundColor Red
+    exit 1
+}
 Write-Host "  Patches applied" -ForegroundColor Green
 
-# Sync versionCode from new version
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  [7/8] 同步 versionCode
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Write-Host "`n[7/8] Syncing versionCode..." -ForegroundColor Yellow
+
+$gradlePropsPath = Join-Path $ScriptDir "android\gradle.properties"
 $propsContent = Get-Content $gradlePropsPath -Raw
 $newVersionCode = $versionParts[2]
+
 if ($propsContent -match 'android\.versionCode=(\d+)') {
     $oldCode = $Matches[1]
     $propsContent = $propsContent -replace "android\.versionCode=\d+", "android.versionCode=$newVersionCode"
     [System.IO.File]::WriteAllText($gradlePropsPath, $propsContent)
     Write-Host "  versionCode: $oldCode -> $newVersionCode" -ForegroundColor Green
 } else {
-    Add-Content $gradlePropsPath "`nandroid.versionCode=$newVersionCode"
-    Write-Host "  versionCode: $newVersionCode" -ForegroundColor Green
+    $propsContent += "`nandroid.versionCode=$newVersionCode"
+    [System.IO.File]::WriteAllText($gradlePropsPath, $propsContent)
+    Write-Host "  versionCode: $newVersionCode (new)" -ForegroundColor Green
 }
 
-# 8. Build Release APK
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  [8/8] Gradle 构建
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Write-Host "`n[8/8] Building Release APK..." -ForegroundColor Yellow
-$androidDir = Join-Path $PSScriptRoot "android"
+
+$androidDir = Join-Path $ScriptDir "android"
 Push-Location $androidDir
 try {
-    .\gradlew.bat assembleRelease -PreactNativeArchitectures=arm64-v8a 2>&1 | Write-Host
-    if ($LASTEXITCODE -ne 0) { Write-Host "  Build FAILED!" -ForegroundColor Red; exit 1 }
+    .\gradlew.bat assembleRelease -PreactNativeArchitectures=arm64-v8a 2>&1 | ForEach-Object {
+        $line = $_ -as [string]
+        if ($line) { Write-Host $line }
+    }
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "  Build FAILED!" -ForegroundColor Red
+        exit 1
+    }
 } finally {
     Pop-Location
 }
 
-# Verify output
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  构建结果验证
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Write-Host "`n========================================" -ForegroundColor Cyan
 Write-Host " Build Result Verification" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 
-$apkDir = Join-Path $PSScriptRoot "android\app\build\outputs\apk\release"
+$apkDir = Join-Path $ScriptDir "android\app\build\outputs\apk\release"
 $apks = Get-ChildItem -Path $apkDir -Filter "*.apk" -ErrorAction SilentlyContinue
 
 if ($apks.Count -eq 0) {
@@ -146,8 +201,7 @@ if ($apks.Count -eq 0) {
 
 foreach ($apk in $apks) {
     $sizeMB = [math]::Round($apk.Length / 1MB, 2)
-    $sizeStr = "$sizeMB MB"
-    Write-Host "  APK: $($apk.Name) $sizeStr" -ForegroundColor White
+    Write-Host "  APK: $($apk.Name)  $sizeMB MB" -ForegroundColor White
 
     Write-Host "  Verifying native lib architectures..." -ForegroundColor Yellow
     Add-Type -Assembly System.IO.Compression.FileSystem
@@ -162,10 +216,11 @@ foreach ($apk in $apks) {
     $zip.Dispose()
 
     if ($libDirs.Count -eq 1 -and $libDirs[0] -eq "arm64-v8a") {
-        Write-Host "  Architecture OK: arm64-v8a only" -ForegroundColor Green
+        Write-Host "  Architecture: arm64-v8a only  OK" -ForegroundColor Green
     } else {
-        Write-Host "  Architecture FAIL: found $libDirs" -ForegroundColor Red
+        Write-Host "  Architecture: $libDirs  WARNING" -ForegroundColor Red
     }
 }
 
+Write-Host "  Version: $newVersion (versionCode=$newVersionCode)" -ForegroundColor Green
 Write-Host "`nBuild complete!" -ForegroundColor Green
