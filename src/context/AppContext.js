@@ -5,6 +5,8 @@ import {
   ENV_API_KEY,
   HISTORY_KEY,
   API_KEY_STORAGE_KEY,
+  API_KEYS_STORAGE_KEY,
+  ACTIVE_KEY_ID_KEY,
   ACTIVE_TAB_KEY,
   TAB_HOME,
   HOME_STATE_KEY,
@@ -34,6 +36,8 @@ const DEFAULT_FAVORITES = ['bza-image-b2-base', 'bza-image-b-pro-official', 'bza
 export function AppProvider({ children }) {
   const [activeTab, setActiveTab] = useState(TAB_HOME);
   const [apiKey, setApiKey] = useState('');
+  const [apiKeys, setApiKeys] = useState([]);
+  const [activeApiKeyId, setActiveApiKeyId] = useState(null);
   const [history, setHistory] = useState([]);
   const [homeState, setHomeState] = useState(DEFAULT_HOME_STATE);
   const [totalCoinsSpent, setTotalCoinsSpent] = useState(0);
@@ -44,7 +48,7 @@ export function AppProvider({ children }) {
   const historyRef = useRef(history);
 
   useEffect(() => {
-    loadApiKey();
+    loadApiKeys();
     loadHistory();
     loadActiveTab();
     loadHomeState();
@@ -62,16 +66,86 @@ export function AppProvider({ children }) {
     historyRef.current = history;
   }, [history]);
 
-  const loadApiKey = async () => {
+  const loadApiKeys = async () => {
     try {
-      const stored = await AsyncStorage.getItem(API_KEY_STORAGE_KEY);
+      const stored = await AsyncStorage.getItem(API_KEYS_STORAGE_KEY);
+      let keys = [];
       if (stored) {
-        setApiKey(stored);
-        refreshUserInfo(stored);
+        keys = JSON.parse(stored);
+      } else {
+        const legacyKey = await AsyncStorage.getItem(API_KEY_STORAGE_KEY);
+        if (legacyKey) {
+          keys = [{ id: 'default', key: legacyKey }];
+        }
+      }
+      setApiKeys(keys);
+      const activeId = await AsyncStorage.getItem(ACTIVE_KEY_ID_KEY);
+      const active = activeId && keys.find((k) => k.id === activeId)
+        ? keys.find((k) => k.id === activeId)
+        : keys[0];
+      if (active) {
+        setApiKey(active.key);
+        setActiveApiKeyId(active.id);
+        refreshUserInfo(active.key);
       }
     } catch (e) {
-      console.error('加载 API Key 失败:', e);
+      console.error('加载 API Keys 失败:', e);
     }
+  };
+
+  const saveApiKeys = async (keys, activeId) => {
+    try {
+      await AsyncStorage.setItem(API_KEYS_STORAGE_KEY, JSON.stringify(keys));
+      setApiKeys(keys);
+      if (activeId) {
+        await AsyncStorage.setItem(ACTIVE_KEY_ID_KEY, activeId);
+        setActiveApiKeyId(activeId);
+        const active = keys.find((k) => k.id === activeId);
+        if (active) {
+          setApiKey(active.key);
+        }
+      }
+    } catch (e) {
+      console.error('保存 API Keys 失败:', e);
+    }
+  };
+
+  const generateKeyId = () => `key_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
+  const addApiKey = async (key, name) => {
+    const id = generateKeyId();
+    const newKeys = [...apiKeys, { id, key, name: name || `密钥 ${apiKeys.length + 1}` }];
+    await saveApiKeys(newKeys, id);
+    refreshUserInfo(key);
+  };
+
+  const renameApiKey = async (id, name) => {
+    const newKeys = apiKeys.map((k) => (k.id === id ? { ...k, name } : k));
+    await saveApiKeys(newKeys, activeApiKeyId);
+  };
+
+  const removeApiKey = async (id) => {
+    const newKeys = apiKeys.filter((k) => k.id !== id);
+    if (newKeys.length === 0) {
+      await saveApiKeys([], null);
+      setApiKey('');
+      setUserInfo(null);
+      setWalletBalance(null);
+      return;
+    }
+    const newActiveId = activeApiKeyId === id ? newKeys[0].id : activeApiKeyId;
+    await saveApiKeys(newKeys, newActiveId);
+    const newActive = newKeys.find((k) => k.id === newActiveId);
+    if (newActive) {
+      refreshUserInfo(newActive.key);
+    }
+  };
+
+  const switchApiKey = async (id) => {
+    const key = apiKeys.find((k) => k.id === id);
+    if (!key) return;
+    await saveApiKeys(apiKeys, id);
+    refreshUserInfo(key.key);
   };
 
   const loadHistory = async () => {
@@ -99,8 +173,13 @@ export function AppProvider({ children }) {
   const saveApiKey = async (key) => {
     try {
       await AsyncStorage.setItem(API_KEY_STORAGE_KEY, key);
-      setApiKey(key);
-      refreshUserInfo(key);
+      const existing = apiKeys.find((k) => k.key === key);
+      if (existing) {
+        await saveApiKeys(apiKeys, existing.id);
+        refreshUserInfo(key);
+      } else {
+        await addApiKey(key, '默认密钥');
+      }
     } catch (e) {
       console.error('保存 API Key 失败:', e);
     }
@@ -129,6 +208,18 @@ export function AppProvider({ children }) {
     }
   };
 
+  const addToHistory = async (entry) => {
+    const updated = [entry, ...history];
+    setHistory(updated);
+    await persistHistory(updated);
+  };
+
+  const removeHistoryItems = async (predicate) => {
+    const updated = history.filter((item) => !predicate(item));
+    setHistory(updated);
+    await persistHistory(updated);
+  };
+
   const updateHistoryItem = useCallback((id, updates) => {
     setHistory((prev) => {
       const idx = prev.findIndex((h) => h.id === id);
@@ -146,12 +237,17 @@ export function AppProvider({ children }) {
     });
   }, []);
 
+  const MAX_POLL_FAILS = 5;
+
   const startPolling = useCallback((id, requestId, ak) => {
     if (pollingRef.current[id]) return;
+
+    let failCount = 0;
 
     const interval = setInterval(async () => {
       try {
         const result = await queryTaskResult(ak, requestId);
+        failCount = 0;
         updateHistoryItem(id, { status: result.status, lastResponse: result });
 
         if (result.status === 'Success') {
@@ -175,14 +271,17 @@ export function AppProvider({ children }) {
           });
         }
       } catch (err) {
-        clearInterval(interval);
-        delete pollingRef.current[id];
-        updateHistoryItem(id, {
-          status: 'Failed',
-          errorMessage: err.message || '轮询请求失败',
-          completedAt: Date.now(),
-          lastResponse: { status: 'Failed', error: err.message },
-        });
+        failCount++;
+        if (failCount >= MAX_POLL_FAILS) {
+          clearInterval(interval);
+          delete pollingRef.current[id];
+          updateHistoryItem(id, {
+            status: 'Failed',
+            errorMessage: `连续${MAX_POLL_FAILS}次轮询失败: ${err.message || '网络异常'}`,
+            completedAt: Date.now(),
+            lastResponse: { status: 'Failed', error: err.message },
+          });
+        }
       }
     }, POLLING_INTERVAL_MS);
 
@@ -267,15 +366,18 @@ export function AppProvider({ children }) {
     }
   };
 
-  const saveHomeState = async (state) => {
+  const homeStateRef = useRef(homeState);
+  homeStateRef.current = homeState;
+
+  const saveHomeState = useCallback(async (state) => {
     try {
-      const updated = { ...homeState, ...state };
+      const updated = { ...homeStateRef.current, ...state };
       setHomeState(updated);
       await AsyncStorage.setItem(HOME_STATE_KEY, JSON.stringify(updated));
     } catch (e) {
       console.error('保存主页状态失败:', e);
     }
-  };
+  }, []);
 
   const loadTotalCoins = async () => {
     try {
@@ -298,8 +400,16 @@ export function AppProvider({ children }) {
   };
 
   const addCoinsSpent = async (amount) => {
-    const newTotal = totalCoinsSpent + amount;
-    await saveTotalCoins(newTotal);
+    try {
+      const stored = await AsyncStorage.getItem(TOTAL_COINS_KEY);
+      const prev = parseInt(stored, 10) || 0;
+      const newTotal = prev + amount;
+      await saveTotalCoins(newTotal);
+    } catch (e) {
+      console.error('累加金币失败:', e);
+      const newTotal = totalCoinsSpent + amount;
+      await saveTotalCoins(newTotal);
+    }
   };
 
   const loadFavorites = async () => {
@@ -360,12 +470,18 @@ export function AppProvider({ children }) {
     apiKey,
     setApiKey,
     saveApiKey,
+    apiKeys,
+    activeApiKeyId,
+    addApiKey,
+    removeApiKey,
+    switchApiKey,
+    renameApiKey,
     history,
-    setHistory,
+    addToHistory,
+    removeHistoryItems,
     persistHistory,
     updateHistoryItem,
     startPolling,
-    pollingRef,
     refreshRunningTasks,
     resumeRunningPolling,
     homeState,

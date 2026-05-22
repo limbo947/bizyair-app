@@ -85,6 +85,32 @@ export const MODELS = {
     paramType: 'width-height-quality',
     qualities: ['low', 'medium', 'high'],
     priceNote: '按尺寸+质量计费',
+    priceCalculator: (params) => {
+      const w = params.width || 1024;
+      const h = params.height || 1024;
+      const q = params.quality || 'medium';
+      const pixels = w * h;
+      const O2_PRICES = {
+        high: [
+          { max: 1920 * 1080, price: 1120 },
+          { max: 2560 * 1440, price: 2149 },
+          { max: Infinity, price: 3486 },
+        ],
+        medium: [
+          { max: 1920 * 1080, price: 378 },
+          { max: 2560 * 1440, price: 630 },
+          { max: Infinity, price: 966 },
+        ],
+        low: [
+          { max: 1920 * 1080, price: 161 },
+          { max: 2560 * 1440, price: 182 },
+          { max: Infinity, price: 224 },
+        ],
+      };
+      const tiers = O2_PRICES[q] || O2_PRICES.medium;
+      const tier = tiers.find((t) => pixels <= t.max);
+      return tier ? tier.price : tiers[tiers.length - 1].price;
+    },
     maxPromptLength: 2500,
     imageField: 'image_urls',
     maxImages: 16,
@@ -138,6 +164,11 @@ export const MODELS = {
     category: 'text-to-image',
     paramType: 'width-height',
     prices: { '1024': 5, '2048': 10 },
+    priceCalculator: (params) => {
+      const w = params.width || 1024;
+      const h = params.height || 1024;
+      return w * h <= 1024 * 1024 ? 5 : 10;
+    },
     maxPromptLength: 2500,
     supportsImageToImage: false,
   },
@@ -162,6 +193,8 @@ export const API_HOST = 'https://api.bizyair.cn';
 export const API_BASE = `${API_HOST}/x/v1/modelzoo/tasks/openapi`;
 export const UPLOAD_TOKEN_URL = `${API_HOST}/x/v1/upload/token`;
 export const COMMIT_RESOURCE_URL = `${API_HOST}/x/v1/input_resource/commit`;
+export const USER_METADATA_URL = `${API_HOST}/x/v1/user/metadata`;
+export const WALLET_BALANCE_URL = `${API_HOST}/y/v1/wallet`;
 export const ENV_API_KEY = process.env.EXPO_PUBLIC_BIZYAIR_API_KEY || '';
 
 export const REQUEST_TIMEOUT_MS = 15000;
@@ -173,6 +206,8 @@ export const TAB_FADE_IN_MS = 180;
 
 export const HISTORY_KEY = '@image_history';
 export const API_KEY_STORAGE_KEY = '@api_key';
+export const API_KEYS_STORAGE_KEY = '@api_keys';
+export const ACTIVE_KEY_ID_KEY = '@active_key_id';
 export const ACTIVE_TAB_KEY = '@active_tab';
 export const HOME_STATE_KEY = '@home_state';
 export const TOTAL_COINS_KEY = '@total_coins_spent';

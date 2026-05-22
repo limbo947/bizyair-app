@@ -2,7 +2,7 @@ import React from 'react';
 import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { TAB_HOME, TAB_HISTORY } from '../constants/models';
-import { Colors, Shadows, Radius, Spacing } from '../constants/theme';
+import { Colors, Radius, Spacing } from '../constants/theme';
 
 const TABS = [
   { key: TAB_HOME, label: '主页', icon: 'home-outline', iconActive: 'home' },

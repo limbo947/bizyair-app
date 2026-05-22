@@ -1,7 +1,7 @@
 import React from 'react';
 import { Text, View, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { QUALITY_LABELS, SIZE_PRESETS } from '../constants/models';
-import { Colors, Shadows, Radius, Spacing } from '../constants/theme';
+import { Colors, Radius, Spacing } from '../constants/theme';
 
 export function ResolutionRatioControls({ currentResolutions, currentRatios, resolution, aspectRatio, setResolution, setAspectRatio }) {
   return (
@@ -158,22 +158,22 @@ export function WidthHeightControls({ sizePreset, setSizePreset, customWidth, se
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: Colors.card, padding: Spacing.lg, borderRadius: Radius.md, marginBottom: Spacing.md, ...Shadows.sm },
+  card: { backgroundColor: Colors.card, padding: Spacing.lg, borderRadius: Radius.md, marginBottom: Spacing.md },
   label: { fontSize: 13, fontWeight: '600', color: Colors.textSecondary, marginBottom: Spacing.sm, textTransform: 'uppercase', letterSpacing: 0.5 },
   selectorRow: { flexDirection: 'row', gap: Spacing.sm },
   selectorButton: { flex: 1, paddingVertical: 10, borderRadius: Radius.sm, backgroundColor: Colors.bg, alignItems: 'center' },
-  selectorButtonActive: { backgroundColor: Colors.primary, ...Shadows.sm },
+  selectorButtonActive: { backgroundColor: Colors.primary },
   selectorText: { fontSize: 14, color: Colors.textSecondary, fontWeight: '500' },
   selectorTextActive: { color: Colors.textInverse, fontWeight: '600' },
   priceHint: { fontSize: 12, color: Colors.textTertiary, marginTop: Spacing.sm },
   aspectRatioGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
   ratioButton: { width: '22%', paddingVertical: 9, borderRadius: Radius.sm, backgroundColor: Colors.bg, alignItems: 'center', justifyContent: 'center' },
-  ratioButtonActive: { backgroundColor: Colors.primary, ...Shadows.sm },
+  ratioButtonActive: { backgroundColor: Colors.primary },
   ratioText: { fontSize: 13, color: Colors.textSecondary, fontWeight: '500' },
   ratioTextActive: { color: Colors.textInverse, fontWeight: '600' },
   presetGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
   presetButton: { width: '30%', paddingVertical: 10, borderRadius: Radius.sm, backgroundColor: Colors.bg, alignItems: 'center' },
-  presetButtonActive: { backgroundColor: Colors.primary, ...Shadows.sm },
+  presetButtonActive: { backgroundColor: Colors.primary },
   presetLabel: { fontSize: 14, color: Colors.textSecondary, fontWeight: '500' },
   presetLabelActive: { color: Colors.textInverse, fontWeight: '600' },
   presetDims: { fontSize: 11, color: Colors.textTertiary, marginTop: 2 },

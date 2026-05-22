@@ -9,11 +9,11 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { MODELS } from '../constants/models';
 import { CATEGORIES, MANUFACTURERS, FAVORITES_MAX_COUNT } from '../constants/modelMeta';
-import { Colors, Shadows, Radius, Spacing } from '../constants/theme';
+import { Colors, Radius, Spacing } from '../constants/theme';
 import { useAppContext } from '../context/AppContext';
 
 export function ModelSelectScreen({ currentModelId, onSelectModel, onBack }) {
-  const { favorites, addFavorite, removeFavorite, isFavorite } = useAppContext();
+  const { favorites, saveFavorites, isFavorite } = useAppContext();
   const [selectedCategory, setSelectedCategory] = useState('favorite');
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedModels, setSelectedModels] = useState([...favorites]);
@@ -47,26 +47,17 @@ export function ModelSelectScreen({ currentModelId, onSelectModel, onBack }) {
   };
 
   const handleSaveFavorites = () => {
-    selectedModels.forEach((modelId) => {
-      if (!favorites.includes(modelId)) {
-        addFavorite(modelId);
-      }
-    });
-    favorites.forEach((modelId) => {
-      if (!selectedModels.includes(modelId)) {
-        removeFavorite(modelId);
-      }
-    });
+    saveFavorites([...selectedModels]);
     setIsEditMode(false);
   };
 
   const toggleEditMode = () => {
     if (isEditMode) {
-      setSelectedModels([...favorites]);
+      handleSaveFavorites();
     } else {
       setSelectedModels([...favorites]);
+      setIsEditMode(true);
     }
-    setIsEditMode(!isEditMode);
   };
 
   const categoryList = Object.entries(CATEGORIES).map(([key, value]) => ({
@@ -97,7 +88,7 @@ export function ModelSelectScreen({ currentModelId, onSelectModel, onBack }) {
             styles.editButtonText,
             isEditMode && styles.editButtonTextActive
           ]}>
-            {isEditMode ? '完成' : '编辑'}
+            {isEditMode ? '完成' : '添加到常用模型'}
           </Text>
         </TouchableOpacity>
       </View>
@@ -116,17 +107,9 @@ export function ModelSelectScreen({ currentModelId, onSelectModel, onBack }) {
               ]}
               onPress={() => {
                 setSelectedCategory(category.key);
-                if (isEditMode && category.key !== 'favorite') {
-                  setIsEditMode(false);
-                }
               }}
               activeOpacity={0.7}
             >
-              <Ionicons
-                name={category.icon}
-                size={18}
-                color={selectedCategory === category.key ? Colors.primary : Colors.textTertiary}
-              />
               <Text
                 style={[
                   styles.categoryLabel,
@@ -155,7 +138,7 @@ export function ModelSelectScreen({ currentModelId, onSelectModel, onBack }) {
             <Text style={styles.modelListTitle}>
               {CATEGORIES[selectedCategory]?.label || '模型'}
             </Text>
-            {isEditMode && selectedCategory === 'favorite' && (
+            {isEditMode && (
               <Text style={styles.modelListSubtitle}>
                 已选 {selectedModels.length}/{FAVORITES_MAX_COUNT}
               </Text>
@@ -168,7 +151,7 @@ export function ModelSelectScreen({ currentModelId, onSelectModel, onBack }) {
               <Text style={styles.emptyText}>暂无模型</Text>
               {selectedCategory === 'favorite' && !isEditMode && (
                 <>
-                  <Text style={styles.emptySubtext}>点击右上角编辑添加常用模型</Text>
+                  <Text style={styles.emptySubtext}>点击右上角添加常用模型</Text>
                 </>
               )}
             </View>
@@ -212,38 +195,12 @@ export function ModelSelectScreen({ currentModelId, onSelectModel, onBack }) {
                         {model.manufacturerInfo.label}
                       </Text>
                     )}
-                    {model.prices && (
-                      <Text style={styles.modelCardPrice}>
-                        {Math.min(...Object.values(model.prices))} 金币起
-                      </Text>
-                    )}
-                    {model.priceNote && (
-                      <Text style={styles.modelCardPriceNote}>
-                        {model.priceNote}
-                      </Text>
-                    )}
-                    {!isEditMode && isSelected && (
-                      <View style={styles.selectedIndicator}>
-                        <Ionicons name="checkmark-circle" size={18} color={Colors.primary} />
-                      </View>
-                    )}
                   </TouchableOpacity>
                 );
               })}
             </View>
           )}
 
-          {isEditMode && selectedCategory === 'favorite' && (
-            <View style={styles.editFooter}>
-              <TouchableOpacity
-                style={styles.saveButton}
-                onPress={handleSaveFavorites}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.saveButtonText}>保存常用模型</Text>
-              </TouchableOpacity>
-            </View>
-          )}
         </ScrollView>
       </View>
     </View>
@@ -290,7 +247,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   categorySidebar: {
-    width: 100,
+    flex: 1,
     backgroundColor: Colors.bg,
     paddingTop: Spacing.sm,
   },
@@ -329,7 +286,9 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primaryBg,
   },
   modelList: {
-    flex: 1,
+    width: 300,
+    flexGrow: 0,
+    flexShrink: 0,
     backgroundColor: Colors.card,
   },
   modelListHeader: {
@@ -413,35 +372,5 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: Colors.textTertiary,
     marginRight: Spacing.sm,
-  },
-  modelCardPrice: {
-    fontSize: 12,
-    color: Colors.warning,
-    marginRight: Spacing.sm,
-  },
-  modelCardPriceNote: {
-    fontSize: 11,
-    color: Colors.textTertiary,
-    fontStyle: 'italic',
-  },
-  selectedIndicator: {
-    marginLeft: 'auto',
-  },
-  editFooter: {
-    padding: Spacing.md,
-    paddingBottom: Spacing.xl,
-    borderTopWidth: 0.5,
-    borderTopColor: Colors.separator,
-  },
-  saveButton: {
-    backgroundColor: Colors.primary,
-    paddingVertical: 14,
-    borderRadius: Radius.md,
-    alignItems: 'center',
-  },
-  saveButtonText: {
-    fontSize: 15,
-    color: Colors.textInverse,
-    fontWeight: '600',
   },
 });

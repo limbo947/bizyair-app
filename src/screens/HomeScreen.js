@@ -10,7 +10,7 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
 import { useAppContext } from '../context/AppContext';
 import { submitImageTask, uploadImageFile } from '../services/apiClient';
@@ -18,7 +18,7 @@ import { calculatePrice, getRatios, getResolutions, getModelInfo, getActualResol
 import { buildPayload } from '../utils/payloadBuilder';
 import { generateId } from '../utils/helpers';
 import { ENV_API_KEY } from '../constants/models';
-import { Colors, Shadows, Radius, Spacing } from '../constants/theme';
+import { Colors, Radius, Spacing } from '../constants/theme';
 import {
   ResolutionRatioControls,
   WidthHeightQualityControls,
@@ -26,18 +26,22 @@ import {
   WanSizeControls,
   WidthHeightControls,
 } from '../components/ParamControls';
-import { UserInfoCard } from '../components/UserInfoCard';
 import { ModelSelector } from '../components/ModelSelector';
 import { FavoriteModelsLayer } from '../components/FavoriteModelsLayer';
+import { ApiKeyDropdown } from '../components/ApiKeyDropdown';
 
 export function HomeScreen({ onOpenModelSelect }) {
   const {
     apiKey,
     setApiKey,
     saveApiKey,
-    history,
-    setHistory,
-    persistHistory,
+    apiKeys,
+    activeApiKeyId,
+    addApiKey,
+    removeApiKey,
+    switchApiKey,
+    renameApiKey,
+    addToHistory,
     startPolling,
     updateHistoryItem,
     homeState,
@@ -64,39 +68,13 @@ export function HomeScreen({ onOpenModelSelect }) {
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState('');
   const [showFavorites, setShowFavorites] = useState(false);
-  const [userCardExpanded, setUserCardExpanded] = useState(true);
+  const [showApiKeyDropdown, setShowApiKeyDropdown] = useState(false);
 
   const currentModel = getModelInfo(modelId);
   const currentRatios = getRatios(modelId, mode);
   const currentResolutions = getResolutions(modelId, mode);
   const paramType = currentModel.paramType;
 
-  const persistCurrentState = useCallback(() => {
-    saveHomeState({
-      modelId,
-      mode,
-      prompt,
-      imageUrls,
-      resolution,
-      aspectRatio,
-      quality,
-      sizePreset,
-      customWidth,
-      customHeight,
-    });
-  }, [
-    modelId,
-    mode,
-    prompt,
-    imageUrls,
-    resolution,
-    aspectRatio,
-    quality,
-    sizePreset,
-    customWidth,
-    customHeight,
-    saveHomeState,
-  ]);
 
   useEffect(() => {
     if (paramType === 'resolution-ratio' || paramType === 'wan-size') {
@@ -114,8 +92,14 @@ export function HomeScreen({ onOpenModelSelect }) {
   }, [modelId, mode, paramType, currentResolutions, currentRatios, currentModel.supportsImageToImage]);
 
   useEffect(() => {
-    persistCurrentState();
-  }, [persistCurrentState]);
+    const timer = setTimeout(() => {
+      saveHomeState({
+        modelId, mode, prompt, imageUrls, resolution, aspectRatio,
+        quality, sizePreset, customWidth, customHeight,
+      });
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [modelId, mode, prompt, imageUrls, resolution, aspectRatio, quality, sizePreset, customWidth, customHeight, saveHomeState]);
 
   const handleModelSelect = (id) => {
     setModelId(id);
@@ -232,9 +216,7 @@ export function HomeScreen({ onOpenModelSelect }) {
         minute: '2-digit',
       }),
     };
-    const updated = [entry, ...history];
-    setHistory(updated);
-    await persistHistory(updated);
+    await addToHistory(entry);
 
     await addCoinsSpent(price);
 
@@ -326,15 +308,109 @@ export function HomeScreen({ onOpenModelSelect }) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <View style={styles.headerTop}>
+        {userInfo && (apiKey || ENV_API_KEY) ? (
+          <View style={styles.headerInner}>
+            <TouchableOpacity
+              style={styles.headerLeft}
+              onPress={() => setShowApiKeyDropdown(true)}
+              activeOpacity={0.7}
+            >
+              <Image source={{ uri: userInfo.avatar }} style={styles.headerAvatar} />
+              <View style={styles.headerUserInfo}>
+                <View style={styles.headerNameRow}>
+                  <Text style={styles.headerUserName}>{userInfo.name}</Text>
+                  {userInfo.user_level_str ? (
+                    <MaterialCommunityIcons name="crown" size={14} color={Colors.warning} style={{ marginLeft: 4 }} />
+                  ) : null}
+                </View>
+                <View style={styles.headerBalances}>
+                  <MaterialCommunityIcons name="gold" size={14} color={Colors.warning} style={{ paddingRight: 2 }} />
+                  <Text style={styles.headerBalanceText}>
+                    {walletBalance?.charge_balance_amount ?? '--'}
+                  </Text>
+                  <MaterialCommunityIcons name="gold" size={14} color="#C0C0C0" style={{ marginLeft: 10, paddingRight: 2 }} />
+                  <Text style={styles.headerBalanceText}>
+                    {walletBalance?.gift_balance_amount ?? '--'}
+                  </Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.headerAllModelsButton}
+              onPress={handleOpenAllModels}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.headerAllModelsText}>所有模型</Text>
+              <Ionicons name="apps-outline" size={18} color={Colors.textPrimary} />
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <View style={styles.headerInner}>
+            <View style={styles.headerLeft}>
+              <View style={[styles.headerAvatar, styles.headerAvatarPlaceholder]}>
+                <Ionicons name="person-outline" size={20} color={Colors.textTertiary} />
+              </View>
+              <TextInput
+                style={styles.headerApiInput}
+                placeholder="输入Bizyair API Key"
+                value={apiKey}
+                onChangeText={setApiKey}
+                secureTextEntry
+                placeholderTextColor={Colors.textPlaceholder}
+              />
+            </View>
+            {apiKey.trim() ? (
+              <TouchableOpacity
+                style={styles.headerSaveButton}
+                onPress={() => { saveApiKey(apiKey); setShowApiKeyInput(false); }}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.headerSaveButtonText}>保存</Text>
+              </TouchableOpacity>
+            ) : (
+              <View style={styles.headerAllModelsButton}>
+                <Text style={styles.headerAllModelsText}>所有模型</Text>
+                <Ionicons name="apps-outline" size={18} color={Colors.textPrimary} />
+              </View>
+            )}
+          </View>
+        )}
+      </View>
+
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
+        {showApiKeyInput ? (
+          <View style={styles.card}>
+            <View style={styles.labelRow}>
+              <Ionicons name="key" size={16} color={Colors.warning} />
+              <Text style={styles.label}>API 密钥</Text>
+            </View>
+            <TextInput
+              style={styles.apiKeyInput}
+              placeholder="输入你的Bizyair API Key"
+              value={apiKey}
+              onChangeText={setApiKey}
+              secureTextEntry
+              maxLength={100}
+              placeholderTextColor={Colors.textPlaceholder}
+            />
+            {apiKey.trim() ? (
+              <TouchableOpacity
+                style={styles.saveKeyButton}
+                onPress={() => { saveApiKey(apiKey); setShowApiKeyInput(false); }}
+              >
+                <Text style={styles.saveKeyButtonText}>保存密钥</Text>
+              </TouchableOpacity>
+            ) : null}
+          </View>
+        ) : null}
+
+        <View style={styles.modelAndModeRow}>
           <ModelSelector
             currentModel={currentModel}
             modelId={modelId}
             onSelectModel={handleModelSelect}
-            onOpenAllModels={handleOpenAllModels}
             onOpenFavorites={handleOpenFavorites}
           />
-          
           <View style={styles.modeToggle}>
             <TouchableOpacity
               style={[styles.modeButton, mode === 'text-to-image' && styles.modeButtonActive]}
@@ -356,21 +432,6 @@ export function HomeScreen({ onOpenModelSelect }) {
             ) : null}
           </View>
         </View>
-      </View>
-
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
-        <UserInfoCard
-          userInfo={userInfo}
-          walletBalance={walletBalance}
-          apiKey={apiKey}
-          showApiKeyInput={showApiKeyInput}
-          userCardExpanded={userCardExpanded}
-          onToggleExpand={() => setUserCardExpanded(!userCardExpanded)}
-          onApiKeyChange={setApiKey}
-          onSaveApiKey={() => { saveApiKey(apiKey); setShowApiKeyInput(false); }}
-          onShowApiKeyInput={() => { if (!apiKey) setApiKey(ENV_API_KEY); setShowApiKeyInput(true); }}
-          onRefresh={() => refreshUserInfo(apiKey || ENV_API_KEY)}
-        />
 
         <View style={styles.card}>
           <Text style={styles.label}>提示词</Text>
@@ -451,8 +512,18 @@ export function HomeScreen({ onOpenModelSelect }) {
         onClose={() => setShowFavorites(false)}
         currentModelId={modelId}
         onSelectModel={handleModelSelect}
-        onEditFavorites={handleOpenAllModels}
         favorites={favorites}
+      />
+
+      <ApiKeyDropdown
+        visible={showApiKeyDropdown}
+        onClose={() => setShowApiKeyDropdown(false)}
+        apiKeys={apiKeys}
+        activeApiKeyId={activeApiKeyId}
+        onSwitchKey={switchApiKey}
+        onDeleteKey={removeApiKey}
+        onAddKey={addApiKey}
+        onRenameKey={renameApiKey}
       />
     </View>
   );
@@ -460,19 +531,33 @@ export function HomeScreen({ onOpenModelSelect }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bg },
-  header: { backgroundColor: Colors.card, paddingHorizontal: Spacing.xl, paddingTop: Spacing.sm, paddingBottom: Spacing.md, borderBottomWidth: 0.5, borderBottomColor: Colors.separator },
-  headerTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  header: { backgroundColor: Colors.card, paddingLeft: Spacing.md, paddingRight: Spacing.md, paddingVertical: Spacing.sm, borderBottomWidth: 0.5, borderBottomColor: Colors.separator },
+  headerInner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, flex: 1, borderRadius: Radius.sm },
+  headerAvatar: { width: 36, height: 36, borderRadius: 18 },
+  headerAvatarPlaceholder: { backgroundColor: Colors.bg, alignItems: 'center', justifyContent: 'center' },
+  headerUserInfo: { flexDirection: 'column' },
+  headerNameRow: { flexDirection: 'row', alignItems: 'center', paddingLeft: 2 },
+  headerUserName: { fontSize: 14, color: Colors.textPrimary, fontWeight: '600' },
+  headerBalances: { flexDirection: 'row', alignItems: 'center', marginTop: 1 },
+  headerBalanceText: { fontSize: 13, color: Colors.textPrimary, fontWeight: '600' },
+  headerApiInput: { flex: 1, fontSize: 14, color: Colors.textPrimary, backgroundColor: Colors.bg, borderRadius: Radius.sm, paddingHorizontal: Spacing.sm, paddingVertical: Spacing.xs },
+  headerSaveButton: { paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, borderRadius: Radius.sm, backgroundColor: Colors.primary },
+  headerSaveButtonText: { color: Colors.textInverse, fontSize: 13, fontWeight: '600' },
+  headerAllModelsButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.bg, paddingHorizontal: Spacing.sm, paddingVertical: Spacing.sm, borderRadius: Radius.sm, gap: Spacing.xs },
+  headerAllModelsText: { fontSize: 14, color: Colors.textPrimary, fontWeight: '600' },
+  modelAndModeRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
   modeToggle: { flexDirection: 'row', borderRadius: Radius.sm, backgroundColor: Colors.bg, padding: 2 },
   modeButton: { paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, borderRadius: Radius.xs, alignItems: 'center' },
   modeButtonActive: { backgroundColor: Colors.card },
   modeButtonText: { fontSize: 13, color: Colors.textTertiary, fontWeight: '500' },
   modeButtonTextActive: { color: Colors.primary, fontWeight: '600' },
   scroll: { flex: 1 },
-  scrollContent: { padding: Spacing.lg, paddingBottom: Spacing.xxl },
-  card: { backgroundColor: Colors.card, padding: Spacing.lg, borderRadius: Radius.md, marginBottom: Spacing.md, ...Shadows.sm },
+  scrollContent: { paddingTop: 8, paddingRight: Spacing.md, paddingBottom: Spacing.xxl, paddingLeft: Spacing.md },
+  card: { backgroundColor: Colors.card, padding: Spacing.lg, borderRadius: Radius.md, marginBottom: Spacing.md },
   labelRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, marginBottom: Spacing.sm },
   label: { fontSize: 13, fontWeight: '600', color: Colors.textSecondary, marginBottom: Spacing.sm, textTransform: 'uppercase', letterSpacing: 0.5 },
-  promptInput: { fontSize: 16, color: Colors.textPrimary, minHeight: 80, maxHeight: 160, textAlignVertical: 'top', borderWidth: 0, borderRadius: Radius.sm, padding: Spacing.md, backgroundColor: Colors.bg },
+  promptInput: { fontSize: 16, color: Colors.textPrimary, minHeight: 80, maxHeight: 160, textAlignVertical: 'top', borderWidth: 0, borderRadius: Radius.sm, padding: Spacing.sm, backgroundColor: Colors.bg },
   charCount: { fontSize: 12, color: Colors.textTertiary, textAlign: 'right', marginTop: Spacing.xs },
   uploadButton: { backgroundColor: Colors.primaryBg, paddingVertical: 18, borderRadius: Radius.md, borderWidth: 1.5, borderColor: Colors.primaryBorder, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: Spacing.sm },
   uploadButtonDisabled: { opacity: 0.6 },
@@ -483,8 +568,11 @@ const styles = StyleSheet.create({
   uploadedName: { flex: 1, fontSize: 14, color: Colors.textPrimary, fontWeight: '500' },
   removeUploadedButton: { backgroundColor: Colors.errorBg, paddingHorizontal: 10, paddingVertical: 5, borderRadius: Radius.xs },
   removeUploadedButtonText: { color: Colors.error, fontSize: 13, fontWeight: '600' },
-  generateButton: { backgroundColor: Colors.primary, paddingVertical: 16, borderRadius: Radius.md, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 10, marginBottom: Spacing.md, ...Shadows.md },
+  generateButton: { backgroundColor: Colors.primary, paddingVertical: 16, borderRadius: Radius.md, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 10, marginBottom: Spacing.md },
   generateButtonDisabled: { backgroundColor: Colors.primaryDisabled },
   generateButtonText: { color: Colors.textInverse, fontSize: 17, fontWeight: '600', letterSpacing: -0.3 },
   errorText: { color: Colors.error, textAlign: 'center', marginBottom: Spacing.md, fontSize: 14 },
+  apiKeyInput: { fontSize: 15, color: Colors.textPrimary, borderWidth: 0, borderRadius: Radius.sm, padding: Spacing.md, fontFamily: 'monospace', backgroundColor: Colors.bg },
+  saveKeyButton: { backgroundColor: Colors.primary, paddingVertical: 10, borderRadius: Radius.sm, alignItems: 'center', marginTop: Spacing.sm },
+  saveKeyButtonText: { color: Colors.textInverse, fontSize: 15, fontWeight: '600' },
 });

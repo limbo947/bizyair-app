@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ENV_API_KEY } from '../constants/models';
-import { Colors, Shadows, Radius, Spacing } from '../constants/theme';
+import { Colors, Radius, Spacing } from '../constants/theme';
 
 export function UserInfoCard({
   userInfo,
@@ -185,7 +185,7 @@ export function UserInfoCard({
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: Colors.card, padding: Spacing.lg, borderRadius: Radius.md, marginBottom: Spacing.md, ...Shadows.sm },
+  card: { backgroundColor: Colors.card, padding: Spacing.lg, borderRadius: Radius.md, marginBottom: Spacing.md },
   labelRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, marginBottom: Spacing.sm },
   label: { fontSize: 13, fontWeight: '600', color: Colors.textSecondary, marginBottom: Spacing.sm, textTransform: 'uppercase', letterSpacing: 0.5 },
   userCard: { paddingVertical: Spacing.md, paddingHorizontal: Spacing.lg },

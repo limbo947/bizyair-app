@@ -3,21 +3,21 @@ import {
   StyleSheet,
   Text,
   View,
-  TextInput,
   TouchableOpacity,
   Image,
-  ScrollView,
   ActivityIndicator,
-  Modal,
   FlatList,
   Platform,
   NativeModules,
+  Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import { useAppContext } from '../context/AppContext';
+import { HistoryModals } from '../components/HistoryModals';
+import { HistoryFilters } from '../components/HistoryFilters';
 import { PAGE_SIZE, TAB_HISTORY } from '../constants/models';
-import { Colors, Shadows, Radius, Spacing } from '../constants/theme';
+import { Colors, Radius, Spacing } from '../constants/theme';
 
 const { AndroidDownloadManager } = NativeModules;
 
@@ -29,15 +29,6 @@ const SORT_OPTIONS = [
   { key: 'oldest', label: '最早优先' },
   { key: 'price_high', label: '价格高→低' },
   { key: 'price_low', label: '价格低→高' },
-];
-
-const FILTER_OPTIONS = [
-  { key: 'all', label: '全部' },
-  { key: 'Pending', label: '排队中' },
-  { key: 'Running', label: '生成中' },
-  { key: 'Saving', label: '转存中' },
-  { key: 'Success', label: '已完成' },
-  { key: 'Failed', label: '失败' },
 ];
 
 function formatDuration(startedAt, completedAt) {
@@ -67,7 +58,6 @@ function triggerDownload(url, filename) {
   } else if (Platform.OS === 'android' && AndroidDownloadManager) {
     AndroidDownloadManager.downloadFile(url, filename || 'image.jpg');
   } else {
-    const { Linking } = require('react-native');
     Linking.openURL(url);
   }
 }
@@ -75,8 +65,7 @@ function triggerDownload(url, filename) {
 export function HistoryScreen() {
   const {
     history,
-    setHistory,
-    persistHistory,
+    removeHistoryItems,
     activeTab,
     refreshRunningTasks,
     totalCoinsSpent,
@@ -94,7 +83,6 @@ export function HistoryScreen() {
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [isDownloading, setIsDownloading] = useState(false);
   const [deleteConfirmBatch, setDeleteConfirmBatch] = useState(false);
-  const [toastMsg, setToastMsg] = useState('');
   const [tick, setTick] = useState(0);
   const flatListRef = useRef(null);
   const prevActiveTab = useRef(activeTab);
@@ -154,18 +142,16 @@ export function HistoryScreen() {
   const handleFilterChange = useCallback((key) => { setFilterBy(key); setVisibleCount(PAGE_SIZE); setBatchMode(false); setSelectedIds(new Set()); }, []);
 
   const handleDelete = useCallback((id) => {
-    const updated = history.filter((item) => item.id !== id);
-    setHistory(updated); persistHistory(updated);
+    removeHistoryItems((item) => item.id === id);
     setSelectedIds((prev) => { const next = new Set(prev); next.delete(id); return next; });
     setDeleteConfirmId(null);
-  }, [history, setHistory, persistHistory]);
+  }, [removeHistoryItems]);
 
   const handleBatchDelete = useCallback(() => {
     if (selectedIds.size === 0) return;
-    const updated = history.filter((item) => !selectedIds.has(item.id));
-    setHistory(updated); persistHistory(updated);
+    removeHistoryItems((item) => selectedIds.has(item.id));
     setSelectedIds(new Set()); setBatchMode(false); setDeleteConfirmBatch(false);
-  }, [history, setHistory, persistHistory, selectedIds]);
+  }, [removeHistoryItems, selectedIds]);
 
   const handleDownload = useCallback((item) => {
     if (!item.imageUrl) return;
@@ -305,160 +291,54 @@ export function HistoryScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.searchBar}>
-        <View style={styles.searchInputWrap}>
-          <Ionicons name="search" size={18} color={Colors.textTertiary} />
-          <TextInput style={styles.searchInput} placeholder="搜索提示词、模型名..." value={searchText} onChangeText={handleSearch} placeholderTextColor={Colors.textPlaceholder} />
-          {searchText.length > 0 ? (
-            <TouchableOpacity onPress={() => handleSearch('')}><Text style={styles.clearSearch}>✕</Text></TouchableOpacity>
-          ) : null}
-        </View>
-      </View>
-
-      <View style={styles.filterBar}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScrollContent}>
-          {FILTER_OPTIONS.map((opt) => (
-            <TouchableOpacity key={opt.key} style={[styles.filterChip, filterBy === opt.key && styles.filterChipActive]} onPress={() => handleFilterChange(opt.key)}>
-              <Text style={[styles.filterChipText, filterBy === opt.key && styles.filterChipTextActive]}>{opt.label}{opt.key === 'all' ? ` (${history.length})` : ''}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-        <TouchableOpacity style={styles.sortButton} onPress={() => setShowSortPicker(true)}>
-          <Ionicons name="funnel-outline" size={18} color={Colors.textSecondary} />
-        </TouchableOpacity>
-      </View>
-
-      {history.length > 0 ? (
-        <View style={styles.batchBar}>
-          <TouchableOpacity style={[styles.batchToggleButton, batchMode && styles.batchToggleButtonActive]} onPress={toggleBatchMode}>
-            <Text style={[styles.batchToggleText, batchMode && styles.batchToggleTextActive]}>{batchMode ? '取消批量' : '批量操作'}</Text>
-          </TouchableOpacity>
-          {batchMode ? (
-            <View style={styles.batchActions}>
-              <TouchableOpacity style={styles.batchActionButton} onPress={selectAll}><Text style={styles.batchActionText}>全选</Text></TouchableOpacity>
-              <TouchableOpacity style={styles.batchActionButton} onPress={deselectAll}><Text style={styles.batchActionText}>取消</Text></TouchableOpacity>
-              <Text style={styles.batchCount}>已选 {selectedIds.size}/{history.length}</Text>
-              <TouchableOpacity style={[styles.batchActionButton, styles.batchDeleteButton]} onPress={() => setDeleteConfirmBatch(true)} disabled={selectedIds.size === 0}>
-                <Text style={[styles.batchActionText, styles.batchDeleteText]}>删除({selectedIds.size})</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.batchActionButton, styles.batchDownloadBtn]} onPress={handleBatchDownload} disabled={selectedIds.size === 0 || isDownloading}>
-                <Text style={[styles.batchActionText, styles.batchDownloadText]}>{isDownloading ? '下载中...' : `下载(${selectedIds.size})`}</Text>
-              </TouchableOpacity>
-            </View>
-          ) : null}
-        </View>
-      ) : null}
-
-      <View style={styles.statsBar}>
-        <View style={styles.statItem}><Text style={styles.statValue}>{activeCount}</Text><Text style={styles.statLabel}>进行中</Text></View>
-        <View style={styles.statDivider} />
-        <View style={styles.statItem}><Text style={[styles.statValue, { color: Colors.success }]}>{successCount}</Text><Text style={styles.statLabel}>已完成</Text></View>
-        <View style={styles.statDivider} />
-        <View style={styles.statItem}><Text style={[styles.statValue, { color: Colors.error }]}>{failedCount}</Text><Text style={styles.statLabel}>失败</Text></View>
-        <View style={styles.statDivider} />
-        <View style={styles.statItem}><Text style={[styles.statValue, { color: Colors.warning }]}>{totalCoinsSpent}</Text><Text style={styles.statLabel}>总金币</Text></View>
-      </View>
+      <HistoryFilters
+        history={history}
+        searchText={searchText}
+        filterBy={filterBy}
+        sortBy={sortBy}
+        batchMode={batchMode}
+        selectedIds={selectedIds}
+        isDownloading={isDownloading}
+        activeCount={activeCount}
+        successCount={successCount}
+        failedCount={failedCount}
+        totalCoinsSpent={totalCoinsSpent}
+        onSearchChange={handleSearch}
+        onFilterChange={handleFilterChange}
+        onSortPress={() => setShowSortPicker(true)}
+        onToggleBatchMode={toggleBatchMode}
+        onSelectAll={selectAll}
+        onDeselectAll={deselectAll}
+        onBatchDeletePress={() => setDeleteConfirmBatch(true)}
+        onBatchDownload={handleBatchDownload}
+      />
 
       <FlatList ref={flatListRef} data={displayedItems} keyExtractor={(item) => item.id} renderItem={renderItem} extraData={{ selectedIds, tick }} ListEmptyComponent={renderEmpty} ListFooterComponent={renderFooter} onEndReached={loadMore} onEndReachedThreshold={0.3} contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false} />
 
-      <Modal visible={!!previewImage} transparent animationType="fade" onRequestClose={() => { setPreviewImage(null); }}>
-        <TouchableOpacity
-          style={styles.previewOverlay}
-          activeOpacity={1}
-          onPress={() => setPreviewImage(null)}
-        >
-          <Image source={{ uri: previewImage?.url }} style={styles.modalImage} resizeMode="contain" />
-        </TouchableOpacity>
-      </Modal>
-
-      <Modal visible={!!logModal} transparent animationType="fade" onRequestClose={() => setLogModal(null)}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.logModalContent}>
-            <View style={styles.logModalHeader}>
-              <Text style={styles.logModalTitle}>响应日志</Text>
-              <TouchableOpacity onPress={() => setLogModal(null)}><Text style={styles.logModalClose}>✕</Text></TouchableOpacity>
-            </View>
-            <ScrollView style={styles.logModalScroll}>
-              <Text style={styles.logModalText}>{logModal?.lastResponse ? JSON.stringify(logModal.lastResponse, null, 2) : '暂无响应信息'}</Text>
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
-
-      <Modal visible={deleteConfirmId !== null} transparent animationType="fade" onRequestClose={() => setDeleteConfirmId(null)}>
-        <View style={styles.confirmOverlay}>
-          <View style={styles.confirmBox}>
-            <Text style={styles.confirmTitle}>确认删除</Text>
-            <Text style={styles.confirmMessage}>确定要删除这条记录吗？此操作不可恢复。</Text>
-            <View style={styles.confirmActions}>
-              <TouchableOpacity style={styles.confirmCancelButton} onPress={() => setDeleteConfirmId(null)}><Text style={styles.confirmCancelText}>取消</Text></TouchableOpacity>
-              <TouchableOpacity style={styles.confirmDeleteButton} onPress={() => handleDelete(deleteConfirmId)}><Text style={styles.confirmDeleteText}>删除</Text></TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      <Modal visible={deleteConfirmBatch} transparent animationType="fade" onRequestClose={() => setDeleteConfirmBatch(false)}>
-        <View style={styles.confirmOverlay}>
-          <View style={styles.confirmBox}>
-            <Text style={styles.confirmTitle}>确认批量删除</Text>
-            <Text style={styles.confirmMessage}>确定要删除选中的 {selectedIds.size} 条记录吗？此操作不可恢复。</Text>
-            <View style={styles.confirmActions}>
-              <TouchableOpacity style={styles.confirmCancelButton} onPress={() => setDeleteConfirmBatch(false)}><Text style={styles.confirmCancelText}>取消</Text></TouchableOpacity>
-              <TouchableOpacity style={styles.confirmDeleteButton} onPress={handleBatchDelete}><Text style={styles.confirmDeleteText}>删除</Text></TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      <Modal visible={showSortPicker} transparent animationType="fade" onRequestClose={() => setShowSortPicker(false)}>
-        <TouchableOpacity style={styles.pickerOverlay} activeOpacity={1} onPress={() => setShowSortPicker(false)}>
-          <View style={styles.pickerContent}>
-            <Text style={styles.pickerTitle}>排序方式</Text>
-            {SORT_OPTIONS.map((opt) => (
-              <TouchableOpacity key={opt.key} style={[styles.pickerOption, sortBy === opt.key && styles.pickerOptionActive]} onPress={() => handleSortChange(opt.key)}>
-                <Text style={[styles.pickerOptionText, sortBy === opt.key && styles.pickerOptionTextActive]}>{opt.label}</Text>
-                {sortBy === opt.key ? <Text style={styles.pickerCheck}>✓</Text> : null}
-              </TouchableOpacity>
-            ))}
-          </View>
-        </TouchableOpacity>
-      </Modal>
+      <HistoryModals
+        previewImage={previewImage}
+        setPreviewImage={setPreviewImage}
+        logModal={logModal}
+        setLogModal={setLogModal}
+        deleteConfirmId={deleteConfirmId}
+        setDeleteConfirmId={setDeleteConfirmId}
+        deleteConfirmBatch={deleteConfirmBatch}
+        setDeleteConfirmBatch={setDeleteConfirmBatch}
+        showSortPicker={showSortPicker}
+        setShowSortPicker={setShowSortPicker}
+        handleDelete={handleDelete}
+        handleBatchDelete={handleBatchDelete}
+        selectedIds={selectedIds}
+        handleSortChange={handleSortChange}
+        sortBy={sortBy}
+        SORT_OPTIONS={SORT_OPTIONS}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bg },
-  searchBar: { backgroundColor: Colors.card, paddingHorizontal: Spacing.lg, paddingTop: Spacing.md, paddingBottom: Spacing.sm, borderBottomWidth: 0.5, borderBottomColor: Colors.separator },
-  searchInputWrap: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.bg, borderRadius: Radius.sm, paddingHorizontal: Spacing.md, height: 40, gap: Spacing.sm },
-  searchInput: { flex: 1, fontSize: 15, color: Colors.textPrimary, paddingVertical: 0 },
-  clearSearch: { fontSize: 16, color: Colors.textTertiary, paddingHorizontal: 4 },
-  filterBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.card, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, borderBottomWidth: 0.5, borderBottomColor: Colors.separator },
-  filterScrollContent: { gap: Spacing.sm, paddingRight: Spacing.sm },
-  filterChip: { paddingHorizontal: Spacing.md, paddingVertical: 5, borderRadius: Radius.full, backgroundColor: Colors.bg },
-  filterChipActive: { backgroundColor: Colors.primary },
-  filterChipText: { fontSize: 13, color: Colors.textSecondary, fontWeight: '500' },
-  filterChipTextActive: { color: Colors.textInverse, fontWeight: '600' },
-  sortButton: { paddingHorizontal: Spacing.sm, paddingVertical: Spacing.xs, marginLeft: 4 },
-  batchBar: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', backgroundColor: Colors.card, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, borderBottomWidth: 0.5, borderBottomColor: Colors.separator, gap: Spacing.sm },
-  batchToggleButton: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: Radius.full, backgroundColor: Colors.primaryBg },
-  batchToggleButtonActive: { backgroundColor: Colors.primary },
-  batchToggleText: { fontSize: 13, color: Colors.primary, fontWeight: '600' },
-  batchToggleTextActive: { color: Colors.textInverse, fontWeight: '600' },
-  batchActions: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, flexWrap: 'wrap' },
-  batchActionButton: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: Radius.full, backgroundColor: Colors.bg },
-  batchActionText: { fontSize: 12, color: Colors.textSecondary, fontWeight: '500' },
-  batchCount: { fontSize: 12, color: Colors.textPrimary, fontWeight: '600', marginHorizontal: 4 },
-  batchDeleteButton: { backgroundColor: Colors.errorBg },
-  batchDeleteText: { color: Colors.error },
-  batchDownloadBtn: { backgroundColor: Colors.successBg },
-  batchDownloadText: { color: Colors.success },
-  statsBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.card, paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md, borderBottomWidth: 0.5, borderBottomColor: Colors.separator },
-  statItem: { alignItems: 'center', flex: 1 },
-  statValue: { fontSize: 17, fontWeight: '700', color: Colors.primary },
-  statLabel: { fontSize: 10, color: Colors.textTertiary, marginTop: 2 },
-  statDivider: { width: 0.5, height: 24, backgroundColor: Colors.separator },
   listContent: { paddingHorizontal: Spacing.sm, paddingTop: Spacing.md, paddingBottom: Spacing.xxl },
   historyCard: { flexDirection: 'row', backgroundColor: Colors.card, borderRadius: Radius.xs, marginBottom: Spacing.sm, overflow: 'hidden' },
   checkboxArea: { width: 44, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.bg },
@@ -493,32 +373,4 @@ const styles = StyleSheet.create({
   footerEndText: { fontSize: 13, color: Colors.disabled },
   footerLoading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: Spacing.xl, gap: Spacing.sm },
   footerLoadingText: { fontSize: 13, color: Colors.textTertiary },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
-  modalImage: { width: '100%', height: '80%' },
-  previewOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center' },
-  logModalContent: { width: '90%', maxHeight: '80%', backgroundColor: '#1C1C1E', borderRadius: Radius.lg, overflow: 'hidden' },
-  logModalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: Spacing.lg, borderBottomWidth: 0.5, borderBottomColor: '#38383A' },
-  logModalTitle: { fontSize: 17, fontWeight: '600', color: Colors.textInverse },
-  logModalClose: { fontSize: 20, color: Colors.textTertiary, fontWeight: '600', paddingHorizontal: 8 },
-  logModalScroll: { padding: Spacing.lg, maxHeight: 500 },
-  logModalText: { fontSize: 13, color: '#98989D', fontFamily: 'monospace' },
-  pickerOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'center', alignItems: 'center' },
-  pickerContent: { width: '80%', backgroundColor: Colors.card, borderRadius: Radius.lg, padding: Spacing.xl },
-  pickerTitle: { fontSize: 17, fontWeight: '600', color: Colors.textPrimary, marginBottom: Spacing.lg, textAlign: 'center' },
-  pickerOption: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12, paddingHorizontal: Spacing.lg, borderRadius: Radius.sm, marginBottom: 2 },
-  pickerOptionActive: { backgroundColor: Colors.primaryBg },
-  pickerOptionText: { fontSize: 16, color: Colors.textSecondary },
-  pickerOptionTextActive: { color: Colors.primary, fontWeight: '600' },
-  pickerCheck: { fontSize: 18, color: Colors.primary, fontWeight: '600' },
-  confirmOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'center', alignItems: 'center' },
-  confirmBox: { width: '82%', backgroundColor: Colors.card, borderRadius: Radius.xl, padding: Spacing.xxl },
-  confirmTitle: { fontSize: 18, fontWeight: '600', color: Colors.textPrimary, marginBottom: Spacing.sm, textAlign: 'center' },
-  confirmMessage: { fontSize: 15, color: Colors.textSecondary, lineHeight: 22, marginBottom: Spacing.xl, textAlign: 'center' },
-  confirmActions: { flexDirection: 'row', gap: Spacing.md },
-  confirmCancelButton: { flex: 1, paddingVertical: 12, borderRadius: Radius.md, backgroundColor: Colors.bg, alignItems: 'center' },
-  confirmCancelText: { fontSize: 17, color: Colors.primary, fontWeight: '600' },
-  confirmDeleteButton: { flex: 1, paddingVertical: 12, borderRadius: Radius.md, backgroundColor: Colors.error, alignItems: 'center' },
-  confirmDeleteText: { fontSize: 17, color: Colors.textInverse, fontWeight: '600' },
-  toast: { position: 'absolute', bottom: 100, left: '50%', transform: [{ translateX: -70 }], flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, backgroundColor: 'rgba(28,28,30,0.88)', paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md, borderRadius: Radius.full, ...Shadows.lg },
-  toastText: { color: Colors.textInverse, fontSize: 14, fontWeight: '600' },
 });

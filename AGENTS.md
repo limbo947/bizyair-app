@@ -6,6 +6,7 @@
 - 目标架构：Android arm64-v8a
 
 ## 项目结构
+  *新增文件或修改文件后，及时更新本章节，保持与项目结构一致。*
 ```
 ├── App.js                    # 导航容器（AppProvider + AppNavigator）
 ├── index.js                  # 应用入口
@@ -27,13 +28,18 @@
 │   │   └── AppContext.js     # React Context Provider + Hook（历史/密钥/轮询/用户信息）
 │   ├── screens/              # 页面级组件
 │   │   ├── HomeScreen.js     # 主页：模型选择、参数配置、图片生成
-│   │   └── HistoryScreen.js  # 历史记录：搜索/筛选/排序/批量操作/分页
+│   │   ├── HistoryScreen.js  # 历史记录：列表渲染、搜索/筛选逻辑
+│   │   └── ModelSelectScreen.js  # 模型选择页
 │   ├── components/           # UI 组件
 │   │   ├── ModelSelector.js  # 模型选择器（按钮+下拉菜单）
 │   │   ├── UserInfoCard.js   # 用户信息卡片（头像/余额/API密钥管理）
 │   │   ├── TabBar.js         # 底部导航栏（带角标和切换动画）
 │   │   ├── ParamControls.js  # 参数控制面板（5 种参数类型自适应）
-│   │   └── StatusBadge.js    # 任务状态徽章
+│   │   ├── StatusBadge.js    # 任务状态徽章
+│   │   ├── HistoryModals.js  # 历史记录弹窗（预览/日志/删除确认/排序）
+│   │   ├── HistoryFilters.js # 历史记录筛选栏（搜索/筛选/批量/统计）
+│   │   ├── ApiKeyDropdown.js # API 密钥下拉浮窗（多密钥管理/切换/新增/删除）
+│   │   └── FavoriteModelsLayer.js  # 常用模型浮窗（收藏模型列表）
 │   ├── constants/            # 常量定义
 │   │   ├── models.js         # 模型配置、状态标签、API/存储常量
 │   │   ├── theme.js          # 设计令牌（色彩/间距/圆角/阴影）
@@ -62,6 +68,8 @@
 - 已接入应用的功能，文件名末尾追加 `[已接入]`
 - 目录内全部接入后，目录名也标记 `[已接入]`
 
+## 项目图标规则
+- 从 @expo/vector-icons/Ionicons 图标库中选择图标
 
 ## 错误处理
 - 所有 API 调用必须处理超时、重试和状态码

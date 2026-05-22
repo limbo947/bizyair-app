@@ -55,12 +55,7 @@ export const Spacing = {
   xxl: 28,
 };
 
-export const Shadows = {
-  sm: {},
-  md: {},
-  lg: {},
-  xl: {},
-};
+
 
 export const STATUS_COLORS = {
   Pending: Colors.warning,

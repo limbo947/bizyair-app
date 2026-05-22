@@ -30,10 +30,22 @@ npx expo export --platform web
 npx serve dist -l 3000
 ```
 
-### 4. 构建 APK（EAS Build）
+### 4. 构建 APK
 
+**一键构建（推荐）：**
+```powershell
+.\build-android.ps1 -Clean
+```
+该脚本自动执行：prebuild → 配置修补 → 签名注入 → Gradle 构建 → 产物验证（arm64-v8a）
+
+**仅增量构建（跳过 prebuild）：**
 ```bash
-npx eas-cli build --platform android --profile preview
+cd android && ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a
+```
+
+**EAS Build（兜底方案）：**
+```bash
+npx eas build --platform android --profile preview --local
 ```
 
 ## 功能
@@ -58,6 +70,8 @@ npx eas-cli build --platform android --profile preview
 - **底部导航**：主页 / 历史 双标签切换，切换状态持久化，进行中任务角标显示
 - **文生图**：输入提示词，选择参数，一键生成
 - **图生图**：上传参考图片 + 提示词，修改或扩展图片（支持多张上传）
+- **模型选择**：独立模型选择页面，按分类（常用/文生图/图生图等）和厂商筛选，支持收藏管理（最多 7 个）
+- **用户信息**：头像展示、余额查询、API 密钥运行时配置与管理
 - **异步任务模式**：提交后立即加入历史列表，后台轮询状态（排队中 → 生成中 → 转存中 → 完成/失败）
 - **动态价格计算**：根据模型和参数实时计算金币消耗，显示在生成按钮上
 - **5 种参数类型**：resolution-ratio / width-height-quality / size-only / wan-size / width-height，UI 自适应渲染
@@ -75,10 +89,12 @@ npx eas-cli build --platform android --profile preview
 
 ## 技术栈
 
-- React Native (Expo SDK 54)
+- React Native (Expo SDK 54) + React 19
+- Hermes 引擎 + 新架构（New Arch）
 - AsyncStorage 本地存储
 - BizyAir OpenAPI（异步任务模式）
 - 阿里云 OSS 直传（HMAC-SHA1 签名）
+- 目标平台：Android arm64-v8a
 
 ## 项目结构
 
@@ -89,29 +105,45 @@ npx eas-cli build --platform android --profile preview
 ├── package.json              # 依赖配置
 ├── app.json                  # Expo 配置
 ├── eas.json                  # EAS Build 配置
+├── build-android.ps1         # APK 一键构建脚本（prebuild → 修补 → Gradle）
+├── scripts/                  # 构建辅助脚本
+│   └── patch-android-build.ps1  # post-prebuild 配置修补（签名/ProGuard/allowBackup）
+├── android/                  # Android 原生工程（expo prebuild 生成，勿手动修改）
+│   ├── keystore.properties   # 签名密钥配置（不提交 Git）
+│   ├── gradle.properties     # Gradle 构建属性
+│   └── app/
+│       ├── build.gradle      # 应用 Gradle 配置
+│       └── src/main/java/com/bizyair/assistant/  # Kotlin 源码
 ├── src/
 │   ├── context/              # 全局状态管理
-│   │   └── AppContext.js     # React Context Provider + Hook（历史/密钥/轮询）
+│   │   └── AppContext.js     # React Context Provider + Hook（历史/密钥/轮询/用户信息/收藏）
 │   ├── screens/              # 页面级组件
 │   │   ├── HomeScreen.js     # 主页：模型选择、参数配置、图片生成
-│   │   └── HistoryScreen.js  # 历史记录：搜索/筛选/排序/批量操作/分页
+│   │   ├── HistoryScreen.js  # 历史记录：搜索/筛选/排序/批量操作/分页
+│   │   └── ModelSelectScreen.js  # 模型选择页：分类/厂商筛选、收藏管理
 │   ├── components/           # UI 组件
 │   │   ├── TabBar.js         # 底部导航栏（带角标和切换动画）
 │   │   ├── ParamControls.js  # 参数控制面板（5 种参数类型自适应）
-│   │   └── StatusBadge.js    # 任务状态徽章
+│   │   ├── StatusBadge.js    # 任务状态徽章
+│   │   ├── ModelSelector.js  # 模型选择器（按钮+下拉菜单）
+│   │   ├── UserInfoCard.js   # 用户信息卡片（头像/余额/API密钥管理）
+│   │   └── FavoriteModelsLayer.js  # 收藏模型浮层
 │   ├── constants/            # 常量定义
 │   │   ├── models.js         # 模型配置、状态标签、API/存储常量
+│   │   ├── modelMeta.js      # 模型分类/厂商映射/收藏配置
+│   │   ├── theme.js          # 设计令牌（色彩/间距/圆角/阴影）
 │   │   └── ratios.js         # 宽高比常量
 │   ├── utils/                # 工具函数
+│   │   ├── helpers.js        # 通用工具（generateId 等）
 │   │   ├── modelHelpers.js   # 模型信息、价格计算、分辨率计算
 │   │   └── payloadBuilder.js # API 请求体构建
 │   └── services/             # API 服务层
-│       └── apiClient.js      # 统一请求封装（超时+重试）、任务提交/轮询、OSS 上传
+│       └── apiClient.js      # 统一请求封装（超时+重试）、任务提交/轮询/OSS 上传
 ├── assets/                   # 图标资源
-├── bizyair.api.reference/    # BizyAir 平台 API 文档（按模型分类）
+├── bizyair.api.reference/    # BizyAir 平台 API 参考文档（按模型分类）
 └── .env.example              # 环境变量模板
 ```
 
-## 开发分支
+## 当前分支
 
-- `EAS-v0.1`：当前开发分支，包含模块化重构和 EAS Build 配置
+- `test03`

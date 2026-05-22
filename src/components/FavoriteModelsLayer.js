@@ -11,14 +11,13 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { MODELS } from '../constants/models';
 import { MANUFACTURERS, FAVORITES_MAX_COUNT } from '../constants/modelMeta';
-import { Colors, Shadows, Radius, Spacing } from '../constants/theme';
+import { Colors, Radius, Spacing } from '../constants/theme';
 
 export function FavoriteModelsLayer({
   visible,
   onClose,
   currentModelId,
   onSelectModel,
-  onEditFavorites,
   favorites,
 }) {
   const favoriteModels = favorites.map((modelId) => ({
@@ -114,17 +113,6 @@ export function FavoriteModelsLayer({
                 ))
               )}
             </ScrollView>
-
-            <View style={styles.dropdownFooter}>
-              <TouchableOpacity
-                style={styles.editButton}
-                onPress={onEditFavorites}
-                activeOpacity={0.7}
-              >
-                <Ionicons name="pencil-outline" size={16} color={Colors.primary} />
-                <Text style={styles.editButtonText}>自定义常用模型</Text>
-              </TouchableOpacity>
-            </View>
           </View>
         </View>
       </Pressable>
@@ -139,16 +127,14 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     alignItems: 'flex-start',
     paddingHorizontal: Spacing.md,
-    paddingTop: 120,
+    paddingTop: 110,
   },
   dropdownContainer: {
-    width: '100%',
-    maxWidth: 340,
+    width: 260,
   },
   dropdown: {
     backgroundColor: Colors.card,
     borderRadius: Radius.md,
-    ...Shadows.lg,
     overflow: 'hidden',
   },
   dropdownHeader: {
@@ -176,7 +162,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
+    height: 50,
     gap: Spacing.sm,
   },
   dropdownItemActive: {
@@ -232,23 +218,5 @@ const styles = StyleSheet.create({
   emptySubtext: {
     fontSize: 13,
     color: Colors.textTertiary,
-  },
-  dropdownFooter: {
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    borderTopWidth: 0.5,
-    borderTopColor: Colors.separator,
-  },
-  editButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.sm,
-    paddingVertical: 8,
-  },
-  editButtonText: {
-    fontSize: 14,
-    color: Colors.primary,
-    fontWeight: '600',
   },
 });

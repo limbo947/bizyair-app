@@ -12,42 +12,13 @@ export function getPrice(modelId, resolution) {
 export function calculatePrice(modelId, params) {
   const model = getModelInfo(modelId);
 
+  if (model.priceCalculator) {
+    return model.priceCalculator(params);
+  }
+
   if (model.prices && model.paramType !== 'width-height-quality' && model.paramType !== 'width-height') {
     const res = params.resolution === 'Custom' ? '2K' : params.resolution;
     return model.prices[res] || Object.values(model.prices)[0] || 0;
-  }
-
-  if (modelId === 'bza-image-o2-official') {
-    const w = params.width || 1024;
-    const h = params.height || 1024;
-    const q = params.quality || 'medium';
-    const pixels = w * h;
-    const O2_PRICES = {
-      high: [
-        { max: 1920 * 1080, price: 1120 },
-        { max: 2560 * 1440, price: 2149 },
-        { max: Infinity, price: 3486 },
-      ],
-      medium: [
-        { max: 1920 * 1080, price: 378 },
-        { max: 2560 * 1440, price: 630 },
-        { max: Infinity, price: 966 },
-      ],
-      low: [
-        { max: 1920 * 1080, price: 161 },
-        { max: 2560 * 1440, price: 182 },
-        { max: Infinity, price: 224 },
-      ],
-    };
-    const tiers = O2_PRICES[q] || O2_PRICES.medium;
-    const tier = tiers.find((t) => pixels <= t.max);
-    return tier ? tier.price : tiers[tiers.length - 1].price;
-  }
-
-  if (modelId === 'z-image-turbo') {
-    const w = params.width || 1024;
-    const h = params.height || 1024;
-    return w * h <= 1024 * 1024 ? 5 : 10;
   }
 
   return 0;

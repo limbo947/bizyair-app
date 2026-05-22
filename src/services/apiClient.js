@@ -3,6 +3,8 @@ import {
   API_BASE,
   UPLOAD_TOKEN_URL,
   COMMIT_RESOURCE_URL,
+  USER_METADATA_URL,
+  WALLET_BALANCE_URL,
   ENV_API_KEY,
   REQUEST_TIMEOUT_MS,
   MAX_RETRIES,
@@ -131,28 +133,47 @@ async function uploadImageFile(apiKey, file) {
 
   let body;
   if (file.uri) {
-    const fetchResponse = await fetch(file.uri);
-    body = await fetchResponse.arrayBuffer();
+    const fileFetchController = new AbortController();
+    const fileFetchTimeout = setTimeout(() => fileFetchController.abort(), REQUEST_TIMEOUT_MS);
+    try {
+      const fetchResponse = await fetch(file.uri, { signal: fileFetchController.signal });
+      body = await fetchResponse.arrayBuffer();
+    } finally {
+      clearTimeout(fileFetchTimeout);
+    }
   } else if (file instanceof ArrayBuffer || ArrayBuffer.isView(file)) {
     body = file;
   } else {
     body = file;
   }
 
-  const response = await fetch(uploadUrl, {
-    method: 'PUT',
-    headers: {
-      'Authorization': authorization,
-      'x-oss-security-token': securityToken,
-      'x-oss-date': date,
-      'Content-Type': contentType,
-    },
-    body,
-  });
+  const uploadController = new AbortController();
+  const uploadTimeout = setTimeout(() => uploadController.abort(), REQUEST_TIMEOUT_MS * 4);
+  try {
+    const response = await fetch(uploadUrl, {
+      method: 'PUT',
+      headers: {
+        'Authorization': authorization,
+        'x-oss-security-token': securityToken,
+        'x-oss-date': date,
+        'Content-Type': contentType,
+      },
+      body,
+      signal: uploadController.signal,
+    });
 
-  if (!response.ok) {
-    const errText = await response.text().catch(() => '');
-    throw new Error(`OSS上传失败: ${response.status} - ${errText}`);
+    clearTimeout(uploadTimeout);
+
+    if (!response.ok) {
+      const errText = await response.text().catch(() => '');
+      throw new Error(`OSS上传失败: ${response.status} - ${errText}`);
+    }
+  } catch (err) {
+    clearTimeout(uploadTimeout);
+    if (err.name === 'AbortError') {
+      throw new Error('OSS上传超时，请检查网络连接后重试');
+    }
+    throw err;
   }
 
   await commitResource(apiKey, fileName, objectKey);
@@ -168,7 +189,7 @@ async function fetchUserInfo(apiKey) {
 }
 
 async function fetchWalletBalance(apiKey) {
-  const result = await request('https://api.bizyair.cn/y/v1/wallet', {
+  const result = await request(WALLET_BALANCE_URL, {
     method: 'GET',
     headers: { 'Authorization': `Bearer ${apiKey}` },
   });
