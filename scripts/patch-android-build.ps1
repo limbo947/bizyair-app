@@ -54,7 +54,7 @@ $proguardContent = @'
     public static int d(...);
 }
 '@
-Set-Content -Path (Join-Path $androidDir "app\proguard-rules.pro") -Value $proguardContent -NoNewline
+[System.IO.File]::WriteAllText((Join-Path $androidDir "app\proguard-rules.pro"), $proguardContent)
 Write-Host "  ProGuard rules written" -ForegroundColor Green
 
 # ── 2. 配置 gradle.properties 补充属性 ─────────────────────────
@@ -92,7 +92,7 @@ if ($props -notmatch "android\.versionCode=") {
 if ($appendLines.Count -gt 0) {
     if (-not $props.EndsWith("`n")) { $props += "`n" }
     $props += ($appendLines -join "`n") + "`n"
-    Set-Content -Path $propsPath -Value $props -NoNewline
+    [System.IO.File]::WriteAllText($propsPath, $props)
     Write-Host "  gradle.properties patched: $($appendLines -join ', ')" -ForegroundColor Green
 } else {
     Write-Host "  gradle.properties already configured" -ForegroundColor Green
@@ -111,7 +111,7 @@ if ($manifest -notmatch 'tools:replace="android:allowBackup"') {
     $manifest = $manifest -replace '(<application[^>]*?)>', ('$1' + ' tools:replace="android:allowBackup">')
 }
 
-Set-Content -Path $manifestPath -Value $manifest -NoNewline
+[System.IO.File]::WriteAllText($manifestPath, $manifest)
 Write-Host "  AndroidManifest.xml patched (allowBackup=false)" -ForegroundColor Green
 
 # ── 4. 配置 Release 签名 ────────────────────────────────────────
@@ -159,7 +159,7 @@ if (keystorePropertiesFile.exists()) {
         $buildGradle = $buildGradle -replace 'signingConfig\s+signingConfigs\.debug', 'signingConfig keystorePropertiesFile.exists() ? signingConfigs.release : signingConfigs.debug'
     }
     
-    Set-Content -Path $buildGradlePath -Value $buildGradle -NoNewline
+    [System.IO.File]::WriteAllText($buildGradlePath, $buildGradle)
     Write-Host "  Release signing configured" -ForegroundColor Green
 } else {
     Write-Host "  keystore.properties NOT found, skipping release signing config" -ForegroundColor Yellow
@@ -170,7 +170,7 @@ Write-Host "[patch] Configuring version management..." -ForegroundColor Yellow
 $buildGradle = Get-Content $buildGradlePath -Raw
 if ($buildGradle -match "versionCode\s+\d+") {
     $buildGradle = $buildGradle -replace "versionCode\s+\d+", "versionCode Integer.parseInt(findProperty('android.versionCode') ?: '1')"
-    Set-Content -Path $buildGradlePath -Value $buildGradle -NoNewline
+    [System.IO.File]::WriteAllText($buildGradlePath, $buildGradle)
     Write-Host "  versionCode now reads from gradle.properties" -ForegroundColor Green
 }
 
@@ -189,7 +189,7 @@ android.applicationVariants.all { variant ->
 }
 '@
     $buildGradle = $buildGradle -replace '(?=dependencies\s*\{)', ($apkNamingBlock + "`n")
-    Set-Content -Path $buildGradlePath -Value $buildGradle -NoNewline
+    [System.IO.File]::WriteAllText($buildGradlePath, $buildGradle)
     Write-Host "  APK filename will include version number" -ForegroundColor Green
 } else {
     Write-Host "  APK filename config already present" -ForegroundColor Green

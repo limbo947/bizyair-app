@@ -30,7 +30,7 @@ $versionParts = $oldVersion -split '\.'
 $versionParts[2] = [int]$versionParts[2] + 1
 $newVersion = $versionParts -join '.'
 $appJson.expo.version = $newVersion
-$appJson | ConvertTo-Json -Depth 10 | Set-Content $appJsonPath -NoNewline
+[System.IO.File]::WriteAllText($appJsonPath, ($appJson | ConvertTo-Json -Depth 10))
 Write-Host "  Version: $oldVersion -> $newVersion" -ForegroundColor Green
 
 git add app.json 2>&1 | Out-Null
@@ -67,7 +67,7 @@ if (Test-Path $keystorePropsSrc) {
 
 # 5. Prebuild
 Write-Host "`n[5/8] Running expo prebuild..." -ForegroundColor Yellow
-npx expo prebuild --platform android --clean 2>&1 | Write-Host
+npx expo prebuild --platform android --clean
 if ($LASTEXITCODE -ne 0) { Write-Host "  prebuild FAILED!" -ForegroundColor Red; exit 1 }
 Write-Host "  prebuild done" -ForegroundColor Green
 
@@ -94,7 +94,7 @@ if (Test-Path $gradlePropsPath) {
     $content = Get-Content $gradlePropsPath -Raw
     $content = $content -replace "react\.nativeArchitectures=.*`r?`n?", ""
     $content = $content -replace "reactNativeArchitectures=.*`r?`n?", ""
-    Set-Content $gradlePropsPath $content -NoNewline
+    [System.IO.File]::WriteAllText($gradlePropsPath, $content)
     Write-Host "  Cleaned legacy architecture properties" -ForegroundColor Green
 } else {
     Write-Host "  gradle.properties not found, prebuild may have failed" -ForegroundColor Red
@@ -113,7 +113,7 @@ $newVersionCode = $versionParts[2]
 if ($propsContent -match 'android\.versionCode=(\d+)') {
     $oldCode = $Matches[1]
     $propsContent = $propsContent -replace "android\.versionCode=\d+", "android.versionCode=$newVersionCode"
-    Set-Content $gradlePropsPath $propsContent -NoNewline
+    [System.IO.File]::WriteAllText($gradlePropsPath, $propsContent)
     Write-Host "  versionCode: $oldCode -> $newVersionCode" -ForegroundColor Green
 } else {
     Add-Content $gradlePropsPath "`nandroid.versionCode=$newVersionCode"
