@@ -33,6 +33,10 @@ $appJson.expo.version = $newVersion
 $appJson | ConvertTo-Json -Depth 10 | Set-Content $appJsonPath -NoNewline
 Write-Host "  Version: $oldVersion -> $newVersion" -ForegroundColor Green
 
+git add app.json 2>&1 | Out-Null
+git commit -m "chore: bump version to $newVersion" --no-verify 2>&1 | Out-Null
+Write-Host "  Committed version change" -ForegroundColor Green
+
 # 3. Clean (optional)
 if ($Clean) {
     Write-Host "`n[3/7] Cleaning old build artifacts..." -ForegroundColor Yellow
