@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   StyleSheet,
   Text,
@@ -9,6 +9,7 @@ import {
   Image,
   ScrollView,
   ActivityIndicator,
+  PanResponder,
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
@@ -69,6 +70,32 @@ export function HomeScreen({ onOpenModelSelect }) {
   const [error, setError] = useState('');
   const [showFavorites, setShowFavorites] = useState(false);
   const [showApiKeyDropdown, setShowApiKeyDropdown] = useState(false);
+
+  const MIN_PROMPT_HEIGHT = 80;
+  const MAX_PROMPT_HEIGHT = 300;
+  const [promptHeight, setPromptHeight] = useState(120);
+  const promptHeightRef = useRef(120);
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderMove: (_, gestureState) => {
+        const newHeight = Math.max(
+          MIN_PROMPT_HEIGHT,
+          Math.min(MAX_PROMPT_HEIGHT, promptHeightRef.current + gestureState.dy)
+        );
+        setPromptHeight(newHeight);
+      },
+      onPanResponderRelease: () => {
+        promptHeightRef.current = promptHeight;
+      },
+    })
+  ).current;
+
+  useEffect(() => {
+    promptHeightRef.current = promptHeight;
+  }, [promptHeight]);
 
   const currentModel = getModelInfo(modelId);
   const currentRatios = getRatios(modelId, mode);
@@ -219,6 +246,7 @@ export function HomeScreen({ onOpenModelSelect }) {
     await addToHistory(entry);
 
     await addCoinsSpent(price);
+    await refreshUserInfo();
 
     try {
       const payload = buildPayload(modelId, mode, params);
@@ -325,11 +353,11 @@ export function HomeScreen({ onOpenModelSelect }) {
                 </View>
                 <View style={styles.headerBalances}>
                   <MaterialCommunityIcons name="gold" size={14} color={Colors.warning} style={{ paddingRight: 2 }} />
-                  <Text style={styles.headerBalanceText}>
+                  <Text style={[styles.headerBalanceText, { paddingLeft: 2, paddingTop: 2 }]}>
                     {walletBalance?.charge_balance_amount ?? '--'}
                   </Text>
                   <MaterialCommunityIcons name="gold" size={14} color="#C0C0C0" style={{ marginLeft: 10, paddingRight: 2 }} />
-                  <Text style={styles.headerBalanceText}>
+                  <Text style={[styles.headerBalanceText, { paddingLeft: 2, paddingTop: 2 }]}>
                     {walletBalance?.gift_balance_amount ?? '--'}
                   </Text>
                 </View>
@@ -435,15 +463,20 @@ export function HomeScreen({ onOpenModelSelect }) {
 
         <View style={styles.card}>
           <Text style={styles.label}>提示词</Text>
-          <TextInput
-            style={styles.promptInput}
-            placeholder={mode === 'image-to-image' ? '描述你想对图片进行哪些修改...' : '描述你想生成的图片...'}
-            value={prompt}
-            onChangeText={setPrompt}
-            multiline
-            maxLength={currentModel.maxPromptLength}
-            placeholderTextColor={Colors.textPlaceholder}
-          />
+          <View style={[styles.promptInputWrapper, { height: promptHeight }]}>
+            <TextInput
+              style={[styles.promptInput, { height: promptHeight }]}
+              placeholder={mode === 'image-to-image' ? '描述你想对图片进行哪些修改...' : '描述你想生成的图片...'}
+              value={prompt}
+              onChangeText={setPrompt}
+              multiline
+              maxLength={currentModel.maxPromptLength}
+              placeholderTextColor={Colors.textPlaceholder}
+            />
+            <View style={styles.resizeHandle} {...panResponder.panHandlers}>
+              <MaterialCommunityIcons name="resize-bottom-right" size={16} color={Colors.textTertiary} />
+            </View>
+          </View>
           <Text style={styles.charCount}>
             {prompt.length} / {currentModel.maxPromptLength}
           </Text>
@@ -557,7 +590,9 @@ const styles = StyleSheet.create({
   card: { backgroundColor: Colors.card, padding: Spacing.lg, borderRadius: Radius.md, marginBottom: Spacing.md },
   labelRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, marginBottom: Spacing.sm },
   label: { fontSize: 13, fontWeight: '600', color: Colors.textSecondary, marginBottom: Spacing.sm, textTransform: 'uppercase', letterSpacing: 0.5 },
-  promptInput: { fontSize: 16, color: Colors.textPrimary, minHeight: 80, maxHeight: 160, textAlignVertical: 'top', borderWidth: 0, borderRadius: Radius.sm, padding: Spacing.sm, backgroundColor: Colors.bg },
+  promptInputWrapper: { position: 'relative', borderRadius: Radius.sm, backgroundColor: Colors.bg, overflow: 'hidden' },
+  promptInput: { fontSize: 16, color: Colors.textPrimary, textAlignVertical: 'top', borderWidth: 0, borderRadius: Radius.sm, padding: Spacing.sm, paddingRight: 24, backgroundColor: Colors.bg },
+  resizeHandle: { position: 'absolute', right: 4, bottom: 4, padding: 4, zIndex: 1 },
   charCount: { fontSize: 12, color: Colors.textTertiary, textAlign: 'right', marginTop: Spacing.xs },
   uploadButton: { backgroundColor: Colors.primaryBg, paddingVertical: 18, borderRadius: Radius.md, borderWidth: 1.5, borderColor: Colors.primaryBorder, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: Spacing.sm },
   uploadButtonDisabled: { opacity: 0.6 },

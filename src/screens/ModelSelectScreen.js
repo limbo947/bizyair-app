@@ -14,7 +14,7 @@ import { useAppContext } from '../context/AppContext';
 
 export function ModelSelectScreen({ currentModelId, onSelectModel, onBack }) {
   const { favorites, saveFavorites, isFavorite } = useAppContext();
-  const [selectedCategory, setSelectedCategory] = useState('favorite');
+  const [selectedCategory, setSelectedCategory] = useState('all');
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedModels, setSelectedModels] = useState([...favorites]);
 
@@ -28,6 +28,9 @@ export function ModelSelectScreen({ currentModelId, onSelectModel, onBack }) {
   }, [isFavorite]);
 
   const filteredModels = useMemo(() => {
+    if (selectedCategory === 'all') {
+      return allModelEntries;
+    }
     if (selectedCategory === 'favorite') {
       return allModelEntries.filter((m) => favorites.includes(m.id));
     }
@@ -60,13 +63,16 @@ export function ModelSelectScreen({ currentModelId, onSelectModel, onBack }) {
     }
   };
 
-  const categoryList = Object.entries(CATEGORIES).map(([key, value]) => ({
-    key,
-    ...value,
-    count: key === 'favorite' 
-      ? favorites.length 
-      : allModelEntries.filter((m) => m.category === key).length,
-  }));
+  const categoryList = [
+    { key: 'all', label: '全部模型', icon: 'apps-outline', color: Colors.primary, count: allModelEntries.length },
+    ...Object.entries(CATEGORIES).map(([key, value]) => ({
+      key,
+      ...value,
+      count: key === 'favorite'
+        ? favorites.length
+        : allModelEntries.filter((m) => m.category === key).length,
+    })),
+  ];
 
   return (
     <View style={styles.container}>
@@ -134,17 +140,6 @@ export function ModelSelectScreen({ currentModelId, onSelectModel, onBack }) {
           style={styles.modelList}
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.modelListHeader}>
-            <Text style={styles.modelListTitle}>
-              {CATEGORIES[selectedCategory]?.label || '模型'}
-            </Text>
-            {isEditMode && (
-              <Text style={styles.modelListSubtitle}>
-                已选 {selectedModels.length}/{FAVORITES_MAX_COUNT}
-              </Text>
-            )}
-          </View>
-
           {filteredModels.length === 0 ? (
             <View style={styles.emptyState}>
               <Text style={styles.emptyIcon}>📦</Text>
@@ -174,6 +169,7 @@ export function ModelSelectScreen({ currentModelId, onSelectModel, onBack }) {
                         name={model.icon.name}
                         size={24}
                         color={model.icon.color}
+                        style={{ paddingLeft: 4, paddingRight: 4 }}
                       />
                       {isEditMode && (
                         <View style={[
@@ -189,7 +185,7 @@ export function ModelSelectScreen({ currentModelId, onSelectModel, onBack }) {
                         <Ionicons name="star" size={16} color="#FFD700" />
                       )}
                     </View>
-                    <Text style={styles.modelCardName}>{model.name}</Text>
+                    <Text style={[styles.modelCardName, { paddingLeft: 6, paddingRight: 6 }]}>{model.name}</Text>
                     {model.manufacturerInfo && (
                       <Text style={styles.modelCardManufacturer}>
                         {model.manufacturerInfo.label}
@@ -249,7 +245,7 @@ const styles = StyleSheet.create({
   categorySidebar: {
     flex: 1,
     backgroundColor: Colors.bg,
-    paddingTop: Spacing.sm,
+    paddingTop: 0,
   },
   categoryItem: {
     flexDirection: 'row',
@@ -334,7 +330,8 @@ const styles = StyleSheet.create({
   modelCard: {
     backgroundColor: Colors.bg,
     borderRadius: Radius.md,
-    padding: Spacing.md,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: 6,
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.md,

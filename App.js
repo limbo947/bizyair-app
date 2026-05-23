@@ -5,6 +5,7 @@ import {
   Animated,
   Platform,
   StatusBar as RNStatusBar,
+  BackHandler,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
@@ -69,6 +70,19 @@ function AppNavigator() {
   const handleCloseModelSelect = useCallback(() => {
     setCurrentPage(activeTab === TAB_HOME ? PAGE_HOME : PAGE_HISTORY);
   }, [activeTab]);
+
+  useEffect(() => {
+    const onBackPress = () => {
+      if (currentPage === PAGE_MODEL_SELECT) {
+        handleCloseModelSelect();
+        return true;
+      }
+      return false;
+    };
+
+    BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => BackHandler.removeEventListener('hardwareBackPress', onBackPress);
+  }, [currentPage, handleCloseModelSelect]);
 
   const handleSelectModel = useCallback((modelId) => {
     saveHomeState({ modelId });

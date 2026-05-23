@@ -331,7 +331,8 @@ const styles = StyleSheet.create({
     borderTopWidth: 0.5,
     borderTopColor: Colors.separator,
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
+    paddingTop: 16,
+    paddingBottom: Spacing.sm,
   },
   addNameInput: {
     fontSize: 14,
@@ -366,7 +367,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.bg,
     borderRadius: Radius.sm,
     paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
+    paddingTop: 8,
+    paddingBottom: 8,
     fontFamily: 'monospace',
   },
   addConfirmButton: {
