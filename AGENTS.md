@@ -8,7 +8,7 @@
 ## 项目结构
   *新增文件或修改文件后，及时更新本章节，保持与项目结构一致。*
 ```
-├── App.js                    # 导航容器（AppProvider + AppNavigator）
+├── App.js                    # 导航容器（ThemeProvider + AppProvider + AppNavigator）
 ├── index.js                  # 应用入口
 ├── api.js                    # API 兼容层（重新导出）
 ├── package.json              # 依赖配置
@@ -25,33 +25,48 @@
 │       └── src/main/java/com/bizyair/assistant/  # Kotlin 源码（MainActivity/MainApplication）
 ├── src/
 │   ├── context/              # 全局状态管理
-│   │   └── AppContext.js     # React Context Provider + Hook（历史/密钥/轮询/用户信息）
+│   │   ├── AppContext.js     # React Context（历史/密钥/轮询/用户信息/收藏）
+│   │   └── ThemeContext.js   # 主题上下文（亮色/暗色切换，AsyncStorage 持久化）
 │   ├── screens/              # 页面级组件
-│   │   ├── HomeScreen.js     # 主页：模型选择、参数配置、图片生成
-│   │   ├── HistoryScreen.js  # 历史记录：列表渲染、搜索/筛选逻辑
-│   │   └── ModelSelectScreen.js  # 模型选择页
+│   │   ├── HomeScreen.js     # 主页：模型选择、参数配置、生成、文本结果展示
+│   │   ├── HistoryScreen.js  # 历史记录：搜索/筛选/排序/批量操作/分页
+│   │   └── ModelSelectScreen.js  # 模型选择页：分类筛选、收藏管理、模式自动选择
 │   ├── components/           # UI 组件
-│   │   ├── ModelSelector.js  # 模型选择器（按钮+下拉菜单）
-│   │   ├── UserInfoCard.js   # 用户信息卡片（头像/余额/API密钥管理）
 │   │   ├── TabBar.js         # 底部导航栏（带角标和切换动画）
-│   │   ├── ParamControls.js  # 参数控制面板（5 种参数类型自适应）
+│   │   ├── HomeParamControls.js   # 主页参数控件路由（按 paramType 分发）
+│   │   ├── ParamControls.js  # 图片参数控制面板（5 种参数类型自适应）
+│   │   ├── VideoParamControls.js  # 视频参数控制面板（12 种视频参数类型）
+│   │   ├── LLMControls.js    # LLM 参数控件（系统提示词预设/自定义/温度/思考/搜索）
+│   │   ├── VisionParamControls.js # 视觉理解参数控件（预设/温度/细节/思考）
+│   │   ├── TTSControls.js    # TTS 语音合成参数控件（语速/音色/格式）
+│   │   ├── ResizableTextInput.js  # 可调整大小文本输入（清空按钮+拖拽手柄）
+│   │   ├── MarkdownRenderer.js    # Markdown 富文本渲染组件
+│   │   ├── AudioPlayer.js    # 音频播放器（expo-av，播放/暂停/进度跳转）
+│   │   ├── VideoPlayer.js    # 视频预览播放器
+│   │   ├── TextResultView.js # 文本结果查看器
 │   │   ├── StatusBadge.js    # 任务状态徽章
+│   │   ├── ModelSelector.js  # 模型选择器（按钮+下拉菜单）
+│   │   ├── ApiKeyDropdown.js # API 密钥下拉浮窗（多密钥管理/切换/新增/删除）
+│   │   ├── FavoriteModelsLayer.js  # 收藏模型浮层
 │   │   ├── HistoryModals.js  # 历史记录弹窗（预览/日志/删除确认/排序）
 │   │   ├── HistoryFilters.js # 历史记录筛选栏（搜索/筛选/批量/统计）
-│   │   ├── ApiKeyDropdown.js # API 密钥下拉浮窗（多密钥管理/切换/新增/删除）
-│   │   └── FavoriteModelsLayer.js  # 常用模型浮窗（收藏模型列表）
+│   │   └── UserInfoCard.js   # 用户信息卡片
 │   ├── constants/            # 常量定义
-│   │   ├── models.js         # 模型配置、状态标签、API/存储常量
-│   │   ├── theme.js          # 设计令牌（色彩/间距/圆角/阴影）
+│   │   ├── models.js         # 29 个模型配置、价格计算、状态标签
+│   │   ├── modelMeta.js      # 模型分类/厂商映射（MANUFACTURERS + CATEGORIES）
+│   │   ├── theme.js          # 设计令牌（LightColors/DarkColors/createTheme/色彩/间距/圆角）
 │   │   └── ratios.js         # 宽高比常量
+│   ├── hooks/                # 自定义 Hooks
+│   │   └── useFileUpload.js  # 文件上传逻辑（图片/视频选择+OSS上传）
 │   ├── utils/                # 工具函数
 │   │   ├── helpers.js        # 通用工具（generateId 等）
-│   │   ├── modelHelpers.js   # 模型信息、价格计算、分辨率计算
-│   │   └── payloadBuilder.js # API 请求体构建
+│   │   ├── modelHelpers.js   # 模型信息查询、价格计算、分辨率计算
+│   │   └── payloadBuilder.js # API 请求体构建（按 paramType 分发）
 │   └── services/             # API 服务层
-│       └── apiClient.js      # 统一请求封装（超时+重试）、任务提交/轮询、OSS 上传
+│       └── apiClient.js      # 统一请求封装（超时+重试）、任务提交/轮询/OSS 上传
 ├── assets/                   # 图标资源
-├── bizyair.api.reference/    # BizyAir 平台 API 参考文档（按模型分类）
+├── reference/                # 参考文档
+│   └── bizyair.api.reference/  # BizyAir 平台 API 参考文档（按模型分类，38 个子目录）
 └── .env.example              # 环境变量模板
 ```
 
@@ -60,16 +75,16 @@
 - 组件不写 API 调用，服务文件不写 UI 代码，常量文件不定义函数
 - 文件名使用 kebab-case
 - 修改已有功能优先复用现有模块
-- 单文件有效代码行数（不含空行/注释）不得超过 **800 行**，新文件预估超 700 行时即拆分为多个文件
 - 修改代码时遵循最小改动原则，尽量保持原有接口不变
+- 单文件有效代码行数（不含空行/注释）不得超过 **800 行**，*新建代码文件*或*修改后的代码文件* 预估超 **700 行** 时即拆分为多个文件
 
 ## BizyAir API 目录规范
-- `bizyair.api.reference/` 下按模型 ID 建文件夹，文件名对应接口类型
+- `reference\bizyair.api.reference/` 下按模型 ID 建文件夹，文件名对应接口类型
 - 已接入应用的功能，文件名末尾追加 `[已接入]`
 - 目录内全部接入后，目录名也标记 `[已接入]`
 
 ## 项目图标规则
-- 从 @expo/vector-icons/Ionicons 图标库中选择图标
+- 从 @expo/vector-icons 图标库中选择图标
 
 ## 错误处理
 - 所有 API 调用必须处理超时、重试和状态码

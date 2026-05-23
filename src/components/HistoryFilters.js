@@ -12,11 +12,10 @@ import { Colors, Radius, Spacing } from '../constants/theme';
 
 const FILTER_OPTIONS = [
   { key: 'all', label: '全部' },
-  { key: 'Pending', label: '排队中' },
-  { key: 'Running', label: '生成中' },
-  { key: 'Saving', label: '转存中' },
-  { key: 'Success', label: '已完成' },
-  { key: 'Failed', label: '失败' },
+  { key: 'image', label: '图片' },
+  { key: 'video', label: '视频' },
+  { key: 'audio', label: '音频' },
+  { key: 'text', label: '文本' },
 ];
 
 export function HistoryFilters({

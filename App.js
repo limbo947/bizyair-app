@@ -10,12 +10,12 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppProvider, useAppContext } from './src/context/AppContext';
+import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import { TabBar } from './src/components/TabBar';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { HistoryScreen } from './src/screens/HistoryScreen';
 import { ModelSelectScreen } from './src/screens/ModelSelectScreen';
 import { TAB_HOME, TAB_FADE_OUT_MS, TAB_FADE_IN_MS } from './src/constants/models';
-import { Colors } from './src/constants/theme';
 
 const PAGE_HOME = 'home';
 const PAGE_HISTORY = 'history';
@@ -30,6 +30,7 @@ function AppNavigator() {
     homeState,
     saveHomeState,
   } = useAppContext();
+  const { colors, themeMode } = useTheme();
 
   const [currentPage, setCurrentPage] = useState(PAGE_HOME);
   const [statusBarHeight, setStatusBarHeight] = useState(0);
@@ -84,8 +85,8 @@ function AppNavigator() {
     return () => BackHandler.removeEventListener('hardwareBackPress', onBackPress);
   }, [currentPage, handleCloseModelSelect]);
 
-  const handleSelectModel = useCallback((modelId) => {
-    saveHomeState({ modelId });
+  const handleSelectModel = useCallback((modelId, mode) => {
+    saveHomeState({ modelId, ...(mode ? { mode } : {}) });
     handleCloseModelSelect();
   }, [saveHomeState, handleCloseModelSelect]);
 
@@ -94,9 +95,9 @@ function AppNavigator() {
   ).length;
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
-      <StatusBar style="dark" backgroundColor={Colors.card} />
-      <View style={{ height: statusBarHeight, backgroundColor: Colors.card }} />
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={['bottom']}>
+      <StatusBar style={themeMode === 'dark' ? 'light' : 'dark'} backgroundColor={colors.card} />
+      <View style={{ height: statusBarHeight, backgroundColor: colors.card }} />
       <View style={styles.contentWrapper}>
         <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
           {currentPage === PAGE_MODEL_SELECT ? (
@@ -127,15 +128,17 @@ function AppNavigator() {
 export default function App() {
   return (
     <SafeAreaProvider>
-      <AppProvider>
-        <AppNavigator />
-      </AppProvider>
+      <ThemeProvider>
+        <AppProvider>
+          <AppNavigator />
+        </AppProvider>
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.bg },
+  container: { flex: 1 },
   contentWrapper: { flex: 1, overflow: 'hidden' },
   content: { flex: 1 },
 });

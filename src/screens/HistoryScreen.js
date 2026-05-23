@@ -16,6 +16,9 @@ import * as Clipboard from 'expo-clipboard';
 import { useAppContext } from '../context/AppContext';
 import { HistoryModals } from '../components/HistoryModals';
 import { HistoryFilters } from '../components/HistoryFilters';
+import { VideoPlayer } from '../components/VideoPlayer';
+import { AudioPlayer } from '../components/AudioPlayer';
+import { TextResultView } from '../components/TextResultView';
 import { PAGE_SIZE, TAB_HISTORY } from '../constants/models';
 import { Colors, Radius, Spacing } from '../constants/theme';
 
@@ -76,6 +79,9 @@ export function HistoryScreen() {
   const [filterBy, setFilterBy] = useState('all');
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [previewImage, setPreviewImage] = useState(null);
+  const [videoPreview, setVideoPreview] = useState({ visible: false, url: null });
+  const [audioPreview, setAudioPreview] = useState({ visible: false, url: null });
+  const [textPreview, setTextPreview] = useState({ visible: false, text: '' });
   const [logModal, setLogModal] = useState(null);
   const [showSortPicker, setShowSortPicker] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
@@ -122,7 +128,7 @@ export function HistoryScreen() {
       );
     }
     if (filterBy !== 'all') {
-      items = items.filter((item) => item.status === filterBy);
+      items = items.filter((item) => item.outputType === filterBy);
     }
     switch (sortBy) {
       case 'newest': items.sort((a, b) => (parseInt(b.id) || 0) - (parseInt(a.id) || 0)); break;
@@ -154,16 +160,21 @@ export function HistoryScreen() {
   }, [removeHistoryItems, selectedIds]);
 
   const handleDownload = useCallback((item) => {
-    if (!item.imageUrl) return;
-    triggerDownload(item.imageUrl, `bizyair_${item.id}.jpg`);
-  }, []);
+    if (isDownloading) return;
+    const ext = item.outputType === 'video' ? '.mp4' : item.outputType === 'audio' ? `.${item.responseFormat || 'mp3'}` : '.jpg';
+    const url = item.videoUrl || item.audioUrl || item.imageUrl;
+    if (!url) return;
+    triggerDownload(url, `bizyair_${item.id}${ext}`);
+  }, [isDownloading]);
 
   const handleBatchDownload = useCallback(async () => {
-    const items = history.filter((item) => selectedIds.has(item.id) && item.imageUrl);
+    const items = history.filter((item) => selectedIds.has(item.id) && (item.imageUrl || item.videoUrl || item.audioUrl));
     if (items.length === 0) return;
     setIsDownloading(true);
     for (let i = 0; i < items.length; i++) {
-      triggerDownload(items[i].imageUrl, `bizyair_${items[i].id}.jpg`);
+      const url = items[i].videoUrl || items[i].audioUrl || items[i].imageUrl;
+      const ext = items[i].outputType === 'video' ? '.mp4' : items[i].outputType === 'audio' ? `.${items[i].responseFormat || 'mp3'}` : '.jpg';
+      triggerDownload(url, `bizyair_${items[i].id}${ext}`);
       if (i < items.length - 1) await new Promise((resolve) => setTimeout(resolve, 500));
     }
     setIsDownloading(false); setBatchMode(false); setSelectedIds(new Set());
@@ -200,12 +211,33 @@ export function HistoryScreen() {
         ) : null}
         <TouchableOpacity
           style={styles.historyCardInner}
-          onPress={() => { if (batchMode) toggleSelect(item.id); else if (item.imageUrl) setPreviewImage({ url: item.imageUrl, prompt: item.prompt }); }}
-          disabled={batchMode ? false : !item.imageUrl}
+          onPress={() => {
+            if (batchMode) toggleSelect(item.id);
+            else if (item.outputType === 'video' && item.videoUrl) {
+              setVideoPreview({ visible: true, url: item.videoUrl });
+            } else if (item.outputType === 'text' && item.textResult) {
+              setTextPreview({ visible: true, text: item.textResult });
+            } else if (item.outputType === 'audio' && item.audioUrl) {
+              setAudioPreview({ visible: true, url: item.audioUrl });
+            } else if (item.imageUrl) setPreviewImage({ url: item.imageUrl, prompt: item.prompt });
+          }}
+          disabled={batchMode ? false : !(item.imageUrl || item.videoUrl || item.textResult || item.audioUrl)}
           activeOpacity={batchMode ? 0.6 : 0.7}
         >
           <View style={styles.historyThumbWrap}>
-            {item.imageUrl ? (
+            {item.outputType === 'video' && item.videoUrl ? (
+              <View style={[styles.historyThumbPlaceholder, styles.historyThumbVideo]}>
+                <Ionicons name="videocam" size={32} color={Colors.primary} />
+              </View>
+            ) : item.outputType === 'audio' && item.audioUrl ? (
+              <View style={[styles.historyThumbPlaceholder, styles.historyThumbAudio]}>
+                <Ionicons name="musical-notes" size={32} color={Colors.purple} />
+              </View>
+            ) : item.outputType === 'text' && item.textResult ? (
+              <View style={[styles.historyThumbPlaceholder, styles.historyThumbText]}>
+                <Ionicons name="document-text" size={32} color={Colors.primary} />
+              </View>
+            ) : item.imageUrl ? (
               <Image source={{ uri: item.imageUrl }} style={styles.historyThumb} />
             ) : item.status === 'Failed' ? (
               <View style={[styles.historyThumbPlaceholder, styles.historyThumbFailed]}>
@@ -224,7 +256,7 @@ export function HistoryScreen() {
             <View style={styles.historyBottomRow}>
               <Text style={styles.historyPrice}>{item.price} 金币</Text>
               <View style={styles.historyActions}>
-                {item.imageUrl && !batchMode ? (
+                {((item.imageUrl && !batchMode) || (item.outputType === 'video' && item.videoUrl && !batchMode) || (item.outputType === 'audio' && item.audioUrl && !batchMode)) ? (
                   <TouchableOpacity style={[styles.iconButton, styles.iconButtonSuccess]} onPress={() => handleDownload(item)}>
                     <Ionicons name="download" size={18} color={Colors.success} />
                   </TouchableOpacity>
@@ -333,6 +365,21 @@ export function HistoryScreen() {
         sortBy={sortBy}
         SORT_OPTIONS={SORT_OPTIONS}
       />
+      <VideoPlayer
+        visible={videoPreview.visible}
+        videoUrl={videoPreview.url}
+        onClose={() => setVideoPreview({ visible: false, url: null })}
+      />
+      <AudioPlayer
+        visible={audioPreview.visible}
+        audioUrl={audioPreview.url}
+        onClose={() => setAudioPreview({ visible: false, url: null })}
+      />
+      <TextResultView
+        visible={textPreview.visible}
+        text={textPreview.text}
+        onClose={() => setTextPreview({ visible: false, text: '' })}
+      />
     </View>
   );
 }
@@ -350,6 +397,9 @@ const styles = StyleSheet.create({
   historyThumb: { width: '100%', flex: 1, resizeMode: 'cover', borderRadius: Radius.xs },
   historyThumbPlaceholder: { flex: 1, width: '100%', backgroundColor: Colors.bg, alignItems: 'center', justifyContent: 'center' },
   historyThumbFailed: { backgroundColor: Colors.errorBg },
+  historyThumbVideo: { backgroundColor: Colors.primaryBg },
+  historyThumbAudio: { backgroundColor: Colors.purpleBg },
+  historyThumbText: { backgroundColor: Colors.primaryBg },
   historyInfo: { flex: 1, padding: Spacing.md, justifyContent: 'space-between', alignSelf: 'center' },
   historyPrompt: { fontSize: 14, color: Colors.textPrimary, fontWeight: '500', lineHeight: 18 },
   historyMeta: { fontSize: 12, color: Colors.textTertiary, marginTop: 3 },

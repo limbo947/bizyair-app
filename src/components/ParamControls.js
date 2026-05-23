@@ -33,6 +33,13 @@ export function ResolutionRatioControls({ currentResolutions, currentRatios, res
 }
 
 export function WidthHeightQualityControls({ sizePreset, setSizePreset, customWidth, setCustomWidth, customHeight, setCustomHeight, quality, setQuality, modelQualities }) {
+  const w = parseInt(customWidth) || 0;
+  const h = parseInt(customHeight) || 0;
+  const pixels = w * h;
+  const ratioValid = w > 0 && h > 0 && w / h <= 3 && h / w <= 3;
+  const pixelsValid = pixels >= 655360 && pixels <= 8294400;
+  const stepValid = w % 16 === 0 && h % 16 === 0;
+  const hasError = (w > 0 || h > 0) && (!ratioValid || !pixelsValid || !stepValid);
   return (
     <>
       <View style={styles.card}>
@@ -60,6 +67,14 @@ export function WidthHeightQualityControls({ sizePreset, setSizePreset, customWi
             <TextInput style={styles.dimInput} value={customHeight} onChangeText={setCustomHeight} keyboardType="numeric" />
           </View>
         </View>
+        {hasError && (
+          <Text style={styles.errorHint}>
+            {!stepValid ? '宽高须为16的倍数。' : ''}
+            {!ratioValid ? '宽高比不能超过3:1。' : ''}
+            {!pixelsValid ? '总像素须在655,360~8,294,400之间。' : ''}
+          </Text>
+        )}
+        <Text style={styles.priceHint}>宽高范围: 480~3840，步进16，宽高比≤3:1</Text>
       </View>
       <View style={styles.card}>
         <Text style={styles.label}>质量</Text>
@@ -166,6 +181,7 @@ const styles = StyleSheet.create({
   selectorText: { fontSize: 14, color: Colors.textSecondary, fontWeight: '500' },
   selectorTextActive: { color: Colors.textInverse, fontWeight: '600' },
   priceHint: { fontSize: 12, color: Colors.textTertiary, marginTop: Spacing.sm },
+  errorHint: { fontSize: 12, color: '#FF3B30', marginTop: Spacing.sm },
   aspectRatioGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
   ratioButton: { width: '22%', paddingVertical: 9, borderRadius: Radius.sm, backgroundColor: Colors.bg, alignItems: 'center', justifyContent: 'center' },
   ratioButtonActive: { backgroundColor: Colors.primary },

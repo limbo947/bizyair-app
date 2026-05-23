@@ -1,14 +1,131 @@
 import { MODELS } from '../constants/models';
 
+/**
+ * @typedef {Object} ModelConfig
+ * @property {string} name - 模型显示名称
+ * @property {Object} icon - 图标配置 { name, color }
+ * @property {string} manufacturer - 厂商
+ * @property {string} category - 分类（text-to-image/text-to-video/language/vision/text-to-audio 等）
+ * @property {string} paramType - 参数控件类型（resolution-ratio/seedance-video/llm-chat/tts 等）
+ * @property {string[]} [modes] - 支持的模式列表
+ * @property {Object} [prices] - 按分辨率/按token计费表
+ * @property {number} [price] - 固定价格
+ * @property {function} [priceCalculator] - 自定义价格计算函数
+ * @property {string[]} [resolutions] - 支持的分辨率列表
+ * @property {string[]} [videoRatios] - 视频宽高比列表
+ * @property {number} [maxPromptLength] - 最大提示词长度
+ * @property {number} [maxDuration] - 最大时长（秒）
+ * @property {number} [minDuration] - 最小时长（秒）
+ * @property {string} [imageField] - 图片上传字段名
+ * @property {number} [maxImages] - 最大图片数量
+ * @property {boolean} [supportsImageToImage] - 是否支持图生图
+ * @property {boolean} [supportsAudio] - 是否支持音频
+ * @property {boolean} [supportsMultiShot] - 是否支持多镜头
+ * @property {boolean} [supportsPromptExtend] - 是否支持提示词扩展
+ * @property {boolean} [supportsWatermark] - 是否支持水印
+ * @property {boolean} [supportsNegativePrompt] - 是否支持反向提示词
+ * @property {boolean} [supportsOffPeak] - 是否支持闲时模式
+ * @property {boolean} [supportsPromptOptimizer] - 是否支持提示词优化
+ * @property {string[]} [voices] - TTS 语音列表
+ * @property {string[]} [formats] - TTS 输出格式列表
+ * @property {string[]} [languages] - TTS 语言列表
+ * @property {number[]} [speedRange] - TTS 语速范围
+ * @property {number[]} [durationOptions] - 可选时长列表
+ * @property {string[]} [detailOptions] - Vision 详情级别列表
+ * @property {string[]} [captionTypes] - JoyCaption 类型列表
+ * @property {string[]} [captionLengths] - JoyCaption 长度列表
+ */
+
+const OUTPUT_TYPE_MAP = {
+  'text-to-image': 'image',
+  'image-to-image': 'image',
+  'text-to-video': 'video',
+  'image-to-video': 'video',
+  'flf-to-video': 'video',
+  'reference-to-video': 'video',
+  'video-edit': 'video',
+  'video-extend': 'video',
+  'text-to-audio': 'audio',
+  'vision': 'text',
+  'language': 'text',
+};
+
+/**
+ * 获取模型的输出类型。
+ * @param {string} modelId - 模型ID
+ * @returns {'image'|'video'|'audio'|'text'} 输出类型，未知模型默认返回 'image'
+ */
+export function getOutputType(modelId) {
+  const model = MODELS[modelId];
+  if (!model) return 'image';
+  return OUTPUT_TYPE_MAP[model.category] || 'image';
+}
+
+/**
+ * 获取模型支持的模式列表。
+ * @param {string} modelId - 模型ID
+ * @returns {string[]} 模式列表，如 ['text-to-image', 'image-to-image']
+ */
+export function getModelModes(modelId) {
+  const model = MODELS[modelId];
+  if (!model) return ['text-to-image'];
+  if (model.modes) return model.modes;
+  const cat = model.category;
+  switch (cat) {
+    case 'text-to-image':
+      return model.supportsImageToImage ? ['text-to-image', 'image-to-image'] : ['text-to-image'];
+    case 'text-to-video':
+      return ['text-to-video'];
+    case 'image-to-video':
+      return ['image-to-video'];
+    case 'flf-to-video':
+      return ['flf-to-video'];
+    case 'reference-to-video':
+      return ['reference-to-video'];
+    case 'video-edit':
+      return ['video-edit'];
+    case 'video-extend':
+      return ['video-extend'];
+    case 'text-to-audio':
+      return ['text-to-audio'];
+    case 'vision':
+    case 'large-language-models':
+      return [cat];
+    default:
+      return ['text-to-image'];
+  }
+}
+
+/**
+ * 获取模型配置对象，未找到时返回默认模型。
+ * @param {string} modelId - 模型ID
+ * @returns {ModelConfig} 模型配置对象
+ */
 export function getModelInfo(modelId) {
   return MODELS[modelId] || MODELS['bza-image-b2-base'];
 }
 
+/**
+ * 获取指定分辨率的固定价格（仅用于简单价格表模型）。
+ * @param {string} modelId - 模型ID
+ * @param {string} resolution - 分辨率
+ * @returns {number} 价格
+ */
 export function getPrice(modelId, resolution) {
   const model = getModelInfo(modelId);
   return model.prices?.[resolution] || 0;
 }
 
+/**
+ * 计算模型调用价格。按优先级依次尝试：
+ * 1. model.priceCalculator 自定义计算函数
+ * 2. model.price 固定价格
+ * 3. model.prices 按分辨率或按token计费表
+ * 4. 返回 0
+ * @param {string} modelId - 模型ID
+ * @param {object} params - 请求参数（resolution/duration/sound/userPrompt等）
+ * @returns {number} 计算出的价格（金币）
+ */
 export function calculatePrice(modelId, params) {
   const model = getModelInfo(modelId);
 
@@ -16,7 +133,15 @@ export function calculatePrice(modelId, params) {
     return model.priceCalculator(params);
   }
 
+  if (model.price !== undefined) {
+    return model.price;
+  }
+
   if (model.prices && model.paramType !== 'width-height-quality' && model.paramType !== 'width-height') {
+    if (model.prices.input_per_1k_tokens !== undefined) {
+      const tokens = Math.max(100, (params.userPrompt || params.prompt || '').length);
+      return model.prices.input_per_1k_tokens * Math.ceil(tokens / 1000);
+    }
     const res = params.resolution === 'Custom' ? '2K' : params.resolution;
     return model.prices[res] || Object.values(model.prices)[0] || 0;
   }
@@ -24,18 +149,37 @@ export function calculatePrice(modelId, params) {
   return 0;
 }
 
+/**
+ * 获取模型支持的宽高比列表。
+ * @param {string} modelId - 模型ID
+ * @param {string} mode - 当前模式（'text-to-image' 或 'image-to-image'）
+ * @returns {string[]} 宽高比列表
+ */
 export function getRatios(modelId, mode) {
   const model = getModelInfo(modelId);
   if (mode === 'image-to-image') return model.imageToImageRatios || [];
   return model.textToImageRatios || [];
 }
 
+/**
+ * 获取模型支持的分辨率列表。
+ * @param {string} modelId - 模型ID
+ * @param {string} mode - 当前模式
+ * @returns {string[]} 分辨率列表
+ */
 export function getResolutions(modelId, mode) {
   const model = getModelInfo(modelId);
   if (mode === 'image-to-image' && model.i2iResolutions) return model.i2iResolutions;
   return model.resolutions || [];
 }
 
+/**
+ * 计算实际输出分辨率字符串（用于历史记录展示）。
+ * @param {string} modelId - 模型ID
+ * @param {string} mode - 当前模式
+ * @param {object} params - 请求参数
+ * @returns {string} 分辨率描述，如 '2048×1024' 或 '720p'
+ */
 export function getActualResolution(modelId, mode, params) {
   const model = getModelInfo(modelId);
   const RES_BASE = { '0.5K': 512, '1K': 1024, '2K': 2048, '3K': 3072, '4K': 4096 };

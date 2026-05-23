@@ -1,4 +1,5 @@
-export const Colors = {
+// ── Light Color Palette ──
+export const LightColors = {
   primary: '#007AFF',
   primaryHover: '#0066D6',
   primaryLight: '#4DA2FF',
@@ -36,6 +37,73 @@ export const Colors = {
   groupedBg: '#FFFFFF',
 };
 
+// ── Dark Color Palette (iOS dark mode conventions) ──
+export const DarkColors = {
+  primary: '#007AFF',
+  primaryHover: '#0066D6',
+  primaryLight: '#4DA2FF',
+  primaryBg: '#1C2D4A',
+  primaryBorder: '#2A4A7F',
+  primaryDisabled: '#2A4A7F',
+  success: '#34C759',
+  successBg: '#1A3A2A',
+  successBorder: '#2A5A3A',
+  warning: '#FF9500',
+  warningBg: '#3A2A1A',
+  warningBorder: '#5A3A1A',
+  error: '#FF3B30',
+  errorBg: '#3A1A1A',
+  errorBorder: '#5A2A2A',
+  info: '#5AC8FA',
+  infoBg: '#1A2A3A',
+  infoBorder: '#2A4A5A',
+  purple: '#AF52DE',
+  purpleBg: '#2A1A3A',
+  purpleBorder: '#4A2A5A',
+  bg: '#000000',
+  card: '#1C1C1E',
+  border: '#38383A',
+  divider: '#38383A',
+  inputBg: '#2C2C2E',
+  disabled: '#48484A',
+  disabledBg: '#38383A',
+  textPrimary: '#FFFFFF',
+  textSecondary: '#EBEBF5',
+  textTertiary: '#8E8E93',
+  textPlaceholder: '#48484A',
+  textInverse: '#000000',
+  separator: '#38383A',
+  groupedBg: '#000000',
+};
+
+// ── Theme Factory ──
+export function createTheme(mode) {
+  const colors = mode === 'dark' ? DarkColors : LightColors;
+  return {
+    mode,
+    colors,
+    Radius,
+    Spacing,
+    STATUS_COLORS: {
+      Pending: colors.warning,
+      Running: colors.primary,
+      Saving: colors.purple,
+      Success: colors.success,
+      Failed: colors.error,
+    },
+    STATUS_BG: {
+      Pending: colors.warningBg,
+      Running: colors.primaryBg,
+      Saving: colors.purpleBg,
+      Success: colors.successBg,
+      Failed: colors.errorBg,
+    },
+  };
+}
+
+// ── Backward-compatible default exports (light mode) ──
+export const Colors = { ...LightColors };
+
 export const Radius = {
   xs: 6,
   sm: 8,
@@ -54,8 +122,6 @@ export const Spacing = {
   xl: 20,
   xxl: 28,
 };
-
-
 
 export const STATUS_COLORS = {
   Pending: Colors.warning,

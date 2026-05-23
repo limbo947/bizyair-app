@@ -239,6 +239,25 @@ export function AppProvider({ children }) {
 
   const MAX_POLL_FAILS = 5;
 
+  function extractTaskResult(result) {
+    const outputs = result.outputs;
+    if (!outputs) return {};
+
+    if (outputs.videos?.length > 0) {
+      return { outputType: 'video', videoUrl: outputs.videos[0], resultUrl: outputs.videos[0] };
+    }
+    if (outputs.audios?.length > 0) {
+      return { outputType: 'audio', audioUrl: outputs.audios[0], resultUrl: outputs.audios[0] };
+    }
+    if (outputs.texts?.length > 0) {
+      return { outputType: 'text', textResult: outputs.texts[0], resultUrl: null };
+    }
+    if (outputs.images?.length > 0) {
+      return { outputType: 'image', imageUrl: outputs.images[0], resultUrl: outputs.images[0] };
+    }
+    return {};
+  }
+
   const startPolling = useCallback((id, requestId, ak) => {
     if (pollingRef.current[id]) return;
 
@@ -253,10 +272,10 @@ export function AppProvider({ children }) {
         if (result.status === 'Success') {
           clearInterval(interval);
           delete pollingRef.current[id];
-          const imgs = result.outputs?.images;
+          const taskResult = extractTaskResult(result);
           updateHistoryItem(id, {
             status: 'Success',
-            imageUrl: imgs?.length > 0 ? imgs[0] : null,
+            ...taskResult,
             completedAt: Date.now(),
             lastResponse: result,
           });
@@ -295,10 +314,10 @@ export function AppProvider({ children }) {
       const result = await queryTaskResult(ak, item.requestId);
       updateHistoryItem(item.id, { status: result.status, lastResponse: result });
       if (result.status === 'Success') {
-        const imgs = result.outputs?.images;
+        const taskResult = extractTaskResult(result);
         updateHistoryItem(item.id, {
           status: 'Success',
-          imageUrl: imgs?.length > 0 ? imgs[0] : null,
+          ...taskResult,
           completedAt: Date.now(),
           lastResponse: result,
         });
@@ -400,16 +419,13 @@ export function AppProvider({ children }) {
   };
 
   const addCoinsSpent = async (amount) => {
-    try {
-      const stored = await AsyncStorage.getItem(TOTAL_COINS_KEY);
-      const prev = parseInt(stored, 10) || 0;
+    setTotalCoinsSpent((prev) => {
       const newTotal = prev + amount;
-      await saveTotalCoins(newTotal);
-    } catch (e) {
-      console.error('累加金币失败:', e);
-      const newTotal = totalCoinsSpent + amount;
-      await saveTotalCoins(newTotal);
-    }
+      AsyncStorage.setItem(TOTAL_COINS_KEY, String(newTotal)).catch(
+        (e) => console.error('保存总金币失败:', e)
+      );
+      return newTotal;
+    });
   };
 
   const loadFavorites = async () => {

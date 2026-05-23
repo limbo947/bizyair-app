@@ -19,12 +19,28 @@ export function ModelSelectScreen({ currentModelId, onSelectModel, onBack }) {
   const [selectedModels, setSelectedModels] = useState([...favorites]);
 
   const allModelEntries = useMemo(() => {
-    return Object.entries(MODELS).map(([id, model]) => ({
-      id,
-      ...model,
-      manufacturerInfo: MANUFACTURERS[model.manufacturer],
-      isFavorite: isFavorite(id),
-    }));
+    return Object.entries(MODELS).map(([id, model]) => {
+      // categories 用于 UI 分类过滤，基于 CATEGORIES 的键
+      // modes 用于 API 路径，两者可能不同（如 LLM 的 category='language' vs mode='large-language-models'）
+      const categories = model.supportsImageToImage && !model.modes
+        ? ['text-to-image', 'image-to-image']
+        : model.modes
+          ? model.modes.map(m => {
+              // 将 API mode 映射回 UI category
+              if (m === 'large-language-models') return 'language';
+              if (m === 'vision') return 'vision';
+              if (m === 'text-to-audio') return 'text-to-audio';
+              return m;
+            })
+          : [model.category];
+      return {
+        id,
+        ...model,
+        categories,
+        manufacturerInfo: MANUFACTURERS[model.manufacturer],
+        isFavorite: isFavorite(id),
+      };
+    });
   }, [isFavorite]);
 
   const filteredModels = useMemo(() => {
@@ -34,10 +50,10 @@ export function ModelSelectScreen({ currentModelId, onSelectModel, onBack }) {
     if (selectedCategory === 'favorite') {
       return allModelEntries.filter((m) => favorites.includes(m.id));
     }
-    return allModelEntries.filter((m) => m.category === selectedCategory);
+    return allModelEntries.filter((m) => m.categories.includes(selectedCategory));
   }, [selectedCategory, favorites, allModelEntries]);
 
-  const handleModelPress = (modelId) => {
+  const handleModelPress = (modelId, category) => {
     if (isEditMode) {
       if (selectedModels.includes(modelId)) {
         setSelectedModels(selectedModels.filter((id) => id !== modelId));
@@ -45,7 +61,11 @@ export function ModelSelectScreen({ currentModelId, onSelectModel, onBack }) {
         setSelectedModels([...selectedModels, modelId]);
       }
     } else {
-      onSelectModel(modelId);
+      // 传递当前分类，以便 HomeScreen 自动切换到对应模式
+      // 将 UI category 映射为 API mode
+      let apiMode = category && category !== 'all' && category !== 'favorite' ? category : undefined;
+      if (apiMode === 'language') apiMode = 'large-language-models';
+      onSelectModel(modelId, apiMode);
     }
   };
 
@@ -70,7 +90,7 @@ export function ModelSelectScreen({ currentModelId, onSelectModel, onBack }) {
       ...value,
       count: key === 'favorite'
         ? favorites.length
-        : allModelEntries.filter((m) => m.category === key).length,
+        : allModelEntries.filter((m) => m.categories.includes(key)).length,
     })),
   ];
 
@@ -161,7 +181,7 @@ export function ModelSelectScreen({ currentModelId, onSelectModel, onBack }) {
                       styles.modelCard,
                       isSelected && styles.modelCardActive,
                     ]}
-                    onPress={() => handleModelPress(model.id)}
+                    onPress={() => handleModelPress(model.id, selectedCategory)}
                     activeOpacity={0.7}
                   >
                     <View style={styles.modelCardHeader}>
