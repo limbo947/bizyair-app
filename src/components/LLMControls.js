@@ -190,8 +190,16 @@ export function LLMChatControls({
           onChangeText={setSystemPrompt}
           placeholder="设定AI的角色和行为，或选择上方预设..."
           maxLength={2500}
+          hideClear
         />
-        <Text style={styles.hint}>长按自定义预设可删除</Text>
+        <View style={styles.hintRow}>
+          <Text style={styles.hint}>长按自定义预设可删除</Text>
+          {systemPrompt ? (
+            <TouchableOpacity onPress={() => setSystemPrompt('')} activeOpacity={0.6}>
+              <Text style={styles.clearText}>清空</Text>
+            </TouchableOpacity>
+          ) : null}
+        </View>
       </View>
       <View style={styles.card}>
         <Text style={styles.label}>Temperature (0 ~ 2)</Text>
@@ -266,6 +274,8 @@ const styles = StyleSheet.create({
   addPresetConfirm: { backgroundColor: Colors.primary, paddingVertical: 6, paddingHorizontal: 16, borderRadius: Radius.sm },
   addPresetConfirmText: { color: Colors.textInverse, fontSize: 14, fontWeight: '600' },
   hint: { fontSize: 11, color: Colors.textTertiary, marginTop: 4 },
+  hintRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  clearText: { fontSize: 12, color: '#4A9EF5', fontWeight: '500' },
   switchRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   inputSingle: { fontSize: 15, color: Colors.textPrimary, borderWidth: 0, borderRadius: Radius.sm, paddingHorizontal: Spacing.sm, paddingVertical: 10, backgroundColor: Colors.bg },
 });

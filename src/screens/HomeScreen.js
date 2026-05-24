@@ -573,7 +573,7 @@ export function HomeScreen({ onOpenModelSelect }) {
         )}
       </View>
 
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {showApiKeyInput ? (
           <View style={styles.card}>
             <View style={styles.labelRow}>
@@ -628,10 +628,18 @@ export function HomeScreen({ onOpenModelSelect }) {
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.label}>提示词</Text>
+          <View style={styles.promptLabelRow}>
+            <Text style={[styles.label, { marginBottom: 0 }]}>提示词</Text>
+            {prompt ? (
+              <TouchableOpacity onPress={() => setPrompt('')} activeOpacity={0.6}>
+                <Text style={styles.promptClearText}>清空</Text>
+              </TouchableOpacity>
+            ) : null}
+          </View>
           <ResizableTextInput
             value={prompt}
             onChangeText={setPrompt}
+            hideClear
             placeholder={
               paramType === 'llm-chat' ? '输入你的问题，支持深度思考...'
               : paramType === 'vision-g' ? '描述图片内容或提出问题...'
@@ -859,9 +867,9 @@ const styles = StyleSheet.create({
   headerAllModelsButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.bg, paddingHorizontal: Spacing.sm, paddingVertical: Spacing.sm, borderRadius: Radius.sm, gap: Spacing.xs },
   headerAllModelsText: { fontSize: 14, color: Colors.textPrimary, fontWeight: '600' },
   headerThemeButton: { padding: Spacing.sm, borderRadius: Radius.sm, backgroundColor: Colors.bg },
-  modelAndModeRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
-  modeToggle: { flexDirection: 'row', borderRadius: Radius.sm, backgroundColor: Colors.bg, padding: 2 },
-  modeButton: { paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, borderRadius: Radius.xs, alignItems: 'center' },
+  modelAndModeRow: { marginBottom: 6 },
+  modeToggle: { flexDirection: 'row', borderRadius: Radius.sm, backgroundColor: Colors.bg, padding: 4, gap: 4, marginTop: 6 },
+  modeButton: { flex: 1, paddingVertical: Spacing.sm, borderRadius: Radius.xs, alignItems: 'center' },
   modeButtonActive: { backgroundColor: Colors.card },
   modeButtonText: { fontSize: 13, color: Colors.textTertiary, fontWeight: '500' },
   modeButtonTextActive: { color: Colors.primary, fontWeight: '600' },
@@ -870,6 +878,8 @@ const styles = StyleSheet.create({
   card: { backgroundColor: Colors.card, padding: Spacing.lg, borderRadius: Radius.md, marginBottom: Spacing.md },
   labelRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, marginBottom: Spacing.sm },
   label: { fontSize: 13, fontWeight: '600', color: Colors.textSecondary, marginBottom: Spacing.sm, textTransform: 'uppercase', letterSpacing: 0.5 },
+  promptLabelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.sm },
+  promptClearText: { fontSize: 12, color: '#4A9EF5', fontWeight: '500' },
   charCount: { fontSize: 12, color: Colors.textTertiary, textAlign: 'right', marginTop: Spacing.xs },
   uploadButton: { backgroundColor: Colors.primaryBg, paddingVertical: 18, borderRadius: Radius.md, borderWidth: 1.5, borderColor: Colors.primaryBorder, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: Spacing.sm },
   uploadButtonDisabled: { opacity: 0.6 },

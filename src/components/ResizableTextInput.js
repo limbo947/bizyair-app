@@ -19,6 +19,7 @@ export function ResizableTextInput({
   inputStyle,
   minHeight,
   maxHeight,
+  hideClear = false,
 }) {
   const [height, setHeight] = React.useState(minHeight || MIN_HEIGHT);
   const heightRef = useRef(minHeight || MIN_HEIGHT);
@@ -53,8 +54,9 @@ export function ResizableTextInput({
         placeholder={placeholder}
         placeholderTextColor={placeholderTextColor || Colors.textPlaceholder}
         textAlignVertical="top"
+        showsVerticalScrollIndicator={false}
       />
-      {value && value.length > 0 ? (
+      {!hideClear && value && value.length > 0 ? (
         <TouchableOpacity
           style={styles.clearButton}
           onPress={() => onChangeText('')}
@@ -91,12 +93,13 @@ const styles = StyleSheet.create({
   },
   clearButton: {
     position: 'absolute',
-    top: 6,
+    top: 4,
     right: 28,
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: Radius.xs,
     zIndex: 2,
+    backgroundColor: Colors.bg,
   },
   clearButtonText: {
     fontSize: 12,
