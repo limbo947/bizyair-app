@@ -105,6 +105,21 @@ export function SizeOnlyControls({ currentResolutions, resolution, setResolution
   );
 }
 
+export function FluxKontextControls({ currentRatios, aspectRatio, setAspectRatio }) {
+  return (
+    <View style={styles.card}>
+      <Text style={styles.label}>宽高比</Text>
+      <View style={styles.aspectRatioGrid}>
+        {currentRatios.map((r) => (
+          <TouchableOpacity key={r} style={[styles.ratioButton, aspectRatio === r && styles.ratioButtonActive]} onPress={() => setAspectRatio(r)}>
+            <Text style={[styles.ratioText, aspectRatio === r && styles.ratioTextActive]}>{r}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </View>
+  );
+}
+
 export function WanSizeControls({ currentResolutions, resolution, setResolution, customWidth, setCustomWidth, customHeight, setCustomHeight }) {
   return (
     <>

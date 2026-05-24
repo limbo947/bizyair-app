@@ -1,33 +1,24 @@
----
-display_name: "海螺2.3.Fast-文生视频-渠道版"
-category: "Text to Video"
-manufacturer: "MiniMax"
-price: "768P, 6s: 1080 金币/1次 | 768P, 10s: 1800 金币/1次 | 1080P, 6s: 1850 金币/1次"
-price_url: "https://bizyair.cn/modelzoo/hailuo-2-3-fast-base/text-to-video?tab=price"
-benefit:
-  rpd: 200
-  rph: 60
-  rpm: -1
-description: |
-  海螺 2.3 极速渠道版文生视频模型，面向新媒体创作者与内容量产团队。具备高效文本语义解析能力，生成速度大幅提升，画面动态过渡平稳，主体形象无畸变，兼顾效率与基础画质，适配短视频、营销短片快速批量创作。
-tags: ["海螺"]
----
+## 一. 开始使用
 
-# 海螺2.3.Fast-文生视频-渠道版
+欢迎使用 Bizyair API，基于这份说明，您可以轻松调用 Bizyair 标准模型API。
 
-> **文生视频** | 厂商: MiniMax | 模型: `hailuo-2-3-fast-base` | 类型: `text-to-video`
+### 1. 注册用户
 
-海螺 2.3 极速渠道版文生视频模型，面向新媒体创作者与内容量产团队。具备高效文本语义解析能力，生成速度大幅提升，画面动态过渡平稳，主体形象无畸变，兼顾效率与基础画质，适配短视频、营销短片快速批量创作。
+请登陆或注册您的bizyair账号，并确保拥有一定的金币，以免运行扣费失败。
 
-💰 **价格**: 768P, 6s: 1080 金币/1次 | 768P, 10s: 1800 金币/1次 | 1080P, 6s: 1850 金币/1次  [查看详情](https://bizyair.cn/modelzoo/hailuo-2-3-fast-base/text-to-video?tab=price)
+请注意，**标准模型API只能使用金币。**
 
-> 公共内容请参阅 [common.md](../common.md)
+### 2. 获取您的 API Key
+
+每位用户都拥有Bizyair所提供的一个独特的 48 位 **API Key**，
+
+您可以将光标移动至右上角用户头像处，点击【API密钥】获取您的专属密钥，
+
+**请妥善保存您的 API Key**，它将参与接下来的每一步操作。
 
 ## 二. 提交请求
 
-
-> _preamble — 与公共文档一致，详见 [common.md](../common.md)
-
+您现在可以提交 API 请求了。
 
 ### 1. 请求示例
 
@@ -68,7 +59,6 @@ async function submitTask() {
 submitTask();
 ```
 
-
 ### 2. 请求参数说明
 
 您可以阅读以下的【**请求参数说明**】，进一步完善您提交的请求。这会使您最终的运行成功更加准确，但请严格遵守参数内容要求，以免运行失败。
@@ -79,21 +69,71 @@ submitTask();
 | resolution | string | 是 | ⟨bz_enum_json⟩["768P","1080P"]⟨/bz_enum_json⟩<br/>支持 768P、1080P；当时长为 10 秒时仅支持 768P。 |
 | duration | number | 是 | ⟨bz_enum_json⟩["6","10"]⟨/bz_enum_json⟩<br/>支持 6 秒、10 秒；1080P 仅支持 6 秒。 |
 
+> 为保护您的业务敏感信息（如 prompt 设计等），我们支持对 API 调用记录中的指定字段进行脱敏处理。脱敏后的字段在查询调用记录时将显示为 `[调用方要求隐藏]`，但不影响实际请求的执行和计费准确性。
+>
+> **使用方法**：在请求头中携带 `X-BizyAir-Log-Mask-Fields`，指定需要脱敏的字段，多个字段用英文逗号分隔。
+>
+> ```http
+> Content-Type: application/json
+> Authorization: Bearer ${BIZYAIR_API_KEY}
+> X-BizyAir-Log-Mask-Fields: prompt, image_urls
+> ```
 
-> ### 3. 响应示例 — 与公共文档一致，详见 [common.md](../common.md)
+### 3. 响应示例
 
+在成功提交请求后，您会收到类似的信息反馈。
 
-> ### 4. 响应字段说明 — 与公共文档一致，详见 [common.md](../common.md)
+这是一个**异步任务提交的成功回执**，作用是告诉你：“请求已接收，任务正在排队执行中”。
 
+如果您收到了其他的信息反馈，可以结合下文【**4. 响应字段说明**】进一步了解详情。
+
+```json
+{
+  "request_id": "4569bb94-1d30-417a-a987-9715de1e2633"
+}
+```
+
+### 4. 响应字段说明
+
+您可以阅读下方的【**响应字段说明**】，了解各字段含义与取值说明。
+
+| 参数名 | 类型 | 说明 |
+| :--- | :--- | :--- |
+| request_id | string | 请求ID，用于后续查询任务状态。 |
 
 ## 三. 查询结果
 
+在这个阶段，您可以通过刚才产生的**任务单号（request_id）**，去主动查询任务是否完成，以及获取最终结果。
 
-> _preamble — 与公共文档一致，详见 [common.md](../common.md)
+### 1. 请求示例
 
+请您分别将下方的 `${BIZYAIR_API_KEY}`、`${REQUEST_ID}`，
 
-> ### 1. 请求示例 — 与公共文档一致，详见 [common.md](../common.md)
+更换成您的 **API Key** 以及您的**任务单号（request_id）**，
 
+这样可以为您提供任务最新状态，包括是否成功以及结果资源地址。
+
+```javascript
+async function queryTaskStatus(requestId) {
+  const url = `https://api.bizyair.cn/x/v1/modelzoo/tasks/openapi/${requestId}`;
+
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': 'Bearer ${BIZYAIR_API_KEY}'
+      }
+    });
+
+    const result = await response.json();
+    console.log('Task Status:', result);
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+queryTaskStatus('${REQUEST_ID}');
+```
 
 ### 2. 响应示例
 
@@ -118,7 +158,6 @@ submitTask();
 }
 ```
 
-
 ### 3. 响应字段说明
 
 您可以阅读下方的【**响应字段说明**】，了解各字段含义与取值说明。
@@ -132,3 +171,118 @@ submitTask();
 | ended_at | string | 当任务成功或失败时，任务结束的时间。 |
 | outputs | array | 生成结果（非“完成”状态时，为null或[]）。 |
 | outputs.videos | array | 视频类输出结果，URL 实际上是文件的下载链接（CDN 地址）。 |
+
+## 四. 文件上传
+
+这项操作用于资源上传，支持上传图片、音频、视频等资源至 BizyAir 服务器。
+
+上传后的文件将可以作为输入资源使用到您运行的任务当中。
+
+### 1. 获取上传凭证与参数
+调用获取上传凭证接口，服务端会返回本次上传所需的 OSS 信息与临时 STS 凭证。
+
+```javascript
+async function getUploadToken() {
+  const params = new URLSearchParams({
+    file_name: 'example.webp',
+    file_type: 'inputs'
+  });
+  const url = `https://api.bizyair.cn/x/v1/upload/token?${params}`;
+
+  try {
+    const response = await fetch(url, {
+      headers: {
+        'Authorization': 'Bearer ${BIZYAIR_API_KEY}'
+      }
+    });
+    const result = await response.json();
+    console.log('Upload Token:', result);
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+getUploadToken();
+```
+
+### 2. 使用 阿里云 OSS 简单上传
+
+使用上一步返回的 `endpoint`、`bucket`、`region`、`object_key` 与 STS 凭证将本地文件上传到 OSS。更详细信息参考：[阿里云 OSS 简单上传](https://help.aliyun.com/zh/oss/user-guide/simple-upload)、[BizyAir 上传教程](https://docs.bizyair.cn/api/upload-tutorial.html#oss)。
+
+```javascript
+const OSS = require('ali-oss');
+
+async function uploadToOSS(region, bucket, accessKeyId, accessKeySecret, securityToken, objectKey, filePath) {
+  const client = new OSS({
+    region: region,
+    accessKeyId: accessKeyId,
+    accessKeySecret: accessKeySecret,
+    stsToken: securityToken,
+    bucket: bucket
+  });
+  return await client.put(objectKey, filePath);
+}
+```
+
+注意：
+
+- 有些 SDK 需要去掉 `region` 的 `oss-` 前缀，如 `oss-cn-shanghai` → `cn-shanghai`。
+- 建议同时设置 `region` 与 `endpoint`，以返回的 `endpoint` 为准。
+
+### 3. 提交输入资源
+当 OSS 上传成功后，提交本次输入资源，便于后续任务直接引用。
+
+```javascript
+async function commitResource() {
+  const url = 'https://api.bizyair.cn/x/v1/input_resource/commit';
+  const payload = {
+    name: 'example.webp',
+    object_key: 'inputs/20250911/abc123.webp'
+  };
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ${BIZYAIR_API_KEY}'
+      },
+      body: JSON.stringify(payload)
+    });
+    const result = await response.json();
+    console.log('Commit Result:', result);
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+commitResource();
+```
+
+### 4. 查询 inputs 列表（可选）
+
+这项操作可以查询您的查询 inputs 列表，
+
+您可以这样校验上传的内容。
+
+```javascript
+async function listInputs() {
+  const params = new URLSearchParams({ current: '1', page_size: '20' });
+  const url = `https://api.bizyair.cn/x/v1/input_resource?${params}`;
+
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': 'Bearer ${BIZYAIR_API_KEY}'
+      }
+    });
+    const result = await response.json();
+    console.log('Inputs List:', result);
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+listInputs();
+```

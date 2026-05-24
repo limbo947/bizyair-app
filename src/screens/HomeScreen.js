@@ -94,13 +94,14 @@ export function HomeScreen({ onOpenModelSelect }) {
   const [promptOptimizer, setPromptOptimizer] = useState(homeState.promptOptimizer !== undefined ? homeState.promptOptimizer : false);
   const [fastPretreatment, setFastPretreatment] = useState(homeState.fastPretreatment || false);
   const [aigcWatermark, setAigcWatermark] = useState(homeState.aigcWatermark !== undefined ? homeState.aigcWatermark : false);
+  const [movementAmplitude, setMovementAmplitude] = useState(homeState.movementAmplitude || 'auto');
   const [videoUrls, setVideoUrls] = useState(homeState.videoUrls || []);
   const [firstFrameUrls, setFirstFrameUrls] = useState(homeState.firstFrameUrls || []);
   const [lastFrameUrls, setLastFrameUrls] = useState(homeState.lastFrameUrls || []);
   const [mediaUrls, setMediaUrls] = useState(homeState.mediaUrls || []);
   const [systemPrompt, setSystemPrompt] = useState(homeState.systemPrompt || '');
   const [temperature, setTemperature] = useState(homeState.temperature ?? 1.0);
-  const [maxTokens, setMaxTokens] = useState(homeState.maxTokens || 4096);
+  const [maxTokens, setMaxTokens] = useState(homeState.maxTokens || 1024);
   const [enableThinking, setEnableThinking] = useState(homeState.enableThinking !== undefined ? homeState.enableThinking : true);
   const [enableSearch, setEnableSearch] = useState(homeState.enableSearch !== undefined ? homeState.enableSearch : false);
   const [detail, setDetail] = useState(homeState.detail || 'medium');
@@ -119,9 +120,24 @@ export function HomeScreen({ onOpenModelSelect }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
   const [showFavorites, setShowFavorites] = useState(false);
   const [showApiKeyDropdown, setShowApiKeyDropdown] = useState(false);
   const [latestTextResult, setLatestTextResult] = useState('');
+
+  const handleSaveApiKey = async () => {
+    if (!apiKey.trim() || isSaving) return;
+    setIsSaving(true);
+    setError('');
+    try {
+      await saveApiKey(apiKey);
+      setShowApiKeyInput(false);
+    } catch (e) {
+      setError('保存失败: ' + (e.message || '未知错误'));
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const currentModel = getModelInfo(modelId);
   const currentRatios = getRatios(modelId, mode);
@@ -162,7 +178,7 @@ export function HomeScreen({ onOpenModelSelect }) {
         duration, generateAudio, sound, multiShot, shotType, multiPrompt,
         negativePrompt, promptExtend, watermark, seed, display,
         keepOriginalSound, audio, offPeak, isRec, promptOptimizer,
-        fastPretreatment, aigcWatermark, videoUrls, firstFrameUrls,
+        fastPretreatment, aigcWatermark, movementAmplitude, videoUrls, firstFrameUrls,
         lastFrameUrls, mediaUrls,
         systemPrompt, temperature, maxTokens, enableThinking, enableSearch,
         detail, captionType, captionLength, doSample, extraOptions,
@@ -171,7 +187,7 @@ export function HomeScreen({ onOpenModelSelect }) {
       });
     }, 500);
     return () => clearTimeout(timer);
-  }, [modelId, mode, prompt, imageUrls, resolution, aspectRatio, quality, sizePreset, customWidth, customHeight, saveHomeState, duration, generateAudio, sound, multiShot, shotType, multiPrompt, negativePrompt, promptExtend, watermark, seed, display, keepOriginalSound, audio, offPeak, isRec, promptOptimizer, fastPretreatment, aigcWatermark, videoUrls, firstFrameUrls, lastFrameUrls, mediaUrls, systemPrompt, temperature, maxTokens, enableThinking, enableSearch, detail, captionType, captionLength, doSample, extraOptions, nameInput, customPrompt, voice, responseFormat, instructions, language, speed]);
+  }, [modelId, mode, prompt, imageUrls, resolution, aspectRatio, quality, sizePreset, customWidth, customHeight, saveHomeState, duration, generateAudio, sound, multiShot, shotType, multiPrompt, negativePrompt, promptExtend, watermark, seed, display, keepOriginalSound, audio, offPeak, isRec, promptOptimizer, fastPretreatment, aigcWatermark, movementAmplitude, videoUrls, firstFrameUrls, lastFrameUrls, mediaUrls, systemPrompt, temperature, maxTokens, enableThinking, enableSearch, detail, captionType, captionLength, doSample, extraOptions, nameInput, customPrompt, voice, responseFormat, instructions, language, speed]);
 
   const handleModelSelect = (id) => {
     setModelId(id);
@@ -208,6 +224,8 @@ export function HomeScreen({ onOpenModelSelect }) {
         return { ...base, width: parseInt(customWidth), height: parseInt(customHeight), quality, imageUrls };
       case 'size-only':
         return { ...base, resolution, imageUrls };
+      case 'flux-kontext':
+        return { ...base, aspectRatio, imageUrls };
       case 'wan-size':
         return { ...base, resolution, customWidth, customHeight, imageUrls };
       case 'width-height':
@@ -219,7 +237,7 @@ export function HomeScreen({ onOpenModelSelect }) {
       case 'kling-o3-4k':
         return { ...base, aspectRatio, duration, sound, keepOriginalSound, multiShot, shotType, multiPrompt, imageUrls, videoUrls };
       case 'vidu-video':
-        return { ...base, resolution, aspectRatio, duration, audio, isRec, offPeak, seed: seed ? parseInt(seed) : undefined, imageUrls, lastFrameUrls };
+        return { ...base, resolution, aspectRatio, duration, audio, isRec, offPeak, seed: seed ? parseInt(seed) : undefined, imageUrls, lastFrameUrls, movementAmplitude };
       case 'wan-video':
         return { ...base, resolution, aspectRatio, duration, promptExtend, watermark, negativePrompt, imageUrls, firstFrameUrls: mode === 'image-to-video' ? imageUrls : firstFrameUrls, lastFrameUrls, videoUrls, firstClipUrls: mode === 'video-extend' ? videoUrls : undefined, seed: seed ? parseInt(seed) : undefined };
       case 'wan-i2v':
@@ -247,9 +265,20 @@ export function HomeScreen({ onOpenModelSelect }) {
       default:
         return { ...base, resolution, aspectRatio, imageUrls };
     }
-  }, [paramType, prompt, resolution, aspectRatio, imageUrls, customWidth, customHeight, quality, duration, generateAudio, sound, multiShot, shotType, multiPrompt, negativePrompt, promptExtend, watermark, seed, display, keepOriginalSound, audio, offPeak, isRec, promptOptimizer, fastPretreatment, aigcWatermark, videoUrls, firstFrameUrls, lastFrameUrls, mediaUrls, systemPrompt, temperature, maxTokens, enableThinking, enableSearch, detail, captionType, captionLength, doSample, extraOptions, nameInput, customPrompt, voice, responseFormat, instructions, language, speed, mode]);
+  }, [paramType, prompt, resolution, aspectRatio, imageUrls, customWidth, customHeight, quality, duration, generateAudio, sound, multiShot, shotType, multiPrompt, negativePrompt, promptExtend, watermark, seed, display, keepOriginalSound, audio, offPeak, isRec, promptOptimizer, fastPretreatment, aigcWatermark, movementAmplitude, videoUrls, firstFrameUrls, lastFrameUrls, mediaUrls, systemPrompt, temperature, maxTokens, enableThinking, enableSearch, detail, captionType, captionLength, doSample, extraOptions, nameInput, customPrompt, voice, responseFormat, instructions, language, speed, mode]);
 
-  const currentPrice = useMemo(() => calculatePrice(modelId, getPayloadParams()), [modelId, getPayloadParams]);
+  const livePrice = useMemo(() => calculatePrice(modelId, getPayloadParams()), [modelId, getPayloadParams]);
+
+  // 获取价格公式显示文本（按 Tokens 计费模型）
+  const priceFormulaText = useMemo(() => {
+    const model = getModelInfo(modelId);
+    if (!model) return null;
+    // Seedance 参考生视频模式显示特殊公式
+    if (model.priceFormulaRefVideo && mode === 'reference-to-video') {
+      return model.priceFormulaRefVideo;
+    }
+    return model.priceFormula || null;
+  }, [modelId, mode]);
 
   const handleGenerate = async () => {
     const isVideo = paramType?.startsWith('seedance') || paramType?.startsWith('kling') || paramType?.startsWith('vidu') ||
@@ -299,7 +328,7 @@ export function HomeScreen({ onOpenModelSelect }) {
     setError('');
     const id = generateId();
     const now = Date.now();
-    const price = currentPrice;
+    const price = livePrice;
     const params = getPayloadParams();
     const actualRes = getActualResolution(modelId, mode, params);
 
@@ -331,7 +360,7 @@ export function HomeScreen({ onOpenModelSelect }) {
     await addToHistory(entry);
 
     await addCoinsSpent(price);
-    await refreshUserInfo();
+    await refreshUserInfo().catch(() => {});
 
     try {
       const payload = buildPayload(modelId, mode, params);
@@ -421,6 +450,8 @@ export function HomeScreen({ onOpenModelSelect }) {
       setFastPretreatment={setFastPretreatment}
       aigcWatermark={aigcWatermark}
       setAigcWatermark={setAigcWatermark}
+      movementAmplitude={movementAmplitude}
+      setMovementAmplitude={setMovementAmplitude}
       systemPrompt={systemPrompt}
       setSystemPrompt={setSystemPrompt}
       temperature={temperature}
@@ -522,10 +553,15 @@ export function HomeScreen({ onOpenModelSelect }) {
             {apiKey.trim() ? (
               <TouchableOpacity
                 style={styles.headerSaveButton}
-                onPress={() => { saveApiKey(apiKey); setShowApiKeyInput(false); }}
+                onPress={handleSaveApiKey}
                 activeOpacity={0.7}
+                disabled={isSaving}
               >
-                <Text style={styles.headerSaveButtonText}>保存</Text>
+                {isSaving ? (
+                  <ActivityIndicator size="small" color={Colors.textInverse} />
+                ) : (
+                  <Text style={styles.headerSaveButtonText}>保存</Text>
+                )}
               </TouchableOpacity>
             ) : (
               <View style={styles.headerAllModelsButton}>
@@ -556,9 +592,14 @@ export function HomeScreen({ onOpenModelSelect }) {
             {apiKey.trim() ? (
               <TouchableOpacity
                 style={styles.saveKeyButton}
-                onPress={() => { saveApiKey(apiKey); setShowApiKeyInput(false); }}
+                onPress={handleSaveApiKey}
+                disabled={isSaving}
               >
-                <Text style={styles.saveKeyButtonText}>保存密钥</Text>
+                {isSaving ? (
+                  <ActivityIndicator size="small" color={Colors.textInverse} />
+                ) : (
+                  <Text style={styles.saveKeyButtonText}>保存密钥</Text>
+                )}
               </TouchableOpacity>
             ) : null}
           </View>
@@ -758,9 +799,13 @@ export function HomeScreen({ onOpenModelSelect }) {
           <Text style={styles.generateButtonText}>
             {isSubmitting
               ? '提交中...'
-              : `${MODE_LABELS[mode] || '生成'} · ${currentPrice} 金币`}
+              : `${MODE_LABELS[mode] || '生成'}${priceFormulaText ? '' : ` · ${livePrice} 金币`}`}
           </Text>
         </TouchableOpacity>
+
+        {priceFormulaText ? (
+          <Text style={styles.priceFormulaText}>{priceFormulaText}</Text>
+        ) : null}
 
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
@@ -835,9 +880,10 @@ const styles = StyleSheet.create({
   uploadedName: { flex: 1, fontSize: 14, color: Colors.textPrimary, fontWeight: '500' },
   removeUploadedButton: { backgroundColor: Colors.errorBg, paddingHorizontal: 10, paddingVertical: 5, borderRadius: Radius.xs },
   removeUploadedButtonText: { color: Colors.error, fontSize: 13, fontWeight: '600' },
-  generateButton: { backgroundColor: Colors.primary, paddingVertical: 16, borderRadius: Radius.md, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 10, marginBottom: Spacing.md },
+  generateButton: { backgroundColor: Colors.primary, paddingVertical: 16, borderRadius: Radius.md, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 10, marginBottom: Spacing.sm },
   generateButtonDisabled: { backgroundColor: Colors.primaryDisabled },
   generateButtonText: { color: Colors.textInverse, fontSize: 17, fontWeight: '600', letterSpacing: -0.3 },
+  priceFormulaText: { fontSize: 12, color: Colors.textTertiary, textAlign: 'center', marginBottom: Spacing.md, lineHeight: 18 },
   errorText: { color: Colors.error, textAlign: 'center', marginBottom: Spacing.md, fontSize: 14 },
   textResultBox: { maxHeight: 300, backgroundColor: Colors.bg, borderRadius: Radius.sm, padding: Spacing.md },
   textResultContent: { fontSize: 14, color: Colors.textPrimary, lineHeight: 22 },

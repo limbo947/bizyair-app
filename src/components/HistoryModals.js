@@ -4,15 +4,12 @@ import {
   Text,
   View,
   TouchableOpacity,
-  Image,
   ScrollView,
   Modal,
 } from 'react-native';
 import { Colors, Radius, Spacing } from '../constants/theme';
 
 export function HistoryModals({
-  previewImage,
-  setPreviewImage,
   logModal,
   setLogModal,
   deleteConfirmId,
@@ -30,16 +27,6 @@ export function HistoryModals({
 }) {
   return (
     <>
-      <Modal visible={!!previewImage} transparent animationType="fade" onRequestClose={() => { setPreviewImage(null); }}>
-        <TouchableOpacity
-          style={styles.previewOverlay}
-          activeOpacity={1}
-          onPress={() => setPreviewImage(null)}
-        >
-          <Image source={{ uri: previewImage?.url }} style={styles.modalImage} resizeMode="contain" />
-        </TouchableOpacity>
-      </Modal>
-
       <Modal visible={!!logModal} transparent animationType="fade" onRequestClose={() => setLogModal(null)}>
         <View style={styles.modalOverlay}>
           <View style={styles.logModalContent}>
@@ -99,8 +86,6 @@ export function HistoryModals({
 
 const styles = StyleSheet.create({
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
-  modalImage: { width: '100%', height: '80%' },
-  previewOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center' },
   logModalContent: { width: '90%', maxHeight: '80%', backgroundColor: '#1C1C1E', borderRadius: Radius.lg, overflow: 'hidden' },
   logModalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: Spacing.lg, borderBottomWidth: 0.5, borderBottomColor: '#38383A' },
   logModalTitle: { fontSize: 17, fontWeight: '600', color: Colors.textInverse },

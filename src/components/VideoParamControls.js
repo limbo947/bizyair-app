@@ -210,6 +210,7 @@ export function ViduVideoControls({
   aspectRatio, setAspectRatio, duration, setDuration,
   audio, setAudio, isRec, setIsRec, offPeak, setOffPeak,
   maxDuration, minDuration, supportsAudio, supportsOffPeak, seed, setSeed,
+  movementAmplitude, setMovementAmplitude, supportsMovementAmplitude,
 }) {
   const durArray = [];
   for (let i = minDuration || 1; i <= (maxDuration || 16); i++) durArray.push(i);
@@ -264,6 +265,18 @@ export function ViduVideoControls({
           <View style={styles.switchRow}>
             <Text style={styles.label}>低谷模式</Text>
             <Switch value={offPeak} onValueChange={setOffPeak} trackColor={{ false: Colors.bg, true: Colors.primary }} />
+          </View>
+        </View>
+      )}
+      {supportsMovementAmplitude && (
+        <View style={styles.card}>
+          <Text style={styles.label}>运动幅度</Text>
+          <View style={styles.selectorRow}>
+            {['auto', 'small', 'medium', 'large'].map((m) => (
+              <TouchableOpacity key={m} style={[styles.selectorButton, movementAmplitude === m && styles.selectorButtonActive]} onPress={() => setMovementAmplitude(m)}>
+                <Text style={[styles.selectorText, movementAmplitude === m && styles.selectorTextActive]}>{m === 'auto' ? '自动' : m === 'small' ? '小' : m === 'medium' ? '中' : '大'}</Text>
+              </TouchableOpacity>
+            ))}
           </View>
         </View>
       )}
@@ -403,7 +416,7 @@ export function HailuoVideoControls({
   resolutions, durationOptions, resolutionDurationMap, resolution, setResolution,
   duration, setDuration, promptOptimizer, setPromptOptimizer,
   fastPretreatment, setFastPretreatment, aigcWatermark, setAigcWatermark,
-  supportsPromptOptimizer, supportsWatermark,
+  supportsPromptOptimizer, supportsFastPretreatment, supportsWatermark,
 }) {
   const allowedDurations = resolutionDurationMap
     ? (resolutionDurationMap[resolution] || durationOptions)
@@ -443,8 +456,7 @@ export function HailuoVideoControls({
           </View>
         </View>
       )}
-      {/* Prompt优化和快速预处理共用同一控制条件 */}
-      {supportsPromptOptimizer && (
+      {supportsFastPretreatment && (
         <View style={styles.card}>
           <View style={styles.switchRow}>
             <Text style={styles.label}>快速预处理</Text>

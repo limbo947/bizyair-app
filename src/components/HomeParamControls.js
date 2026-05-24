@@ -3,6 +3,7 @@ import {
   ResolutionRatioControls,
   WidthHeightQualityControls,
   SizeOnlyControls,
+  FluxKontextControls,
   WanSizeControls,
   WidthHeightControls,
 } from './ParamControls';
@@ -86,6 +87,8 @@ export function HomeParamControls({
   setFastPretreatment,
   aigcWatermark,
   setAigcWatermark,
+  movementAmplitude,
+  setMovementAmplitude,
   // LLM 参数
   systemPrompt,
   setSystemPrompt,
@@ -156,6 +159,14 @@ export function HomeParamControls({
           currentResolutions={currentResolutions}
           resolution={resolution}
           setResolution={setResolution}
+        />
+      );
+    case 'flux-kontext':
+      return (
+        <FluxKontextControls
+          currentRatios={currentRatios}
+          aspectRatio={aspectRatio}
+          setAspectRatio={setAspectRatio}
         />
       );
     case 'wan-size':
@@ -268,6 +279,9 @@ export function HomeParamControls({
           supportsOffPeak={currentModel.supportsOffPeak}
           seed={seed}
           setSeed={setSeed}
+          movementAmplitude={movementAmplitude}
+          setMovementAmplitude={setMovementAmplitude}
+          supportsMovementAmplitude={currentModel.supportsMovementAmplitude}
         />
       );
     case 'wan-video':
@@ -331,6 +345,7 @@ export function HomeParamControls({
           aigcWatermark={aigcWatermark}
           setAigcWatermark={setAigcWatermark}
           supportsPromptOptimizer={currentModel.supportsPromptOptimizer}
+          supportsFastPretreatment={currentModel.supportsFastPretreatment}
           supportsWatermark={currentModel.supportsWatermark}
         />
       );

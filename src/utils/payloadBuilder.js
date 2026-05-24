@@ -33,6 +33,12 @@ export function buildPayload(modelId, mode, params) {
       if (mode === 'image-to-image') payload[model.imageField] = params.imageUrls;
       break;
 
+    case 'flux-kontext':
+      payload.prompt = params.prompt;
+      if (params.aspectRatio) payload.aspect_ratio = params.aspectRatio;
+      if (mode === 'image-to-image') payload[model.imageField] = params.imageUrls;
+      break;
+
     case 'wan-size':
       payload.prompt = params.prompt;
       payload.size = params.resolution;
@@ -52,13 +58,18 @@ export function buildPayload(modelId, mode, params) {
 
     case 'seedance-video':
       payload.prompt = params.prompt;
-      // 不同 seedance 版本使用不同的 ratio 字段名和自适应值
       const ratioField = model.ratioField || 'aspect_ratio';
       payload[ratioField] = params.aspectRatio || (ratioField === 'ratio' ? 'adaptive' : 'auto');
       payload.resolution = params.resolution || '720p';
-      payload.duration = params.duration || '5';
+      if (model.durationType === 'number') {
+        payload.duration = parseInt(params.duration) || 5;
+      } else {
+        payload.duration = params.duration || '5';
+      }
       if (model.supportsAudio) payload.generate_audio = params.generateAudio || false;
       if (params.seed) payload.seed = params.seed;
+      if (params.webSearch !== undefined) payload.web_search = params.webSearch;
+      if (params.returnLastFrame !== undefined) payload.return_last_frame = params.returnLastFrame;
       if (mode === 'flf-to-video') {
         if (params.firstFrameUrls?.length) payload.first_frame_url = params.firstFrameUrls;
         if (params.lastFrameUrls?.length) payload.last_frame_url = params.lastFrameUrls;
@@ -75,9 +86,11 @@ export function buildPayload(modelId, mode, params) {
       payload.duration = params.duration || 5;
       payload.sound = params.sound !== undefined ? params.sound : false;
       if (mode !== 'flf-to-video' && params.aspectRatio) payload.aspect_ratio = params.aspectRatio;
-      if (params.multiShot) payload.multi_shot = params.multiShot;
-      if (params.shotType) payload.shot_type = params.shotType;
-      if (params.multiPrompt) payload.multi_prompt = params.multiPrompt;
+      if (model.supportsMultiShot) {
+        if (params.multiShot) payload.multi_shot = params.multiShot;
+        if (params.shotType) payload.shot_type = params.shotType;
+        if (params.multiPrompt) payload.multi_prompt = params.multiPrompt;
+      }
       if (params.seed !== undefined && params.seed !== null) payload.seed = params.seed;
       if (mode === 'flf-to-video') {
         if (params.firstFrameUrls?.length) payload.first_frame_image = params.firstFrameUrls;
@@ -104,6 +117,8 @@ export function buildPayload(modelId, mode, params) {
       payload.aspect_ratio = params.aspectRatio || '16:9';
       payload.duration = params.duration || 5;
       if (model.supportsAudio) payload.audio = params.audio !== undefined ? params.audio : false;
+      if (model.supportsStyle) payload.style = params.style || 'general';
+      if (model.supportsMovementAmplitude) payload.movement_amplitude = params.movementAmplitude || 'auto';
       if (params.isRec) payload.is_rec = params.isRec;
       if (params.offPeak) payload.off_peak = params.offPeak;
       if (params.seed) payload.seed = params.seed;
@@ -138,6 +153,7 @@ export function buildPayload(modelId, mode, params) {
         if (params.videoUrls?.length) payload.video = params.videoUrls;
         if (params.audioSetting) payload.audio_setting = params.audioSetting;
         if (params.refImages?.length) payload.ref_images = params.refImages;
+        if (params.firstFrameUrls?.length) payload.first_frame = params.firstFrameUrls;
       }
       if (mode === 'reference-to-video') {
         if (params.refImages?.length) payload.ref_images = params.refImages;
@@ -147,6 +163,7 @@ export function buildPayload(modelId, mode, params) {
       if (mode === 'video-extend') {
         if (params.firstClipUrls?.length) payload.first_clip = params.firstClipUrls;
         if (params.drivingAudio) payload.driving_audio = params.drivingAudio;
+        if (params.lastFrameUrls?.length) payload.last_frame = params.lastFrameUrls;
       }
       break;
 
@@ -164,9 +181,9 @@ export function buildPayload(modelId, mode, params) {
       payload.prompt = params.prompt;
       payload.resolution = params.resolution || '768P';
       payload.duration = params.duration || 6;
-      if (params.promptOptimizer !== undefined) payload.prompt_optimizer = params.promptOptimizer;
-      if (params.fastPretreatment !== undefined) payload.fast_pretreatment = params.fastPretreatment;
-      if (params.aigcWatermark !== undefined) payload.aigc_watermark = params.aigcWatermark;
+      if (model.supportsPromptOptimizer && params.promptOptimizer !== undefined) payload.prompt_optimizer = params.promptOptimizer;
+      if (model.supportsFastPretreatment && params.fastPretreatment !== undefined) payload.fast_pretreatment = params.fastPretreatment;
+      if (model.supportsWatermark && params.aigcWatermark !== undefined) payload.aigc_watermark = params.aigcWatermark;
       if (mode === 'image-to-video' && params.imageUrls?.length) {
         payload.first_frame_image = params.imageUrls;
       }

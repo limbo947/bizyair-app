@@ -13,11 +13,13 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
+import { getVideoThumbnailAsync } from 'expo-video-thumbnails';
 import { useAppContext } from '../context/AppContext';
 import { HistoryModals } from '../components/HistoryModals';
 import { HistoryFilters } from '../components/HistoryFilters';
 import { VideoPlayer } from '../components/VideoPlayer';
 import { AudioPlayer } from '../components/AudioPlayer';
+import { ImageViewer } from '../components/ImageViewer';
 import { TextResultView } from '../components/TextResultView';
 import { PAGE_SIZE, TAB_HISTORY } from '../constants/models';
 import { Colors, Radius, Spacing } from '../constants/theme';
@@ -93,6 +95,8 @@ export function HistoryScreen() {
   const flatListRef = useRef(null);
   const prevActiveTab = useRef(activeTab);
   const tickRef = useRef(null);
+  const thumbCache = useRef({});
+  const [thumbVersion, setThumbVersion] = useState(0);
 
   const hasActiveTasks = history.some((h) => ACTIVE_STATUSES.includes(h.status));
 
@@ -141,6 +145,27 @@ export function HistoryScreen() {
 
   const displayedItems = useMemo(() => filteredHistory.slice(0, visibleCount), [filteredHistory, visibleCount]);
   const hasMore = visibleCount < filteredHistory.length;
+
+  useEffect(() => {
+    const videoItems = displayedItems
+      .filter((item) => item.outputType === 'video' && item.videoUrl && !thumbCache.current[item.videoUrl]);
+    if (videoItems.length === 0) return;
+    let cancelled = false;
+    const loadThumbnails = async () => {
+      for (const item of videoItems) {
+        if (cancelled) break;
+        try {
+          const { uri } = await getVideoThumbnailAsync(item.videoUrl, { time: 2000 });
+          if (!cancelled && uri) {
+            thumbCache.current[item.videoUrl] = uri;
+            setThumbVersion((v) => v + 1);
+          }
+        } catch {}
+      }
+    };
+    loadThumbnails();
+    return () => { cancelled = true; };
+  }, [displayedItems]);
 
   const loadMore = useCallback(() => { if (hasMore) setVisibleCount((prev) => prev + PAGE_SIZE); }, [hasMore]);
   const handleSearch = useCallback((text) => { setSearchText(text); setVisibleCount(PAGE_SIZE); }, []);
@@ -226,12 +251,26 @@ export function HistoryScreen() {
         >
           <View style={styles.historyThumbWrap}>
             {item.outputType === 'video' && item.videoUrl ? (
-              <View style={[styles.historyThumbPlaceholder, styles.historyThumbVideo]}>
-                <Ionicons name="videocam" size={32} color={Colors.primary} />
+              <View style={styles.thumbContainer}>
+                {thumbCache.current[item.videoUrl] ? (
+                  <Image source={{ uri: thumbCache.current[item.videoUrl] }} style={styles.historyThumb} />
+                ) : (
+                  <View style={[styles.historyThumbPlaceholder, styles.historyThumbVideo]}>
+                    <Ionicons name="videocam" size={32} color={Colors.primary} />
+                  </View>
+                )}
+                <View style={styles.thumbPlayOverlay}>
+                  <Ionicons name="play-circle" size={28} color="rgba(255,255,255,0.9)" />
+                </View>
               </View>
             ) : item.outputType === 'audio' && item.audioUrl ? (
-              <View style={[styles.historyThumbPlaceholder, styles.historyThumbAudio]}>
-                <Ionicons name="musical-notes" size={32} color={Colors.purple} />
+              <View style={styles.thumbContainer}>
+                <View style={[styles.historyThumbPlaceholder, styles.historyThumbAudio]}>
+                  <Ionicons name="musical-notes" size={32} color={Colors.purple} />
+                </View>
+                <View style={styles.thumbPlayOverlay}>
+                  <Ionicons name="play-circle" size={28} color="rgba(255,255,255,0.9)" />
+                </View>
               </View>
             ) : item.outputType === 'text' && item.textResult ? (
               <View style={[styles.historyThumbPlaceholder, styles.historyThumbText]}>
@@ -345,11 +384,9 @@ export function HistoryScreen() {
         onBatchDownload={handleBatchDownload}
       />
 
-      <FlatList ref={flatListRef} data={displayedItems} keyExtractor={(item) => item.id} renderItem={renderItem} extraData={{ selectedIds, tick }} ListEmptyComponent={renderEmpty} ListFooterComponent={renderFooter} onEndReached={loadMore} onEndReachedThreshold={0.3} contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false} />
+      <FlatList ref={flatListRef} data={displayedItems} keyExtractor={(item) => item.id} renderItem={renderItem} extraData={{ selectedIds, tick, thumbVersion }} ListEmptyComponent={renderEmpty} ListFooterComponent={renderFooter} onEndReached={loadMore} onEndReachedThreshold={0.3} contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false} />
 
       <HistoryModals
-        previewImage={previewImage}
-        setPreviewImage={setPreviewImage}
         logModal={logModal}
         setLogModal={setLogModal}
         deleteConfirmId={deleteConfirmId}
@@ -380,6 +417,12 @@ export function HistoryScreen() {
         text={textPreview.text}
         onClose={() => setTextPreview({ visible: false, text: '' })}
       />
+      <ImageViewer
+        visible={!!previewImage}
+        imageUrl={previewImage?.url}
+        prompt={previewImage?.prompt}
+        onClose={() => setPreviewImage(null)}
+      />
     </View>
   );
 }
@@ -394,6 +437,12 @@ const styles = StyleSheet.create({
   checkboxMark: { color: Colors.textInverse, fontSize: 14, fontWeight: '600' },
   historyCardInner: { flex: 1, flexDirection: 'row', alignItems: 'stretch' },
   historyThumbWrap: { marginLeft: 6, marginVertical: 6, width: 88 },
+  thumbContainer: { flex: 1, width: '100%', position: 'relative', borderRadius: Radius.xs, overflow: 'hidden' },
+  thumbPlayOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center', justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.25)',
+  },
   historyThumb: { width: '100%', flex: 1, resizeMode: 'cover', borderRadius: Radius.xs },
   historyThumbPlaceholder: { flex: 1, width: '100%', backgroundColor: Colors.bg, alignItems: 'center', justifyContent: 'center' },
   historyThumbFailed: { backgroundColor: Colors.errorBg },

@@ -86,7 +86,7 @@ export function AppProvider({ children }) {
       if (active) {
         setApiKey(active.key);
         setActiveApiKeyId(active.id);
-        refreshUserInfo(active.key);
+        refreshUserInfo(active.key).catch(() => {});
       }
     } catch (e) {
       console.error('加载 API Keys 失败:', e);
@@ -107,6 +107,7 @@ export function AppProvider({ children }) {
       }
     } catch (e) {
       console.error('保存 API Keys 失败:', e);
+      throw e;
     }
   };
 
@@ -116,7 +117,7 @@ export function AppProvider({ children }) {
     const id = generateKeyId();
     const newKeys = [...apiKeys, { id, key, name: name || `密钥 ${apiKeys.length + 1}` }];
     await saveApiKeys(newKeys, id);
-    refreshUserInfo(key);
+    await refreshUserInfo(key);
   };
 
   const renameApiKey = async (id, name) => {
@@ -137,7 +138,7 @@ export function AppProvider({ children }) {
     await saveApiKeys(newKeys, newActiveId);
     const newActive = newKeys.find((k) => k.id === newActiveId);
     if (newActive) {
-      refreshUserInfo(newActive.key);
+      await refreshUserInfo(newActive.key);
     }
   };
 
@@ -145,7 +146,7 @@ export function AppProvider({ children }) {
     const key = apiKeys.find((k) => k.id === id);
     if (!key) return;
     await saveApiKeys(apiKeys, id);
-    refreshUserInfo(key.key);
+    await refreshUserInfo(key.key);
   };
 
   const loadHistory = async () => {
@@ -176,18 +177,19 @@ export function AppProvider({ children }) {
       const existing = apiKeys.find((k) => k.key === key);
       if (existing) {
         await saveApiKeys(apiKeys, existing.id);
-        refreshUserInfo(key);
+        await refreshUserInfo(key);
       } else {
         await addApiKey(key, '默认密钥');
       }
     } catch (e) {
       console.error('保存 API Key 失败:', e);
+      throw e;
     }
   };
 
   const refreshUserInfo = async (key) => {
     const ak = key || apiKey || ENV_API_KEY;
-    if (!ak) return;
+    if (!ak) return false;
     try {
       const [info, balance] = await Promise.allSettled([
         fetchUserInfo(ak),
@@ -195,8 +197,13 @@ export function AppProvider({ children }) {
       ]);
       if (info.status === 'fulfilled') setUserInfo(info.value);
       if (balance.status === 'fulfilled') setWalletBalance(balance.value);
+      if (info.status === 'rejected' && balance.status === 'rejected') {
+        throw new Error('密钥验证失败，请检查密钥是否正确');
+      }
+      return true;
     } catch (e) {
       console.error('获取用户信息失败:', e);
+      throw e;
     }
   };
 

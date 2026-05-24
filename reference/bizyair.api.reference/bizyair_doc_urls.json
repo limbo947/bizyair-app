@@ -1,5 +1,22 @@
 [
   {
+    "id": 1083,
+    "display_name": "HappyHorse-1.0-图生视频-官方版-基于首帧",
+    "category": "Image to Video",
+    "model_name": "happyhorse-1-0-official",
+    "function": "image-to-video",
+    "url": "https://bizyair.cn/llms/modelzoo/happyhorse-1-0-official/image-to-video?lang=javascript",
+    "price": "720P: 900 金币/1秒 | 1080P: 1600 金币/1秒",
+    "price_url": "https://bizyair.cn/modelzoo/happyhorse-1-0-official/image-to-video?tab=price",
+    "benefit": {
+      "rpd": 200,
+      "rph": 60,
+      "rpm": -1
+    },
+    "status_code": 200,
+    "accessible": true
+  },
+  {
     "id": 1111,
     "display_name": "HappyHorse-1.0-视频编辑-官方版",
     "category": "Video Edit",
@@ -51,48 +68,14 @@
     "accessible": true
   },
   {
-    "id": 1083,
-    "display_name": "HappyHorse-1.0-图生视频-官方版-基于首帧",
-    "category": "Image to Video",
-    "model_name": "happyhorse-1-0-official",
-    "function": "image-to-video",
-    "url": "https://bizyair.cn/llms/modelzoo/happyhorse-1-0-official/image-to-video?lang=javascript",
-    "price": "720P: 900 金币/1秒 | 1080P: 1600 金币/1秒",
-    "price_url": "https://bizyair.cn/modelzoo/happyhorse-1-0-official/image-to-video?tab=price",
-    "benefit": {
-      "rpd": 200,
-      "rph": 60,
-      "rpm": -1
-    },
-    "status_code": 200,
-    "accessible": true
-  },
-  {
-    "id": 1006,
-    "display_name": "通用图片O.2-图生图-官方版",
-    "category": "Image to Image",
-    "model_name": "bza-image-o2-official",
-    "function": "image-to-image",
-    "url": "https://bizyair.cn/llms/modelzoo/bza-image-o2-official/image-to-image?lang=javascript",
-    "price": ">2560*1440, high: 3486 金币/1次 | <=2560*1440 且 >1920*1080 , high: 2149 金币/1次 | <=1920*1080, high: 1120 金币/1次 | >2560*1440, medium: 966 金币/1次 | >1920*1080 且 <=2560*1440, medium: 630 金币/1次 | <=1920*1080, medium: 378 金币/1次 | >2560*1440 , low: 224 金币/1次 | >1920*1080 且 <=2560*1440, low: 182 金币/1次 | <=1920*1080, low: 161 金币/1次",
-    "price_url": "https://bizyair.cn/modelzoo/bza-image-o2-official/image-to-image?tab=price",
-    "benefit": {
-      "rpd": 200,
-      "rph": 60,
-      "rpm": -1
-    },
-    "status_code": 200,
-    "accessible": true
-  },
-  {
-    "id": 1005,
-    "display_name": "通用图片O.2-文生图-官方版",
+    "id": 1003,
+    "display_name": "通用图片O.2-文生图-渠道版",
     "category": "Text to Image",
-    "model_name": "bza-image-o2-official",
+    "model_name": "bza-image-o2-base",
     "function": "text-to-image",
-    "url": "https://bizyair.cn/llms/modelzoo/bza-image-o2-official/text-to-image?lang=javascript",
-    "price": ">2560*1440, high: 3486 金币/1次 | <=2560*1440 且 >1920*1080 , high: 2149 金币/1次 | <=1920*1080, high: 1120 金币/1次 | >2560*1440, medium: 966 金币/1次 | >1920*1080 且 <=2560*1440, medium: 630 金币/1次 | <=1920*1080, medium: 378 金币/1次 | >2560*1440 , low: 224 金币/1次 | >1920*1080 且 <=2560*1440, low: 182 金币/1次 | <=1920*1080, low: 161 金币/1次",
-    "price_url": "https://bizyair.cn/modelzoo/bza-image-o2-official/text-to-image?tab=price",
+    "url": "https://bizyair.cn/llms/modelzoo/bza-image-o2-base/text-to-image?lang=javascript",
+    "price": "1K: 100 金币/1次 | 2K: 100 金币/1次 | 4K: 100 金币/1次",
+    "price_url": "https://bizyair.cn/modelzoo/bza-image-o2-base/text-to-image?tab=price",
     "benefit": {
       "rpd": 200,
       "rph": 60,
@@ -119,14 +102,31 @@
     "accessible": true
   },
   {
-    "id": 1003,
-    "display_name": "通用图片O.2-文生图-渠道版",
+    "id": 1005,
+    "display_name": "通用图片O.2-文生图-官方版",
     "category": "Text to Image",
-    "model_name": "bza-image-o2-base",
+    "model_name": "bza-image-o2-official",
     "function": "text-to-image",
-    "url": "https://bizyair.cn/llms/modelzoo/bza-image-o2-base/text-to-image?lang=javascript",
-    "price": "1K: 100 金币/1次 | 2K: 100 金币/1次 | 4K: 100 金币/1次",
-    "price_url": "https://bizyair.cn/modelzoo/bza-image-o2-base/text-to-image?tab=price",
+    "url": "https://bizyair.cn/llms/modelzoo/bza-image-o2-official/text-to-image?lang=javascript",
+    "price": ">2560*1440, high: 3486 金币/1次 | <=2560*1440 且 >1920*1080 , high: 2149 金币/1次 | <=1920*1080, high: 1120 金币/1次 | >2560*1440, medium: 966 金币/1次 | >1920*1080 且 <=2560*1440, medium: 630 金币/1次 | <=1920*1080, medium: 378 金币/1次 | >2560*1440 , low: 224 金币/1次 | >1920*1080 且 <=2560*1440, low: 182 金币/1次 | <=1920*1080, low: 161 金币/1次",
+    "price_url": "https://bizyair.cn/modelzoo/bza-image-o2-official/text-to-image?tab=price",
+    "benefit": {
+      "rpd": 200,
+      "rph": 60,
+      "rpm": -1
+    },
+    "status_code": 200,
+    "accessible": true
+  },
+  {
+    "id": 1006,
+    "display_name": "通用图片O.2-图生图-官方版",
+    "category": "Image to Image",
+    "model_name": "bza-image-o2-official",
+    "function": "image-to-image",
+    "url": "https://bizyair.cn/llms/modelzoo/bza-image-o2-official/image-to-image?lang=javascript",
+    "price": ">2560*1440, high: 3486 金币/1次 | <=2560*1440 且 >1920*1080 , high: 2149 金币/1次 | <=1920*1080, high: 1120 金币/1次 | >2560*1440, medium: 966 金币/1次 | >1920*1080 且 <=2560*1440, medium: 630 金币/1次 | <=1920*1080, medium: 378 金币/1次 | >2560*1440 , low: 224 金币/1次 | >1920*1080 且 <=2560*1440, low: 182 金币/1次 | <=1920*1080, low: 161 金币/1次",
+    "price_url": "https://bizyair.cn/modelzoo/bza-image-o2-official/image-to-image?tab=price",
     "benefit": {
       "rpd": 200,
       "rph": 60,
@@ -1504,6 +1504,142 @@
     "url": "https://bizyair.cn/llms/modelzoo/seedance-2-0-base/text-to-video?lang=javascript",
     "price": "480p: 600 金币/1秒 | 720p: 1200 金币/1秒 | native1080p: 3000 金币/1秒 | 1080p: 1480 金币/1秒 | 2k: 1620 金币/1秒 | 4k: 1830 金币/1秒",
     "price_url": "https://bizyair.cn/modelzoo/seedance-2-0-base/text-to-video?tab=price",
+    "benefit": {
+      "rpd": 200,
+      "rph": 60,
+      "rpm": -1
+    },
+    "status_code": 200,
+    "accessible": true
+  },
+  {
+    "id": 1153,
+    "display_name": "通用图片F.K.Pro-图生图-渠道版",
+    "category": "Image to Image",
+    "model_name": "flux-kontext-pro-base",
+    "function": "image-to-image",
+    "url": "https://bizyair.cn/llms/modelzoo/flux-kontext-pro-base/image-to-image?lang=javascript",
+    "price": "70 金币/1次",
+    "price_url": "https://bizyair.cn/modelzoo/flux-kontext-pro-base/image-to-image?tab=price",
+    "benefit": {
+      "rpd": 200,
+      "rph": 60,
+      "rpm": -1
+    },
+    "status_code": 200,
+    "accessible": true
+  },
+  {
+    "id": 1154,
+    "display_name": "通用图片F.K.Max-文生图-渠道版",
+    "category": "Text to Image",
+    "model_name": "flux-kontext-max-base",
+    "function": "text-to-image",
+    "url": "https://bizyair.cn/llms/modelzoo/flux-kontext-max-base/text-to-image?lang=javascript",
+    "price": "140 金币/1次",
+    "price_url": "https://bizyair.cn/modelzoo/flux-kontext-max-base/text-to-image?tab=price",
+    "benefit": {
+      "rpd": 200,
+      "rph": 60,
+      "rpm": -1
+    },
+    "status_code": 200,
+    "accessible": true
+  },
+  {
+    "id": 1155,
+    "display_name": "通用图片F.K.Max-图生图-渠道版",
+    "category": "Image to Image",
+    "model_name": "flux-kontext-max-base",
+    "function": "image-to-image",
+    "url": "https://bizyair.cn/llms/modelzoo/flux-kontext-max-base/image-to-image?lang=javascript",
+    "price": "140 金币/1次",
+    "price_url": "https://bizyair.cn/modelzoo/flux-kontext-max-base/image-to-image?tab=price",
+    "benefit": {
+      "rpd": 200,
+      "rph": 60,
+      "rpm": -1
+    },
+    "status_code": 200,
+    "accessible": true
+  },
+  {
+    "id": 1152,
+    "display_name": "通用图片F.K.Pro-文生图-渠道版",
+    "category": "Text to Image",
+    "model_name": "flux-kontext-pro-base",
+    "function": "text-to-image",
+    "url": "https://bizyair.cn/llms/modelzoo/flux-kontext-pro-base/text-to-image?lang=javascript",
+    "price": "70 金币/1次",
+    "price_url": "https://bizyair.cn/modelzoo/flux-kontext-pro-base/text-to-image?tab=price",
+    "benefit": {
+      "rpd": 200,
+      "rph": 60,
+      "rpm": -1
+    },
+    "status_code": 200,
+    "accessible": true
+  },
+  {
+    "id": 1151,
+    "display_name": "Seedream 4.5-图生图-官方版",
+    "category": "Image to Image",
+    "model_name": "seedream-4-5-official",
+    "function": "image-to-image",
+    "url": "https://bizyair.cn/llms/modelzoo/seedream-4-5-official/image-to-image?lang=javascript",
+    "price": "250 金币/1次",
+    "price_url": "https://bizyair.cn/modelzoo/seedream-4-5-official/image-to-image?tab=price",
+    "benefit": {
+      "rpd": 200,
+      "rph": 60,
+      "rpm": -1
+    },
+    "status_code": 200,
+    "accessible": true
+  },
+  {
+    "id": 1150,
+    "display_name": "Seedream 4.5-文生图-官方版",
+    "category": "Text to Image",
+    "model_name": "seedream-4-5-official",
+    "function": "text-to-image",
+    "url": "https://bizyair.cn/llms/modelzoo/seedream-4-5-official/text-to-image?lang=javascript",
+    "price": "250 金币/1次",
+    "price_url": "https://bizyair.cn/modelzoo/seedream-4-5-official/text-to-image?tab=price",
+    "benefit": {
+      "rpd": 200,
+      "rph": 60,
+      "rpm": -1
+    },
+    "status_code": 200,
+    "accessible": true
+  },
+  {
+    "id": 1149,
+    "display_name": "Seedream 4.0-图生图-官方版",
+    "category": "Image to Image",
+    "model_name": "seedream-4-0-official",
+    "function": "image-to-image",
+    "url": "https://bizyair.cn/llms/modelzoo/seedream-4-0-official/image-to-image?lang=javascript",
+    "price": "150 金币/1次",
+    "price_url": "https://bizyair.cn/modelzoo/seedream-4-0-official/image-to-image?tab=price",
+    "benefit": {
+      "rpd": 200,
+      "rph": 60,
+      "rpm": -1
+    },
+    "status_code": 200,
+    "accessible": true
+  },
+  {
+    "id": 1148,
+    "display_name": "Seedream 4.0-文生图-官方版",
+    "category": "Text to Image",
+    "model_name": "seedream-4-0-official",
+    "function": "text-to-image",
+    "url": "https://bizyair.cn/llms/modelzoo/seedream-4-0-official/text-to-image?lang=javascript",
+    "price": "150 金币/1次",
+    "price_url": "https://bizyair.cn/modelzoo/seedream-4-0-official/text-to-image?tab=price",
     "benefit": {
       "rpd": 200,
       "rph": 60,

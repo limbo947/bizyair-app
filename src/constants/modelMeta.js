@@ -24,6 +24,7 @@ export const MANUFACTURERS = {
   minimax: { label: 'MiniMax', icon: 'water-outline', color: '#00CEC9' },
   jimeng: { label: '即梦', icon: 'person-outline', color: '#E17055' },
   grok: { label: 'Grok', icon: 'videocam-outline', color: '#FF9500' },
+  blackforest: { label: 'Black Forest', icon: 'image-outline', color: '#FF6B6B' },
 };
 
 export const MODEL_MANUFACTURERS = {
@@ -34,6 +35,10 @@ export const MODEL_MANUFACTURERS = {
   'bza-image-o2-base': 'openai',
   'bza-image-o2-official': 'openai',
   'seedream-5-0-official': 'bytedance',
+  'seedream-4-0-official': 'bytedance',
+  'seedream-4-5-official': 'bytedance',
+  'flux-kontext-pro-base': 'blackforest',
+  'flux-kontext-max-base': 'blackforest',
   'wan-2-7-image-official': 'alibaba',
   'wan-2-7-image-pro-offcial': 'alibaba',
   'wan-2-7-image-pro-official': 'alibaba',

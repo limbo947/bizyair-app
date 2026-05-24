@@ -24,27 +24,39 @@ const O2_PRICE_TIERS = {
 
 /** Seedance 2.0 按秒计费（有参考视频/无参考视频） */
 const SEEDANCE_RATES = { withRefVideo: 59, withoutRefVideo: 98 };
-const SEEDANCE_FAST_RATE = 59;
+const SEEDANCE_FAST_RATE = 80;
+/** Seedance 2.0 渠道版 按分辨率×时长计费 */
+const SEEDANCE_BASE_PRICES = { '480p': 600, '720p': 1200, 'native1080p': 3000, '1080p': 1480, '2k': 1620, '4k': 1830 };
+/** Seedance 2.0 Fast 渠道版 按分辨率×时长计费 */
+const SEEDANCE_FAST_BASE_PRICES = { '480p': 500, '720p': 1000, '1080p': 1200, '2k': 1420, '4k': 1630 };
 
 /** 可灵系列按秒计费 */
-const KLING_PRO_RATES = { sound: 900, noSound: 700 };
-const KLING_STD_RATES = { sound: 700, noSound: 550 };
+const KLING_O3_PRO_RATES = { sound: 900, noSound: 700 };
+const KLING_PRO_RATES = { sound: 1050, noSound: 700 };
+const KLING_STD_RATES = { sound: 800, noSound: 550 };
+/** 可灵 O3 4K 按秒计费（keepOriginalSound） */
+const KLING_O3_4K_RATES = { keepOriginalSound: 700, noKeepOriginalSound: 550 };
 
 /** Vidu Q3 Pro 按分辨率计费 */
 const VIDU_Q3_PRO_PRICES = { '540P': 438, '720P': 938, '1080P': 1000 };
-const VIDU_Q3_PRO_BASE_PRICES = { '540P': 310, '720P': 660, '1080P': 700 };
+const VIDU_Q3_PRO_BASE_T2V_PRICES = { '540P': 310, '720P': 660, '1080P': 700 };
+const VIDU_Q3_PRO_BASE_I2V_PRICES = { '540P': 350, '720P': 700, '1080P': 750 };
 /** Vidu Q3 Turbo 按分辨率计费 */
-const VIDU_Q3_TURBO_PRICES = { '540P': 300, '720P': 600, '1080P': 700 };
+const VIDU_Q3_TURBO_PRICES = { '540P': 250, '720P': 375, '1080P': 500 };
+/** Vidu Q3 Turbo 渠道版 按分辨率计费 */
+const VIDU_Q3_TURBO_BASE_PRICES = { '540P': 200, '720P': 300, '1080P': 350 };
 
 /** 万相2.7视频 按分辨率计费 */
 const WAN_27_VIDEO_PRICES = { '720P': 600, '1080P': 1000 };
 /** 万相2.7视频延长 按分辨率计费 */
-const WAN_27_EXTEND_PRICES = { '720P': 600, '1080P': 1000 };
+const WAN_27_EXTEND_PRICES = { '480P': 300, '720P': 600, '1080P': 1000 };
 /** 万相2.5/2.6图生视频 按分辨率计费 */
-const WAN_I2V_PRICES = { '480P': 200, '720P': 400, '1080P': 700 };
+const WAN_I2V_PRICES = { '480P': 300, '720P': 600, '1080P': 1000 };
 
 /** 海螺2.3 按分辨率+时长组合计费 */
 const HAILUO_23_PRICES = { '768P/6': 1600, '768P/10': 3200, '1080P/6': 2800 };
+/** 海螺2.3 Fast 按分辨率+时长组合计费 */
+const HAILUO_23_FAST_PRICES = { '768P/6': 1080, '768P/10': 1800, '1080P/6': 1850 };
 
 /** HappyHorse 按分辨率计费 */
 const HAPPYHORSE_PRICES = { '720P': 900, '1080P': 1600 };
@@ -52,7 +64,7 @@ const HAPPYHORSE_PRICES = { '720P': 900, '1080P': 1600 };
 /** Video V3.1 Pro 按分辨率计费 */
 const BZA_V3_PRO_PRICES = { '720p': 800, '1080p': 1000, '4k': 1400 };
 /** Video V3.1 Fast 按分辨率计费 */
-const BZA_V3_FAST_PRICES = { '720p': 600, '1080p': 800, '4k': 1100 };
+const BZA_V3_FAST_PRICES = { '720p': 200, '1080p': 250, '4k': 500 };
 
 /** Z-Image Turbo 按像素面积计费阈值 */
 const Z_IMAGE_PRICES = { small: 5, large: 10 };
@@ -60,6 +72,8 @@ const Z_IMAGE_PIXEL_THRESHOLD = 1024 * 1024;
 
 /** Video X 按时长计费 */
 const BZA_VIDEO_X_PRICES = { 6: 1900, 10: 3150 };
+/** Video X 渠道版 按秒计费 */
+const BZA_VIDEO_X_BASE_RATE = 50;
 
 /** LTX 2.3 固定价格 */
 const LTX_PRICE = 300;
@@ -71,7 +85,7 @@ const DREAMACTOR_PRICE = 350;
 const JOYCAPTION_PRICE = 6;
 
 /** Qwen3 TTS 固定价格 */
-const TTS_PRICE = 100;
+const TTS_PRICE = 10;
 
 // ─── 通用价格计算函数 ─────────────────────────────────────────────────────────
 
@@ -133,6 +147,13 @@ function calcKlingPrice(rates) {
   };
 }
 
+/** 可灵 O3 4K 按秒计费（区分是否保留原始声音） */
+function calcKlingO3_4KPrice(params) {
+  const dur = params.duration || 5;
+  const rate = params.keepOriginalSound ? KLING_O3_4K_RATES.keepOriginalSound : KLING_O3_4K_RATES.noKeepOriginalSound;
+  return rate * dur;
+}
+
 /** Video X 按时长计费 */
 function calcBzaVideoXPrice(params) {
   const dur = parseInt(params.duration) || 6;
@@ -146,6 +167,33 @@ function calcZImagePrice(params) {
   return w * h <= Z_IMAGE_PIXEL_THRESHOLD ? Z_IMAGE_PRICES.small : Z_IMAGE_PRICES.large;
 }
 
+/** Vidu Q3 Pro 渠道版 按模式区分价格计费 */
+function calcViduQ3ProBasePrice(params) {
+  const isI2V = params.imageUrls?.length > 0 || params.lastFrameUrls?.length > 0;
+  const prices = isI2V ? VIDU_Q3_PRO_BASE_I2V_PRICES : VIDU_Q3_PRO_BASE_T2V_PRICES;
+  const dur = params.duration || 5;
+  const rate = prices[params.resolution] || 660;
+  return rate * dur;
+}
+
+/** Vidu Q3 Pro 官方版 按分辨率*时长计费 + is_rec 额外费用 */
+function calcViduQ3ProOfficialPrice(params) {
+  const dur = params.duration || 5;
+  const rate = VIDU_Q3_PRO_PRICES[params.resolution] || 938;
+  let price = rate * dur;
+  if (params.isRec) price += 320;
+  return price;
+}
+
+/** Vidu Q3 Turbo 官方版 按分辨率*时长计费 + is_rec 额外费用 */
+function calcViduQ3TurboOfficialPrice(params) {
+  const dur = params.duration || 5;
+  const rate = VIDU_Q3_TURBO_PRICES[params.resolution] || 375;
+  let price = rate * dur;
+  if (params.isRec) price += 320;
+  return price;
+}
+
 /** 固定价格（忽略参数） */
 function calcFixedPrice(price) {
   return () => price;
@@ -154,7 +202,7 @@ function calcFixedPrice(price) {
 export const MODELS = {
   'bza-image-b2-base': {
     name: 'B.2 渠道版',
-    icon: { name: 'color-palette-outline', color: '#FF9500' },
+    icon: { name: 'image-outline', color: '#4285F4' },
     manufacturer: 'google',
     category: 'text-to-image',
     modes: ['text-to-image', 'image-to-image'],
@@ -170,7 +218,7 @@ export const MODELS = {
   },
   'bza-image-b2-official': {
     name: 'B.2 官方版',
-    icon: { name: 'color-palette-outline', color: '#FF9500' },
+    icon: { name: 'image-outline', color: '#4285F4' },
     manufacturer: 'google',
     category: 'text-to-image',
     modes: ['text-to-image', 'image-to-image'],
@@ -186,7 +234,7 @@ export const MODELS = {
   },
   'bza-image-b-pro-base': {
     name: 'B.Pro 渠道版',
-    icon: { name: 'color-palette-outline', color: '#FF9500' },
+    icon: { name: 'image-outline', color: '#4285F4' },
     manufacturer: 'google',
     category: 'text-to-image',
     modes: ['text-to-image', 'image-to-image'],
@@ -202,7 +250,7 @@ export const MODELS = {
   },
   'bza-image-b-pro-official': {
     name: 'B.Pro 官方版',
-    icon: { name: 'color-palette-outline', color: '#FF9500' },
+    icon: { name: 'image-outline', color: '#4285F4' },
     manufacturer: 'google',
     category: 'text-to-image',
     modes: ['text-to-image', 'image-to-image'],
@@ -218,7 +266,7 @@ export const MODELS = {
   },
   'bza-image-o2-base': {
     name: 'O.2 渠道版',
-    icon: { name: 'hardware-chip-outline', color: '#5AC8FA' },
+    icon: { name: 'image-outline', color: '#10A37F' },
     manufacturer: 'openai',
     category: 'text-to-image',
     modes: ['text-to-image', 'image-to-image'],
@@ -234,7 +282,7 @@ export const MODELS = {
   },
   'bza-image-o2-official': {
     name: 'O.2 官方版',
-    icon: { name: 'hardware-chip-outline', color: '#5AC8FA' },
+    icon: { name: 'image-outline', color: '#10A37F' },
     manufacturer: 'openai',
     category: 'text-to-image',
     modes: ['text-to-image', 'image-to-image'],
@@ -249,7 +297,7 @@ export const MODELS = {
   },
   'seedream-5-0-official': {
     name: 'Seedream 5.0',
-    icon: { name: 'leaf-outline', color: '#34C759' },
+    icon: { name: 'image-outline', color: '#00C7BE' },
     manufacturer: 'bytedance',
     category: 'text-to-image',
     modes: ['text-to-image', 'image-to-image'],
@@ -261,9 +309,67 @@ export const MODELS = {
     maxImages: 14,
     supportsImageToImage: true,
   },
+  'seedream-4-0-official': {
+    name: 'Seedream 4.0',
+    icon: { name: 'image-outline', color: '#00C7BE' },
+    manufacturer: 'bytedance',
+    category: 'text-to-image',
+    modes: ['text-to-image', 'image-to-image'],
+    paramType: 'size-only',
+    prices: { '1K': 150, '2K': 150, '4K': 150 },
+    resolutions: ['1K', '2K', '4K'],
+    maxPromptLength: 2500,
+    imageField: 'image_urls',
+    maxImages: 14,
+    supportsImageToImage: true,
+  },
+  'seedream-4-5-official': {
+    name: 'Seedream 4.5',
+    icon: { name: 'image-outline', color: '#00C7BE' },
+    manufacturer: 'bytedance',
+    category: 'text-to-image',
+    modes: ['text-to-image', 'image-to-image'],
+    paramType: 'size-only',
+    prices: { '2K': 250, '4K': 250 },
+    resolutions: ['2K', '4K'],
+    maxPromptLength: 2500,
+    imageField: 'image_urls',
+    maxImages: 14,
+    supportsImageToImage: true,
+  },
+  'flux-kontext-pro-base': {
+    name: 'F.K Pro',
+    icon: { name: 'image-outline', color: '#FF6B6B' },
+    manufacturer: 'blackforest',
+    category: 'text-to-image',
+    modes: ['text-to-image', 'image-to-image'],
+    paramType: 'flux-kontext',
+    prices: { default: 70 },
+    textToImageRatios: ['21:9', '16:9', '4:3', '1:1', '3:4', '9:16'],
+    imageToImageRatios: ['21:9', '16:9', '4:3', '1:1', '3:4', '9:16'],
+    maxPromptLength: 2500,
+    imageField: 'image_urls',
+    maxImages: 14,
+    supportsImageToImage: true,
+  },
+  'flux-kontext-max-base': {
+    name: 'F.K Max',
+    icon: { name: 'image-outline', color: '#FF6B6B' },
+    manufacturer: 'blackforest',
+    category: 'text-to-image',
+    modes: ['text-to-image', 'image-to-image'],
+    paramType: 'flux-kontext',
+    prices: { default: 140 },
+    textToImageRatios: ['21:9', '16:9', '4:3', '1:1', '3:4', '9:16'],
+    imageToImageRatios: ['21:9', '16:9', '4:3', '1:1', '3:4', '9:16'],
+    maxPromptLength: 2500,
+    imageField: 'image_urls',
+    maxImages: 14,
+    supportsImageToImage: true,
+  },
   'wan-2-7-image-official': {
     name: '万相2.7',
-    icon: { name: 'grid-outline', color: '#007AFF' },
+    icon: { name: 'image-outline', color: '#FF6A00' },
     manufacturer: 'alibaba',
     category: 'text-to-image',
     modes: ['text-to-image', 'image-to-image'],
@@ -275,10 +381,11 @@ export const MODELS = {
     maxImages: 9,
     supportsImageToImage: true,
     i2iResolutions: ['1K', '2K', 'Custom'],
+    supportsSeed: true,
   },
   'wan-2-7-image-pro-offcial': {
     name: '万相2.7 Pro',
-    icon: { name: 'grid-outline', color: '#007AFF' },
+    icon: { name: 'image-outline', color: '#FF6A00' },
     manufacturer: 'alibaba',
     category: 'text-to-image',
     modes: ['text-to-image', 'image-to-image'],
@@ -293,7 +400,7 @@ export const MODELS = {
   },
   'z-image-turbo': {
     name: 'Z-Image Turbo',
-    icon: { name: 'flash-outline', color: '#AF52DE' },
+    icon: { name: 'image-outline', color: '#6C5CE7' },
     manufacturer: 'siliconflow',
     category: 'text-to-image',
     modes: ['text-to-image'],
@@ -306,44 +413,51 @@ export const MODELS = {
 
   'seedance-2-0-official': {
     name: 'Seedance 2.0',
-    icon: { name: 'musical-notes-outline', color: '#FD79A8' },
+    icon: { name: 'videocam-outline', color: '#00C7BE' },
     manufacturer: 'bytedance',
     category: 'text-to-video',
     paramType: 'seedance-video',
     modes: ['text-to-video', 'flf-to-video', 'reference-to-video'],
     priceCalculator: calcSeedancePrice,
-    resolutions: ['480p', '720p', 'native1080p', '1080p', '2k', '4k'],
-    videoRatios: ['adaptive', '16:9', '4:3', '1:1', '3:4', '9:16', '21:9'],
+    priceFormula: '98金币/M Tokens',
+    priceFormulaRefVideo: '无参考视频 98金币/M Tokens; 有参考视频 98 * 0.6/M Tokens;',
+    resolutions: ['480p', '720p', '1080p'],
+    videoRatios: ['auto', '16:9', '4:3', '1:1', '3:4', '9:16', '21:9'],
     maxPromptLength: 20480,
     maxDuration: 15,
     minDuration: 4,
     supportsAudio: true,
-    ratioField: 'ratio',
+    supportsSeed: true,
+    ratioField: 'aspect_ratio',
   },
   'seedance-2-0-base': {
     name: 'Seedance 2.0 渠道版',
-    icon: { name: 'musical-notes-outline', color: '#FD79A8' },
+    icon: { name: 'videocam-outline', color: '#00C7BE' },
     manufacturer: 'bytedance',
     category: 'text-to-video',
     paramType: 'seedance-video',
     modes: ['text-to-video', 'flf-to-video', 'reference-to-video'],
-    priceCalculator: calcSeedancePrice,
+    priceCalculator: calcByResolutionDuration(SEEDANCE_BASE_PRICES, 600),
     resolutions: ['480p', '720p', 'native1080p', '1080p', '2k', '4k'],
     videoRatios: ['adaptive', '16:9', '4:3', '1:1', '3:4', '9:16', '21:9'],
     maxPromptLength: 20480,
     maxDuration: 15,
     minDuration: 4,
     supportsAudio: true,
+    supportsSeed: true,
     ratioField: 'ratio',
+    durationType: 'number',
   },
   'seedance-2-0-fast-official': {
     name: 'Seedance 2.0 Fast',
-    icon: { name: 'speedometer-outline', color: '#FD79A8' },
+    icon: { name: 'videocam-outline', color: '#00C7BE' },
     manufacturer: 'bytedance',
     category: 'text-to-video',
     paramType: 'seedance-video',
     modes: ['text-to-video', 'flf-to-video', 'reference-to-video'],
     priceCalculator: calcByDuration(SEEDANCE_FAST_RATE),
+    priceFormula: '80金币/M Tokens',
+    priceFormulaRefVideo: '无参考视频 80金币/M Tokens; 有参考视频 80 * 0.6/M Tokens;',
     resolutions: ['480p', '720p'],
     videoRatios: ['auto', '16:9', '4:3', '1:1', '3:4', '9:16', '21:9'],
     maxPromptLength: 20480,
@@ -354,29 +468,31 @@ export const MODELS = {
   },
   'seedance-2-0-fast-base': {
     name: 'Seedance 2.0 Fast 渠道版',
-    icon: { name: 'speedometer-outline', color: '#FD79A8' },
+    icon: { name: 'videocam-outline', color: '#00C7BE' },
     manufacturer: 'bytedance',
     category: 'text-to-video',
     paramType: 'seedance-video',
     modes: ['text-to-video', 'flf-to-video', 'reference-to-video'],
-    priceCalculator: calcByDuration(SEEDANCE_FAST_RATE),
+    priceCalculator: calcByResolutionDuration(SEEDANCE_FAST_BASE_PRICES, 500),
     resolutions: ['480p', '720p', '1080p', '2k', '4k'],
     videoRatios: ['adaptive', '16:9', '4:3', '1:1', '3:4', '9:16', '21:9'],
     maxPromptLength: 20480,
     maxDuration: 15,
     minDuration: 4,
     supportsAudio: true,
+    supportsSeed: true,
     ratioField: 'ratio',
+    durationType: 'number',
   },
 
   'kling-o3-pro-base': {
     name: '可灵 O3 Pro',
-    icon: { name: 'zap-outline', color: '#FF6B6B' },
+    icon: { name: 'videocam-outline', color: '#FF6B6B' },
     manufacturer: 'kuaishou',
     category: 'text-to-video',
     paramType: 'kling-video',
     modes: ['text-to-video', 'flf-to-video'],
-    priceCalculator: calcKlingPrice(KLING_PRO_RATES),
+    priceCalculator: calcKlingPrice(KLING_O3_PRO_RATES),
     videoRatios: ['16:9', '9:16', '1:1'],
     maxPromptLength: 2500,
     maxDuration: 15,
@@ -385,7 +501,7 @@ export const MODELS = {
   },
   'kling-o3-std-base': {
     name: '可灵 O3 Std',
-    icon: { name: 'zap-outline', color: '#FF6B6B' },
+    icon: { name: 'videocam-outline', color: '#FF6B6B' },
     manufacturer: 'kuaishou',
     category: 'text-to-video',
     paramType: 'kling-video',
@@ -399,7 +515,7 @@ export const MODELS = {
   },
   'kling-3-0-pro-base': {
     name: '可灵 3.0 Pro',
-    icon: { name: 'zap-outline', color: '#FF6B6B' },
+    icon: { name: 'videocam-outline', color: '#FF6B6B' },
     manufacturer: 'kuaishou',
     category: 'text-to-video',
     paramType: 'kling-video',
@@ -413,7 +529,7 @@ export const MODELS = {
   },
   'kling-3-0-std-base': {
     name: '可灵 3.0 Std',
-    icon: { name: 'zap-outline', color: '#FF6B6B' },
+    icon: { name: 'videocam-outline', color: '#FF6B6B' },
     manufacturer: 'kuaishou',
     category: 'text-to-video',
     paramType: 'kling-video',
@@ -427,12 +543,12 @@ export const MODELS = {
   },
   'kling-o3-4k-base': {
     name: '可灵 O3 4K',
-    icon: { name: 'zap-outline', color: '#FF6B6B' },
+    icon: { name: 'git-compare-outline', color: '#FF6B6B' },
     manufacturer: 'kuaishou',
     category: 'reference-to-video',
     paramType: 'kling-o3-4k',
     modes: ['reference-to-video'],
-    priceCalculator: calcKlingPrice(KLING_STD_RATES),
+    priceCalculator: calcKlingO3_4KPrice,
     videoRatios: ['16:9', '9:16', '1:1'],
     maxPromptLength: 2500,
     maxDuration: 15,
@@ -442,43 +558,48 @@ export const MODELS = {
 
   'vidu-q3-pro-official': {
     name: 'Vidu Q3 Pro',
-    icon: { name: 'play-circle-outline', color: '#6C5CE7' },
+    icon: { name: 'videocam-outline', color: '#6C5CE7' },
     manufacturer: 'shengshuo',
     category: 'text-to-video',
     paramType: 'vidu-video',
     modes: ['text-to-video', 'image-to-video', 'flf-to-video'],
-    priceCalculator: calcByResolutionDuration(VIDU_Q3_PRO_PRICES, 938),
+    priceCalculator: calcViduQ3ProOfficialPrice,
     resolutions: ['540P', '720P', '1080P'],
     videoRatios: ['16:9', '9:16', '4:3', '3:4', '1:1'],
-    maxPromptLength: 5000,
+    maxPromptLength: 2048,
     maxDuration: 16,
     minDuration: 1,
     supportsAudio: true,
+    supportsStyle: true,
+    supportsMovementAmplitude: true,
     supportsOffPeak: true,
+    supportsIsRec: true,
   },
   'vidu-q3-pro-base': {
     name: 'Vidu Q3 Pro 渠道版',
-    icon: { name: 'film-outline', color: '#6C5CE7' },
+    icon: { name: 'videocam-outline', color: '#6C5CE7' },
     manufacturer: 'shengshuo',
     category: 'text-to-video',
     paramType: 'vidu-video',
     modes: ['text-to-video', 'image-to-video', 'flf-to-video'],
-    priceCalculator: calcByResolutionDuration(VIDU_Q3_PRO_BASE_PRICES, 660),
+    priceCalculator: calcViduQ3ProBasePrice,
     resolutions: ['540P', '720P', '1080P'],
-    videoRatios: ['16:9', '9:16', '1:1'],
+    videoRatios: ['16:9', '9:16', '4:3', '3:4', '1:1'],
     maxPromptLength: 2048,
-    maxDuration: 15,
-    minDuration: 3,
+    maxDuration: 16,
+    minDuration: 1,
     supportsAudio: true,
+    supportsStyle: true,
+    supportsMovementAmplitude: true,
   },
   'vidu-q3-turbo-official': {
     name: 'Vidu Q3 Turbo',
-    icon: { name: 'rocket-outline', color: '#6C5CE7' },
+    icon: { name: 'videocam-outline', color: '#6C5CE7' },
     manufacturer: 'shengshuo',
     category: 'text-to-video',
     paramType: 'vidu-video',
     modes: ['text-to-video', 'image-to-video', 'flf-to-video'],
-    priceCalculator: calcByResolutionDuration(VIDU_Q3_TURBO_PRICES, 600),
+    priceCalculator: calcViduQ3TurboOfficialPrice,
     resolutions: ['540P', '720P', '1080P'],
     videoRatios: ['16:9', '9:16', '4:3', '3:4', '1:1'],
     maxPromptLength: 5000,
@@ -486,27 +607,30 @@ export const MODELS = {
     minDuration: 1,
     supportsAudio: true,
     supportsOffPeak: true,
+    supportsIsRec: true,
+    supportsSeed: true,
   },
   'vidu-q3-turbo-base': {
     name: 'Vidu Q3 Turbo 渠道版',
-    icon: { name: 'rocket-outline', color: '#6C5CE7' },
+    icon: { name: 'videocam-outline', color: '#6C5CE7' },
     manufacturer: 'shengshuo',
     category: 'text-to-video',
     paramType: 'vidu-video',
     modes: ['text-to-video', 'image-to-video', 'flf-to-video'],
-    priceCalculator: calcByResolutionDuration(VIDU_Q3_TURBO_PRICES, 600),
+    priceCalculator: calcByResolutionDuration(VIDU_Q3_TURBO_BASE_PRICES, 200),
     resolutions: ['540P', '720P', '1080P'],
     videoRatios: ['16:9', '9:16', '4:3', '3:4', '1:1'],
-    maxPromptLength: 5000,
+    maxPromptLength: 4000,
     maxDuration: 16,
     minDuration: 1,
     supportsAudio: true,
-    supportsOffPeak: true,
+    supportsStyle: true,
+    supportsMovementAmplitude: true,
   },
 
   'wan-2-7-official': {
     name: '万相2.7 视频',
-    icon: { name: 'film-outline', color: '#007AFF' },
+    icon: { name: 'videocam-outline', color: '#FF6A00' },
     manufacturer: 'alibaba',
     category: 'text-to-video',
     paramType: 'wan-video',
@@ -520,26 +644,30 @@ export const MODELS = {
     supportsPromptExtend: true,
     supportsWatermark: true,
     supportsNegativePrompt: true,
+    supportsSeed: true,
+    supportsAudioSetting: true,
   },
   'wan-2-7-offcial': {
     name: '万相2.7 视频延长',
-    icon: { name: 'pulse-outline', color: '#007AFF' },
+    icon: { name: 'time-outline', color: '#FF6A00' },
     manufacturer: 'alibaba',
     category: 'video-extend',
     paramType: 'wan-video',
     modes: ['video-extend'],
     priceCalculator: calcByResolutionDuration(WAN_27_EXTEND_PRICES, 600),
-    resolutions: ['720P', '1080P'],
+    resolutions: ['480P', '720P', '1080P'],
     videoRatios: [],
     maxPromptLength: 2048,
     maxDuration: 15,
     minDuration: 2,
     supportsPromptExtend: true,
     supportsWatermark: true,
+    supportsNegativePrompt: true,
+    supportsSeed: true,
   },
   'wan-2-5-official': {
     name: '万相2.5 图生视频',
-    icon: { name: 'image-outline', color: '#007AFF' },
+    icon: { name: 'film-outline', color: '#FF6A00' },
     manufacturer: 'alibaba',
     category: 'image-to-video',
     paramType: 'wan-i2v',
@@ -555,7 +683,7 @@ export const MODELS = {
   },
   'wan-2-6-official': {
     name: '万相2.6 图生视频',
-    icon: { name: 'image-outline', color: '#007AFF' },
+    icon: { name: 'film-outline', color: '#FF6A00' },
     manufacturer: 'alibaba',
     category: 'image-to-video',
     paramType: 'wan-i2v',
@@ -572,7 +700,7 @@ export const MODELS = {
 
   'hailuo-2-3-base': {
     name: '海螺 2.3',
-    icon: { name: 'water-outline', color: '#00CEC9' },
+    icon: { name: 'videocam-outline', color: '#00CEC9' },
     manufacturer: 'minimax',
     category: 'text-to-video',
     paramType: 'hailuo-video',
@@ -584,16 +712,17 @@ export const MODELS = {
     resolutionDurationMap: { '768P': [6, 10], '1080P': [6] },
     maxPromptLength: 2000,
     supportsPromptOptimizer: true,
+    supportsFastPretreatment: true,
     supportsWatermark: true,
   },
   'hailuo-2-3-fast-base': {
     name: '海螺 2.3 Fast',
-    icon: { name: 'water-outline', color: '#00CEC9' },
+    icon: { name: 'videocam-outline', color: '#00CEC9' },
     manufacturer: 'minimax',
     category: 'text-to-video',
     paramType: 'hailuo-video',
     modes: ['text-to-video', 'image-to-video'],
-    priceCalculator: calcByCombo(HAILUO_23_PRICES, 1600),
+    priceCalculator: calcByCombo(HAILUO_23_FAST_PRICES, 1080),
     resolutions: ['768P', '1080P'],
     videoRatios: [],
     durationOptions: [6, 10],
@@ -603,7 +732,7 @@ export const MODELS = {
 
   'happyhorse-1-0-official': {
     name: 'HappyHorse 1.0',
-    icon: { name: 'happy-outline', color: '#E17055' },
+    icon: { name: 'videocam-outline', color: '#FF6A00' },
     manufacturer: 'alibaba',
     category: 'text-to-video',
     paramType: 'happyhorse-video',
@@ -619,7 +748,7 @@ export const MODELS = {
 
   'ltx-2-3': {
     name: 'LTX 2.3',
-    icon: { name: 'camera-outline', color: '#AF52DE' },
+    icon: { name: 'videocam-outline', color: '#6C5CE7' },
     manufacturer: 'siliconflow',
     category: 'text-to-video',
     paramType: 'ltx-video',
@@ -631,11 +760,12 @@ export const MODELS = {
     maxDuration: 5,
     minDuration: 5,
     displayOptions: ['horizontal', 'vertical'],
+    supportsSeed: true,
   },
 
   'bza-video-x-official': {
     name: 'Video X 官方版',
-    icon: { name: 'videocam-outline', color: '#FF9500' },
+    icon: { name: 'videocam-outline', color: '#FF6A00' },
     manufacturer: 'grok',
     category: 'text-to-video',
     paramType: 'bza-video-x',
@@ -648,12 +778,12 @@ export const MODELS = {
   },
   'bza-video-x-base': {
     name: 'Video X 渠道版',
-    icon: { name: 'videocam-outline', color: '#FF9500' },
+    icon: { name: 'videocam-outline', color: '#FF6A00' },
     manufacturer: 'grok',
     category: 'text-to-video',
     paramType: 'bza-video-x',
     modes: ['text-to-video', 'image-to-video'],
-    priceCalculator: calcBzaVideoXPrice,
+    priceCalculator: calcByDuration(BZA_VIDEO_X_BASE_RATE),
     resolutions: ['480p', '720p'],
     videoRatios: ['16:9', '2:3', '1:1', '3:2', '9:16'],
     maxDuration: 30,
@@ -663,7 +793,7 @@ export const MODELS = {
 
   'bza-video-v3-1-pro-base': {
     name: 'Video V3.1 Pro',
-    icon: { name: 'videocam-outline', color: '#34C759' },
+    icon: { name: 'videocam-outline', color: '#4285F4' },
     manufacturer: 'google',
     category: 'text-to-video',
     paramType: 'bza-video-v3',
@@ -675,7 +805,7 @@ export const MODELS = {
   },
   'bza-video-v3-1-fast-base': {
     name: 'Video V3.1 Fast',
-    icon: { name: 'videocam-outline', color: '#34C759' },
+    icon: { name: 'videocam-outline', color: '#4285F4' },
     manufacturer: 'google',
     category: 'text-to-video',
     paramType: 'bza-video-v3',
@@ -688,16 +818,17 @@ export const MODELS = {
 
   'dreamactor-2-0-base': {
     name: 'DreamActor 2.0',
-    icon: { name: 'person-outline', color: '#E17055' },
+    icon: { name: 'git-compare-outline', color: '#E17055' },
     manufacturer: 'jimeng',
     category: 'reference-to-video',
     paramType: 'dreamactor',
     modes: ['reference-to-video'],
-    priceCalculator: calcFixedPrice(DREAMACTOR_PRICE),
+    priceCalculator: calcByDuration(DREAMACTOR_PRICE),
     resolutions: [],
     videoRatios: [],
     maxPromptLength: 0,
-    maxDuration: 0,
+    maxDuration: 15,
+    minDuration: 3,
   },
 
   'bza-chat-g3-1-pro-official': {
@@ -709,6 +840,7 @@ export const MODELS = {
     modes: ['large-language-models'],
     outputType: 'text',
     prices: { input_per_1k_tokens: 14, output_per_1k_tokens: 84 },
+    priceFormula: '金币：14 / 1000 * prompt_tokens + 84 / 1000 * completion_tokens',
     maxSystemPromptLength: 2500,
     maxUserPromptLength: 2500,
     maxTokens: 65536,
@@ -718,13 +850,14 @@ export const MODELS = {
   },
   'bza-chat-g3-1-flash-lite-official': {
     name: 'G.3.1 Flash-Lite',
-    icon: { name: 'chatbubbles-outline', color: '#34C759' },
+    icon: { name: 'chatbubbles-outline', color: '#4285F4' },
     manufacturer: 'google',
     category: 'language',
     paramType: 'llm-chat',
     modes: ['large-language-models'],
     outputType: 'text',
-    prices: { input_per_1k_tokens: 2, output_per_1k_tokens: 11 },
+    prices: { input_per_1k_tokens: 1.75, output_per_1k_tokens: 10.5 },
+    priceFormula: '金币：1.75 / 1000 * prompt_tokens + 10.5 / 1000 * completion_tokens',
     maxSystemPromptLength: 2500,
     maxUserPromptLength: 2500,
     maxTokens: 65536,
@@ -734,13 +867,14 @@ export const MODELS = {
   },
   'bza-chat-g3-flash-official': {
     name: 'G.3 Flash',
-    icon: { name: 'chatbubbles-outline', color: '#FF9500' },
+    icon: { name: 'chatbubbles-outline', color: '#4285F4' },
     manufacturer: 'google',
     category: 'language',
     paramType: 'llm-chat',
     modes: ['large-language-models'],
     outputType: 'text',
-    prices: { input_per_1k_tokens: 4, output_per_1k_tokens: 21 },
+    prices: { input_per_1k_tokens: 3.5, output_per_1k_tokens: 21 },
+    priceFormula: '金币：3.5 / 1000 * prompt_tokens + 21 / 1000 * completion_tokens',
     maxSystemPromptLength: 2500,
     maxUserPromptLength: 2500,
     maxTokens: 65536,
@@ -751,29 +885,32 @@ export const MODELS = {
 
   'bza-vision-g3-1-pro-official': {
     name: 'G.3.1 Pro Vision',
-    icon: { name: 'eye-outline', color: '#00C7BE' },
+    icon: { name: 'eye-outline', color: '#4285F4' },
     manufacturer: 'google',
     category: 'vision',
     paramType: 'vision-g',
     modes: ['vision'],
     outputType: 'text',
     prices: { input_per_1k_tokens: 14, output_per_1k_tokens: 84 },
+    priceFormula: '金币：14 / 1000 * prompt_tokens + 84 / 1000 * completion_tokens',
     maxSystemPromptLength: 5000,
     maxUserPromptLength: 2500,
     maxTokens: 65536,
     maxImages: 900,
     temperatureRange: [0, 2],
     detailOptions: ['low', 'medium', 'high'],
+    supportsEnableThinking: true,
   },
   'bza-vision-g3-1-flash-lite-official': {
     name: 'G.3.1 Flash-Lite Vision',
-    icon: { name: 'eye-outline', color: '#34C759' },
+    icon: { name: 'eye-outline', color: '#4285F4' },
     manufacturer: 'google',
     category: 'vision',
     paramType: 'vision-g',
     modes: ['vision'],
     outputType: 'text',
-    prices: { input_per_1k_tokens: 2, output_per_1k_tokens: 11 },
+    priceCalculator: calcFixedPrice(700),
+    priceFormula: '金币：1.75 / 1000 * prompt_tokens + 10.5 / 1000 * completion_tokens',
     maxSystemPromptLength: 5000,
     maxUserPromptLength: 2500,
     maxTokens: 65536,
@@ -783,23 +920,25 @@ export const MODELS = {
   },
   'bza-vision-g3-flash-official': {
     name: 'G.3 Flash Vision',
-    icon: { name: 'eye-outline', color: '#FF9500' },
+    icon: { name: 'eye-outline', color: '#4285F4' },
     manufacturer: 'google',
     category: 'vision',
     paramType: 'vision-g',
     modes: ['vision'],
     outputType: 'text',
-    prices: { input_per_1k_tokens: 4, output_per_1k_tokens: 21 },
+    prices: { input_per_1k_tokens: 3.5, output_per_1k_tokens: 21 },
+    priceFormula: '金币：3.5 / 1000 * prompt_tokens + 21 / 1000 * completion_tokens',
     maxSystemPromptLength: 2500,
     maxUserPromptLength: 2500,
     maxTokens: 65536,
     maxImages: 900,
     temperatureRange: [0, 2],
     detailOptions: ['low', 'medium', 'high'],
+    supportsEnableThinking: true,
   },
   'joycaption3': {
     name: 'JoyCaption3',
-    icon: { name: 'eye-outline', color: '#AF52DE' },
+    icon: { name: 'eye-outline', color: '#6C5CE7' },
     manufacturer: 'siliconflow',
     category: 'vision',
     paramType: 'joycaption',
@@ -815,7 +954,7 @@ export const MODELS = {
 
   'qwen3tts-custom-voice': {
     name: 'Qwen3 TTS',
-    icon: { name: 'mic-outline', color: '#9C27B0' },
+    icon: { name: 'mic-outline', color: '#6C5CE7' },
     manufacturer: 'siliconflow',
     category: 'text-to-audio',
     paramType: 'tts',
