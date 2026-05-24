@@ -10,7 +10,9 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Video, ResizeMode } from 'expo-av';
-import { Colors, Spacing } from '../constants/theme';
+import { Spacing } from '../constants/theme';
+import { useThemedStyles } from '../hooks/useThemedStyles';
+import { useTheme } from '../context/ThemeContext';
 
 const NATIVE = Platform.OS !== 'web';
 
@@ -18,6 +20,8 @@ const NATIVE = Platform.OS !== 'web';
  * WebVideoPlayer — HTML5 <video>，尺寸/音量/控件全部原生可靠
  * ================================================================ */
 function WebVideoPlayer({ visible, videoUrl, onClose }) {
+  const s = useThemedStyles(createStyles);
+  const { colors } = useTheme();
   const vidRef = useRef(null);
   const elRef = useRef(null);
   const rafRef = useRef(null);
@@ -137,6 +141,8 @@ function WebVideoPlayer({ visible, videoUrl, onClose }) {
  * NativeVideoPlayer — expo-av
  * ================================================================ */
 function NativeVideoPlayer({ visible, videoUrl, onClose }) {
+  const s = useThemedStyles(createStyles);
+  const { colors } = useTheme();
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [duration, setDuration] = useState(0);
@@ -158,7 +164,7 @@ function NativeVideoPlayer({ visible, videoUrl, onClose }) {
 
   const togglePlay = useCallback(async () => {
     if (!videoRef.current) return;
-    try { if (isPlaying) await videoRef.current.pauseAsync(); else { const s = await videoRef.current.getStatusAsync(); s.isLoaded && s.didJustFinish ? await videoRef.current.replayAsync() : await videoRef.current.playAsync(); } } catch {}
+    try { if (isPlaying) await videoRef.current.pauseAsync(); else { const st = await videoRef.current.getStatusAsync(); st.isLoaded && st.didJustFinish ? await videoRef.current.replayAsync() : await videoRef.current.playAsync(); } } catch {}
   }, [isPlaying]);
 
   const toggleMute = () => { if (isMuted) { setVolume(mutedVolume); setIsMuted(false); } else { setMutedVolume(volume); setVolume(0); setIsMuted(true); } };
@@ -212,7 +218,7 @@ export function VideoPlayer(props) {
 }
 
 /* ---- shared styles ------------------------------------------------------- */
-const s = StyleSheet.create({
+const createStyles = (colors) => ({
   full: { flex: 1, backgroundColor: '#000' },
   header: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 50, paddingHorizontal: Spacing.lg, paddingBottom: Spacing.md, backgroundColor: 'rgba(0,0,0,0.5)' },
   btn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
@@ -227,7 +233,7 @@ const s = StyleSheet.create({
   progressRow: { flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.sm },
   progArea: { flex: 1, height: 32, justifyContent: 'center', marginHorizontal: 4 },
   progBg: { height: 3, borderRadius: 1.5, backgroundColor: 'rgba(255,255,255,0.3)', overflow: 'hidden' },
-  progFill: { height: '100%', backgroundColor: Colors.primary, borderRadius: 1.5 },
+  progFill: { height: '100%', backgroundColor: colors.primary, borderRadius: 1.5 },
   t: { fontSize: 12, color: '#fff', minWidth: 42, textAlign: 'center' },
   ctrlRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, paddingVertical: Spacing.sm },
   ctrlBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },

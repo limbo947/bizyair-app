@@ -4,10 +4,11 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
-} from 'react-native';
+  } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Radius, Spacing } from '../constants/theme';
+import { Radius, Spacing } from '../constants/theme';
+import { useThemedStyles } from '../hooks/useThemedStyles';
+import { useTheme } from '../context/ThemeContext';
 
 export function TTSControls({
   voice, setVoice,
@@ -22,6 +23,8 @@ export function TTSControls({
   speedRange,
   maxTokensMax,
 }) {
+  const styles = useThemedStyles(createStyles);
+  const { colors } = useTheme();
   return (
     <>
       <View style={styles.card}>
@@ -80,7 +83,7 @@ export function TTSControls({
                 if (v >= (speedRange?.[0] || 0.5)) setSpeed(v);
               }}
             >
-              <Ionicons name="remove" size={18} color={Colors.textSecondary} />
+              <Ionicons name="remove" size={18} color={colors.textSecondary} />
             </TouchableOpacity>
             <TextInput
               style={styles.valueInput}
@@ -101,7 +104,7 @@ export function TTSControls({
                 if (v <= (speedRange?.[1] || 2)) setSpeed(v);
               }}
             >
-              <Ionicons name="add" size={18} color={Colors.textSecondary} />
+              <Ionicons name="add" size={18} color={colors.textSecondary} />
             </TouchableOpacity>
           </View>
         </View>
@@ -120,7 +123,7 @@ export function TTSControls({
               setMaxTokens(v);
             }}
           >
-            <Ionicons name="remove" size={18} color={Colors.textSecondary} />
+            <Ionicons name="remove" size={18} color={colors.textSecondary} />
           </TouchableOpacity>
           <TextInput
             style={styles.inputSingle}
@@ -132,7 +135,7 @@ export function TTSControls({
             }}
             keyboardType="numeric"
             placeholder={String(maxTokensMax || 1024)}
-            placeholderTextColor={Colors.textPlaceholder}
+            placeholderTextColor={colors.textPlaceholder}
           />
           <TouchableOpacity
             style={styles.stepBtn}
@@ -141,7 +144,7 @@ export function TTSControls({
               setMaxTokens(v);
             }}
           >
-            <Ionicons name="add" size={18} color={Colors.textSecondary} />
+            <Ionicons name="add" size={18} color={colors.textSecondary} />
           </TouchableOpacity>
         </View>
       </View>
@@ -155,7 +158,7 @@ export function TTSControls({
             onChangeText={setInstructions}
             multiline
             placeholder="可选：指定语音风格、情感等..."
-            placeholderTextColor={Colors.textPlaceholder}
+            placeholderTextColor={colors.textPlaceholder}
           />
         </View>
       ) : null}
@@ -163,20 +166,20 @@ export function TTSControls({
   );
 }
 
-const styles = StyleSheet.create({
-  card: { backgroundColor: Colors.card, padding: Spacing.lg, borderRadius: Radius.md, marginBottom: Spacing.md },
-  label: { fontSize: 13, fontWeight: '600', color: Colors.textSecondary, marginBottom: Spacing.sm, textTransform: 'uppercase', letterSpacing: 0.5 },
+const createStyles = (colors) => ({
+  card: { backgroundColor: colors.card, padding: Spacing.lg, borderRadius: Radius.md, marginBottom: Spacing.md },
+  label: { fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginBottom: Spacing.sm, textTransform: 'uppercase', letterSpacing: 0.5 },
   labelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.sm },
-  rangeHint: { fontSize: 12, color: Colors.textTertiary },
+  rangeHint: { fontSize: 12, color: colors.textTertiary },
   valueRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  valueInput: { fontSize: 14, color: Colors.primary, fontWeight: '600', borderWidth: 1, borderColor: Colors.border, borderRadius: Radius.sm, paddingHorizontal: 8, paddingVertical: 4, minWidth: 52, textAlign: 'center' },
-  stepBtn: { width: 28, height: 28, borderRadius: 14, backgroundColor: Colors.bg, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: Colors.separator },
+  valueInput: { fontSize: 14, color: colors.primary, fontWeight: '600', borderWidth: 1, borderColor: colors.border, borderRadius: Radius.sm, paddingHorizontal: 8, paddingVertical: 4, minWidth: 52, textAlign: 'center' },
+  stepBtn: { width: 28, height: 28, borderRadius: 14, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.separator },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs },
-  chip: { paddingHorizontal: Spacing.md, paddingVertical: Spacing.xs, borderRadius: Radius.sm, backgroundColor: Colors.bg, borderWidth: 1, borderColor: Colors.separator },
-  chipActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
-  chipText: { fontSize: 13, color: Colors.textSecondary, fontWeight: '500' },
-  chipTextActive: { color: Colors.textInverse, fontWeight: '600' },
-  promptInput: { fontSize: 14, color: Colors.textPrimary, lineHeight: 20, minHeight: 60, textAlignVertical: 'top', borderWidth: 0, borderRadius: Radius.sm, paddingHorizontal: Spacing.sm, paddingVertical: Spacing.sm, backgroundColor: Colors.bg },
+  chip: { paddingHorizontal: Spacing.md, paddingVertical: Spacing.xs, borderRadius: Radius.sm, backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.separator },
+  chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  chipText: { fontSize: 13, color: colors.textSecondary, fontWeight: '500' },
+  chipTextActive: { color: colors.textInverse, fontWeight: '600' },
+  promptInput: { fontSize: 14, color: colors.textPrimary, lineHeight: 20, minHeight: 60, textAlignVertical: 'top', borderWidth: 0, borderRadius: Radius.sm, paddingHorizontal: Spacing.sm, paddingVertical: Spacing.sm, backgroundColor: colors.bg },
   inputRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  inputSingle: { flex: 1, fontSize: 15, color: Colors.textPrimary, textAlign: 'center', borderWidth: 0, borderRadius: Radius.sm, paddingHorizontal: Spacing.sm, paddingVertical: 10, backgroundColor: Colors.bg },
+  inputSingle: { flex: 1, fontSize: 15, color: colors.textPrimary, textAlign: 'center', borderWidth: 0, borderRadius: Radius.sm, paddingHorizontal: Spacing.sm, paddingVertical: 10, backgroundColor: colors.bg },
 });

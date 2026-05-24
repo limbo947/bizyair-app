@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
-  StyleSheet,
   Text,
   View,
   TextInput,
@@ -14,11 +13,12 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAppContext } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
 import { submitImageTask, submitVideoTask, submitLLMTask, submitVisionTask, submitTTSTask } from '../services/apiClient';
-import { calculatePrice, getRatios, getResolutions, getModelInfo, getActualResolution, getModelModes } from '../utils/modelHelpers';
+import { calculatePrice, getRatios, getResolutions, getModelInfo, getActualResolution, getModelModes, getOutputType } from '../utils/modelHelpers';
 import { buildPayload } from '../utils/payloadBuilder';
 import { generateId } from '../utils/helpers';
 import { ENV_API_KEY } from '../constants/models';
-import { Colors, Radius, Spacing } from '../constants/theme';
+import { Radius, Spacing } from '../constants/theme';
+import { useThemedStyles } from '../hooks/useThemedStyles';
 import { ModelSelector } from '../components/ModelSelector';
 import { FavoriteModelsLayer } from '../components/FavoriteModelsLayer';
 import { ApiKeyDropdown } from '../components/ApiKeyDropdown';
@@ -64,7 +64,8 @@ export function HomeScreen({ onOpenModelSelect }) {
     favorites,
     history,
   } = useAppContext();
-  const { themeMode, toggleTheme } = useTheme();
+  const { themeMode, toggleTheme, colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
 
   const [modelId, setModelId] = useState(homeState.modelId);
   const [mode, setMode] = useState(homeState.mode);
@@ -281,13 +282,10 @@ export function HomeScreen({ onOpenModelSelect }) {
   }, [modelId, mode]);
 
   const handleGenerate = async () => {
-    const isVideo = paramType?.startsWith('seedance') || paramType?.startsWith('kling') || paramType?.startsWith('vidu') ||
-      paramType?.startsWith('wan-video') || paramType?.startsWith('wan-i2v') || paramType?.startsWith('hailuo') ||
-      paramType?.startsWith('happyhorse') || paramType?.startsWith('ltx') || paramType?.startsWith('bza-video') ||
-      paramType === 'dreamactor';
-    const isText = paramType === 'llm-chat' || paramType === 'vision-g' || paramType === 'joycaption';
-    const isAudio = paramType === 'tts';
-    const initialOutputType = isVideo ? 'video' : isAudio ? 'audio' : isText ? 'text' : 'image';
+    const initialOutputType = getOutputType(modelId);
+    const isVideo = initialOutputType === 'video';
+    const isText = initialOutputType === 'text';
+    const isAudio = initialOutputType === 'audio';
 
     if (!prompt.trim() && paramType !== 'dreamactor') {
       setError('请输入提示词');
@@ -504,11 +502,11 @@ export function HomeScreen({ onOpenModelSelect }) {
                 <View style={styles.headerNameRow}>
                   <Text style={styles.headerUserName}>{userInfo.name}</Text>
                   {userInfo.user_level_str ? (
-                    <MaterialCommunityIcons name="crown" size={14} color={Colors.warning} style={{ marginLeft: 4 }} />
+                    <MaterialCommunityIcons name="crown" size={14} color={colors.warning} style={{ marginLeft: 4 }} />
                   ) : null}
                 </View>
                 <View style={styles.headerBalances}>
-                  <MaterialCommunityIcons name="gold" size={14} color={Colors.warning} style={{ paddingRight: 2 }} />
+                  <MaterialCommunityIcons name="gold" size={14} color={colors.warning} style={{ paddingRight: 2 }} />
                   <Text style={[styles.headerBalanceText, { paddingLeft: 2, paddingTop: 2 }]}>
                     {walletBalance?.charge_balance_amount ?? '--'}
                   </Text>
@@ -525,21 +523,21 @@ export function HomeScreen({ onOpenModelSelect }) {
               activeOpacity={0.7}
             >
               <Text style={styles.headerAllModelsText}>所有模型</Text>
-              <Ionicons name="apps-outline" size={18} color={Colors.textPrimary} />
+              <Ionicons name="apps-outline" size={18} color={colors.textPrimary} />
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.headerThemeButton}
               onPress={toggleTheme}
               activeOpacity={0.7}
             >
-              <Ionicons name={themeMode === 'dark' ? 'sunny-outline' : 'moon-outline'} size={20} color={Colors.textPrimary} />
+              <Ionicons name={themeMode === 'dark' ? 'sunny-outline' : 'moon-outline'} size={20} color={colors.textPrimary} />
             </TouchableOpacity>
           </View>
         ) : (
           <View style={styles.headerInner}>
             <View style={styles.headerLeft}>
               <View style={[styles.headerAvatar, styles.headerAvatarPlaceholder]}>
-                <Ionicons name="person-outline" size={20} color={Colors.textTertiary} />
+                <Ionicons name="person-outline" size={20} color={colors.textTertiary} />
               </View>
               <TextInput
                 style={styles.headerApiInput}
@@ -547,7 +545,7 @@ export function HomeScreen({ onOpenModelSelect }) {
                 value={apiKey}
                 onChangeText={setApiKey}
                 secureTextEntry
-                placeholderTextColor={Colors.textPlaceholder}
+                placeholderTextColor={colors.textPlaceholder}
               />
             </View>
             {apiKey.trim() ? (
@@ -558,7 +556,7 @@ export function HomeScreen({ onOpenModelSelect }) {
                 disabled={isSaving}
               >
                 {isSaving ? (
-                  <ActivityIndicator size="small" color={Colors.textInverse} />
+                  <ActivityIndicator size="small" color={colors.textInverse} />
                 ) : (
                   <Text style={styles.headerSaveButtonText}>保存</Text>
                 )}
@@ -566,7 +564,7 @@ export function HomeScreen({ onOpenModelSelect }) {
             ) : (
               <View style={styles.headerAllModelsButton}>
                 <Text style={styles.headerAllModelsText}>所有模型</Text>
-                <Ionicons name="apps-outline" size={18} color={Colors.textPrimary} />
+                <Ionicons name="apps-outline" size={18} color={colors.textPrimary} />
               </View>
             )}
           </View>
@@ -577,7 +575,7 @@ export function HomeScreen({ onOpenModelSelect }) {
         {showApiKeyInput ? (
           <View style={styles.card}>
             <View style={styles.labelRow}>
-              <Ionicons name="key" size={16} color={Colors.warning} />
+              <Ionicons name="key" size={16} color={colors.warning} />
               <Text style={styles.label}>API 密钥</Text>
             </View>
             <TextInput
@@ -587,7 +585,7 @@ export function HomeScreen({ onOpenModelSelect }) {
               onChangeText={setApiKey}
               secureTextEntry
               maxLength={100}
-              placeholderTextColor={Colors.textPlaceholder}
+              placeholderTextColor={colors.textPlaceholder}
             />
             {apiKey.trim() ? (
               <TouchableOpacity
@@ -596,7 +594,7 @@ export function HomeScreen({ onOpenModelSelect }) {
                 disabled={isSaving}
               >
                 {isSaving ? (
-                  <ActivityIndicator size="small" color={Colors.textInverse} />
+                  <ActivityIndicator size="small" color={colors.textInverse} />
                 ) : (
                   <Text style={styles.saveKeyButtonText}>保存密钥</Text>
                 )}
@@ -689,9 +687,9 @@ export function HomeScreen({ onOpenModelSelect }) {
               disabled={isUploading}
             >
               {isUploading ? (
-                <ActivityIndicator color={Colors.primary} />
+                <ActivityIndicator color={colors.primary} />
               ) : (
-                <Ionicons name="cloud-upload-outline" size={24} color={Colors.primary} />
+                <Ionicons name="cloud-upload-outline" size={24} color={colors.primary} />
               )}
               <Text style={styles.uploadButtonText}>
                 {isUploading ? '上传中...' : '选择图片上传'}
@@ -727,9 +725,9 @@ export function HomeScreen({ onOpenModelSelect }) {
               disabled={isUploading}
             >
               {isUploading ? (
-                <ActivityIndicator color={Colors.primary} />
+                <ActivityIndicator color={colors.primary} />
               ) : (
-                <Ionicons name="cloud-upload-outline" size={24} color={Colors.primary} />
+                <Ionicons name="cloud-upload-outline" size={24} color={colors.primary} />
               )}
               <Text style={styles.uploadButtonText}>
                 {isUploading ? '上传中...' : '选择尾帧图片'}
@@ -765,9 +763,9 @@ export function HomeScreen({ onOpenModelSelect }) {
               disabled={isUploading}
             >
               {isUploading ? (
-                <ActivityIndicator color={Colors.primary} />
+                <ActivityIndicator color={colors.primary} />
               ) : (
-                <Ionicons name="cloud-upload-outline" size={24} color={Colors.primary} />
+                <Ionicons name="cloud-upload-outline" size={24} color={colors.primary} />
               )}
               <Text style={styles.uploadButtonText}>
                 {isUploading ? '上传中...' : '选择视频上传'}
@@ -777,7 +775,7 @@ export function HomeScreen({ onOpenModelSelect }) {
               <View style={styles.uploadedList}>
                 {videoUrls.map((url, i) => (
                   <View key={i} style={styles.uploadedItem}>
-                    <Ionicons name="videocam" size={24} color={Colors.primary} />
+                    <Ionicons name="videocam" size={24} color={colors.primary} />
                     <Text style={styles.uploadedName} numberOfLines={1}>
                       视频 {i + 1}
                     </Text>
@@ -802,7 +800,7 @@ export function HomeScreen({ onOpenModelSelect }) {
           disabled={isSubmitting}
         >
           {isSubmitting ? (
-            <ActivityIndicator color={Colors.textInverse} />
+            <ActivityIndicator color={colors.textInverse} />
           ) : null}
           <Text style={styles.generateButtonText}>
             {isSubmitting
@@ -849,55 +847,55 @@ export function HomeScreen({ onOpenModelSelect }) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.bg },
-  header: { backgroundColor: Colors.card, paddingLeft: Spacing.md, paddingRight: Spacing.md, paddingVertical: Spacing.sm, borderBottomWidth: 0.5, borderBottomColor: Colors.separator },
+const createStyles = (colors) => ({
+  container: { flex: 1, backgroundColor: colors.bg },
+  header: { backgroundColor: colors.card, paddingLeft: Spacing.md, paddingRight: Spacing.md, paddingVertical: Spacing.sm, borderBottomWidth: 0.5, borderBottomColor: colors.separator },
   headerInner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, flex: 1, borderRadius: Radius.sm },
   headerAvatar: { width: 36, height: 36, borderRadius: 18 },
-  headerAvatarPlaceholder: { backgroundColor: Colors.bg, alignItems: 'center', justifyContent: 'center' },
+  headerAvatarPlaceholder: { backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
   headerUserInfo: { flexDirection: 'column' },
   headerNameRow: { flexDirection: 'row', alignItems: 'center', paddingLeft: 2 },
-  headerUserName: { fontSize: 14, color: Colors.textPrimary, fontWeight: '600' },
+  headerUserName: { fontSize: 14, color: colors.textPrimary, fontWeight: '600' },
   headerBalances: { flexDirection: 'row', alignItems: 'center', marginTop: 1 },
-  headerBalanceText: { fontSize: 13, color: Colors.textPrimary, fontWeight: '600' },
-  headerApiInput: { flex: 1, fontSize: 14, color: Colors.textPrimary, backgroundColor: Colors.bg, borderRadius: Radius.sm, paddingHorizontal: Spacing.sm, paddingVertical: Spacing.xs },
-  headerSaveButton: { paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, borderRadius: Radius.sm, backgroundColor: Colors.primary },
-  headerSaveButtonText: { color: Colors.textInverse, fontSize: 13, fontWeight: '600' },
-  headerAllModelsButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.bg, paddingHorizontal: Spacing.sm, paddingVertical: Spacing.sm, borderRadius: Radius.sm, gap: Spacing.xs },
-  headerAllModelsText: { fontSize: 14, color: Colors.textPrimary, fontWeight: '600' },
-  headerThemeButton: { padding: Spacing.sm, borderRadius: Radius.sm, backgroundColor: Colors.bg },
+  headerBalanceText: { fontSize: 13, color: colors.textPrimary, fontWeight: '600' },
+  headerApiInput: { flex: 1, fontSize: 14, color: colors.textPrimary, backgroundColor: colors.bg, borderRadius: Radius.sm, paddingHorizontal: Spacing.sm, paddingVertical: Spacing.xs },
+  headerSaveButton: { paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, borderRadius: Radius.sm, backgroundColor: colors.primary },
+  headerSaveButtonText: { color: colors.textInverse, fontSize: 13, fontWeight: '600' },
+  headerAllModelsButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.bg, paddingHorizontal: Spacing.sm, paddingVertical: Spacing.sm, borderRadius: Radius.sm, gap: Spacing.xs },
+  headerAllModelsText: { fontSize: 14, color: colors.textPrimary, fontWeight: '600' },
+  headerThemeButton: { padding: Spacing.sm, borderRadius: Radius.sm, backgroundColor: colors.bg },
   modelAndModeRow: { marginBottom: 6 },
-  modeToggle: { flexDirection: 'row', borderRadius: Radius.sm, backgroundColor: Colors.bg, padding: 4, gap: 4, marginTop: 6 },
+  modeToggle: { flexDirection: 'row', borderRadius: 8, backgroundColor: colors.bg, padding: 1, gap: 4, marginTop: 6, borderWidth: 1, borderColor: colors.divider, height: 45 },
   modeButton: { flex: 1, paddingVertical: Spacing.sm, borderRadius: Radius.xs, alignItems: 'center' },
-  modeButtonActive: { backgroundColor: Colors.card },
-  modeButtonText: { fontSize: 13, color: Colors.textTertiary, fontWeight: '500' },
-  modeButtonTextActive: { color: Colors.primary, fontWeight: '600' },
+  modeButtonActive: { backgroundColor: colors.card },
+  modeButtonText: { fontSize: 13, color: colors.textTertiary, fontWeight: '500' },
+  modeButtonTextActive: { color: colors.primary, fontWeight: '600' },
   scroll: { flex: 1 },
   scrollContent: { paddingTop: 8, paddingRight: Spacing.md, paddingBottom: Spacing.xxl, paddingLeft: Spacing.md },
-  card: { backgroundColor: Colors.card, padding: Spacing.lg, borderRadius: Radius.md, marginBottom: Spacing.md },
+  card: { backgroundColor: colors.card, padding: Spacing.lg, borderRadius: Radius.md, marginBottom: Spacing.md },
   labelRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, marginBottom: Spacing.sm },
-  label: { fontSize: 13, fontWeight: '600', color: Colors.textSecondary, marginBottom: Spacing.sm, textTransform: 'uppercase', letterSpacing: 0.5 },
+  label: { fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginBottom: Spacing.sm, textTransform: 'uppercase', letterSpacing: 0.5 },
   promptLabelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.sm },
   promptClearText: { fontSize: 12, color: '#4A9EF5', fontWeight: '500' },
-  charCount: { fontSize: 12, color: Colors.textTertiary, textAlign: 'right', marginTop: Spacing.xs },
-  uploadButton: { backgroundColor: Colors.primaryBg, paddingVertical: 18, borderRadius: Radius.md, borderWidth: 1.5, borderColor: Colors.primaryBorder, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: Spacing.sm },
+  charCount: { fontSize: 12, color: colors.textTertiary, textAlign: 'right', marginTop: Spacing.xs },
+  uploadButton: { backgroundColor: colors.primaryBg, paddingVertical: 18, borderRadius: Radius.md, borderWidth: 1.5, borderColor: colors.primaryBorder, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: Spacing.sm },
   uploadButtonDisabled: { opacity: 0.6 },
-  uploadButtonText: { color: Colors.primary, fontSize: 15, fontWeight: '600' },
+  uploadButtonText: { color: colors.primary, fontSize: 15, fontWeight: '600' },
   uploadedList: { marginTop: Spacing.md, gap: Spacing.sm },
-  uploadedItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.bg, borderRadius: Radius.sm, padding: Spacing.sm, gap: 10 },
+  uploadedItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.bg, borderRadius: Radius.sm, padding: Spacing.sm, gap: 10 },
   uploadedThumb: { width: 44, height: 44, borderRadius: Radius.xs },
-  uploadedName: { flex: 1, fontSize: 14, color: Colors.textPrimary, fontWeight: '500' },
-  removeUploadedButton: { backgroundColor: Colors.errorBg, paddingHorizontal: 10, paddingVertical: 5, borderRadius: Radius.xs },
-  removeUploadedButtonText: { color: Colors.error, fontSize: 13, fontWeight: '600' },
-  generateButton: { backgroundColor: Colors.primary, paddingVertical: 16, borderRadius: Radius.md, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 10, marginBottom: Spacing.sm },
-  generateButtonDisabled: { backgroundColor: Colors.primaryDisabled },
-  generateButtonText: { color: Colors.textInverse, fontSize: 17, fontWeight: '600', letterSpacing: -0.3 },
-  priceFormulaText: { fontSize: 12, color: Colors.textTertiary, textAlign: 'center', marginBottom: Spacing.md, lineHeight: 18 },
-  errorText: { color: Colors.error, textAlign: 'center', marginBottom: Spacing.md, fontSize: 14 },
-  textResultBox: { maxHeight: 300, backgroundColor: Colors.bg, borderRadius: Radius.sm, padding: Spacing.md },
-  textResultContent: { fontSize: 14, color: Colors.textPrimary, lineHeight: 22 },
-  apiKeyInput: { fontSize: 15, color: Colors.textPrimary, borderWidth: 0, borderRadius: Radius.sm, padding: Spacing.md, fontFamily: 'monospace', backgroundColor: Colors.bg },
-  saveKeyButton: { backgroundColor: Colors.primary, paddingVertical: 10, borderRadius: Radius.sm, alignItems: 'center', marginTop: Spacing.sm },
-  saveKeyButtonText: { color: Colors.textInverse, fontSize: 15, fontWeight: '600' },
+  uploadedName: { flex: 1, fontSize: 14, color: colors.textPrimary, fontWeight: '500' },
+  removeUploadedButton: { backgroundColor: colors.errorBg, paddingHorizontal: 10, paddingVertical: 5, borderRadius: Radius.xs },
+  removeUploadedButtonText: { color: colors.error, fontSize: 13, fontWeight: '600' },
+  generateButton: { backgroundColor: colors.primary, paddingVertical: 16, borderRadius: Radius.md, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 10, marginBottom: Spacing.sm },
+  generateButtonDisabled: { backgroundColor: colors.primaryDisabled },
+  generateButtonText: { color: colors.textInverse, fontSize: 17, fontWeight: '600', letterSpacing: -0.3 },
+  priceFormulaText: { fontSize: 12, color: colors.textTertiary, textAlign: 'center', marginBottom: Spacing.md, lineHeight: 18 },
+  errorText: { color: colors.error, textAlign: 'center', marginBottom: Spacing.md, fontSize: 14 },
+  textResultBox: { maxHeight: 300, backgroundColor: colors.bg, borderRadius: Radius.sm, padding: Spacing.md },
+  textResultContent: { fontSize: 14, color: colors.textPrimary, lineHeight: 22 },
+  apiKeyInput: { fontSize: 15, color: colors.textPrimary, borderWidth: 0, borderRadius: Radius.sm, padding: Spacing.md, fontFamily: 'monospace', backgroundColor: colors.bg },
+  saveKeyButton: { backgroundColor: colors.primary, paddingVertical: 10, borderRadius: Radius.sm, alignItems: 'center', marginTop: Spacing.sm },
+  saveKeyButtonText: { color: colors.textInverse, fontSize: 15, fontWeight: '600' },
 });

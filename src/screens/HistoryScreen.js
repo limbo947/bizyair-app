@@ -22,7 +22,9 @@ import { AudioPlayer } from '../components/AudioPlayer';
 import { ImageViewer } from '../components/ImageViewer';
 import { TextResultView } from '../components/TextResultView';
 import { PAGE_SIZE, TAB_HISTORY } from '../constants/models';
-import { Colors, Radius, Spacing } from '../constants/theme';
+import { Radius, Spacing } from '../constants/theme';
+import { useThemedStyles } from '../hooks/useThemedStyles';
+import { useTheme } from '../context/ThemeContext';
 
 const { AndroidDownloadManager } = NativeModules;
 
@@ -68,6 +70,8 @@ function triggerDownload(url, filename) {
 }
 
 export function HistoryScreen() {
+  const styles = useThemedStyles(createStyles);
+  const { colors } = useTheme();
   const {
     history,
     removeHistoryItems,
@@ -90,6 +94,7 @@ export function HistoryScreen() {
   const [batchMode, setBatchMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [isDownloading, setIsDownloading] = useState(false);
+  const downloadingRef = useRef(new Set());
   const [deleteConfirmBatch, setDeleteConfirmBatch] = useState(false);
   const [tick, setTick] = useState(0);
   const flatListRef = useRef(null);
@@ -135,8 +140,8 @@ export function HistoryScreen() {
       items = items.filter((item) => item.outputType === filterBy);
     }
     switch (sortBy) {
-      case 'newest': items.sort((a, b) => (parseInt(b.id) || 0) - (parseInt(a.id) || 0)); break;
-      case 'oldest': items.sort((a, b) => (parseInt(a.id) || 0) - (parseInt(b.id) || 0)); break;
+      case 'newest': items.sort((a, b) => (b.startedAt || 0) - (a.startedAt || 0)); break;
+      case 'oldest': items.sort((a, b) => (a.startedAt || 0) - (b.startedAt || 0)); break;
       case 'price_high': items.sort((a, b) => (b.price || 0) - (a.price || 0)); break;
       case 'price_low': items.sort((a, b) => (a.price || 0) - (b.price || 0)); break;
     }
@@ -185,11 +190,13 @@ export function HistoryScreen() {
   }, [removeHistoryItems, selectedIds]);
 
   const handleDownload = useCallback((item) => {
-    if (isDownloading) return;
+    if (isDownloading || downloadingRef.current.has(item.id)) return;
+    downloadingRef.current.add(item.id);
     const ext = item.outputType === 'video' ? '.mp4' : item.outputType === 'audio' ? `.${item.responseFormat || 'mp3'}` : '.jpg';
     const url = item.videoUrl || item.audioUrl || item.imageUrl;
-    if (!url) return;
+    if (!url) { downloadingRef.current.delete(item.id); return; }
     triggerDownload(url, `bizyair_${item.id}${ext}`);
+    setTimeout(() => downloadingRef.current.delete(item.id), 2000);
   }, [isDownloading]);
 
   const handleBatchDownload = useCallback(async () => {
@@ -256,7 +263,7 @@ export function HistoryScreen() {
                   <Image source={{ uri: thumbCache.current[item.videoUrl] }} style={styles.historyThumb} />
                 ) : (
                   <View style={[styles.historyThumbPlaceholder, styles.historyThumbVideo]}>
-                    <Ionicons name="videocam" size={32} color={Colors.primary} />
+                    <Ionicons name="videocam" size={32} color={colors.primary} />
                   </View>
                 )}
                 <View style={styles.thumbPlayOverlay}>
@@ -266,7 +273,7 @@ export function HistoryScreen() {
             ) : item.outputType === 'audio' && item.audioUrl ? (
               <View style={styles.thumbContainer}>
                 <View style={[styles.historyThumbPlaceholder, styles.historyThumbAudio]}>
-                  <Ionicons name="musical-notes" size={32} color={Colors.purple} />
+                  <Ionicons name="musical-notes" size={32} color={colors.purple} />
                 </View>
                 <View style={styles.thumbPlayOverlay}>
                   <Ionicons name="play-circle" size={28} color="rgba(255,255,255,0.9)" />
@@ -274,17 +281,17 @@ export function HistoryScreen() {
               </View>
             ) : item.outputType === 'text' && item.textResult ? (
               <View style={[styles.historyThumbPlaceholder, styles.historyThumbText]}>
-                <Ionicons name="document-text" size={32} color={Colors.primary} />
+                <Ionicons name="document-text" size={32} color={colors.primary} />
               </View>
             ) : item.imageUrl ? (
               <Image source={{ uri: item.imageUrl }} style={styles.historyThumb} />
             ) : item.status === 'Failed' ? (
               <View style={[styles.historyThumbPlaceholder, styles.historyThumbFailed]}>
-                <Ionicons name="close-circle-outline" size={32} color={Colors.error} />
+                <Ionicons name="close-circle-outline" size={32} color={colors.error} />
               </View>
             ) : (
               <View style={styles.historyThumbPlaceholder}>
-                <ActivityIndicator color={Colors.textTertiary} />
+                <ActivityIndicator color={colors.textTertiary} />
               </View>
             )}
           </View>
@@ -297,43 +304,43 @@ export function HistoryScreen() {
               <View style={styles.historyActions}>
                 {((item.imageUrl && !batchMode) || (item.outputType === 'video' && item.videoUrl && !batchMode) || (item.outputType === 'audio' && item.audioUrl && !batchMode)) ? (
                   <TouchableOpacity style={[styles.iconButton, styles.iconButtonSuccess]} onPress={() => handleDownload(item)}>
-                    <Ionicons name="download" size={18} color={Colors.success} />
+                    <Ionicons name="download" size={18} color={colors.success} />
                   </TouchableOpacity>
                 ) : null}
                 {!batchMode ? (
                   <TouchableOpacity style={[styles.iconButton, styles.iconButtonPurple]} onPress={async () => {
                     await Clipboard.setStringAsync(item.prompt || '');
                   }}>
-                    <Ionicons name="copy" size={18} color={Colors.purple} />
+                    <Ionicons name="copy" size={18} color={colors.purple} />
                   </TouchableOpacity>
                 ) : null}
                 <TouchableOpacity style={[styles.iconButton, styles.iconButtonPrimary]} onPress={() => setLogModal(item)}>
-                  <Ionicons name="document-text" size={18} color={Colors.primary} />
+                  <Ionicons name="document-text" size={18} color={colors.primary} />
                 </TouchableOpacity>
                 {!batchMode ? (
                   <TouchableOpacity style={[styles.iconButton, styles.iconButtonError]} onPress={() => setDeleteConfirmId(item.id)}>
-                    <Ionicons name="trash" size={18} color={Colors.error} />
+                    <Ionicons name="trash" size={18} color={colors.error} />
                   </TouchableOpacity>
                 ) : null}
                 {item.status === 'Pending' ? (
                   <View style={[styles.iconButton, styles.iconButtonWarning]}>
-                    <Ionicons name="time" size={16} color={Colors.warning} />
+                    <Ionicons name="time" size={16} color={colors.warning} />
                   </View>
                 ) : item.status === 'Running' ? (
                   <View style={[styles.iconButton, styles.iconButtonRunning]}>
-                    <ActivityIndicator size="small" color={Colors.primary} />
+                    <ActivityIndicator size="small" color={colors.primary} />
                   </View>
                 ) : item.status === 'Saving' ? (
                   <View style={[styles.iconButton, styles.iconButtonPurple]}>
-                    <Ionicons name="cloud-upload" size={16} color={Colors.purple} />
+                    <Ionicons name="cloud-upload" size={16} color={colors.purple} />
                   </View>
                 ) : item.status === 'Success' ? (
                   <View style={[styles.iconButton, styles.iconButtonSuccess]}>
-                    <Ionicons name="checkmark-circle" size={16} color={Colors.success} />
+                    <Ionicons name="checkmark-circle" size={16} color={colors.success} />
                   </View>
                 ) : (
                   <View style={[styles.iconButton, styles.iconButtonError]}>
-                    <Ionicons name="close-circle" size={16} color={Colors.error} />
+                    <Ionicons name="close-circle" size={16} color={colors.error} />
                   </View>
                 )}
               </View>
@@ -352,7 +359,7 @@ export function HistoryScreen() {
       if (filteredHistory.length > 0) return <View style={styles.footerEnd}><Text style={styles.footerEndText}>已加载全部 {filteredHistory.length} 条记录</Text></View>;
       return null;
     }
-    return <View style={styles.footerLoading}><ActivityIndicator color={Colors.primary} /><Text style={styles.footerLoadingText}>加载更多...</Text></View>;
+    return <View style={styles.footerLoading}><ActivityIndicator color={colors.primary} /><Text style={styles.footerLoadingText}>加载更多...</Text></View>;
   }, [hasMore, filteredHistory.length]);
 
   const renderEmpty = useCallback(() => {
@@ -427,14 +434,14 @@ export function HistoryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.bg },
+const createStyles = (colors) => ({
+  container: { flex: 1, backgroundColor: colors.bg },
   listContent: { paddingHorizontal: Spacing.sm, paddingTop: Spacing.md, paddingBottom: Spacing.xxl },
-  historyCard: { flexDirection: 'row', backgroundColor: Colors.card, borderRadius: Radius.xs, marginBottom: Spacing.sm, overflow: 'hidden' },
-  checkboxArea: { width: 44, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.bg },
-  checkbox: { width: 22, height: 22, borderRadius: Radius.full, borderWidth: 1.5, borderColor: Colors.disabled, alignItems: 'center', justifyContent: 'center' },
-  checkboxChecked: { backgroundColor: Colors.primary, borderColor: Colors.primary },
-  checkboxMark: { color: Colors.textInverse, fontSize: 14, fontWeight: '600' },
+  historyCard: { flexDirection: 'row', backgroundColor: colors.card, borderRadius: Radius.xs, marginBottom: Spacing.sm, overflow: 'hidden' },
+  checkboxArea: { width: 44, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg },
+  checkbox: { width: 22, height: 22, borderRadius: Radius.full, borderWidth: 1.5, borderColor: colors.disabled, alignItems: 'center', justifyContent: 'center' },
+  checkboxChecked: { backgroundColor: colors.primary, borderColor: colors.primary },
+  checkboxMark: { color: colors.textInverse, fontSize: 14, fontWeight: '600' },
   historyCardInner: { flex: 1, flexDirection: 'row', alignItems: 'stretch' },
   historyThumbWrap: { marginLeft: 6, marginVertical: 6, width: 88 },
   thumbContainer: { flex: 1, width: '100%', position: 'relative', borderRadius: Radius.xs, overflow: 'hidden' },
@@ -444,32 +451,32 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.25)',
   },
   historyThumb: { width: '100%', flex: 1, resizeMode: 'cover', borderRadius: Radius.xs },
-  historyThumbPlaceholder: { flex: 1, width: '100%', backgroundColor: Colors.bg, alignItems: 'center', justifyContent: 'center' },
-  historyThumbFailed: { backgroundColor: Colors.errorBg },
-  historyThumbVideo: { backgroundColor: Colors.primaryBg },
-  historyThumbAudio: { backgroundColor: Colors.purpleBg },
-  historyThumbText: { backgroundColor: Colors.primaryBg },
+  historyThumbPlaceholder: { flex: 1, width: '100%', backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
+  historyThumbFailed: { backgroundColor: colors.errorBg },
+  historyThumbVideo: { backgroundColor: colors.primaryBg },
+  historyThumbAudio: { backgroundColor: colors.purpleBg },
+  historyThumbText: { backgroundColor: colors.primaryBg },
   historyInfo: { flex: 1, padding: Spacing.md, justifyContent: 'space-between', alignSelf: 'center' },
-  historyPrompt: { fontSize: 14, color: Colors.textPrimary, fontWeight: '500', lineHeight: 18 },
-  historyMeta: { fontSize: 12, color: Colors.textTertiary, marginTop: 3 },
-  historyDuration: { fontSize: 12, color: Colors.success, marginTop: 2, fontWeight: '500' },
+  historyPrompt: { fontSize: 14, color: colors.textPrimary, fontWeight: '500', lineHeight: 18 },
+  historyMeta: { fontSize: 12, color: colors.textTertiary, marginTop: 3 },
+  historyDuration: { fontSize: 12, color: colors.success, marginTop: 2, fontWeight: '500' },
   historyBottomRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 },
-  historyPrice: { fontSize: 13, color: Colors.warning, fontWeight: '700' },
+  historyPrice: { fontSize: 13, color: colors.warning, fontWeight: '700' },
   historyActions: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   iconButton: { width: 28, height: 28, borderRadius: Radius.xs, alignItems: 'center', justifyContent: 'center' },
-  iconButtonSuccess: { backgroundColor: Colors.successBg },
-  iconButtonPurple: { backgroundColor: Colors.purpleBg },
-  iconButtonPrimary: { backgroundColor: Colors.primaryBg },
-  iconButtonError: { backgroundColor: Colors.errorBg },
-  iconButtonWarning: { backgroundColor: Colors.warningBg },
-  iconButtonRunning: { backgroundColor: Colors.primaryBg },
-  historyError: { fontSize: 11, color: Colors.error, marginTop: 2 },
+  iconButtonSuccess: { backgroundColor: colors.successBg },
+  iconButtonPurple: { backgroundColor: colors.purpleBg },
+  iconButtonPrimary: { backgroundColor: colors.primaryBg },
+  iconButtonError: { backgroundColor: colors.errorBg },
+  iconButtonWarning: { backgroundColor: colors.warningBg },
+  iconButtonRunning: { backgroundColor: colors.primaryBg },
+  historyError: { fontSize: 11, color: colors.error, marginTop: 2 },
   emptyContainer: { alignItems: 'center', justifyContent: 'center', paddingTop: 60 },
   emptyIcon: { fontSize: 48, marginBottom: Spacing.md },
-  emptyTitle: { fontSize: 20, color: Colors.textPrimary, fontWeight: '700', marginBottom: 6 },
-  emptySubtitle: { fontSize: 14, color: Colors.textTertiary },
+  emptyTitle: { fontSize: 20, color: colors.textPrimary, fontWeight: '700', marginBottom: 6 },
+  emptySubtitle: { fontSize: 14, color: colors.textTertiary },
   footerEnd: { alignItems: 'center', paddingVertical: Spacing.xl },
-  footerEndText: { fontSize: 13, color: Colors.disabled },
+  footerEndText: { fontSize: 13, color: colors.disabled },
   footerLoading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: Spacing.xl, gap: Spacing.sm },
-  footerLoadingText: { fontSize: 13, color: Colors.textTertiary },
+  footerLoadingText: { fontSize: 13, color: colors.textTertiary },
 });

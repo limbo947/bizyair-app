@@ -1,12 +1,35 @@
 import React from 'react';
 import {
-  StyleSheet,
   Text,
   View,
   TouchableOpacity,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Radius, Spacing } from '../constants/theme';
+import { Radius, Spacing } from '../constants/theme';
+import { useThemedStyles } from '../hooks/useThemedStyles';
+import { useTheme } from '../context/ThemeContext';
+
+const createStyles = (colors) => ({
+  container: {},
+  currentModelButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.card,
+    paddingVertical: Spacing.sm,
+    paddingLeft: 4,
+    paddingRight: 4,
+    borderRadius: Radius.sm,
+    gap: Spacing.xs,
+    alignSelf: 'flex-start',
+  },
+  currentModelName: {
+    fontSize: 14,
+    color: colors.textPrimary,
+    fontWeight: '600',
+    paddingLeft: 2,
+    paddingRight: 2,
+  },
+});
 
 export function ModelSelector({
   currentModel,
@@ -14,6 +37,9 @@ export function ModelSelector({
   onSelectModel,
   onOpenFavorites,
 }) {
+  const styles = useThemedStyles(createStyles);
+  const { colors } = useTheme();
+
   return (
     <View style={styles.container}>
       <TouchableOpacity
@@ -28,30 +54,8 @@ export function ModelSelector({
           style={{ paddingLeft: 2 }}
         />
         <Text style={styles.currentModelName}>{currentModel.name}</Text>
-        <Ionicons name="ellipsis-horizontal" size={18} color={Colors.textTertiary} style={{ paddingLeft: 4, paddingRight: 4 }} />
+        <Ionicons name="ellipsis-horizontal" size={18} color={colors.textTertiary} style={{ paddingLeft: 4, paddingRight: 4 }} />
       </TouchableOpacity>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {},
-  currentModelButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.card,
-    paddingVertical: Spacing.sm,
-    paddingLeft: 4,
-    paddingRight: 4,
-    borderRadius: Radius.sm,
-    gap: Spacing.xs,
-    flex: 1,
-  },
-  currentModelName: {
-    fontSize: 14,
-    color: Colors.textPrimary,
-    fontWeight: '600',
-    paddingLeft: 2,
-    paddingRight: 2,
-  },
-});

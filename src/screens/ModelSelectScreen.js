@@ -9,10 +9,14 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { MODELS } from '../constants/models';
 import { CATEGORIES, MANUFACTURERS, FAVORITES_MAX_COUNT } from '../constants/modelMeta';
-import { Colors, Radius, Spacing } from '../constants/theme';
+import { Radius, Spacing } from '../constants/theme';
+import { useThemedStyles } from '../hooks/useThemedStyles';
+import { useTheme } from '../context/ThemeContext';
 import { useAppContext } from '../context/AppContext';
 
 export function ModelSelectScreen({ currentModelId, onSelectModel, onBack }) {
+  const styles = useThemedStyles(createStyles);
+  const { colors } = useTheme();
   const { favorites, saveFavorites, isFavorite } = useAppContext();
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [isEditMode, setIsEditMode] = useState(false);
@@ -84,7 +88,7 @@ export function ModelSelectScreen({ currentModelId, onSelectModel, onBack }) {
   };
 
   const categoryList = [
-    { key: 'all', label: '全部模型', icon: 'apps-outline', color: Colors.primary, count: allModelEntries.length },
+    { key: 'all', label: '全部模型', icon: 'apps-outline', color: colors.primary, count: allModelEntries.length },
     ...Object.entries(CATEGORIES).map(([key, value]) => ({
       key,
       ...value,
@@ -102,7 +106,7 @@ export function ModelSelectScreen({ currentModelId, onSelectModel, onBack }) {
           onPress={onBack}
           activeOpacity={0.7}
         >
-          <Ionicons name="arrow-back" size={20} color={Colors.textPrimary} />
+          <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>选择模型</Text>
         <TouchableOpacity
@@ -223,10 +227,10 @@ export function ModelSelectScreen({ currentModelId, onSelectModel, onBack }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) => ({
   container: {
     flex: 1,
-    backgroundColor: Colors.bg,
+    backgroundColor: colors.bg,
   },
   header: {
     flexDirection: 'row',
@@ -234,9 +238,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.md,
-    backgroundColor: Colors.card,
+    backgroundColor: colors.card,
     borderBottomWidth: 0.5,
-    borderBottomColor: Colors.separator,
+    borderBottomColor: colors.separator,
   },
   backButton: {
     padding: Spacing.sm,
@@ -244,7 +248,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 17,
     fontWeight: '600',
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   editButton: {
     paddingHorizontal: Spacing.md,
@@ -252,11 +256,11 @@ const styles = StyleSheet.create({
   },
   editButtonText: {
     fontSize: 15,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     fontWeight: '600',
   },
   editButtonTextActive: {
-    color: Colors.primary,
+    color: colors.primary,
   },
   body: {
     flex: 1,
@@ -264,7 +268,7 @@ const styles = StyleSheet.create({
   },
   categorySidebar: {
     flex: 1,
-    backgroundColor: Colors.bg,
+    backgroundColor: colors.bg,
     paddingTop: 0,
   },
   categoryItem: {
@@ -275,37 +279,37 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   categoryItemActive: {
-    backgroundColor: Colors.card,
+    backgroundColor: colors.card,
     borderLeftWidth: 2,
-    borderLeftColor: Colors.primary,
+    borderLeftColor: colors.primary,
   },
   categoryLabel: {
     flex: 1,
     fontSize: 13,
-    color: Colors.textTertiary,
+    color: colors.textTertiary,
     fontWeight: '500',
   },
   categoryLabelActive: {
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     fontWeight: '600',
   },
   categoryCount: {
     fontSize: 12,
-    color: Colors.textTertiary,
-    backgroundColor: Colors.bg,
+    color: colors.textTertiary,
+    backgroundColor: colors.bg,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 10,
   },
   categoryCountActive: {
-    color: Colors.primary,
-    backgroundColor: Colors.primaryBg,
+    color: colors.primary,
+    backgroundColor: colors.primaryBg,
   },
   modelList: {
     width: 300,
     flexGrow: 0,
     flexShrink: 0,
-    backgroundColor: Colors.card,
+    backgroundColor: colors.card,
   },
   modelListHeader: {
     flexDirection: 'row',
@@ -314,16 +318,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     borderBottomWidth: 0.5,
-    borderBottomColor: Colors.separator,
+    borderBottomColor: colors.separator,
   },
   modelListTitle: {
     fontSize: 15,
     fontWeight: '600',
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   modelListSubtitle: {
     fontSize: 13,
-    color: Colors.textTertiary,
+    color: colors.textTertiary,
   },
   emptyState: {
     alignItems: 'center',
@@ -335,20 +339,20 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     fontWeight: '600',
     marginBottom: Spacing.sm,
   },
   emptySubtext: {
     fontSize: 14,
-    color: Colors.textTertiary,
+    color: colors.textTertiary,
   },
   modelGrid: {
     padding: Spacing.sm,
     gap: Spacing.sm,
   },
   modelCard: {
-    backgroundColor: Colors.bg,
+    backgroundColor: colors.bg,
     borderRadius: Radius.md,
     paddingVertical: Spacing.md,
     paddingHorizontal: 6,
@@ -357,9 +361,9 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
   },
   modelCardActive: {
-    backgroundColor: Colors.primaryBg,
+    backgroundColor: colors.primaryBg,
     borderWidth: 1,
-    borderColor: Colors.primary,
+    borderColor: colors.primary,
   },
   modelCardHeader: {
     flexDirection: 'row',
@@ -371,23 +375,23 @@ const styles = StyleSheet.create({
     height: 18,
     borderRadius: 4,
     borderWidth: 1.5,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
   favoriteCheckboxChecked: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   modelCardName: {
     flex: 1,
     fontSize: 14,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     fontWeight: '600',
   },
   modelCardManufacturer: {
     fontSize: 12,
-    color: Colors.textTertiary,
+    color: colors.textTertiary,
     marginRight: Spacing.sm,
   },
 });

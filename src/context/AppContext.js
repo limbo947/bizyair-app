@@ -46,6 +46,7 @@ export function AppProvider({ children }) {
   const [favorites, setFavorites] = useState(DEFAULT_FAVORITES);
   const pollingRef = useRef({});
   const historyRef = useRef(history);
+  const resumeTimerRef = useRef(null);
 
   useEffect(() => {
     loadApiKeys();
@@ -58,7 +59,12 @@ export function AppProvider({ children }) {
 
   useEffect(() => {
     return () => {
-      Object.values(pollingRef.current).forEach(clearInterval);
+      if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
+      const intervals = pollingRef.current;
+      Object.keys(intervals).forEach((id) => {
+        if (intervals[id]) clearInterval(intervals[id]);
+        delete intervals[id];
+      });
     };
   }, []);
 
@@ -155,7 +161,7 @@ export function AppProvider({ children }) {
       if (stored) {
         const parsed = JSON.parse(stored);
         setHistory(parsed);
-        setTimeout(() => resumeRunningPolling(parsed), 500);
+        resumeTimerRef.current = setTimeout(() => resumeRunningPolling(parsed), 500);
       }
     } catch (e) {
       console.error('加载历史记录失败:', e);
@@ -216,9 +222,11 @@ export function AppProvider({ children }) {
   };
 
   const addToHistory = async (entry) => {
-    const updated = [entry, ...history];
-    setHistory(updated);
-    await persistHistory(updated);
+    setHistory((prev) => {
+      const updated = [entry, ...prev];
+      persistHistory(updated);
+      return updated;
+    });
   };
 
   const removeHistoryItems = async (predicate) => {

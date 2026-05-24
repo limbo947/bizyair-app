@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Text, View, TextInput, Switch, TouchableOpacity, Alert, StyleSheet } from 'react-native';
-import { Colors, Radius, Spacing } from '../constants/theme';
+import { Radius, Spacing } from '../constants/theme';
+import { useThemedStyles } from '../hooks/useThemedStyles';
+import { useTheme } from '../context/ThemeContext';
 import { ResizableTextInput } from './ResizableTextInput';
 
 const STORAGE_KEY = 'llm_custom_presets';
@@ -107,12 +109,20 @@ function saveCustomPresets(presets) {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(presets)); } catch {}
 }
 
+
 export function LLMChatControls({
   systemPrompt, setSystemPrompt,
-  temperature, setTemperature, maxTokens, setMaxTokens,
-  enableThinking, setEnableThinking, enableSearch, setEnableSearch,
-  enableThinkingRequired, enableSearchRequired, maxTokensMax,
+  temperature, setTemperature,
+  maxTokens, setMaxTokens,
+  enableThinking, setEnableThinking,
+  enableSearch, setEnableSearch,
+  enableThinkingRequired,
+  enableSearchRequired,
+  maxTokensMax,
 }) {
+  const styles = useThemedStyles(createStyles);
+  const { colors } = useTheme();
+
   const [customPresets, setCustomPresets] = useState(loadCustomPresets);
   const [showAddPreset, setShowAddPreset] = useState(false);
   const [newPresetName, setNewPresetName] = useState('');
@@ -166,7 +176,7 @@ export function LLMChatControls({
               value={newPresetName}
               onChangeText={setNewPresetName}
               placeholder="预设名称"
-              placeholderTextColor={Colors.textPlaceholder}
+              placeholderTextColor={colors.textPlaceholder}
               maxLength={10}
             />
             <ResizableTextInput
@@ -212,7 +222,7 @@ export function LLMChatControls({
           }}
           keyboardType="decimal-pad"
           placeholder="1.0"
-          placeholderTextColor={Colors.textPlaceholder}
+          placeholderTextColor={colors.textPlaceholder}
           selectTextOnFocus
         />
       </View>
@@ -228,7 +238,7 @@ export function LLMChatControls({
           }}
           keyboardType="numeric"
           placeholder="4096"
-          placeholderTextColor={Colors.textPlaceholder}
+          placeholderTextColor={colors.textPlaceholder}
         />
       </View>
       <View style={styles.card}>
@@ -237,7 +247,7 @@ export function LLMChatControls({
           <Switch
             value={enableThinkingRequired ? true : enableThinking}
             onValueChange={enableThinkingRequired ? undefined : setEnableThinking}
-            trackColor={{ false: Colors.disabled, true: Colors.primary }}
+            trackColor={{ false: colors.disabled, true: colors.primary }}
             disabled={enableThinkingRequired}
           />
         </View>
@@ -248,7 +258,7 @@ export function LLMChatControls({
           <Switch
             value={enableSearchRequired ? true : enableSearch}
             onValueChange={enableSearchRequired ? undefined : setEnableSearch}
-            trackColor={{ false: Colors.disabled, true: Colors.primary }}
+            trackColor={{ false: colors.disabled, true: colors.primary }}
             disabled={enableSearchRequired}
           />
         </View>
@@ -257,25 +267,25 @@ export function LLMChatControls({
   );
 }
 
-const styles = StyleSheet.create({
-  card: { backgroundColor: Colors.card, padding: Spacing.lg, borderRadius: Radius.md, marginBottom: Spacing.md },
-  label: { fontSize: 13, fontWeight: '600', color: Colors.textSecondary, marginBottom: Spacing.sm, textTransform: 'uppercase', letterSpacing: 0.5 },
+const createStyles = (colors) => ({
+  card: { backgroundColor: colors.card, padding: Spacing.lg, borderRadius: Radius.md, marginBottom: Spacing.md },
+  label: { fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginBottom: Spacing.sm, textTransform: 'uppercase', letterSpacing: 0.5 },
   presetRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm, marginBottom: Spacing.md },
-  presetChip: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: Radius.md, backgroundColor: Colors.bg, borderWidth: 1, borderColor: Colors.border },
-  presetChipActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
-  presetChipText: { fontSize: 12, color: Colors.textSecondary, fontWeight: '500' },
-  presetChipTextActive: { color: Colors.textInverse, fontWeight: '600' },
-  presetChipAdd: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: Radius.md, backgroundColor: Colors.bg, borderWidth: 1, borderColor: Colors.primary, borderStyle: 'dashed' },
-  presetChipAddText: { fontSize: 12, color: Colors.primary, fontWeight: '500' },
-  addPresetBox: { backgroundColor: Colors.bg, borderRadius: Radius.sm, padding: Spacing.sm, marginBottom: Spacing.md, gap: Spacing.sm },
-  addPresetName: { fontSize: 14, color: Colors.textPrimary, borderWidth: 1, borderColor: Colors.border, borderRadius: Radius.sm, paddingHorizontal: Spacing.sm, paddingVertical: 8, backgroundColor: Colors.card },
+  presetChip: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: Radius.md, backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border },
+  presetChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  presetChipText: { fontSize: 12, color: colors.textSecondary, fontWeight: '500' },
+  presetChipTextActive: { color: colors.textInverse, fontWeight: '600' },
+  presetChipAdd: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: Radius.md, backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.primary, borderStyle: 'dashed' },
+  presetChipAddText: { fontSize: 12, color: colors.primary, fontWeight: '500' },
+  addPresetBox: { backgroundColor: colors.bg, borderRadius: Radius.sm, padding: Spacing.sm, marginBottom: Spacing.md, gap: Spacing.sm },
+  addPresetName: { fontSize: 14, color: colors.textPrimary, borderWidth: 1, borderColor: colors.border, borderRadius: Radius.sm, paddingHorizontal: Spacing.sm, paddingVertical: 8, backgroundColor: colors.card },
   addPresetActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: Spacing.md },
-  addPresetCancel: { fontSize: 14, color: Colors.textTertiary, paddingVertical: 6, paddingHorizontal: 12 },
-  addPresetConfirm: { backgroundColor: Colors.primary, paddingVertical: 6, paddingHorizontal: 16, borderRadius: Radius.sm },
-  addPresetConfirmText: { color: Colors.textInverse, fontSize: 14, fontWeight: '600' },
-  hint: { fontSize: 11, color: Colors.textTertiary, marginTop: 4 },
+  addPresetCancel: { fontSize: 14, color: colors.textTertiary, paddingVertical: 6, paddingHorizontal: 12 },
+  addPresetConfirm: { backgroundColor: colors.primary, paddingVertical: 6, paddingHorizontal: 16, borderRadius: Radius.sm },
+  addPresetConfirmText: { color: colors.textInverse, fontSize: 14, fontWeight: '600' },
+  hint: { fontSize: 11, color: colors.textTertiary, marginTop: 4 },
   hintRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   clearText: { fontSize: 12, color: '#4A9EF5', fontWeight: '500' },
   switchRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  inputSingle: { fontSize: 15, color: Colors.textPrimary, borderWidth: 0, borderRadius: Radius.sm, paddingHorizontal: Spacing.sm, paddingVertical: 10, backgroundColor: Colors.bg },
+  inputSingle: { fontSize: 15, color: colors.textPrimary, borderWidth: 0, borderRadius: Radius.sm, paddingHorizontal: Spacing.sm, paddingVertical: 10, backgroundColor: colors.bg },
 });

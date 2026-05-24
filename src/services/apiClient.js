@@ -50,7 +50,10 @@ async function request(url, options = {}) {
       retries < MAX_RETRIES &&
       (err.message.includes('超时') ||
        err.message.startsWith('[5') ||
-       err.message === 'Network request failed');
+       err.message === 'Network request failed' ||
+       err.message === 'Failed to fetch' ||
+       err.message === 'fetch failed' ||
+       (err.name === 'TypeError' && err.message.includes('fetch')));
 
     if (isRetryable) {
       await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS * Math.pow(2, retries)));
@@ -107,18 +110,21 @@ async function queryTaskResult(apiKey, requestId) {
 }
 
 /**
- * 提交图片生成任务。
+ * 通用任务提交函数（涵盖图片/视频/LLM/TTS/Vision 等所有类型）。
  * @param {string} apiKey - API 密钥（为空时使用 ENV_API_KEY）
  * @param {string} modelId - 模型ID
  * @param {string} mode - 调用模式
  * @param {object} payload - 请求体
  * @returns {Promise<{requestId: string, apiKey: string}>} 任务ID和实际使用的API密钥
  */
-async function submitImageTask(apiKey, modelId, mode, payload) {
+async function submitTaskWithKey(apiKey, modelId, mode, payload) {
   const key = apiKey || ENV_API_KEY;
   const requestId = await submitTask(key, modelId, mode, payload);
   return { requestId, apiKey: key };
 }
+
+// 保留别名以兼容外部调用
+const submitImageTask = submitTaskWithKey;
 
 /**
  * 获取文件上传凭证。
@@ -174,7 +180,8 @@ async function uploadImageFile(apiKey, file) {
   const contentType = file.type || 'application/octet-stream';
   const date = new Date().toUTCString();
 
-  const stringToSign = `PUT\n\n${contentType}\n${date}\nx-oss-date:${date}\nx-oss-security-token:${securityToken}\n/${bucket}/${objectKey}`;
+  // 使用 x-oss-date 时，Date 位置留空（OSS V1 签名规范）
+  const stringToSign = `PUT\n\n${contentType}\n\nx-oss-date:${date}\nx-oss-security-token:${securityToken}\n/${bucket}/${objectKey}`;
 
   const shaObj = new jsSHA('SHA-1', 'TEXT');
   shaObj.setHMACKey(accessKeySecret, 'TEXT');
@@ -237,7 +244,7 @@ async function uploadImageFile(apiKey, file) {
  * @returns {Promise<object>} 用户元数据
  */
 async function fetchUserInfo(apiKey) {
-  const result = await request('https://api.bizyair.cn/x/v1/user/metadata', {
+  const result = await request(USER_METADATA_URL, {
     method: 'GET',
     headers: { 'Authorization': `Bearer ${apiKey}` },
   });
@@ -257,33 +264,10 @@ async function fetchWalletBalance(apiKey) {
   return result.data || result;
 }
 
-/** 提交视频生成任务 */
-async function submitVideoTask(apiKey, modelId, mode, payload) {
-  const key = apiKey || ENV_API_KEY;
-  const requestId = await submitTask(key, modelId, mode, payload);
-  return { requestId, apiKey: key };
-}
-
-/** 提交LLM对话任务 */
-async function submitLLMTask(apiKey, modelId, mode, payload) {
-  const key = apiKey || ENV_API_KEY;
-  const requestId = await submitTask(key, modelId, mode, payload);
-  return { requestId, apiKey: key };
-}
-
-/** 提交语音合成任务 */
-async function submitTTSTask(apiKey, modelId, mode, payload) {
-  const key = apiKey || ENV_API_KEY;
-  const requestId = await submitTask(key, modelId, mode, payload);
-  return { requestId, apiKey: key };
-}
-
-/** 提交视觉理解任务 */
-async function submitVisionTask(apiKey, modelId, mode, payload) {
-  const key = apiKey || ENV_API_KEY;
-  const requestId = await submitTask(key, modelId, mode, payload);
-  return { requestId, apiKey: key };
-}
+const submitVideoTask = submitTaskWithKey;
+const submitLLMTask = submitTaskWithKey;
+const submitTTSTask = submitTaskWithKey;
+const submitVisionTask = submitTaskWithKey;
 
 /**
  * 上传视频文件（复用图片上传流程：获取凭证 → OSS PUT 上传 → commitResource）。

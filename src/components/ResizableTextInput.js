@@ -1,6 +1,8 @@
 import React, { useRef, useEffect } from 'react';
-import { Text, View, TextInput, TouchableOpacity, PanResponder, StyleSheet } from 'react-native';
-import { Colors, Radius, Spacing } from '../constants/theme';
+import { Text, View, TextInput, TouchableOpacity, PanResponder } from 'react-native';
+import { Radius, Spacing } from '../constants/theme';
+import { useThemedStyles } from '../hooks/useThemedStyles';
+import { useTheme } from '../context/ThemeContext';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 const MIN_HEIGHT = 80;
@@ -21,6 +23,8 @@ export function ResizableTextInput({
   maxHeight,
   hideClear = false,
 }) {
+  const styles = useThemedStyles(createStyles);
+  const { colors } = useTheme();
   const [height, setHeight] = React.useState(minHeight || MIN_HEIGHT);
   const heightRef = useRef(minHeight || MIN_HEIGHT);
 
@@ -52,7 +56,7 @@ export function ResizableTextInput({
         multiline
         maxLength={maxLength}
         placeholder={placeholder}
-        placeholderTextColor={placeholderTextColor || Colors.textPlaceholder}
+        placeholderTextColor={placeholderTextColor || colors.textPlaceholder}
         textAlignVertical="top"
         showsVerticalScrollIndicator={false}
       />
@@ -66,22 +70,22 @@ export function ResizableTextInput({
         </TouchableOpacity>
       ) : null}
       <View style={styles.resizeHandle} {...panResponder.panHandlers}>
-        <MaterialCommunityIcons name="resize-bottom-right" size={14} color={Colors.textTertiary} />
+        <MaterialCommunityIcons name="resize-bottom-right" size={14} color={colors.textTertiary} />
       </View>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) => ({
   wrapper: {
     position: 'relative',
     borderRadius: Radius.sm,
-    backgroundColor: Colors.bg,
+    backgroundColor: colors.bg,
     overflow: 'hidden',
   },
   input: {
     fontSize: 14,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     lineHeight: 20,
     textAlignVertical: 'top',
     borderWidth: 0,
@@ -89,7 +93,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.sm,
     paddingRight: 24,
-    backgroundColor: Colors.bg,
+    backgroundColor: colors.bg,
   },
   clearButton: {
     position: 'absolute',
@@ -99,7 +103,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: Radius.xs,
     zIndex: 2,
-    backgroundColor: Colors.bg,
+    backgroundColor: colors.bg,
   },
   clearButtonText: {
     fontSize: 12,

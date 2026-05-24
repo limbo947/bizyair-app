@@ -1,6 +1,14 @@
 import React from 'react';
-import { Text, View, TextInput, TouchableOpacity, Switch, StyleSheet } from 'react-native';
-import { Colors, Radius, Spacing } from '../constants/theme';
+import { Text, View, TextInput, TouchableOpacity, Switch } from 'react-native';
+import { Radius, Spacing } from '../constants/theme';
+import { useThemedStyles } from '../hooks/useThemedStyles';
+import { useTheme } from '../context/ThemeContext';
+
+function useStyles() {
+  const styles = useThemedStyles(createStyles);
+  const { colors } = useTheme();
+  return { styles, colors };
+}
 
 export function SeedanceVideoControls({
   resolutions, videoRatios, resolution, setResolution,
@@ -8,6 +16,7 @@ export function SeedanceVideoControls({
   generateAudio, setGenerateAudio, seed, setSeed,
   supportsAudio, minDuration,
 }) {
+  const { styles, colors } = useStyles();
   const min = minDuration || 4;
   const durationOptions = ['auto'];
   for (let i = min; i <= 15; i++) durationOptions.push(String(i));
@@ -47,13 +56,13 @@ export function SeedanceVideoControls({
         <View style={styles.card}>
           <View style={styles.switchRow}>
             <Text style={styles.label}>生成音频</Text>
-            <Switch value={generateAudio} onValueChange={setGenerateAudio} trackColor={{ false: Colors.bg, true: Colors.primary }} />
+            <Switch value={generateAudio} onValueChange={setGenerateAudio} trackColor={{ false: colors.bg, true: colors.primary }} />
           </View>
         </View>
       )}
       <View style={styles.card}>
         <Text style={styles.label}>种子 (可选)</Text>
-        <TextInput style={styles.dimInputFull} value={seed || ''} onChangeText={(text) => setSeed(text.replace(/[^0-9-]/g, ''))} keyboardType="numeric" placeholder="随机" placeholderTextColor={Colors.textTertiary} />
+        <TextInput style={styles.dimInputFull} value={seed || ''} onChangeText={(text) => setSeed(text.replace(/[^0-9-]/g, ''))} keyboardType="numeric" placeholder="随机" placeholderTextColor={colors.textTertiary} />
       </View>
     </>
   );
@@ -64,6 +73,7 @@ export function KlingVideoControls({
   sound, setSound, multiShot, setMultiShot, shotType, setShotType,
   seed, setSeed, maxDuration, minDuration, supportsMultiShot, supportsSeed,
 }) {
+  const { styles, colors } = useStyles();
   const durArray = [];
   for (let i = minDuration || 1; i <= (maxDuration || 15); i++) durArray.push(i);
   return (
@@ -93,7 +103,7 @@ export function KlingVideoControls({
       <View style={styles.card}>
         <View style={styles.switchRow}>
           <Text style={styles.label}>添加音效</Text>
-          <Switch value={sound} onValueChange={setSound} trackColor={{ false: Colors.bg, true: Colors.primary }} />
+          <Switch value={sound} onValueChange={setSound} trackColor={{ false: colors.bg, true: colors.primary }} />
         </View>
       </View>
       {supportsMultiShot && (
@@ -101,7 +111,7 @@ export function KlingVideoControls({
           <View style={styles.card}>
             <View style={styles.switchRow}>
               <Text style={styles.label}>多镜头</Text>
-              <Switch value={multiShot} onValueChange={setMultiShot} trackColor={{ false: Colors.bg, true: Colors.primary }} />
+              <Switch value={multiShot} onValueChange={setMultiShot} trackColor={{ false: colors.bg, true: colors.primary }} />
             </View>
           </View>
           {multiShot && (
@@ -121,7 +131,7 @@ export function KlingVideoControls({
       {supportsSeed && (
         <View style={styles.card}>
           <Text style={styles.label}>种子 (可选)</Text>
-          <TextInput style={styles.dimInputFull} value={seed || ''} onChangeText={(text) => setSeed(text.replace(/[^0-9-]/g, ''))} keyboardType="numeric" placeholder="-1 为随机" placeholderTextColor={Colors.textTertiary} />
+          <TextInput style={styles.dimInputFull} value={seed || ''} onChangeText={(text) => setSeed(text.replace(/[^0-9-]/g, ''))} keyboardType="numeric" placeholder="-1 为随机" placeholderTextColor={colors.textTertiary} />
         </View>
       )}
     </>
@@ -135,6 +145,7 @@ export function KlingO34KControls({
   multiPrompt, setMultiPrompt,
   maxDuration, minDuration, supportsMultiShot,
 }) {
+  const { styles, colors } = useStyles();
   const durArray = [];
   for (let i = minDuration || 3; i <= (maxDuration || 15); i++) durArray.push(i);
   return (
@@ -164,13 +175,13 @@ export function KlingO34KControls({
       <View style={styles.card}>
         <View style={styles.switchRow}>
           <Text style={styles.label}>添加音效</Text>
-          <Switch value={sound} onValueChange={setSound} trackColor={{ false: Colors.bg, true: Colors.primary }} />
+          <Switch value={sound} onValueChange={setSound} trackColor={{ false: colors.bg, true: colors.primary }} />
         </View>
       </View>
       <View style={styles.card}>
         <View style={styles.switchRow}>
           <Text style={styles.label}>保留原始声音</Text>
-          <Switch value={keepOriginalSound} onValueChange={setKeepOriginalSound} trackColor={{ false: Colors.bg, true: Colors.primary }} />
+          <Switch value={keepOriginalSound} onValueChange={setKeepOriginalSound} trackColor={{ false: colors.bg, true: colors.primary }} />
         </View>
       </View>
       {supportsMultiShot && (
@@ -178,7 +189,7 @@ export function KlingO34KControls({
           <View style={styles.card}>
             <View style={styles.switchRow}>
               <Text style={styles.label}>多镜头</Text>
-              <Switch value={multiShot} onValueChange={setMultiShot} trackColor={{ false: Colors.bg, true: Colors.primary }} />
+              <Switch value={multiShot} onValueChange={setMultiShot} trackColor={{ false: colors.bg, true: colors.primary }} />
             </View>
           </View>
           {multiShot && (
@@ -195,7 +206,7 @@ export function KlingO34KControls({
               </View>
               <View style={styles.card}>
                 <Text style={styles.label}>多镜头提示词 (可选)</Text>
-                <TextInput style={styles.dimInputFull} value={multiPrompt || ''} onChangeText={setMultiPrompt} multiline placeholder="JSON 格式的多镜头配置" placeholderTextColor={Colors.textTertiary} />
+                <TextInput style={styles.dimInputFull} value={multiPrompt || ''} onChangeText={setMultiPrompt} multiline placeholder="JSON 格式的多镜头配置" placeholderTextColor={colors.textTertiary} />
               </View>
             </>
           )}
@@ -212,6 +223,7 @@ export function ViduVideoControls({
   maxDuration, minDuration, supportsAudio, supportsOffPeak, seed, setSeed,
   movementAmplitude, setMovementAmplitude, supportsMovementAmplitude,
 }) {
+  const { styles, colors } = useStyles();
   const durArray = [];
   for (let i = minDuration || 1; i <= (maxDuration || 16); i++) durArray.push(i);
   return (
@@ -250,21 +262,21 @@ export function ViduVideoControls({
         <View style={styles.card}>
           <View style={styles.switchRow}>
             <Text style={styles.label}>生成音频</Text>
-            <Switch value={audio} onValueChange={setAudio} trackColor={{ false: Colors.bg, true: Colors.primary }} />
+            <Switch value={audio} onValueChange={setAudio} trackColor={{ false: colors.bg, true: colors.primary }} />
           </View>
         </View>
       )}
       <View style={styles.card}>
         <View style={styles.switchRow}>
           <Text style={styles.label}>推荐提示词</Text>
-          <Switch value={isRec} onValueChange={setIsRec} trackColor={{ false: Colors.bg, true: Colors.primary }} />
+          <Switch value={isRec} onValueChange={setIsRec} trackColor={{ false: colors.bg, true: colors.primary }} />
         </View>
       </View>
       {supportsOffPeak && (
         <View style={styles.card}>
           <View style={styles.switchRow}>
             <Text style={styles.label}>低谷模式</Text>
-            <Switch value={offPeak} onValueChange={setOffPeak} trackColor={{ false: Colors.bg, true: Colors.primary }} />
+            <Switch value={offPeak} onValueChange={setOffPeak} trackColor={{ false: colors.bg, true: colors.primary }} />
           </View>
         </View>
       )}
@@ -282,7 +294,7 @@ export function ViduVideoControls({
       )}
       <View style={styles.card}>
         <Text style={styles.label}>种子 (可选)</Text>
-        <TextInput style={styles.dimInputFull} value={seed || ''} onChangeText={(text) => setSeed(text.replace(/[^0-9-]/g, ''))} keyboardType="numeric" placeholder="随机" placeholderTextColor={Colors.textTertiary} />
+        <TextInput style={styles.dimInputFull} value={seed || ''} onChangeText={(text) => setSeed(text.replace(/[^0-9-]/g, ''))} keyboardType="numeric" placeholder="随机" placeholderTextColor={colors.textTertiary} />
       </View>
     </>
   );
@@ -296,6 +308,7 @@ export function WanVideoControls({
   supportsPromptExtend, supportsWatermark, supportsNegativePrompt,
   maxDuration, minDuration,
 }) {
+  const { styles, colors } = useStyles();
   const durArray = [];
   for (let i = minDuration || 2; i <= (maxDuration || 15); i++) durArray.push(i);
   return (
@@ -336,7 +349,7 @@ export function WanVideoControls({
         <View style={styles.card}>
           <View style={styles.switchRow}>
             <Text style={styles.label}>智能改写</Text>
-            <Switch value={promptExtend} onValueChange={setPromptExtend} trackColor={{ false: Colors.bg, true: Colors.primary }} />
+            <Switch value={promptExtend} onValueChange={setPromptExtend} trackColor={{ false: colors.bg, true: colors.primary }} />
           </View>
         </View>
       )}
@@ -344,19 +357,19 @@ export function WanVideoControls({
         <View style={styles.card}>
           <View style={styles.switchRow}>
             <Text style={styles.label}>水印</Text>
-            <Switch value={watermark} onValueChange={setWatermark} trackColor={{ false: Colors.bg, true: Colors.primary }} />
+            <Switch value={watermark} onValueChange={setWatermark} trackColor={{ false: colors.bg, true: colors.primary }} />
           </View>
         </View>
       )}
       {supportsNegativePrompt && (
         <View style={styles.card}>
           <Text style={styles.label}>反向提示词 (可选)</Text>
-          <TextInput style={styles.dimInputFull} value={negativePrompt || ''} onChangeText={setNegativePrompt} placeholder="描述不想要的元素" placeholderTextColor={Colors.textTertiary} multiline />
+          <TextInput style={styles.dimInputFull} value={negativePrompt || ''} onChangeText={setNegativePrompt} placeholder="描述不想要的元素" placeholderTextColor={colors.textTertiary} multiline />
         </View>
       )}
       <View style={styles.card}>
         <Text style={styles.label}>种子 (可选)</Text>
-        <TextInput style={styles.dimInputFull} value={seed || ''} onChangeText={(text) => setSeed(text.replace(/[^0-9-]/g, ''))} keyboardType="numeric" placeholder="-1 为随机" placeholderTextColor={Colors.textTertiary} />
+        <TextInput style={styles.dimInputFull} value={seed || ''} onChangeText={(text) => setSeed(text.replace(/[^0-9-]/g, ''))} keyboardType="numeric" placeholder="-1 为随机" placeholderTextColor={colors.textTertiary} />
       </View>
     </>
   );
@@ -368,6 +381,7 @@ export function WanI2VControls({
   audio, setAudio, supportsPromptExtend, supportsAudio,
   maxDuration, minDuration,
 }) {
+  const { styles, colors } = useStyles();
   const durArray = [];
   for (let i = minDuration || 5; i <= (maxDuration || 10); i++) durArray.push(i);
   return (
@@ -396,7 +410,7 @@ export function WanI2VControls({
         <View style={styles.card}>
           <View style={styles.switchRow}>
             <Text style={styles.label}>智能改写</Text>
-            <Switch value={promptExtend} onValueChange={setPromptExtend} trackColor={{ false: Colors.bg, true: Colors.primary }} />
+            <Switch value={promptExtend} onValueChange={setPromptExtend} trackColor={{ false: colors.bg, true: colors.primary }} />
           </View>
         </View>
       )}
@@ -404,7 +418,7 @@ export function WanI2VControls({
         <View style={styles.card}>
           <View style={styles.switchRow}>
             <Text style={styles.label}>生成音频</Text>
-            <Switch value={audio} onValueChange={setAudio} trackColor={{ false: Colors.bg, true: Colors.primary }} />
+            <Switch value={audio} onValueChange={setAudio} trackColor={{ false: colors.bg, true: colors.primary }} />
           </View>
         </View>
       )}
@@ -418,6 +432,7 @@ export function HailuoVideoControls({
   fastPretreatment, setFastPretreatment, aigcWatermark, setAigcWatermark,
   supportsPromptOptimizer, supportsFastPretreatment, supportsWatermark,
 }) {
+  const { styles, colors } = useStyles();
   const allowedDurations = resolutionDurationMap
     ? (resolutionDurationMap[resolution] || durationOptions)
     : durationOptions;
@@ -452,7 +467,7 @@ export function HailuoVideoControls({
         <View style={styles.card}>
           <View style={styles.switchRow}>
             <Text style={styles.label}>Prompt 优化</Text>
-            <Switch value={promptOptimizer} onValueChange={setPromptOptimizer} trackColor={{ false: Colors.bg, true: Colors.primary }} />
+            <Switch value={promptOptimizer} onValueChange={setPromptOptimizer} trackColor={{ false: colors.bg, true: colors.primary }} />
           </View>
         </View>
       )}
@@ -460,7 +475,7 @@ export function HailuoVideoControls({
         <View style={styles.card}>
           <View style={styles.switchRow}>
             <Text style={styles.label}>快速预处理</Text>
-            <Switch value={fastPretreatment} onValueChange={setFastPretreatment} trackColor={{ false: Colors.bg, true: Colors.primary }} />
+            <Switch value={fastPretreatment} onValueChange={setFastPretreatment} trackColor={{ false: colors.bg, true: colors.primary }} />
           </View>
         </View>
       )}
@@ -468,7 +483,7 @@ export function HailuoVideoControls({
         <View style={styles.card}>
           <View style={styles.switchRow}>
             <Text style={styles.label}>AI 水印</Text>
-            <Switch value={aigcWatermark} onValueChange={setAigcWatermark} trackColor={{ false: Colors.bg, true: Colors.primary }} />
+            <Switch value={aigcWatermark} onValueChange={setAigcWatermark} trackColor={{ false: colors.bg, true: colors.primary }} />
           </View>
         </View>
       )}
@@ -482,6 +497,7 @@ export function HappyHorseVideoControls({
   watermark, setWatermark, supportsWatermark,
   maxDuration, minDuration, seed, setSeed,
 }) {
+  const { styles, colors } = useStyles();
   const durArray = [];
   for (let i = minDuration || 3; i <= (maxDuration || 15); i++) durArray.push(i);
   return (
@@ -520,19 +536,20 @@ export function HappyHorseVideoControls({
         <View style={styles.card}>
           <View style={styles.switchRow}>
             <Text style={styles.label}>水印</Text>
-            <Switch value={watermark} onValueChange={setWatermark} trackColor={{ false: Colors.bg, true: Colors.primary }} />
+            <Switch value={watermark} onValueChange={setWatermark} trackColor={{ false: colors.bg, true: colors.primary }} />
           </View>
         </View>
       )}
       <View style={styles.card}>
         <Text style={styles.label}>种子 (可选)</Text>
-        <TextInput style={styles.dimInputFull} value={seed || ''} onChangeText={(text) => setSeed(text.replace(/[^0-9-]/g, ''))} keyboardType="numeric" placeholder="随机" placeholderTextColor={Colors.textTertiary} />
+        <TextInput style={styles.dimInputFull} value={seed || ''} onChangeText={(text) => setSeed(text.replace(/[^0-9-]/g, ''))} keyboardType="numeric" placeholder="随机" placeholderTextColor={colors.textTertiary} />
       </View>
     </>
   );
 }
 
 export function LtxVideoControls({ display, setDisplay, displayOptions, seed, setSeed }) {
+  const { styles, colors } = useStyles();
   return (
     <>
       <View style={styles.card}>
@@ -547,7 +564,7 @@ export function LtxVideoControls({ display, setDisplay, displayOptions, seed, se
       </View>
       <View style={styles.card}>
         <Text style={styles.label}>种子 (可选)</Text>
-        <TextInput style={styles.dimInputFull} value={seed || ''} onChangeText={(text) => setSeed(text.replace(/[^0-9]/g, ''))} keyboardType="numeric" placeholder="1~2147483647，留空随机" placeholderTextColor={Colors.textTertiary} />
+        <TextInput style={styles.dimInputFull} value={seed || ''} onChangeText={(text) => setSeed(text.replace(/[^0-9]/g, ''))} keyboardType="numeric" placeholder="1~2147483647，留空随机" placeholderTextColor={colors.textTertiary} />
       </View>
     </>
   );
@@ -558,6 +575,7 @@ export function BzaVideoXControls({
   aspectRatio, setAspectRatio, duration, setDuration, durationOptions,
   maxDuration, minDuration,
 }) {
+  const { styles, colors } = useStyles();
   const durArray = durationOptions || (() => {
     const arr = [];
     for (let i = minDuration || 6; i <= (maxDuration || 10); i++) arr.push(i);
@@ -603,6 +621,7 @@ export function BzaVideoV3Controls({
   resolutions, videoRatios, resolution, setResolution,
   aspectRatio, setAspectRatio,
 }) {
+  const { styles, colors } = useStyles();
   return (
     <>
       <View style={styles.card}>
@@ -630,6 +649,7 @@ export function BzaVideoV3Controls({
 }
 
 export function DreamActorControls() {
+  const { styles, colors } = useStyles();
   return (
     <View style={styles.card}>
       <Text style={styles.label}>上传人物图片和参考视频</Text>
@@ -638,21 +658,21 @@ export function DreamActorControls() {
   );
 }
 
-const styles = StyleSheet.create({
-  card: { backgroundColor: Colors.card, padding: Spacing.lg, borderRadius: Radius.md, marginBottom: Spacing.md },
-  label: { fontSize: 13, fontWeight: '600', color: Colors.textSecondary, marginBottom: Spacing.sm, textTransform: 'uppercase', letterSpacing: 0.5 },
+const createStyles = (colors) => ({
+  card: { backgroundColor: colors.card, padding: Spacing.lg, borderRadius: Radius.md, marginBottom: Spacing.md },
+  label: { fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginBottom: Spacing.sm, textTransform: 'uppercase', letterSpacing: 0.5 },
   selectorRow: { flexDirection: 'row', gap: Spacing.sm, flexWrap: 'wrap' },
-  selectorButton: { flex: 1, minWidth: 60, paddingVertical: 10, borderRadius: Radius.sm, backgroundColor: Colors.bg, alignItems: 'center' },
-  selectorButtonSmall: { paddingVertical: 8, paddingHorizontal: 10, borderRadius: Radius.sm, backgroundColor: Colors.bg, alignItems: 'center' },
-  selectorButtonActive: { backgroundColor: Colors.primary },
-  selectorText: { fontSize: 13, color: Colors.textSecondary, fontWeight: '500' },
-  selectorTextActive: { color: Colors.textInverse, fontWeight: '600' },
-  priceHint: { fontSize: 12, color: Colors.textTertiary, marginTop: Spacing.sm },
+  selectorButton: { flex: 1, minWidth: 60, paddingVertical: 10, borderRadius: Radius.sm, backgroundColor: colors.bg, alignItems: 'center' },
+  selectorButtonSmall: { paddingVertical: 8, paddingHorizontal: 10, borderRadius: Radius.sm, backgroundColor: colors.bg, alignItems: 'center' },
+  selectorButtonActive: { backgroundColor: colors.primary },
+  selectorText: { fontSize: 13, color: colors.textSecondary, fontWeight: '500' },
+  selectorTextActive: { color: colors.textInverse, fontWeight: '600' },
+  priceHint: { fontSize: 12, color: colors.textTertiary, marginTop: Spacing.sm },
   ratioGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
-  ratioButton: { width: '22%', paddingVertical: 9, borderRadius: Radius.sm, backgroundColor: Colors.bg, alignItems: 'center', justifyContent: 'center' },
-  ratioButtonActive: { backgroundColor: Colors.primary },
-  ratioText: { fontSize: 13, color: Colors.textSecondary, fontWeight: '500' },
-  ratioTextActive: { color: Colors.textInverse, fontWeight: '600' },
+  ratioButton: { width: '22%', paddingVertical: 9, borderRadius: Radius.sm, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
+  ratioButtonActive: { backgroundColor: colors.primary },
+  ratioText: { fontSize: 13, color: colors.textSecondary, fontWeight: '500' },
+  ratioTextActive: { color: colors.textInverse, fontWeight: '600' },
   switchRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  dimInputFull: { fontSize: 15, color: Colors.textPrimary, borderWidth: 0, borderRadius: Radius.sm, paddingHorizontal: Spacing.sm, paddingVertical: 10, backgroundColor: Colors.bg },
+  dimInputFull: { fontSize: 15, color: colors.textPrimary, borderWidth: 0, borderRadius: Radius.sm, paddingHorizontal: Spacing.sm, paddingVertical: 10, backgroundColor: colors.bg },
 });

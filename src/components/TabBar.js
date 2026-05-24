@@ -1,56 +1,22 @@
 import React from 'react';
-import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { TAB_HOME, TAB_HISTORY } from '../constants/models';
-import { Colors, Radius, Spacing } from '../constants/theme';
+import { Radius } from '../constants/theme';
+import { useThemedStyles } from '../hooks/useThemedStyles';
+import { useTheme } from '../context/ThemeContext';
 
 const TABS = [
   { key: TAB_HOME, label: '主页', icon: 'home-outline', iconActive: 'home' },
   { key: TAB_HISTORY, label: '历史', icon: 'time-outline', iconActive: 'time' },
 ];
 
-export function TabBar({ activeTab, onTabChange, historyBadge }) {
-  return (
-    <View style={styles.container}>
-      {TABS.map((tab) => {
-        const isActive = activeTab === tab.key;
-        return (
-          <TouchableOpacity
-            key={tab.key}
-            style={styles.tab}
-            onPress={() => onTabChange(tab.key)}
-            activeOpacity={0.6}
-          >
-            <View style={styles.iconWrap}>
-              <Ionicons
-                name={isActive ? tab.iconActive : tab.icon}
-                size={24}
-                color={isActive ? Colors.primary : Colors.textTertiary}
-              />
-              {tab.key === TAB_HISTORY && historyBadge > 0 ? (
-                <View style={styles.badge}>
-                  <Text style={styles.badgeText}>
-                    {historyBadge > 99 ? '99+' : historyBadge}
-                  </Text>
-                </View>
-              ) : null}
-            </View>
-            <Text style={[styles.label, isActive && styles.labelActive]}>
-              {tab.label}
-            </Text>
-          </TouchableOpacity>
-        );
-      })}
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
+const createStyles = (colors) => ({
   container: {
     flexDirection: 'row',
-    backgroundColor: Colors.card,
+    backgroundColor: colors.card,
     borderTopWidth: 0.5,
-    borderTopColor: Colors.separator,
+    borderTopColor: colors.separator,
     paddingBottom: 6,
     paddingTop: 4,
   },
@@ -71,7 +37,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -4,
     right: -10,
-    backgroundColor: Colors.error,
+    backgroundColor: colors.error,
     borderRadius: Radius.full,
     minWidth: 18,
     height: 18,
@@ -80,18 +46,57 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   badgeText: {
-    color: Colors.textInverse,
+    color: colors.textInverse,
     fontSize: 10,
     fontWeight: '600',
   },
   label: {
     fontSize: 10,
-    color: Colors.textTertiary,
+    color: colors.textTertiary,
     marginTop: 1,
     fontWeight: '500',
   },
   labelActive: {
-    color: Colors.primary,
+    color: colors.primary,
     fontWeight: '600',
   },
 });
+
+export function TabBar({ activeTab, onTabChange, historyBadge }) {
+  const styles = useThemedStyles(createStyles);
+  const { colors } = useTheme();
+
+  return (
+    <View style={styles.container}>
+      {TABS.map((tab) => {
+        const isActive = activeTab === tab.key;
+        return (
+          <TouchableOpacity
+            key={tab.key}
+            style={styles.tab}
+            onPress={() => onTabChange(tab.key)}
+            activeOpacity={0.6}
+          >
+            <View style={styles.iconWrap}>
+              <Ionicons
+                name={isActive ? tab.iconActive : tab.icon}
+                size={24}
+                color={isActive ? colors.primary : colors.textTertiary}
+              />
+              {tab.key === TAB_HISTORY && historyBadge > 0 ? (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>
+                    {historyBadge > 99 ? '99+' : historyBadge}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
+            <Text style={[styles.label, isActive && styles.labelActive]}>
+              {tab.label}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  );
+}

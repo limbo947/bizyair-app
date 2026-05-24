@@ -102,7 +102,15 @@ export function createTheme(mode) {
 }
 
 // ── Backward-compatible default exports (light mode) ──
+// Colors is mutable — ThemeProvider updates it when theme changes.
+// This allows all existing StyleSheet.create({ ... Colors.xxx }) and inline
+// Colors.xxx references to automatically reflect the current theme.
 export const Colors = { ...LightColors };
+
+export function updateColors(mode) {
+  const src = mode === 'dark' ? DarkColors : LightColors;
+  Object.keys(src).forEach((key) => { Colors[key] = src[key]; });
+}
 
 export const Radius = {
   xs: 6,

@@ -1,13 +1,40 @@
 import React from 'react';
 import {
-  StyleSheet,
   Text,
   View,
   TouchableOpacity,
   ScrollView,
   Modal,
 } from 'react-native';
-import { Colors, Radius, Spacing } from '../constants/theme';
+import { Radius, Spacing } from '../constants/theme';
+import { useThemedStyles } from '../hooks/useThemedStyles';
+
+const createStyles = (colors) => ({
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
+  logModalContent: { width: '90%', maxHeight: '80%', backgroundColor: '#1C1C1E', borderRadius: Radius.lg, overflow: 'hidden' },
+  logModalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: Spacing.lg, borderBottomWidth: 0.5, borderBottomColor: '#38383A' },
+  logModalTitle: { fontSize: 17, fontWeight: '600', color: colors.textInverse },
+  logModalClose: { fontSize: 20, color: colors.textTertiary, fontWeight: '600', paddingHorizontal: 8 },
+  logModalScroll: { padding: Spacing.lg, maxHeight: 500 },
+  logModalText: { fontSize: 13, color: '#98989D', fontFamily: 'monospace' },
+  pickerOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'center', alignItems: 'center' },
+  pickerContent: { width: '80%', backgroundColor: colors.card, borderRadius: Radius.lg, padding: Spacing.xl },
+  pickerTitle: { fontSize: 17, fontWeight: '600', color: colors.textPrimary, marginBottom: Spacing.lg, textAlign: 'center' },
+  pickerOption: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12, paddingHorizontal: Spacing.lg, borderRadius: Radius.sm, marginBottom: 2 },
+  pickerOptionActive: { backgroundColor: colors.primaryBg },
+  pickerOptionText: { fontSize: 16, color: colors.textSecondary },
+  pickerOptionTextActive: { color: colors.primary, fontWeight: '600' },
+  pickerCheck: { fontSize: 18, color: colors.primary, fontWeight: '600' },
+  confirmOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'center', alignItems: 'center' },
+  confirmBox: { width: '82%', backgroundColor: colors.card, borderRadius: Radius.xl, padding: Spacing.xxl },
+  confirmTitle: { fontSize: 18, fontWeight: '600', color: colors.textPrimary, marginBottom: Spacing.sm, textAlign: 'center' },
+  confirmMessage: { fontSize: 15, color: colors.textSecondary, lineHeight: 22, marginBottom: Spacing.xl, textAlign: 'center' },
+  confirmActions: { flexDirection: 'row', gap: Spacing.md },
+  confirmCancelButton: { flex: 1, paddingVertical: 12, borderRadius: Radius.md, backgroundColor: colors.bg, alignItems: 'center' },
+  confirmCancelText: { fontSize: 17, color: colors.primary, fontWeight: '600' },
+  confirmDeleteButton: { flex: 1, paddingVertical: 12, borderRadius: Radius.md, backgroundColor: colors.error, alignItems: 'center' },
+  confirmDeleteText: { fontSize: 17, color: colors.textInverse, fontWeight: '600' },
+});
 
 export function HistoryModals({
   logModal,
@@ -25,6 +52,8 @@ export function HistoryModals({
   sortBy,
   SORT_OPTIONS,
 }) {
+  const styles = useThemedStyles(createStyles);
+
   return (
     <>
       <Modal visible={!!logModal} transparent animationType="fade" onRequestClose={() => setLogModal(null)}>
@@ -83,30 +112,3 @@ export function HistoryModals({
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
-  logModalContent: { width: '90%', maxHeight: '80%', backgroundColor: '#1C1C1E', borderRadius: Radius.lg, overflow: 'hidden' },
-  logModalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: Spacing.lg, borderBottomWidth: 0.5, borderBottomColor: '#38383A' },
-  logModalTitle: { fontSize: 17, fontWeight: '600', color: Colors.textInverse },
-  logModalClose: { fontSize: 20, color: Colors.textTertiary, fontWeight: '600', paddingHorizontal: 8 },
-  logModalScroll: { padding: Spacing.lg, maxHeight: 500 },
-  logModalText: { fontSize: 13, color: '#98989D', fontFamily: 'monospace' },
-  pickerOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'center', alignItems: 'center' },
-  pickerContent: { width: '80%', backgroundColor: Colors.card, borderRadius: Radius.lg, padding: Spacing.xl },
-  pickerTitle: { fontSize: 17, fontWeight: '600', color: Colors.textPrimary, marginBottom: Spacing.lg, textAlign: 'center' },
-  pickerOption: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12, paddingHorizontal: Spacing.lg, borderRadius: Radius.sm, marginBottom: 2 },
-  pickerOptionActive: { backgroundColor: Colors.primaryBg },
-  pickerOptionText: { fontSize: 16, color: Colors.textSecondary },
-  pickerOptionTextActive: { color: Colors.primary, fontWeight: '600' },
-  pickerCheck: { fontSize: 18, color: Colors.primary, fontWeight: '600' },
-  confirmOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'center', alignItems: 'center' },
-  confirmBox: { width: '82%', backgroundColor: Colors.card, borderRadius: Radius.xl, padding: Spacing.xxl },
-  confirmTitle: { fontSize: 18, fontWeight: '600', color: Colors.textPrimary, marginBottom: Spacing.sm, textAlign: 'center' },
-  confirmMessage: { fontSize: 15, color: Colors.textSecondary, lineHeight: 22, marginBottom: Spacing.xl, textAlign: 'center' },
-  confirmActions: { flexDirection: 'row', gap: Spacing.md },
-  confirmCancelButton: { flex: 1, paddingVertical: 12, borderRadius: Radius.md, backgroundColor: Colors.bg, alignItems: 'center' },
-  confirmCancelText: { fontSize: 17, color: Colors.primary, fontWeight: '600' },
-  confirmDeleteButton: { flex: 1, paddingVertical: 12, borderRadius: Radius.md, backgroundColor: Colors.error, alignItems: 'center' },
-  confirmDeleteText: { fontSize: 17, color: Colors.textInverse, fontWeight: '600' },
-});

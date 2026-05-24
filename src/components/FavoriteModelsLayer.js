@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  StyleSheet,
   Text,
   View,
   TouchableOpacity,
@@ -11,7 +10,110 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { MODELS } from '../constants/models';
 import { MANUFACTURERS, FAVORITES_MAX_COUNT } from '../constants/modelMeta';
-import { Colors, Radius, Spacing } from '../constants/theme';
+import { Radius, Spacing } from '../constants/theme';
+import { useThemedStyles } from '../hooks/useThemedStyles';
+import { useTheme } from '../context/ThemeContext';
+
+const createStyles = (colors) => ({
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.2)',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
+    paddingHorizontal: Spacing.md,
+    paddingTop: 110,
+  },
+  dropdownContainer: {
+    width: 260,
+  },
+  dropdown: {
+    backgroundColor: colors.card,
+    borderRadius: Radius.md,
+    overflow: 'hidden',
+  },
+  dropdownHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    borderBottomWidth: 0.5,
+    borderBottomColor: colors.separator,
+  },
+  dropdownTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.textPrimary,
+  },
+  dropdownSubtitle: {
+    fontSize: 13,
+    color: colors.textTertiary,
+  },
+  dropdownList: {
+    maxHeight: 280,
+  },
+  dropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.lg,
+    height: 50,
+    gap: Spacing.sm,
+  },
+  dropdownItemActive: {
+    backgroundColor: colors.primaryBg,
+  },
+  dropdownItemBorder: {
+    borderBottomWidth: 0.5,
+    borderBottomColor: colors.separator,
+  },
+  itemIcon: {
+    width: 28,
+    textAlign: 'center',
+  },
+  itemContent: {
+    flex: 1,
+  },
+  itemName: {
+    fontSize: 15,
+    color: colors.textPrimary,
+    fontWeight: '600',
+  },
+  itemNameActive: {
+    color: colors.primary,
+  },
+  itemMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 2,
+  },
+  itemManufacturer: {
+    fontSize: 12,
+    color: colors.textTertiary,
+  },
+  itemPrice: {
+    fontSize: 12,
+    color: colors.warning,
+  },
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: Spacing.xxl,
+    paddingHorizontal: Spacing.lg,
+  },
+  emptyIcon: {
+    fontSize: 36,
+    marginBottom: Spacing.sm,
+  },
+  emptyText: {
+    fontSize: 15,
+    color: colors.textPrimary,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  emptySubtext: {
+    fontSize: 13,
+    color: colors.textTertiary,
+  },
+});
 
 export function FavoriteModelsLayer({
   visible,
@@ -20,6 +122,9 @@ export function FavoriteModelsLayer({
   onSelectModel,
   favorites,
 }) {
+  const styles = useThemedStyles(createStyles);
+  const { colors } = useTheme();
+
   const favoriteModels = favorites.map((modelId) => ({
     id: modelId,
     ...MODELS[modelId],
@@ -74,7 +179,7 @@ export function FavoriteModelsLayer({
                       size={20}
                       color={
                         currentModelId === model.id
-                          ? Colors.primary
+                          ? colors.primary
                           : model.icon.color
                       }
                       style={styles.itemIcon}
@@ -106,7 +211,7 @@ export function FavoriteModelsLayer({
                       <Ionicons
                         name="checkmark-circle"
                         size={20}
-                        color={Colors.primary}
+                        color={colors.primary}
                       />
                     )}
                   </TouchableOpacity>
@@ -119,104 +224,3 @@ export function FavoriteModelsLayer({
     </Modal>
   );
 }
-
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.2)',
-    justifyContent: 'flex-start',
-    alignItems: 'flex-start',
-    paddingHorizontal: Spacing.md,
-    paddingTop: 110,
-  },
-  dropdownContainer: {
-    width: 260,
-  },
-  dropdown: {
-    backgroundColor: Colors.card,
-    borderRadius: Radius.md,
-    overflow: 'hidden',
-  },
-  dropdownHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    borderBottomWidth: 0.5,
-    borderBottomColor: Colors.separator,
-  },
-  dropdownTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: Colors.textPrimary,
-  },
-  dropdownSubtitle: {
-    fontSize: 13,
-    color: Colors.textTertiary,
-  },
-  dropdownList: {
-    maxHeight: 280,
-  },
-  dropdownItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.lg,
-    height: 50,
-    gap: Spacing.sm,
-  },
-  dropdownItemActive: {
-    backgroundColor: Colors.primaryBg,
-  },
-  dropdownItemBorder: {
-    borderBottomWidth: 0.5,
-    borderBottomColor: Colors.separator,
-  },
-  itemIcon: {
-    width: 28,
-    textAlign: 'center',
-  },
-  itemContent: {
-    flex: 1,
-  },
-  itemName: {
-    fontSize: 15,
-    color: Colors.textPrimary,
-    fontWeight: '600',
-  },
-  itemNameActive: {
-    color: Colors.primary,
-  },
-  itemMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 2,
-  },
-  itemManufacturer: {
-    fontSize: 12,
-    color: Colors.textTertiary,
-  },
-  itemPrice: {
-    fontSize: 12,
-    color: Colors.warning,
-  },
-  emptyState: {
-    alignItems: 'center',
-    paddingVertical: Spacing.xxl,
-    paddingHorizontal: Spacing.lg,
-  },
-  emptyIcon: {
-    fontSize: 36,
-    marginBottom: Spacing.sm,
-  },
-  emptyText: {
-    fontSize: 15,
-    color: Colors.textPrimary,
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  emptySubtext: {
-    fontSize: 13,
-    color: Colors.textTertiary,
-  },
-});

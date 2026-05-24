@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-  StyleSheet,
   Text,
   View,
   TouchableOpacity,
@@ -10,7 +9,9 @@ import {
   TextInput,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Radius, Spacing } from '../constants/theme';
+import { Radius, Spacing } from '../constants/theme';
+import { useThemedStyles } from '../hooks/useThemedStyles';
+import { useTheme } from '../context/ThemeContext';
 
 export function ApiKeyDropdown({
   visible,
@@ -22,6 +23,8 @@ export function ApiKeyDropdown({
   onAddKey,
   onRenameKey,
 }) {
+  const styles = useThemedStyles(createStyles);
+  const { colors } = useTheme();
   const [showAddInput, setShowAddInput] = useState(false);
   const [newKey, setNewKey] = useState('');
   const [newKeyName, setNewKeyName] = useState('');
@@ -101,7 +104,7 @@ export function ApiKeyDropdown({
                           onChangeText={setEditName}
                           onSubmitEditing={confirmRename}
                           onBlur={confirmRename}
-                          placeholderTextColor={Colors.textPlaceholder}
+                          placeholderTextColor={colors.textPlaceholder}
                           autoFocus
                           selectTextOnFocus
                         />
@@ -128,7 +131,7 @@ export function ApiKeyDropdown({
                       }}
                       activeOpacity={0.6}
                     >
-                      <Ionicons name="pencil-outline" size={14} color={Colors.textTertiary} />
+                      <Ionicons name="pencil-outline" size={14} color={colors.textTertiary} />
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={styles.deleteButton}
@@ -138,7 +141,7 @@ export function ApiKeyDropdown({
                       }}
                       activeOpacity={0.6}
                     >
-                      <Ionicons name="trash-outline" size={16} color={Colors.error} />
+                      <Ionicons name="trash-outline" size={16} color={colors.error} />
                     </TouchableOpacity>
                   </TouchableOpacity>
                 ))
@@ -153,7 +156,7 @@ export function ApiKeyDropdown({
                   value={newKey}
                   onChangeText={setNewKey}
                   secureTextEntry
-                  placeholderTextColor={Colors.textPlaceholder}
+                  placeholderTextColor={colors.textPlaceholder}
                   autoFocus
                 />
                 <TextInput
@@ -161,7 +164,7 @@ export function ApiKeyDropdown({
                   placeholder="密钥名称（可选）"
                   value={newKeyName}
                   onChangeText={setNewKeyName}
-                  placeholderTextColor={Colors.textPlaceholder}
+                  placeholderTextColor={colors.textPlaceholder}
                   maxLength={30}
                 />
                 <View style={styles.addInputRow}>
@@ -193,7 +196,7 @@ export function ApiKeyDropdown({
                   onPress={() => setShowAddInput(true)}
                   activeOpacity={0.7}
                 >
-                  <Ionicons name="add-circle-outline" size={18} color={Colors.primary} />
+                  <Ionicons name="add-circle-outline" size={18} color={colors.primary} />
                   <Text style={styles.addButtonText}>新增密钥</Text>
                 </TouchableOpacity>
               </View>
@@ -206,7 +209,7 @@ export function ApiKeyDropdown({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) => ({
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.2)',
@@ -219,7 +222,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   dropdown: {
-    backgroundColor: Colors.card,
+    backgroundColor: colors.card,
     borderRadius: Radius.md,
     overflow: 'hidden',
   },
@@ -230,16 +233,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     height: 40,
     borderBottomWidth: 0.5,
-    borderBottomColor: Colors.separator,
+    borderBottomColor: colors.separator,
   },
   dropdownTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   dropdownSubtitle: {
     fontSize: 13,
-    color: Colors.textTertiary,
+    color: colors.textTertiary,
   },
   dropdownList: {
     maxHeight: 280,
@@ -252,36 +255,36 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   dropdownItemActive: {
-    backgroundColor: Colors.primaryBg,
+    backgroundColor: colors.primaryBg,
   },
   dropdownItemBorder: {
     borderBottomWidth: 0.5,
-    borderBottomColor: Colors.separator,
+    borderBottomColor: colors.separator,
   },
   itemContent: {
     flex: 1,
   },
   itemKeyText: {
     fontSize: 14,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     fontWeight: '600',
     lineHeight: 30,
   },
   itemKeyTextActive: {
-    color: Colors.primary,
+    color: colors.primary,
   },
   itemKeySubtext: {
     fontSize: 12,
-    color: Colors.textTertiary,
+    color: colors.textTertiary,
     fontFamily: 'monospace',
     marginLeft: 12,
   },
   renameInput: {
     fontSize: 14,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     fontWeight: '600',
     borderBottomWidth: 1,
-    borderBottomColor: Colors.primary,
+    borderBottomColor: colors.primary,
     paddingVertical: 0,
   },
   editKeyNameButton: {
@@ -301,19 +304,19 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 15,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     fontWeight: '600',
     marginBottom: 4,
   },
   emptySubtext: {
     fontSize: 13,
-    color: Colors.textTertiary,
+    color: colors.textTertiary,
   },
   dropdownFooter: {
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.xs,
     borderTopWidth: 0.5,
-    borderTopColor: Colors.separator,
+    borderTopColor: colors.separator,
   },
   addButton: {
     flexDirection: 'row',
@@ -324,20 +327,20 @@ const styles = StyleSheet.create({
   },
   addButtonText: {
     fontSize: 14,
-    color: Colors.primary,
+    color: colors.primary,
     fontWeight: '600',
   },
   addInputSection: {
     borderTopWidth: 0.5,
-    borderTopColor: Colors.separator,
+    borderTopColor: colors.separator,
     paddingHorizontal: Spacing.lg,
     paddingTop: 16,
     paddingBottom: Spacing.sm,
   },
   addNameInput: {
     fontSize: 14,
-    color: Colors.textPrimary,
-    backgroundColor: Colors.bg,
+    color: colors.textPrimary,
+    backgroundColor: colors.bg,
     borderRadius: Radius.sm,
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.xs,
@@ -353,18 +356,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     borderRadius: Radius.sm,
-    backgroundColor: Colors.bg,
+    backgroundColor: colors.bg,
   },
   cancelButtonText: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     fontWeight: '600',
   },
   addInput: {
     flex: 1,
     fontSize: 14,
-    color: Colors.textPrimary,
-    backgroundColor: Colors.bg,
+    color: colors.textPrimary,
+    backgroundColor: colors.bg,
     borderRadius: Radius.sm,
     paddingHorizontal: Spacing.sm,
     paddingTop: 8,
@@ -375,14 +378,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     borderRadius: Radius.sm,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
   },
   addConfirmButtonDisabled: {
-    backgroundColor: Colors.disabled,
+    backgroundColor: colors.disabled,
   },
   addConfirmButtonText: {
     fontSize: 13,
-    color: Colors.textInverse,
+    color: colors.textInverse,
     fontWeight: '600',
   },
 });

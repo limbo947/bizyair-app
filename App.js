@@ -69,8 +69,8 @@ function AppNavigator() {
   }, []);
 
   const handleCloseModelSelect = useCallback(() => {
-    setCurrentPage(activeTab === TAB_HOME ? PAGE_HOME : PAGE_HISTORY);
-  }, [activeTab]);
+    setCurrentPage(tabRef.current === TAB_HOME ? PAGE_HOME : PAGE_HISTORY);
+  }, []);
 
   useEffect(() => {
     const onBackPress = () => {
