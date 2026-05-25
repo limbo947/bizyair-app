@@ -37,6 +37,13 @@ function AppNavigator() {
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const tabRef = useRef(activeTab);
 
+  // 当 activeTab 从 AsyncStorage 异步加载后，同步 currentPage
+  useEffect(() => {
+    const page = activeTab === TAB_HOME ? PAGE_HOME : PAGE_HISTORY;
+    setCurrentPage(page);
+    tabRef.current = activeTab;
+  }, [activeTab]);
+
   useEffect(() => {
     if (Platform.OS === 'android') {
       setStatusBarHeight(RNStatusBar.currentHeight || 0);
@@ -44,7 +51,12 @@ function AppNavigator() {
   }, []);
 
   const handleTabChange = useCallback((tab) => {
-    if (tab === tabRef.current) return;
+    if (tab === tabRef.current) {
+      // 即使是当前 tab，也确保 currentPage 与 activeTab 同步
+      const page = tab === TAB_HOME ? PAGE_HOME : PAGE_HISTORY;
+      if (currentPage !== page) setCurrentPage(page);
+      return;
+    }
 
     Animated.timing(fadeAnim, {
       toValue: 0,
@@ -62,7 +74,7 @@ function AppNavigator() {
         useNativeDriver: true,
       }).start();
     });
-  }, [fadeAnim, setActiveTab, saveActiveTab]);
+  }, [fadeAnim, setActiveTab, saveActiveTab, currentPage]);
 
   const handleOpenModelSelect = useCallback(() => {
     setCurrentPage(PAGE_MODEL_SELECT);

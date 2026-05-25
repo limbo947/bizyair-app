@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Text,
   View,
@@ -92,17 +92,24 @@ export function HomeScreen({ onOpenModelSelect }) {
   const [audio, setAudio] = useState(homeState.audio || false);
   const [offPeak, setOffPeak] = useState(homeState.offPeak || false);
   const [isRec, setIsRec] = useState(homeState.isRec || false);
-  const [promptOptimizer, setPromptOptimizer] = useState(homeState.promptOptimizer !== undefined ? homeState.promptOptimizer : false);
+  const [promptOptimizer, setPromptOptimizer] = useState(homeState.promptOptimizer !== undefined ? homeState.promptOptimizer : true);
   const [fastPretreatment, setFastPretreatment] = useState(homeState.fastPretreatment || false);
   const [aigcWatermark, setAigcWatermark] = useState(homeState.aigcWatermark !== undefined ? homeState.aigcWatermark : false);
   const [movementAmplitude, setMovementAmplitude] = useState(homeState.movementAmplitude || 'auto');
   const [videoUrls, setVideoUrls] = useState(homeState.videoUrls || []);
   const [firstFrameUrls, setFirstFrameUrls] = useState(homeState.firstFrameUrls || []);
   const [lastFrameUrls, setLastFrameUrls] = useState(homeState.lastFrameUrls || []);
-  const [mediaUrls, setMediaUrls] = useState(homeState.mediaUrls || []);
+  const [mediaUrls] = useState(homeState.mediaUrls || []);
+  const [firstClipUrls, setFirstClipUrls] = useState(homeState.firstClipUrls || []);
+  const [refImages, setRefImages] = useState(homeState.refImages || []);
+  const [audioSetting, setAudioSetting] = useState(homeState.audioSetting || '');
+  const [drivingAudio, setDrivingAudio] = useState(homeState.drivingAudio || '');
+  const [audioUrl, setAudioUrl] = useState(homeState.audioUrl || '');
+  const [referenceVoice, setReferenceVoice] = useState(homeState.referenceVoice || '');
+  const [bboxList, setBboxList] = useState(homeState.bboxList || '');
   const [systemPrompt, setSystemPrompt] = useState(homeState.systemPrompt || '');
   const [temperature, setTemperature] = useState(homeState.temperature ?? 1.0);
-  const [maxTokens, setMaxTokens] = useState(homeState.maxTokens || 1024);
+  const [maxTokens, setMaxTokens] = useState(homeState.maxTokens || 32768);
   const [enableThinking, setEnableThinking] = useState(homeState.enableThinking !== undefined ? homeState.enableThinking : true);
   const [enableSearch, setEnableSearch] = useState(homeState.enableSearch !== undefined ? homeState.enableSearch : false);
   const [detail, setDetail] = useState(homeState.detail || 'medium');
@@ -117,6 +124,14 @@ export function HomeScreen({ onOpenModelSelect }) {
   const [instructions, setInstructions] = useState(homeState.instructions || '');
   const [language, setLanguage] = useState(homeState.language || 'Auto');
   const [speed, setSpeed] = useState(homeState.speed || 1.0);
+  const [enableSequential, setEnableSequential] = useState(homeState.enableSequential || false);
+  const [thinkingMode, setThinkingMode] = useState(homeState.thinkingMode || false);
+  const [colorPalette, setColorPalette] = useState(homeState.colorPalette || '');
+  const [batchSize, setBatchSize] = useState(homeState.batchSize || 1);
+  const [webSearch, setWebSearch] = useState(homeState.webSearch || false);
+  const [returnLastFrame, setReturnLastFrame] = useState(homeState.returnLastFrame || false);
+  const [topP, setTopP] = useState(homeState.topP ?? 0.95);
+  const [style, setStyle] = useState(homeState.style || 'general');
   const [showApiKeyInput, setShowApiKeyInput] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -124,7 +139,6 @@ export function HomeScreen({ onOpenModelSelect }) {
   const [isSaving, setIsSaving] = useState(false);
   const [showFavorites, setShowFavorites] = useState(false);
   const [showApiKeyDropdown, setShowApiKeyDropdown] = useState(false);
-  const [latestTextResult, setLatestTextResult] = useState('');
 
   const handleSaveApiKey = async () => {
     if (!apiKey.trim() || isSaving) return;
@@ -147,24 +161,37 @@ export function HomeScreen({ onOpenModelSelect }) {
   const paramType = currentModel.paramType;
 
   // 监听 LLM/Vision 模型的文本结果
-  useEffect(() => {
-    if (paramType !== 'llm-chat' && paramType !== 'vision-g' && paramType !== 'joycaption') return;
+  const latestTextResult = useMemo(() => {
+    if (paramType !== 'llm-chat' && paramType !== 'vision-g' && paramType !== 'joycaption') return '';
     const latest = history.find(h => h.modelId === modelId && h.status === 'Success' && h.textResult);
-    if (latest?.textResult && latest.textResult !== latestTextResult) {
-      setLatestTextResult(latest.textResult);
-    }
+    return latest?.textResult || '';
   }, [history, modelId, paramType]);
 
+  // 模型切换时重置不合法的参数值
   useEffect(() => {
-    if (paramType === 'resolution-ratio' || paramType === 'wan-size') {
-      const firstRes = currentResolutions[0] || '2K';
-      if (!currentResolutions.includes(resolution)) {
-        setResolution(firstRes);
-      }
-      if (currentRatios.length > 0 && !currentRatios.includes(aspectRatio)) {
-        setAspectRatio(currentRatios[0]);
-      }
+    const model = getModelInfo(modelId);
+    if (currentResolutions.length > 0 && !currentResolutions.includes(resolution)) {
+      setResolution(model.defaultResolution || currentResolutions[0]);
     }
+    // 宽高比：不在可选列表时重置
+    if (currentRatios.length > 0 && !currentRatios.includes(aspectRatio)) {
+      setAspectRatio(currentRatios[0]);
+    }
+    // 模型特定默认值重置
+    if (model.defaultWatermark !== undefined) setWatermark(model.defaultWatermark);
+    if (model.defaultThinkingMode !== undefined) setThinkingMode(model.defaultThinkingMode);
+    if (model.defaultPromptExtend !== undefined) setPromptExtend(model.defaultPromptExtend);
+    if (model.defaultAudio !== undefined) setAudio(model.defaultAudio);
+    if (model.defaultAudioSetting !== undefined) setAudioSetting(model.defaultAudioSetting);
+    if (model.defaultDuration !== undefined) setDuration(model.defaultDuration);
+    if (model.defaultSound !== undefined) setSound(model.defaultSound);
+    if (model.defaultKeepOriginalSound !== undefined) setKeepOriginalSound(model.defaultKeepOriginalSound);
+    if (model.defaultTemperature !== undefined) setTemperature(model.defaultTemperature);
+    if (model.defaultMaxTokens !== undefined) setMaxTokens(model.defaultMaxTokens);
+    if (model.defaultSpeed !== undefined) setSpeed(model.defaultSpeed);
+    if (model.defaultVoice !== undefined) setVoice(model.defaultVoice);
+    if (model.defaultFormat !== undefined) setResponseFormat(model.defaultFormat);
+    if (model.defaultLanguage !== undefined) setLanguage(model.defaultLanguage);
     // 验证当前模式是否被模型支持，不支持则切换到第一个可用模式
     if (currentModes.length > 0 && !currentModes.includes(mode)) {
       setMode(currentModes[0]);
@@ -180,15 +207,15 @@ export function HomeScreen({ onOpenModelSelect }) {
         negativePrompt, promptExtend, watermark, seed, display,
         keepOriginalSound, audio, offPeak, isRec, promptOptimizer,
         fastPretreatment, aigcWatermark, movementAmplitude, videoUrls, firstFrameUrls,
-        lastFrameUrls, mediaUrls,
+        lastFrameUrls, mediaUrls, refImages, audioSetting, drivingAudio, audioUrl, referenceVoice, bboxList,
         systemPrompt, temperature, maxTokens, enableThinking, enableSearch,
         detail, captionType, captionLength, doSample, extraOptions,
         nameInput, customPrompt, voice, responseFormat, instructions,
-        language, speed,
+        language, speed, enableSequential, thinkingMode, colorPalette, batchSize, webSearch, returnLastFrame, topP, style,
       });
     }, 500);
     return () => clearTimeout(timer);
-  }, [modelId, mode, prompt, imageUrls, resolution, aspectRatio, quality, sizePreset, customWidth, customHeight, saveHomeState, duration, generateAudio, sound, multiShot, shotType, multiPrompt, negativePrompt, promptExtend, watermark, seed, display, keepOriginalSound, audio, offPeak, isRec, promptOptimizer, fastPretreatment, aigcWatermark, movementAmplitude, videoUrls, firstFrameUrls, lastFrameUrls, mediaUrls, systemPrompt, temperature, maxTokens, enableThinking, enableSearch, detail, captionType, captionLength, doSample, extraOptions, nameInput, customPrompt, voice, responseFormat, instructions, language, speed]);
+  }, [modelId, mode, prompt, imageUrls, resolution, aspectRatio, quality, sizePreset, customWidth, customHeight, saveHomeState, duration, generateAudio, sound, multiShot, shotType, multiPrompt, negativePrompt, promptExtend, watermark, seed, display, keepOriginalSound, audio, offPeak, isRec, promptOptimizer, fastPretreatment, aigcWatermark, movementAmplitude, videoUrls, firstFrameUrls, lastFrameUrls, mediaUrls, refImages, audioSetting, drivingAudio, audioUrl, referenceVoice, bboxList, systemPrompt, temperature, maxTokens, enableThinking, enableSearch, detail, captionType, captionLength, doSample, extraOptions, nameInput, customPrompt, voice, responseFormat, instructions, language, speed, enableSequential, thinkingMode, colorPalette, batchSize, webSearch, returnLastFrame, topP, style]);
 
   const handleModelSelect = (id) => {
     setModelId(id);
@@ -204,7 +231,7 @@ export function HomeScreen({ onOpenModelSelect }) {
     }
   };
 
-  const { handleFileSelect, handleLastFrameSelect, handleVideoSelect } = useFileUpload({
+  const { handleFileSelect, handleLastFrameSelect, handleVideoSelect, handleRefImageSelect, handleFirstClipSelect, handleFirstFrameSelect } = useFileUpload({
     apiKey,
     setShowApiKeyInput,
     setError,
@@ -212,6 +239,9 @@ export function HomeScreen({ onOpenModelSelect }) {
     setImageUrls,
     setLastFrameUrls,
     setVideoUrls,
+    setRefImages,
+    setFirstClipUrls,
+    setFirstFrameUrls,
   });
 
   // ⚠️ 同步风险：此 switch(paramType) 需与 HomeParamControls 的 switch 保持同步。
@@ -220,7 +250,7 @@ export function HomeScreen({ onOpenModelSelect }) {
     const base = { prompt: prompt.trim() };
     switch (paramType) {
       case 'resolution-ratio':
-        return { ...base, resolution, aspectRatio, imageUrls };
+        return { ...base, resolution, aspectRatio, imageUrls, seed, webSearch, temperature, topP, maxTokens };
       case 'width-height-quality':
         return { ...base, width: parseInt(customWidth), height: parseInt(customHeight), quality, imageUrls };
       case 'size-only':
@@ -228,25 +258,25 @@ export function HomeScreen({ onOpenModelSelect }) {
       case 'flux-kontext':
         return { ...base, aspectRatio, imageUrls };
       case 'wan-size':
-        return { ...base, resolution, customWidth, customHeight, imageUrls };
+        return { ...base, resolution, customWidth, customHeight, imageUrls, seed, watermark, enableSequential, thinkingMode, colorPalette, bboxList };
       case 'width-height':
-        return { ...base, width: parseInt(customWidth), height: parseInt(customHeight) };
+        return { ...base, width: parseInt(customWidth), height: parseInt(customHeight), negativePrompt, seed, batchSize };
       case 'seedance-video':
-        return { ...base, resolution, aspectRatio, duration, generateAudio, seed: seed ? parseInt(seed) : undefined, imageUrls, firstFrameUrls, lastFrameUrls, videoUrls };
+        return { ...base, resolution, aspectRatio, duration, generateAudio, seed: seed ? parseInt(seed) : undefined, webSearch, returnLastFrame, imageUrls, firstFrameUrls, lastFrameUrls, videoUrls };
       case 'kling-video':
         return { ...base, aspectRatio, duration, sound, multiShot, shotType, multiPrompt, seed: seed ? parseInt(seed) : undefined, firstFrameUrls, lastFrameUrls };
       case 'kling-o3-4k':
         return { ...base, aspectRatio, duration, sound, keepOriginalSound, multiShot, shotType, multiPrompt, imageUrls, videoUrls };
       case 'vidu-video':
-        return { ...base, resolution, aspectRatio, duration, audio, isRec, offPeak, seed: seed ? parseInt(seed) : undefined, imageUrls, lastFrameUrls, movementAmplitude };
+        return { ...base, resolution, aspectRatio, duration, audio, isRec, offPeak, seed: seed ? parseInt(seed) : undefined, imageUrls, lastFrameUrls, movementAmplitude, style };
       case 'wan-video':
-        return { ...base, resolution, aspectRatio, duration, promptExtend, watermark, negativePrompt, imageUrls, firstFrameUrls: mode === 'image-to-video' ? imageUrls : firstFrameUrls, lastFrameUrls, videoUrls, firstClipUrls: mode === 'video-extend' ? videoUrls : undefined, seed: seed ? parseInt(seed) : undefined };
+        return { ...base, resolution, aspectRatio, duration, promptExtend, watermark, negativePrompt, imageUrls, firstFrameUrls: mode === 'image-to-video' ? imageUrls : firstFrameUrls, lastFrameUrls, videoUrls, refImages: mode === 'reference-to-video' ? imageUrls : refImages, refVideos: mode === 'reference-to-video' ? videoUrls : undefined, referenceVoice, drivingAudio, firstClipUrls: mode === 'video-extend' ? videoUrls : firstClipUrls, audioUrl, audioSetting, seed: seed ? parseInt(seed) : undefined };
       case 'wan-i2v':
-        return { ...base, resolution, duration, promptExtend, audio, audioUrl: undefined, imageUrls };
+        return { ...base, resolution, duration, promptExtend, audio, audioUrl, imageUrls };
       case 'hailuo-video':
         return { ...base, resolution, duration, promptOptimizer, fastPretreatment, aigcWatermark, imageUrls };
       case 'happyhorse-video':
-        return { ...base, resolution, aspectRatio, duration, watermark, seed: seed ? parseInt(seed) : undefined, imageUrls, mediaUrls };
+        return { ...base, resolution, aspectRatio, duration, watermark, seed: seed ? parseInt(seed) : undefined, imageUrls, mediaUrls, videoUrls, refImages, audioSetting };
       case 'ltx-video':
         return { ...base, resolution, display, seed: seed ? parseInt(seed) : undefined, imageUrls };
       case 'bza-video-x':
@@ -266,7 +296,7 @@ export function HomeScreen({ onOpenModelSelect }) {
       default:
         return { ...base, resolution, aspectRatio, imageUrls };
     }
-  }, [paramType, prompt, resolution, aspectRatio, imageUrls, customWidth, customHeight, quality, duration, generateAudio, sound, multiShot, shotType, multiPrompt, negativePrompt, promptExtend, watermark, seed, display, keepOriginalSound, audio, offPeak, isRec, promptOptimizer, fastPretreatment, aigcWatermark, movementAmplitude, videoUrls, firstFrameUrls, lastFrameUrls, mediaUrls, systemPrompt, temperature, maxTokens, enableThinking, enableSearch, detail, captionType, captionLength, doSample, extraOptions, nameInput, customPrompt, voice, responseFormat, instructions, language, speed, mode]);
+  }, [paramType, prompt, resolution, aspectRatio, imageUrls, customWidth, customHeight, quality, duration, generateAudio, sound, multiShot, shotType, multiPrompt, negativePrompt, promptExtend, watermark, seed, display, keepOriginalSound, audio, offPeak, isRec, promptOptimizer, fastPretreatment, aigcWatermark, movementAmplitude, videoUrls, firstFrameUrls, lastFrameUrls, mediaUrls, refImages, audioSetting, drivingAudio, audioUrl, referenceVoice, bboxList, firstClipUrls, systemPrompt, temperature, maxTokens, enableThinking, enableSearch, detail, captionType, captionLength, doSample, extraOptions, nameInput, customPrompt, voice, responseFormat, instructions, language, speed, enableSequential, thinkingMode, colorPalette, batchSize, webSearch, returnLastFrame, topP, style, mode]);
 
   const livePrice = useMemo(() => calculatePrice(modelId, getPayloadParams()), [modelId, getPayloadParams]);
 
@@ -284,8 +314,6 @@ export function HomeScreen({ onOpenModelSelect }) {
   const handleGenerate = async () => {
     const initialOutputType = getOutputType(modelId);
     const isVideo = initialOutputType === 'video';
-    const isText = initialOutputType === 'text';
-    const isAudio = initialOutputType === 'audio';
 
     if (!prompt.trim() && paramType !== 'dreamactor') {
       setError('请输入提示词');
@@ -484,6 +512,33 @@ export function HomeScreen({ onOpenModelSelect }) {
       setLanguage={setLanguage}
       speed={speed}
       setSpeed={setSpeed}
+      enableSequential={enableSequential}
+      setEnableSequential={setEnableSequential}
+      thinkingMode={thinkingMode}
+      setThinkingMode={setThinkingMode}
+      colorPalette={colorPalette}
+      setColorPalette={setColorPalette}
+      batchSize={batchSize}
+      setBatchSize={setBatchSize}
+      webSearch={webSearch}
+      setWebSearch={setWebSearch}
+      returnLastFrame={returnLastFrame}
+      setReturnLastFrame={setReturnLastFrame}
+      topP={topP}
+      setTopP={setTopP}
+      style={style}
+      setStyle={setStyle}
+      audioSetting={audioSetting}
+      setAudioSetting={setAudioSetting}
+      drivingAudio={drivingAudio}
+      setDrivingAudio={setDrivingAudio}
+      audioUrl={audioUrl}
+      setAudioUrl={setAudioUrl}
+      referenceVoice={referenceVoice}
+      setReferenceVoice={setReferenceVoice}
+      bboxList={bboxList}
+      setBboxList={setBboxList}
+      mode={mode}
     />
   );
 
@@ -627,7 +682,9 @@ export function HomeScreen({ onOpenModelSelect }) {
 
         <View style={styles.card}>
           <View style={styles.promptLabelRow}>
-            <Text style={[styles.label, { marginBottom: 0 }]}>提示词</Text>
+            <Text style={[styles.label, { marginBottom: 0 }]}>
+              提示词{paramType === 'dreamactor' ? <Text style={{ color: colors.textTertiary, fontWeight: '400' }}> (可选)</Text> : <Text style={{ color: '#E74C3C' }}> *</Text>}
+            </Text>
             {prompt ? (
               <TouchableOpacity onPress={() => setPrompt('')} activeOpacity={0.6}>
                 <Text style={styles.promptClearText}>清空</Text>
@@ -679,7 +736,13 @@ export function HomeScreen({ onOpenModelSelect }) {
         {(mode === 'image-to-image' || mode === 'image-to-video' || mode === 'flf-to-video' || mode === 'reference-to-video' || mode === 'vision' || paramType === 'dreamactor' || paramType === 'vision-g' || paramType === 'joycaption') ? (
           <View style={styles.card}>
             <Text style={styles.label}>
-              {mode === 'flf-to-video' ? '首帧图片' : mode === 'reference-to-video' ? '参考图片' : '参考图片'}
+              {(() => {
+                const label = mode === 'flf-to-video' ? '首帧图片' : '参考图片';
+                const isRequired = mode === 'flf-to-video' || mode === 'image-to-image' || mode === 'image-to-video'
+                  || (mode === 'reference-to-video' && paramType === 'dreamactor')
+                  || mode === 'vision' || paramType === 'vision-g' || paramType === 'joycaption';
+                return <>{label}{isRequired ? <Text style={{ color: '#E74C3C' }}> *</Text> : <Text style={{ color: colors.textTertiary, fontWeight: '400' }}> (可选)</Text>}</>;
+              })()}
             </Text>
             <TouchableOpacity
               style={[styles.uploadButton, isUploading && styles.uploadButtonDisabled]}
@@ -716,9 +779,9 @@ export function HomeScreen({ onOpenModelSelect }) {
           </View>
         ) : null}
 
-        {mode === 'flf-to-video' ? (
+        {mode === 'flf-to-video' || ((mode === 'image-to-video' || mode === 'video-extend') && paramType === 'wan-video') ? (
           <View style={styles.card}>
-            <Text style={styles.label}>尾帧图片</Text>
+            <Text style={styles.label}>尾帧图片{mode === 'flf-to-video' ? '' : ' (可选)'}</Text>
             <TouchableOpacity
               style={[styles.uploadButton, isUploading && styles.uploadButtonDisabled]}
               onPress={handleLastFrameSelect}
@@ -782,6 +845,123 @@ export function HomeScreen({ onOpenModelSelect }) {
                     <TouchableOpacity
                       style={styles.removeUploadedButton}
                       onPress={() => setVideoUrls(videoUrls.filter((_, j) => j !== i))}
+                    >
+                      <Text style={styles.removeUploadedButtonText}>删除</Text>
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            ) : null}
+          </View>
+        ) : null}
+
+        {/* 首帧图片上传：wan-2-7 reference-to-video / video-edit 模式 */}
+        {(mode === 'reference-to-video' || mode === 'video-edit') && paramType === 'wan-video' ? (
+          <View style={styles.card}>
+            <Text style={styles.label}>首帧图片 (可选)</Text>
+            <TouchableOpacity
+              style={[styles.uploadButton, isUploading && styles.uploadButtonDisabled]}
+              onPress={handleFirstFrameSelect}
+              disabled={isUploading}
+            >
+              {isUploading ? (
+                <ActivityIndicator color={colors.primary} />
+              ) : (
+                <Ionicons name="cloud-upload-outline" size={24} color={colors.primary} />
+              )}
+              <Text style={styles.uploadButtonText}>
+                {isUploading ? '上传中...' : '选择首帧图片'}
+              </Text>
+            </TouchableOpacity>
+            {firstFrameUrls.length > 0 ? (
+              <View style={styles.uploadedList}>
+                {firstFrameUrls.map((url, i) => (
+                  <View key={i} style={styles.uploadedItem}>
+                    <Image source={{ uri: url }} style={styles.uploadedThumb} resizeMode="cover" />
+                    <Text style={styles.uploadedName} numberOfLines={1}>
+                      首帧 {i + 1}
+                    </Text>
+                    <TouchableOpacity
+                      style={styles.removeUploadedButton}
+                      onPress={() => setFirstFrameUrls(firstFrameUrls.filter((_, j) => j !== i))}
+                    >
+                      <Text style={styles.removeUploadedButtonText}>删除</Text>
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            ) : null}
+          </View>
+        ) : null}
+
+        {/* 首段视频上传：wan-2-7 image-to-video 模式 */}
+        {mode === 'image-to-video' && paramType === 'wan-video' ? (
+          <View style={styles.card}>
+            <Text style={styles.label}>首段视频 (可选)</Text>
+            <TouchableOpacity
+              style={[styles.uploadButton, isUploading && styles.uploadButtonDisabled]}
+              onPress={handleFirstClipSelect}
+              disabled={isUploading}
+            >
+              {isUploading ? (
+                <ActivityIndicator color={colors.primary} />
+              ) : (
+                <Ionicons name="cloud-upload-outline" size={24} color={colors.primary} />
+              )}
+              <Text style={styles.uploadButtonText}>
+                {isUploading ? '上传中...' : '选择首段视频'}
+              </Text>
+            </TouchableOpacity>
+            {firstClipUrls.length > 0 ? (
+              <View style={styles.uploadedList}>
+                {firstClipUrls.map((url, i) => (
+                  <View key={i} style={styles.uploadedItem}>
+                    <Ionicons name="videocam" size={24} color={colors.primary} />
+                    <Text style={styles.uploadedName} numberOfLines={1}>
+                      视频 {i + 1}
+                    </Text>
+                    <TouchableOpacity
+                      style={styles.removeUploadedButton}
+                      onPress={() => setFirstClipUrls(firstClipUrls.filter((_, j) => j !== i))}
+                    >
+                      <Text style={styles.removeUploadedButtonText}>删除</Text>
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            ) : null}
+          </View>
+        ) : null}
+
+        {/* 参考图片上传：wan-2-7 video-edit 模式 / happyhorse video-edit 模式 */}
+        {mode === 'video-edit' && (paramType === 'wan-video' || paramType === 'happyhorse-video') ? (
+          <View style={styles.card}>
+            <Text style={styles.label}>参考图片 (可选)</Text>
+            <TouchableOpacity
+              style={[styles.uploadButton, isUploading && styles.uploadButtonDisabled]}
+              onPress={handleRefImageSelect}
+              disabled={isUploading}
+            >
+              {isUploading ? (
+                <ActivityIndicator color={colors.primary} />
+              ) : (
+                <Ionicons name="cloud-upload-outline" size={24} color={colors.primary} />
+              )}
+              <Text style={styles.uploadButtonText}>
+                {isUploading ? '上传中...' : '选择参考图片'}
+              </Text>
+            </TouchableOpacity>
+            {refImages.length > 0 ? (
+              <View style={styles.uploadedList}>
+                {refImages.map((url, i) => (
+                  <View key={i} style={styles.uploadedItem}>
+                    <Image source={{ uri: url }} style={styles.uploadedThumb} resizeMode="cover" />
+                    <Text style={styles.uploadedName} numberOfLines={1}>
+                      图片 {i + 1}
+                    </Text>
+                    <TouchableOpacity
+                      style={styles.removeUploadedButton}
+                      onPress={() => setRefImages(refImages.filter((_, j) => j !== i))}
                     >
                       <Text style={styles.removeUploadedButtonText}>删除</Text>
                     </TouchableOpacity>

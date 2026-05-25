@@ -1,9 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Text, View, TextInput, TouchableOpacity, Switch, Alert, StyleSheet } from 'react-native';
+import { Text, View, TextInput, TouchableOpacity, Switch, Alert } from 'react-native';
 import { Radius, Spacing } from '../constants/theme';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { useTheme } from '../context/ThemeContext';
 import { ResizableTextInput } from './ResizableTextInput';
+
+/** 参数标签：必选参数显示红色 *，可选参数显示灰色 (可选) */
+function ParamLabel({ label, required, style }) {
+  const { colors } = useTheme();
+  return (
+    <Text style={[{ fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginBottom: Spacing.sm, textTransform: 'uppercase', letterSpacing: 0.5 }, style]}>
+      {label}{required ? <Text style={{ color: '#E74C3C' }}> *</Text> : <Text style={{ color: colors.textTertiary, fontWeight: '400', textTransform: 'none' }}> (可选)</Text>}
+    </Text>
+  );
+}
 
 const STORAGE_KEY = 'vision_custom_presets';
 
@@ -116,6 +126,8 @@ export function VisionGControls({
   maxTokens, setMaxTokens,
   detail, setDetail,
   enableThinking, setEnableThinking,
+  detailOptions,
+  maxSystemPromptLength,
 }) {
   const styles = useThemedStyles(createStyles);
   const { colors } = useTheme();
@@ -196,7 +208,7 @@ export function VisionGControls({
           value={systemPrompt}
           onChangeText={setSystemPrompt}
           placeholder="设定图片理解方式，或选择上方预设..."
-          maxLength={2500}
+          maxLength={maxSystemPromptLength || 2500}
           hideClear
         />
         <View style={styles.hintRow}>
@@ -209,7 +221,7 @@ export function VisionGControls({
         </View>
       </View>
       <View style={styles.card}>
-        <Text style={styles.label}>Temperature (0 ~ 2)</Text>
+        <Text style={styles.label}>Temperature (0 ~ 2)<Text style={styles.required}> *</Text></Text>
         <TextInput
           style={styles.inputSingle}
           value={String(temperature)}
@@ -224,16 +236,16 @@ export function VisionGControls({
         />
       </View>
       <View style={styles.card}>
-        <Text style={styles.label}>细节程度</Text>
+        <Text style={styles.label}>细节程度<Text style={styles.required}> *</Text></Text>
         <View style={styles.selectorRow}>
-          {['low', 'medium', 'high', 'auto'].map((d) => (
+          {(detailOptions || ['low', 'medium', 'high']).map((d) => (
             <TouchableOpacity
               key={d}
               style={[styles.selectorButton, detail === d && styles.selectorButtonActive]}
               onPress={() => setDetail(d)}
             >
               <Text style={[styles.selectorText, detail === d && styles.selectorTextActive]}>
-                {{ low: '低', medium: '中', high: '高', auto: '自动' }[d]}
+                {{ low: '低', medium: '中', high: '高' }[d] || d}
               </Text>
             </TouchableOpacity>
           ))}
@@ -241,7 +253,7 @@ export function VisionGControls({
       </View>
       <View style={styles.card}>
         <View style={styles.switchRow}>
-          <Text style={styles.label}>思考模式</Text>
+          <Text style={styles.label}>思考模式<Text style={styles.required}> *</Text></Text>
           <Switch
             value={enableThinking}
             onValueChange={setEnableThinking}
@@ -250,13 +262,13 @@ export function VisionGControls({
         </View>
       </View>
       <View style={styles.card}>
-        <Text style={styles.label}>最大 Tokens</Text>
+        <Text style={styles.label}>最大 Tokens<Text style={styles.required}> *</Text></Text>
         <TextInput
           style={styles.inputSingle}
           value={String(maxTokens)}
           onChangeText={(t) => setMaxTokens(parseInt(t) || 0)}
           keyboardType="numeric"
-          placeholder="4096"
+          placeholder="32768"
           placeholderTextColor={colors.textPlaceholder}
         />
       </View>
@@ -271,6 +283,9 @@ export function JoyCaptionControls({
   temperature, setTemperature,
   maxTokens, setMaxTokens,
   doSample, setDoSample,
+  extraOptions, setExtraOptions,
+  nameInput, setNameInput,
+  customPrompt, setCustomPrompt,
 }) {
   const captionTypes = ['Descriptive', 'Descriptive (Informal)', 'Training Prompt', 'MidJourney', 'Booru tag list', 'Booru-like tag list', 'Art Critic', 'Product Listing', 'Social Media Post'];
   const captionLengths = ['any', 'very short', 'short', 'medium-length', 'long', 'very long', '20', '30', '40', '50', '60', '70', '80', '90', '100', '110', '120', '130', '140', '150', '160', '170', '180', '190', '200', '210', '220', '230', '240', '250', '260'];
@@ -280,7 +295,7 @@ export function JoyCaptionControls({
   return (
     <>
       <View style={styles.card}>
-        <Text style={styles.label}>描述类型</Text>
+        <ParamLabel label="描述类型" required={false} />
         <View style={styles.selectorRow}>
           {captionTypes.map((t) => (
             <TouchableOpacity
@@ -294,7 +309,7 @@ export function JoyCaptionControls({
         </View>
       </View>
       <View style={styles.card}>
-        <Text style={styles.label}>描述长度</Text>
+        <ParamLabel label="描述长度" required={false} />
         <View style={styles.selectorRow}>
           {captionLengths.slice(0, 8).map((l) => (
             <TouchableOpacity
@@ -308,7 +323,7 @@ export function JoyCaptionControls({
         </View>
       </View>
       <View style={styles.card}>
-        <Text style={styles.label}>Temperature (0 ~ 2)</Text>
+        <ParamLabel label="Temperature" required={false} />
         <TextInput
           style={styles.inputSingle}
           value={String(temperature)}
@@ -317,14 +332,14 @@ export function JoyCaptionControls({
             if (!isNaN(val) && val >= 0 && val <= 2) setTemperature(Math.round(val * 100) / 100);
           }}
           keyboardType="decimal-pad"
-          placeholder="1.0"
+          placeholder="0.5"
           placeholderTextColor={colors.textPlaceholder}
           selectTextOnFocus
         />
       </View>
       <View style={styles.card}>
         <View style={styles.switchRow}>
-          <Text style={styles.label}>随机采样</Text>
+          <ParamLabel label="随机采样 (do_sample)" required={false} style={{ marginBottom: 0 }} />
           <Switch
             value={doSample}
             onValueChange={setDoSample}
@@ -333,14 +348,52 @@ export function JoyCaptionControls({
         </View>
       </View>
       <View style={styles.card}>
-        <Text style={styles.label}>最大 Tokens</Text>
+        <ParamLabel label="最大 Tokens" required={false} />
         <TextInput
           style={styles.inputSingle}
           value={String(maxTokens)}
-          onChangeText={(t) => setMaxTokens(parseInt(t) || 0)}
+          onChangeText={(t) => {
+            const val = parseInt(t) || 0;
+            if (val >= 16 && val <= 512) setMaxTokens(val);
+          }}
           keyboardType="numeric"
-          placeholder="4096"
+          placeholder="256"
           placeholderTextColor={colors.textPlaceholder}
+        />
+      </View>
+      <View style={styles.card}>
+        <ParamLabel label="额外选项 (extra_options)" required={false} />
+        <TextInput
+          style={styles.promptInput}
+          value={extraOptions || ''}
+          onChangeText={setExtraOptions}
+          multiline
+          placeholder="如: If there is a person in the image you must refer to them as {name}."
+          placeholderTextColor={colors.textPlaceholder}
+          maxLength={2500}
+        />
+      </View>
+      <View style={styles.card}>
+        <ParamLabel label="名称输入 (name_input)" required={false} />
+        <TextInput
+          style={styles.inputSingle}
+          value={nameInput || ''}
+          onChangeText={setNameInput}
+          placeholder="如: Jack"
+          placeholderTextColor={colors.textPlaceholder}
+          maxLength={2500}
+        />
+      </View>
+      <View style={styles.card}>
+        <ParamLabel label="自定义 Prompt (custom_prompt)" required={false} />
+        <TextInput
+          style={styles.promptInput}
+          value={customPrompt || ''}
+          onChangeText={setCustomPrompt}
+          multiline
+          placeholder="自定义提示词，留空使用默认"
+          placeholderTextColor={colors.textPlaceholder}
+          maxLength={2500}
         />
       </View>
     </>
@@ -350,6 +403,8 @@ export function JoyCaptionControls({
 const createStyles = (colors) => ({
   card: { backgroundColor: colors.card, padding: Spacing.lg, borderRadius: Radius.md, marginBottom: Spacing.md },
   label: { fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginBottom: Spacing.sm, textTransform: 'uppercase', letterSpacing: 0.5 },
+  required: { color: '#E74C3C' },
+  optional: { color: colors.textTertiary, fontWeight: '400', textTransform: 'none' },
   presetRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm, marginBottom: Spacing.md },
   presetChip: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: Radius.md, backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border },
   presetChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Text, View, TextInput, Switch, TouchableOpacity, Alert, StyleSheet } from 'react-native';
+import { Text, View, TextInput, Switch, TouchableOpacity, Alert } from 'react-native';
 import { Radius, Spacing } from '../constants/theme';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { useTheme } from '../context/ThemeContext';
@@ -150,7 +150,7 @@ export function LLMChatControls({
   return (
     <>
       <View style={styles.card}>
-        <Text style={styles.label}>系统提示词</Text>
+        <Text style={styles.label}>系统提示词<Text style={styles.required}> *</Text></Text>
         <View style={styles.presetRow}>
           {allPresets.map((p, i) => (
             <TouchableOpacity
@@ -212,7 +212,7 @@ export function LLMChatControls({
         </View>
       </View>
       <View style={styles.card}>
-        <Text style={styles.label}>Temperature (0 ~ 2)</Text>
+        <Text style={styles.label}>Temperature (0 ~ 2)<Text style={styles.required}> *</Text></Text>
         <TextInput
           style={styles.inputSingle}
           value={String(temperature)}
@@ -227,7 +227,7 @@ export function LLMChatControls({
         />
       </View>
       <View style={styles.card}>
-        <Text style={styles.label}>最大 Tokens</Text>
+        <Text style={styles.label}>最大 Tokens<Text style={styles.required}> *</Text></Text>
         <TextInput
           style={styles.inputSingle}
           value={String(maxTokens)}
@@ -237,29 +237,27 @@ export function LLMChatControls({
             setMaxTokens(val);
           }}
           keyboardType="numeric"
-          placeholder="4096"
+          placeholder="32768"
           placeholderTextColor={colors.textPlaceholder}
         />
       </View>
       <View style={styles.card}>
         <View style={styles.switchRow}>
-          <Text style={styles.label}>思考模式</Text>
+          <Text style={styles.label}>思考模式{enableThinkingRequired ? <Text style={styles.required}> *</Text> : <Text style={styles.optional}> (可选)</Text>}</Text>
           <Switch
-            value={enableThinkingRequired ? true : enableThinking}
-            onValueChange={enableThinkingRequired ? undefined : setEnableThinking}
+            value={enableThinking}
+            onValueChange={setEnableThinking}
             trackColor={{ false: colors.disabled, true: colors.primary }}
-            disabled={enableThinkingRequired}
           />
         </View>
       </View>
       <View style={styles.card}>
         <View style={styles.switchRow}>
-          <Text style={styles.label}>联网搜索</Text>
+          <Text style={styles.label}>联网搜索{enableSearchRequired ? <Text style={styles.required}> *</Text> : <Text style={styles.optional}> (可选)</Text>}</Text>
           <Switch
-            value={enableSearchRequired ? true : enableSearch}
-            onValueChange={enableSearchRequired ? undefined : setEnableSearch}
+            value={enableSearch}
+            onValueChange={setEnableSearch}
             trackColor={{ false: colors.disabled, true: colors.primary }}
-            disabled={enableSearchRequired}
           />
         </View>
       </View>
@@ -270,6 +268,8 @@ export function LLMChatControls({
 const createStyles = (colors) => ({
   card: { backgroundColor: colors.card, padding: Spacing.lg, borderRadius: Radius.md, marginBottom: Spacing.md },
   label: { fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginBottom: Spacing.sm, textTransform: 'uppercase', letterSpacing: 0.5 },
+  required: { color: '#E74C3C' },
+  optional: { color: colors.textTertiary, fontWeight: '400', textTransform: 'none' },
   presetRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm, marginBottom: Spacing.md },
   presetChip: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: Radius.md, backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border },
   presetChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },

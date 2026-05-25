@@ -25,18 +25,18 @@
 ├── index.js                  # 应用入口
 ├── api.js                    # API 兼容层（重新导出 services/utils/constants 的公共接口）
 ├── package.json              # 依赖配置
+├── package-lock.json         # 依赖锁定
 ├── app.json                  # Expo 配置
 ├── eas.json                  # EAS Build 配置
 ├── build-android.ps1         # APK 一键构建脚本（prebuild → 修补 → Gradle）
 ├── scripts/                  # 构建辅助脚本
 │   └── patch-android-build.ps1  # post-prebuild 配置修补（签名/ProGuard/allowBackup）
-├── android/                  # Android 原生工程（expo prebuild 生成，勿手动修改）
 ├── src/
 │   ├── context/              # 全局状态管理（AppContext + ThemeContext）
 │   ├── screens/              # 页面级组件（HomeScreen / HistoryScreen / ModelSelectScreen）
 │   ├── components/           # UI 组件（20 个，按功能拆分）
 │   ├── constants/            # 常量定义（models / modelMeta / ratios / theme）
-│   ├── hooks/                # 自定义 Hooks（useFileUpload）
+│   ├── hooks/                # 自定义 Hooks（useFileUpload / useThemedStyles）
 │   ├── utils/                # 工具函数（modelHelpers / payloadBuilder / helpers）
 │   └── services/             # API 服务层（apiClient）
 ├── assets/                   # 图标资源
@@ -48,53 +48,45 @@
 - 新建文件严格按上述目录存放
 - 组件不写 API 调用，服务文件不写 UI 代码，常量文件不定义函数
 - 文件名使用 kebab-case
-- 修改已有功能优先复用现有模块
+- 修改和新增功能优先复用现有模块
 - 修改代码时遵循最小改动原则，尽量保持原有接口不变
 - 单文件有效代码行数（不含空行/注释）不得超过 **800 行**，*新建代码文件*或*修改后的代码文件* 预估超 **700 行** 时即拆分为多个文件
 
 ## 架构概览
 
-### 组件层级与 Provider 链
+### Provider 链与页面
 ```
 SafeAreaProvider > ThemeProvider > AppProvider > AppNavigator
 ```
-- `ThemeProvider` 提供亮/暗色主题（`useTheme()`），主题模式持久化到 AsyncStorage。
-- `AppProvider` 管理全部业务状态（`useAppContext()`），包括 API 密钥、历史记录、主页状态、轮询、收藏等。
-- `AppNavigator` 管理三个页面（Home / History / ModelSelect），通过状态切换而非 React Navigation，含淡入淡出动画。
+- `ThemeProvider` — 亮/暗主题（`useTheme()`），持久化到 AsyncStorage。
+- `AppProvider` — 全部业务状态：API 密钥、历史记录、轮询、收藏等。
+- `AppNavigator` — 三个页面状态切换（Home / History / ModelSelect），含淡入淡出动画。底部 TabBar 切换 Home / History，ModelSelectScreen 全屏覆盖。HistoryScreen 支持搜索、筛选、排序、批量操作、分页加载。
 
-### 数据流：任务提交 → 异步轮询 → 结果展示
-1. 用户在 `HomeScreen` 选择模型、填写参数，点击生成。
-2. `payloadBuilder.js` 根据模型的 `paramType` 将前端 camelCase 参数映射为 API snake_case 请求体。
-3. `apiClient.js` 调用 `submitTask()` 提交到 BizyAir OpenAPI，返回 `requestId`。
-4. `AppContext` 调用 `addToHistory()` 添加历史记录（状态 Pending/Running），并 `startPolling()` 每 3 秒轮询。
-5. 轮询成功后更新历史条目状态为 Success/Failed，提取输出（image/video/audio/text URL）。
-6. 应用启动时 `resumeRunningPolling()` 自动恢复未完成任务的轮询。连续 5 次轮询失败标记为 Failed。
+### 任务提交 → 轮询 → 结果
+1. 用户在 `HomeScreen` 选模型、填参数，点击生成。
+2. `HomeParamControls.js` 根据模型的 `paramType` 路由到对应控件组件渲染表单。
+3. `payloadBuilder.js` 将前端 camelCase 参数映射为 API snake_case 请求体。
+4. `apiClient.js` 调用 `submitTask()` 提交，返回 `requestId`。
+5. `AppContext` 添加历史记录（Pending/Running），`startPolling()` 每 3 秒轮询状态。
+6. 轮询成功后提取输出 URL；连续 5 次失败标记 Failed。启动时 `resumeRunningPolling()` 自动恢复。
 
-### paramType 驱动的参数系统
-每个模型在 `constants/models.js` 的 `MODELS` 对象中定义 `paramType`，决定了：
-- 参数控件渲染（`ParamControls` / `VideoParamControls` / `LLMControls` / `VisionParamControls` / `TTSControls`）
-- 请求体构建逻辑（`payloadBuilder.js` 的 switch-case）
-- 价格计算方式（`modelHelpers.js` 的 `calculatePrice()`，支持固定价格、按分辨率、按时长、按像素、按 token 等多种策略）
+### paramType 驱动
+`constants/models.js` 中每个模型定义 `paramType`，驱动三处逻辑：
 
-当前 paramType 值：`resolution-ratio` | `width-height-quality` | `size-only` | `flux-kontext` | `wan-size` | `width-height` | `seedance-video` | `kling-video` | `kling-o3-4k` | `vidu-video` | `wan-video` | `wan-i2v` | `hailuo-video` | `happyhorse-video` | `ltx-video` | `bza-video-x` | `bza-video-v3` | `dreamactor` | `llm-chat` | `vision-g` | `joycaption` | `tts`
+| 层面 | 实现位置 | 说明 |
+|:---|:---|:---|
+| 参数表单 | `HomeParamControls.js` → 按 paramType 分发到 5 类控件组件 | 图片类（6 种）、视频类（10 种）、LLM、Vision、TTS |
+| 请求体构建 | `payloadBuilder.js` switch-case | 每类 paramType 一个 case |
+| 价格计算 | `modelHelpers.js` `calculatePrice()` | 固定/分辨率/时长/像素/token 等策略 |
 
-### 文件上传流程
-1. `useFileUpload` hook 调用 `DocumentPicker` 选择本地文件。
-2. `apiClient.getUploadToken()` 获取阿里云 OSS STS 临时凭证。
-3. 使用 jssha 计算 HMAC-SHA1 签名，PUT 直传到 OSS。
-4. `apiClient.commitResource()` 通知服务端确认上传。
-5. 返回文件 URL 用于任务提交。
+### 文件上传
+1. `useFileUpload` → `DocumentPicker` 选本地文件
+2. `apiClient.getUploadToken()` → 获取 OSS STS 临时凭证
+3. jssha HMAC-SHA1 签名 → PUT 直传阿里云 OSS
+4. `apiClient.commitResource()` → 通知服务端确认
 
 ### API 请求封装
-`apiClient.js` 的 `request()` 函数统一封装了：
-- 15 秒超时（AbortController）
-- 指数退避重试（最多 3 次，仅对超时/5xx/网络错误重试）
-- 错误分类（超时 vs 服务端 vs 客户端）
-
-### 导航与页面
-- 底部 TabBar 切换 Home / History，状态持久化到 AsyncStorage。
-- ModelSelectScreen 为全屏覆盖页面，按分类和厂商筛选模型，支持收藏（最多 7 个）。
-- HistoryScreen 支持搜索、筛选、排序、批量操作、分页加载、日志查看。
+`apiClient.js` 的 `request()` 统一封装：15 秒超时（AbortController）、指数退避重试（最多 3 次）、错误分类（超时/服务端/客户端）。
 
 ## 项目图标规则
 - 优先从 @expo/vector-icons 图标库中选择图标
@@ -106,12 +98,12 @@ SafeAreaProvider > ThemeProvider > AppProvider > AppNavigator
 
 ## 新增模型检查清单
 添加新模型时需同步修改：
-1. `src/constants/models.js` — 在 `MODELS` 对象中添加模型配置（含 paramType、modes、prices/priceCalculator）
-2. `src/constants/modelMeta.js` — 在 `MODEL_MANUFACTURERS` 映射中添加条目
-3. `src/utils/payloadBuilder.js` — 如使用新 paramType，添加对应的 switch-case 分支
-4. `src/utils/modelHelpers.js` — 如有新计费方式，添加计算函数
-5. `src/components/` — 如需新参数控件，创建对应组件并在 HomeScreen 中集成
-6. `api.js` — 如需导出新公共接口，在此添加重新导出
+1. `src/constants/models.js` — `MODELS` 对象中添加模型配置（paramType、modes、prices/priceCalculator）
+2. `src/constants/modelMeta.js` — `MODEL_MANUFACTURERS` 映射中添加条目
+3. `src/components/HomeParamControls.js` — 若新的 paramType，添加 import + case 分支
+4. `src/utils/payloadBuilder.js` — 若新的 paramType，添加 switch-case
+5. `src/utils/modelHelpers.js` — 若新计费方式，添加计算函数
+6. `src/components/` — 若新参数控件，创建组件并在 `HomeParamControls.js` 中引入
 
 ## 构建（Build）
 - *用户明确要构建apk时*，阅读参考文档 `reference\apk-build-reference.md`

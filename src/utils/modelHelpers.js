@@ -150,6 +150,16 @@ export function calculatePrice(modelId, params) {
 }
 
 /**
+ * 判断模型是否按 tokens 计费（价格无法在提交前确定）。
+ * @param {string} modelId - 模型ID
+ * @returns {boolean}
+ */
+export function isTokenPricedModel(modelId) {
+  const model = getModelInfo(modelId);
+  return !!(model.prices?.input_per_1k_tokens || model.priceFormula);
+}
+
+/**
  * 获取模型支持的宽高比列表。
  * @param {string} modelId - 模型ID
  * @param {string} mode - 当前模式（'text-to-image' 或 'image-to-image'）
@@ -158,6 +168,7 @@ export function calculatePrice(modelId, params) {
 export function getRatios(modelId, mode) {
   const model = getModelInfo(modelId);
   if (mode === 'image-to-image') return model.imageToImageRatios || [];
+  if (model.videoRatios?.length) return model.videoRatios;
   return model.textToImageRatios || [];
 }
 

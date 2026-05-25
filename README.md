@@ -130,10 +130,12 @@ npx eas build --platform android --profile preview --local
 ├── index.js                  # 应用入口
 ├── api.js                    # API 兼容层（重新导出）
 ├── package.json              # 依赖配置
+├── package-lock.json         # 依赖锁定
 ├── app.json                  # Expo 配置
 ├── eas.json                  # EAS Build 配置
 ├── build-android.ps1         # APK 一键构建脚本（prebuild → 修补 → Gradle）
-├── scripts/                  # 构建辅助脚本
+├── scripts/
+│   └── patch-android-build.ps1   # post-prebuild 配置修补
 ├── src/
 │   ├── context/              # 全局状态管理
 │   ├── screens/              # 页面级组件
@@ -143,7 +145,7 @@ npx eas build --platform android --profile preview --local
 │   ├── utils/                # 工具函数
 │   └── services/             # API 服务层
 ├── assets/                   # 图标资源
-├── reference/                # 参考文档
+├── reference/                # 参考文档（BizyAir API 参考等）
 └── .env.example              # 环境变量模板
 ```
 

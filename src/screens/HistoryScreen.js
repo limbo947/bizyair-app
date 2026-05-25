@@ -22,6 +22,7 @@ import { AudioPlayer } from '../components/AudioPlayer';
 import { ImageViewer } from '../components/ImageViewer';
 import { TextResultView } from '../components/TextResultView';
 import { PAGE_SIZE, TAB_HISTORY } from '../constants/models';
+import { isTokenPricedModel } from '../utils/modelHelpers';
 import { Radius, Spacing } from '../constants/theme';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { useTheme } from '../context/ThemeContext';
@@ -300,7 +301,7 @@ export function HistoryScreen() {
             <Text style={styles.historyMeta}>{item.modelName} · {item.actualResolution || item.resolution} · {item.date}</Text>
             {duration ? <Text style={styles.historyDuration}>⏱ 用时 {duration}</Text> : null}
             <View style={styles.historyBottomRow}>
-              <Text style={styles.historyPrice}>{item.price} 金币</Text>
+              <Text style={styles.historyPrice}>{isTokenPricedModel(item.modelId) ? '按量计费' : `${item.price} 金币`}</Text>
               <View style={styles.historyActions}>
                 {((item.imageUrl && !batchMode) || (item.outputType === 'video' && item.videoUrl && !batchMode) || (item.outputType === 'audio' && item.audioUrl && !batchMode)) ? (
                   <TouchableOpacity style={[styles.iconButton, styles.iconButtonSuccess]} onPress={() => handleDownload(item)}>

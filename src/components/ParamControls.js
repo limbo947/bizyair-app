@@ -1,9 +1,19 @@
 import React from 'react';
-import { Text, View, TextInput, TouchableOpacity } from 'react-native';
+import { Text, View, TextInput, TouchableOpacity, Switch } from 'react-native';
 import { QUALITY_LABELS, SIZE_PRESETS } from '../constants/models';
 import { Radius, Spacing } from '../constants/theme';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { useTheme } from '../context/ThemeContext';
+
+/** 参数标签：必选参数显示红色 *，可选参数显示灰色 (可选) */
+function ParamLabel({ label, required, style }) {
+  const { colors } = useTheme();
+  return (
+    <Text style={[{ fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginBottom: Spacing.sm, textTransform: 'uppercase', letterSpacing: 0.5 }, style]}>
+      {label}{required ? <Text style={{ color: '#E74C3C' }}> *</Text> : <Text style={{ color: colors.textTertiary, fontWeight: '400', textTransform: 'none' }}> (可选)</Text>}
+    </Text>
+  );
+}
 
 function useStyles() {
   const styles = useThemedStyles(createStyles);
@@ -11,12 +21,12 @@ function useStyles() {
   return { styles, colors };
 }
 
-export function ResolutionRatioControls({ currentResolutions, currentRatios, resolution, aspectRatio, setResolution, setAspectRatio }) {
+export function ResolutionRatioControls({ currentResolutions, currentRatios, resolution, aspectRatio, setResolution, setAspectRatio, seed, setSeed, webSearch, setWebSearch, temperature, setTemperature, topP, setTopP, maxTokens, setMaxTokens, supportsSeed, supportsWebSearch, supportsTemperature, supportsTopP, supportsMaxTokens, resolutionRequired }) {
   const { styles, colors } = useStyles();
   return (
     <>
       <View style={styles.card}>
-        <Text style={styles.label}>分辨率</Text>
+        <ParamLabel label="分辨率" required={resolutionRequired !== false} />
         <View style={styles.selectorRow}>
           {currentResolutions.map((r) => (
             <TouchableOpacity key={r} style={[styles.selectorButton, resolution === r && styles.selectorButtonActive]} onPress={() => setResolution(r)}>
@@ -27,7 +37,7 @@ export function ResolutionRatioControls({ currentResolutions, currentRatios, res
       </View>
       {currentRatios.length > 0 && (
         <View style={styles.card}>
-          <Text style={styles.label}>宽高比</Text>
+          <ParamLabel label="宽高比" required={false} />
           <View style={styles.aspectRatioGrid}>
             {currentRatios.map((r) => (
               <TouchableOpacity key={r} style={[styles.ratioButton, aspectRatio === r && styles.ratioButtonActive]} onPress={() => setAspectRatio(r)}>
@@ -37,12 +47,44 @@ export function ResolutionRatioControls({ currentResolutions, currentRatios, res
           </View>
         </View>
       )}
+      {supportsWebSearch && (
+        <View style={styles.card}>
+          <View style={styles.switchRow}>
+            <ParamLabel label="联网搜索" required={false} style={{ marginBottom: 0 }} />
+            <Switch value={webSearch} onValueChange={setWebSearch} trackColor={{ false: colors.bg, true: colors.primary }} />
+          </View>
+        </View>
+      )}
+      {supportsTemperature && (
+        <View style={styles.card}>
+          <ParamLabel label="温度" required={false} />
+          <TextInput style={styles.dimInputFull} value={String(temperature)} onChangeText={(text) => setTemperature(parseFloat(text) || 0)} keyboardType="decimal-pad" placeholder="0 ~ 2，默认 0.95" placeholderTextColor={colors.textTertiary} />
+        </View>
+      )}
+      {supportsTopP && (
+        <View style={styles.card}>
+          <ParamLabel label="Top-P 采样" required={false} />
+          <TextInput style={styles.dimInputFull} value={String(topP)} onChangeText={(text) => setTopP(parseFloat(text) || 0)} keyboardType="decimal-pad" placeholder="0 ~ 1，默认 0.95" placeholderTextColor={colors.textTertiary} />
+        </View>
+      )}
+      {supportsMaxTokens && (
+        <View style={styles.card}>
+          <ParamLabel label="最大输出 Token" required={false} />
+          <TextInput style={styles.dimInputFull} value={String(maxTokens)} onChangeText={(text) => setMaxTokens(parseInt(text) || 1)} keyboardType="numeric" placeholder="1 ~ 32768，默认 1" placeholderTextColor={colors.textTertiary} />
+        </View>
+      )}
+      {supportsSeed && (
+        <View style={styles.card}>
+          <ParamLabel label="种子" required={false} />
+          <TextInput style={styles.dimInputFull} value={seed || ''} onChangeText={(text) => setSeed(text.replace(/[^0-9-]/g, ''))} keyboardType="numeric" placeholder="0 ~ 2147483647，-1 为随机" placeholderTextColor={colors.textTertiary} />
+        </View>
+      )}
     </>
   );
 }
 
 export function WidthHeightQualityControls({ sizePreset, setSizePreset, customWidth, setCustomWidth, customHeight, setCustomHeight, quality, setQuality, modelQualities }) {
-  const { styles, colors } = useStyles();
+  const { styles } = useStyles();
   const w = parseInt(customWidth) || 0;
   const h = parseInt(customHeight) || 0;
   const pixels = w * h;
@@ -53,7 +95,7 @@ export function WidthHeightQualityControls({ sizePreset, setSizePreset, customWi
   return (
     <>
       <View style={styles.card}>
-        <Text style={styles.label}>尺寸预设</Text>
+        <ParamLabel label="尺寸预设" required={false} />
         <View style={styles.presetGrid}>
           {SIZE_PRESETS.map((p, i) => (
             <TouchableOpacity key={i} style={[styles.presetButton, sizePreset === i && styles.presetButtonActive]}
@@ -65,7 +107,7 @@ export function WidthHeightQualityControls({ sizePreset, setSizePreset, customWi
         </View>
       </View>
       <View style={styles.card}>
-        <Text style={styles.label}>自定义尺寸</Text>
+        <ParamLabel label="图片尺寸" required />
         <View style={styles.dimsRow}>
           <View style={styles.dimWrap}>
             <Text style={styles.dimLabel}>宽</Text>
@@ -87,7 +129,7 @@ export function WidthHeightQualityControls({ sizePreset, setSizePreset, customWi
         <Text style={styles.priceHint}>宽高范围: 480~3840，步进16，宽高比≤3:1</Text>
       </View>
       <View style={styles.card}>
-        <Text style={styles.label}>质量</Text>
+        <ParamLabel label="质量" required />
         <View style={styles.selectorRow}>
           {(modelQualities || []).map((q) => (
             <TouchableOpacity key={q} style={[styles.selectorButton, quality === q && styles.selectorButtonActive]} onPress={() => setQuality(q)}>
@@ -101,10 +143,10 @@ export function WidthHeightQualityControls({ sizePreset, setSizePreset, customWi
 }
 
 export function SizeOnlyControls({ currentResolutions, resolution, setResolution }) {
-  const { styles, colors } = useStyles();
+  const { styles } = useStyles();
   return (
     <View style={styles.card}>
-      <Text style={styles.label}>尺寸</Text>
+      <ParamLabel label="尺寸" required={false} />
       <View style={styles.selectorRow}>
         {currentResolutions.map((r) => (
           <TouchableOpacity key={r} style={[styles.selectorButton, resolution === r && styles.selectorButtonActive]} onPress={() => setResolution(r)}>
@@ -117,10 +159,10 @@ export function SizeOnlyControls({ currentResolutions, resolution, setResolution
 }
 
 export function FluxKontextControls({ currentRatios, aspectRatio, setAspectRatio }) {
-  const { styles, colors } = useStyles();
+  const { styles } = useStyles();
   return (
     <View style={styles.card}>
-      <Text style={styles.label}>宽高比</Text>
+      <ParamLabel label="宽高比" required={false} />
       <View style={styles.aspectRatioGrid}>
         {currentRatios.map((r) => (
           <TouchableOpacity key={r} style={[styles.ratioButton, aspectRatio === r && styles.ratioButtonActive]} onPress={() => setAspectRatio(r)}>
@@ -132,12 +174,12 @@ export function FluxKontextControls({ currentRatios, aspectRatio, setAspectRatio
   );
 }
 
-export function WanSizeControls({ currentResolutions, resolution, setResolution, customWidth, setCustomWidth, customHeight, setCustomHeight }) {
+export function WanSizeControls({ currentResolutions, resolution, setResolution, customWidth, setCustomWidth, customHeight, setCustomHeight, seed, setSeed, watermark, setWatermark, enableSequential, setEnableSequential, thinkingMode, setThinkingMode, colorPalette, setColorPalette, supportsSeed, supportsWatermark, supportsEnableSequential, supportsThinkingMode, supportsColorPalette, supportsBboxList, bboxList, setBboxList, mode }) {
   const { styles, colors } = useStyles();
   return (
     <>
       <View style={styles.card}>
-        <Text style={styles.label}>尺寸</Text>
+        <ParamLabel label="尺寸" required />
         <View style={styles.selectorRow}>
           {currentResolutions.map((r) => (
             <TouchableOpacity key={r} style={[styles.selectorButton, resolution === r && styles.selectorButtonActive]} onPress={() => setResolution(r)}>
@@ -148,7 +190,7 @@ export function WanSizeControls({ currentResolutions, resolution, setResolution,
       </View>
       {resolution === 'Custom' && (
         <View style={styles.card}>
-          <Text style={styles.label}>自定义尺寸</Text>
+          <ParamLabel label="自定义尺寸" required />
           <View style={styles.dimsRow}>
             <View style={styles.dimWrap}>
               <Text style={styles.dimLabel}>宽</Text>
@@ -163,16 +205,58 @@ export function WanSizeControls({ currentResolutions, resolution, setResolution,
           <Text style={styles.priceHint}>宽高范围: 768~4096，宽高比1:8~8:1</Text>
         </View>
       )}
+      {supportsEnableSequential && (
+        <View style={styles.card}>
+          <View style={styles.switchRow}>
+            <ParamLabel label="组图模式" required={false} style={{ marginBottom: 0 }} />
+            <Switch value={enableSequential} onValueChange={setEnableSequential} trackColor={{ false: colors.bg, true: colors.primary }} />
+          </View>
+        </View>
+      )}
+      {supportsThinkingMode && !enableSequential && (
+        <View style={styles.card}>
+          <View style={styles.switchRow}>
+            <ParamLabel label="增强推理" required={false} style={{ marginBottom: 0 }} />
+            <Switch value={thinkingMode} onValueChange={setThinkingMode} trackColor={{ false: colors.bg, true: colors.primary }} />
+          </View>
+        </View>
+      )}
+      {supportsWatermark && (
+        <View style={styles.card}>
+          <View style={styles.switchRow}>
+            <ParamLabel label="AI 水印" required={false} style={{ marginBottom: 0 }} />
+            <Switch value={watermark} onValueChange={setWatermark} trackColor={{ false: colors.bg, true: colors.primary }} />
+          </View>
+        </View>
+      )}
+      {supportsColorPalette && (
+        <View style={styles.card}>
+          <ParamLabel label="调色板" required={false} />
+          <TextInput style={styles.dimInputFull} value={colorPalette || ''} onChangeText={setColorPalette} placeholder="输入调色板 JSON 或留空" placeholderTextColor={colors.textTertiary} />
+        </View>
+      )}
+      {supportsBboxList && mode === 'image-to-image' && (
+        <View style={styles.card}>
+          <ParamLabel label="编辑区域" required={false} />
+          <TextInput style={styles.dimInputFull} value={bboxList || ''} onChangeText={setBboxList} placeholder="输入 bbox JSON 数组或留空" placeholderTextColor={colors.textTertiary} multiline />
+        </View>
+      )}
+      {supportsSeed && (
+        <View style={styles.card}>
+          <ParamLabel label="种子" required={false} />
+          <TextInput style={styles.dimInputFull} value={seed || ''} onChangeText={(text) => setSeed(text.replace(/[^0-9-]/g, ''))} keyboardType="numeric" placeholder="-1 为随机" placeholderTextColor={colors.textTertiary} />
+        </View>
+      )}
     </>
   );
 }
 
-export function WidthHeightControls({ sizePreset, setSizePreset, customWidth, setCustomWidth, customHeight, setCustomHeight }) {
+export function WidthHeightControls({ sizePreset, setSizePreset, customWidth, setCustomWidth, customHeight, setCustomHeight, negativePrompt, setNegativePrompt, seed, setSeed, batchSize, setBatchSize, supportsNegativePrompt, supportsSeed, supportsBatchSize }) {
   const { styles, colors } = useStyles();
   return (
     <>
       <View style={styles.card}>
-        <Text style={styles.label}>尺寸预设</Text>
+        <ParamLabel label="尺寸预设" required={false} />
         <View style={styles.presetGrid}>
           {SIZE_PRESETS.map((p, i) => (
             <TouchableOpacity key={i} style={[styles.presetButton, sizePreset === i && styles.presetButtonActive]}
@@ -184,7 +268,7 @@ export function WidthHeightControls({ sizePreset, setSizePreset, customWidth, se
         </View>
       </View>
       <View style={styles.card}>
-        <Text style={styles.label}>自定义尺寸</Text>
+        <ParamLabel label="自定义尺寸" required={false} />
         <View style={styles.dimsRow}>
           <View style={styles.dimWrap}>
             <Text style={styles.dimLabel}>宽</Text>
@@ -197,6 +281,30 @@ export function WidthHeightControls({ sizePreset, setSizePreset, customWidth, se
           </View>
         </View>
       </View>
+      {supportsNegativePrompt && (
+        <View style={styles.card}>
+          <ParamLabel label="反向提示词" required={false} />
+          <TextInput style={styles.dimInputFull} value={negativePrompt || ''} onChangeText={setNegativePrompt} placeholder="描述不想要的元素" placeholderTextColor={colors.textTertiary} multiline />
+        </View>
+      )}
+      {supportsBatchSize && (
+        <View style={styles.card}>
+          <ParamLabel label="生成数量" required />
+          <View style={styles.selectorRow}>
+            {[1, 2, 3, 4].map((n) => (
+              <TouchableOpacity key={n} style={[styles.selectorButton, batchSize === n && styles.selectorButtonActive]} onPress={() => setBatchSize(n)}>
+                <Text style={[styles.selectorText, batchSize === n && styles.selectorTextActive]}>{n}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      )}
+      {supportsSeed && (
+        <View style={styles.card}>
+          <ParamLabel label="种子" required={false} />
+          <TextInput style={styles.dimInputFull} value={seed || ''} onChangeText={(text) => setSeed(text.replace(/[^0-9]/g, ''))} keyboardType="numeric" placeholder="1~2147483647，留空随机" placeholderTextColor={colors.textTertiary} />
+        </View>
+      )}
     </>
   );
 }
@@ -228,4 +336,6 @@ const createStyles = (colors) => ({
   dimLabel: { position: 'absolute', left: 8, top: 0, bottom: 0, textAlignVertical: 'center', fontSize: 13, color: colors.textTertiary, fontWeight: '500', zIndex: 1, lineHeight: 40 },
   dimInput: { fontSize: 15, color: colors.textPrimary, borderWidth: 0, borderRadius: Radius.sm, paddingLeft: 32, paddingRight: 10, paddingVertical: 10, textAlign: 'right', backgroundColor: colors.bg },
   dimX: { fontSize: 18, color: colors.textTertiary, fontWeight: '400', lineHeight: 40 },
+  switchRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  dimInputFull: { fontSize: 15, color: colors.textPrimary, borderWidth: 0, borderRadius: Radius.sm, paddingHorizontal: Spacing.sm, paddingVertical: 10, backgroundColor: colors.bg },
 });

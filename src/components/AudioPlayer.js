@@ -1,8 +1,8 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, Modal, ActivityIndicator, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Audio } from 'expo-av';
-import { Radius, Spacing } from '../constants/theme';
+import { Spacing } from '../constants/theme';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { useTheme } from '../context/ThemeContext';
 
@@ -63,7 +63,7 @@ function WebAudioPlayer({ visible, audioUrl, onClose }) {
 
   const togglePlay = () => {
     if (!audioRef.current) return;
-    audioRef.current.paused ? audioRef.current.play() : audioRef.current.pause();
+    if (audioRef.current.paused) { audioRef.current.play(); } else { audioRef.current.pause(); }
   };
 
   const toggleMute = () => {
@@ -141,23 +141,10 @@ function NativeAudioPlayer({ visible, audioUrl, onClose }) {
   const soundRef = useRef(null);
   const tickRef = useRef(null);
 
-  useEffect(() => { if (!visible) clean(); }, [visible]);
-  useEffect(() => () => clean(), []);
-
   const clean = () => { clearInterval(tickRef.current); tickRef.current = null; if (soundRef.current) { try { soundRef.current.unloadAsync(); } catch {} soundRef.current = null; } setIsPlaying(false); setPosition(0); setDuration(0); setError(''); };
 
-  const handlePlay = useCallback(async () => {
-    if (!audioUrl) return;
-    if (isPlaying && soundRef.current) { await soundRef.current.pauseAsync(); setIsPlaying(false); clearInterval(tickRef.current); return; }
-    if (soundRef.current && !isPlaying) { try { const s = await soundRef.current.getStatusAsync(); s.isLoaded && s.positionMillis === s.durationMillis ? await soundRef.current.replayAsync() : await soundRef.current.playAsync(); setIsPlaying(true); startTick(); } catch { setError('播放失败'); } return; }
-
-    setIsLoading(true); setError('');
-    try {
-      await Audio.setAudioModeAsync({ allowsRecordingIOS: false, playsInSilentModeIOS: true, staysActiveInBackground: false });
-      const { sound } = await Audio.Sound.createAsync({ uri: audioUrl }, { shouldPlay: true, volume }, onStatus);
-      soundRef.current = sound; setIsPlaying(true); setIsLoading(false); startTick();
-    } catch { setIsLoading(false); setError('音频加载失败，请检查网络连接'); }
-  }, [audioUrl, isPlaying, volume]);
+  useEffect(() => { if (!visible) clean(); }, [visible]);
+  useEffect(() => () => clean(), []);
 
   const onStatus = (s) => {
     if (!s.isLoaded) return;
@@ -166,6 +153,19 @@ function NativeAudioPlayer({ visible, audioUrl, onClose }) {
   };
 
   const startTick = () => { clearInterval(tickRef.current); tickRef.current = setInterval(async () => { if (soundRef.current) { try { const s = await soundRef.current.getStatusAsync(); if (s.isLoaded) setPosition(s.positionMillis || 0); } catch {} } }, 200); };
+
+  const handlePlay = useCallback(async () => {
+    if (!audioUrl) return;
+    if (isPlaying && soundRef.current) { await soundRef.current.pauseAsync(); setIsPlaying(false); clearInterval(tickRef.current); return; }
+    if (soundRef.current && !isPlaying) { try { const s = await soundRef.current.getStatusAsync(); if (s.isLoaded && s.positionMillis === s.durationMillis) { await soundRef.current.replayAsync(); } else { await soundRef.current.playAsync(); } setIsPlaying(true); startTick(); } catch { setError('播放失败'); } return; }
+
+    setIsLoading(true); setError('');
+    try {
+      await Audio.setAudioModeAsync({ allowsRecordingIOS: false, playsInSilentModeIOS: true, staysActiveInBackground: false });
+      const { sound } = await Audio.Sound.createAsync({ uri: audioUrl }, { shouldPlay: true, volume }, onStatus);
+      soundRef.current = sound; setIsPlaying(true); setIsLoading(false); startTick();
+    } catch { setIsLoading(false); setError('音频加载失败，请检查网络连接'); }
+  }, [audioUrl, isPlaying, volume]);
 
   const seek = useCallback(async (frac) => { if (!soundRef.current || !duration) return; const t = frac * duration; try { await soundRef.current.setPositionAsync(t); setPosition(t); } catch {} }, [duration]);
 

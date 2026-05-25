@@ -180,8 +180,8 @@ async function uploadImageFile(apiKey, file) {
   const contentType = file.type || 'application/octet-stream';
   const date = new Date().toUTCString();
 
-  // 使用 x-oss-date 时，Date 位置留空（OSS V1 签名规范）
-  const stringToSign = `PUT\n\n${contentType}\n\nx-oss-date:${date}\nx-oss-security-token:${securityToken}\n/${bucket}/${objectKey}`;
+  // OSS V1 签名：使用 x-oss-date 时，Date 位置仍需填入 x-oss-date 的值
+  const stringToSign = `PUT\n\n${contentType}\n${date}\nx-oss-date:${date}\nx-oss-security-token:${securityToken}\n/${bucket}/${objectKey}`;
 
   const shaObj = new jsSHA('SHA-1', 'TEXT');
   shaObj.setHMACKey(accessKeySecret, 'TEXT');

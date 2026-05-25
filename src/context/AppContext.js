@@ -49,15 +49,6 @@ export function AppProvider({ children }) {
   const resumeTimerRef = useRef(null);
 
   useEffect(() => {
-    loadApiKeys();
-    loadHistory();
-    loadActiveTab();
-    loadHomeState();
-    loadTotalCoins();
-    loadFavorites();
-  }, []);
-
-  useEffect(() => {
     return () => {
       if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
       const intervals = pollingRef.current;
@@ -401,7 +392,9 @@ export function AppProvider({ children }) {
   };
 
   const homeStateRef = useRef(homeState);
-  homeStateRef.current = homeState;
+  useEffect(() => {
+    homeStateRef.current = homeState;
+  }, [homeState]);
 
   const saveHomeState = useCallback(async (state) => {
     try {
@@ -421,15 +414,6 @@ export function AppProvider({ children }) {
       }
     } catch (e) {
       console.error('加载总金币失败:', e);
-    }
-  };
-
-  const saveTotalCoins = async (coins) => {
-    try {
-      await AsyncStorage.setItem(TOTAL_COINS_KEY, String(coins));
-      setTotalCoinsSpent(coins);
-    } catch (e) {
-      console.error('保存总金币失败:', e);
     }
   };
 
@@ -468,6 +452,16 @@ export function AppProvider({ children }) {
       console.error('保存常用模型失败:', e);
     }
   };
+
+  useEffect(() => {
+    loadApiKeys();
+    loadHistory();
+    loadActiveTab();
+    loadHomeState();
+    loadTotalCoins();
+    loadFavorites();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const addFavorite = useCallback((modelId) => {
     if (!MODELS[modelId]) return;

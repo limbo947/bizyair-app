@@ -12,7 +12,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { Video, ResizeMode } from 'expo-av';
 import { Spacing } from '../constants/theme';
 import { useThemedStyles } from '../hooks/useThemedStyles';
-import { useTheme } from '../context/ThemeContext';
 
 const NATIVE = Platform.OS !== 'web';
 
@@ -21,7 +20,6 @@ const NATIVE = Platform.OS !== 'web';
  * ================================================================ */
 function WebVideoPlayer({ visible, videoUrl, onClose }) {
   const s = useThemedStyles(createStyles);
-  const { colors } = useTheme();
   const vidRef = useRef(null);
   const elRef = useRef(null);
   const rafRef = useRef(null);
@@ -76,7 +74,7 @@ function WebVideoPlayer({ visible, videoUrl, onClose }) {
   }, [visible, videoUrl]);
 
   /* ---- controls ---------------------------------------------------------- */
-  const togglePlay = () => { if (!vidRef.current) return; vidRef.current.paused ? vidRef.current.play() : vidRef.current.pause(); };
+  const togglePlay = () => { if (!vidRef.current) return; if (vidRef.current.paused) { vidRef.current.play(); } else { vidRef.current.pause(); } };
 
   const toggleMute = () => {
     if (!vidRef.current) return;
@@ -142,7 +140,6 @@ function WebVideoPlayer({ visible, videoUrl, onClose }) {
  * ================================================================ */
 function NativeVideoPlayer({ visible, videoUrl, onClose }) {
   const s = useThemedStyles(createStyles);
-  const { colors } = useTheme();
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [duration, setDuration] = useState(0);
@@ -153,6 +150,7 @@ function NativeVideoPlayer({ visible, videoUrl, onClose }) {
   const [error, setError] = useState('');
   const videoRef = useRef(null);
 
+  // 可见性变化时重置播放状态
   useEffect(() => { if (!visible) { try { videoRef.current?.stopAsync(); } catch {} setIsPlaying(false); setIsLoading(true); } else { setIsLoading(true); setError(''); setVolume(1); setIsMuted(false); setMutedVolume(1); } }, [visible]);
   useEffect(() => () => { try { videoRef.current?.stopAsync(); } catch {} }, []);
 
@@ -164,7 +162,7 @@ function NativeVideoPlayer({ visible, videoUrl, onClose }) {
 
   const togglePlay = useCallback(async () => {
     if (!videoRef.current) return;
-    try { if (isPlaying) await videoRef.current.pauseAsync(); else { const st = await videoRef.current.getStatusAsync(); st.isLoaded && st.didJustFinish ? await videoRef.current.replayAsync() : await videoRef.current.playAsync(); } } catch {}
+    try { if (isPlaying) { await videoRef.current.pauseAsync(); } else { const st = await videoRef.current.getStatusAsync(); if (st.isLoaded && st.didJustFinish) { await videoRef.current.replayAsync(); } else { await videoRef.current.playAsync(); } } } catch {}
   }, [isPlaying]);
 
   const toggleMute = () => { if (isMuted) { setVolume(mutedVolume); setIsMuted(false); } else { setMutedVolume(volume); setVolume(0); setIsMuted(true); } };

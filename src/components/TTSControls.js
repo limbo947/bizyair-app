@@ -10,6 +10,16 @@ import { Radius, Spacing } from '../constants/theme';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { useTheme } from '../context/ThemeContext';
 
+/** 参数标签：必选参数显示红色 *，可选参数显示灰色 (可选) */
+function ParamLabel({ label, required, style }) {
+  const { colors } = useTheme();
+  return (
+    <Text style={[{ fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginBottom: Spacing.sm, textTransform: 'uppercase', letterSpacing: 0.5 }, style]}>
+      {label}{required ? <Text style={{ color: '#E74C3C' }}> *</Text> : <Text style={{ color: colors.textTertiary, fontWeight: '400', textTransform: 'none' }}> (可选)</Text>}
+    </Text>
+  );
+}
+
 export function TTSControls({
   voice, setVoice,
   responseFormat, setResponseFormat,
@@ -28,7 +38,7 @@ export function TTSControls({
   return (
     <>
       <View style={styles.card}>
-        <Text style={styles.label}>语音</Text>
+        <ParamLabel label="语音" required />
         <View style={styles.chipRow}>
           {(voices || []).map((v) => (
             <TouchableOpacity
@@ -43,7 +53,7 @@ export function TTSControls({
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.label}>输出格式</Text>
+        <ParamLabel label="输出格式" required={false} />
         <View style={styles.chipRow}>
           {(formats || []).map((f) => (
             <TouchableOpacity
@@ -58,7 +68,7 @@ export function TTSControls({
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.label}>语言</Text>
+        <ParamLabel label="语言" required={false} />
         <View style={styles.chipRow}>
           {(languages || []).map((l) => (
             <TouchableOpacity
@@ -74,7 +84,7 @@ export function TTSControls({
 
       <View style={styles.card}>
         <View style={styles.labelRow}>
-          <Text style={styles.label}>语速</Text>
+          <ParamLabel label="语速" required={false} style={{ marginBottom: 0 }} />
           <View style={styles.valueRow}>
             <TouchableOpacity
               style={styles.stepBtn}
@@ -112,7 +122,7 @@ export function TTSControls({
 
       <View style={styles.card}>
         <View style={styles.labelRow}>
-          <Text style={styles.label}>最大 Tokens</Text>
+          <ParamLabel label="最大 Tokens" required={false} style={{ marginBottom: 0 }} />
           <Text style={styles.rangeHint}>1 ~ {maxTokensMax || 1024}</Text>
         </View>
         <View style={styles.inputRow}>
@@ -151,7 +161,7 @@ export function TTSControls({
 
       {instructions !== undefined ? (
         <View style={styles.card}>
-          <Text style={styles.label}>指令</Text>
+          <ParamLabel label="指令 (instructions)" required={false} />
           <TextInput
             style={styles.promptInput}
             value={instructions}

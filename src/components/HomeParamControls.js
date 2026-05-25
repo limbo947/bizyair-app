@@ -126,6 +126,37 @@ export function HomeParamControls({
   setLanguage,
   speed,
   setSpeed,
+  // wan-size 新增参数
+  enableSequential,
+  setEnableSequential,
+  thinkingMode,
+  setThinkingMode,
+  colorPalette,
+  setColorPalette,
+  // vidu style
+  style,
+  setStyle,
+  // resolution-ratio / width-height 新增参数
+  batchSize,
+  setBatchSize,
+  webSearch,
+  setWebSearch,
+  returnLastFrame,
+  setReturnLastFrame,
+  topP,
+  setTopP,
+  // 阿里系新增参数
+  audioSetting,
+  setAudioSetting,
+  drivingAudio,
+  setDrivingAudio,
+  audioUrl,
+  setAudioUrl,
+  referenceVoice,
+  setReferenceVoice,
+  bboxList,
+  setBboxList,
+  mode,
 }) {
   switch (paramType) {
     case 'resolution-ratio':
@@ -137,6 +168,22 @@ export function HomeParamControls({
           aspectRatio={aspectRatio}
           setResolution={setResolution}
           setAspectRatio={setAspectRatio}
+          seed={seed}
+          setSeed={setSeed}
+          webSearch={webSearch}
+          setWebSearch={setWebSearch}
+          temperature={temperature}
+          setTemperature={setTemperature}
+          topP={topP}
+          setTopP={setTopP}
+          maxTokens={maxTokens}
+          setMaxTokens={setMaxTokens}
+          supportsSeed={currentModel.supportsSeed}
+          supportsWebSearch={currentModel.supportsWebSearch}
+          supportsTemperature={currentModel.supportsTemperature}
+          supportsTopP={currentModel.supportsTopP}
+          supportsMaxTokens={currentModel.supportsMaxTokens}
+          resolutionRequired={currentModel.resolutionRequired !== false}
         />
       );
     case 'width-height-quality':
@@ -179,6 +226,25 @@ export function HomeParamControls({
           setCustomWidth={setCustomWidth}
           customHeight={customHeight}
           setCustomHeight={setCustomHeight}
+          seed={seed}
+          setSeed={setSeed}
+          watermark={watermark}
+          setWatermark={setWatermark}
+          enableSequential={enableSequential}
+          setEnableSequential={setEnableSequential}
+          thinkingMode={thinkingMode}
+          setThinkingMode={setThinkingMode}
+          colorPalette={colorPalette}
+          setColorPalette={setColorPalette}
+          supportsSeed={currentModel.supportsSeed}
+          supportsWatermark={currentModel.supportsWatermark}
+          supportsEnableSequential={currentModel.supportsEnableSequential}
+          supportsThinkingMode={currentModel.supportsThinkingMode}
+          supportsColorPalette={currentModel.supportsColorPalette}
+          supportsBboxList={currentModel.supportsBboxList}
+          bboxList={bboxList}
+          setBboxList={setBboxList}
+          mode={mode}
         />
       );
     case 'width-height':
@@ -190,6 +256,15 @@ export function HomeParamControls({
           setCustomWidth={setCustomWidth}
           customHeight={customHeight}
           setCustomHeight={setCustomHeight}
+          negativePrompt={negativePrompt}
+          setNegativePrompt={setNegativePrompt}
+          seed={seed}
+          setSeed={setSeed}
+          batchSize={batchSize}
+          setBatchSize={setBatchSize}
+          supportsNegativePrompt={currentModel.supportsNegativePrompt}
+          supportsSeed={currentModel.supportsSeed}
+          supportsBatchSize={currentModel.supportsBatchSize}
         />
       );
     case 'seedance-video':
@@ -208,7 +283,15 @@ export function HomeParamControls({
           seed={seed}
           setSeed={setSeed}
           supportsAudio={currentModel.supportsAudio}
+          supportsSeed={currentModel.supportsSeed}
+          supportsReturnLastFrame={currentModel.supportsReturnLastFrame}
+          supportsWebSearch={currentModel.supportsWebSearch}
+          webSearch={webSearch}
+          setWebSearch={setWebSearch}
+          returnLastFrame={returnLastFrame}
+          setReturnLastFrame={setReturnLastFrame}
           minDuration={currentModel.minDuration}
+          mode={mode}
         />
       );
     case 'kling-video':
@@ -225,12 +308,16 @@ export function HomeParamControls({
           setMultiShot={setMultiShot}
           shotType={shotType}
           setShotType={setShotType}
+          multiPrompt={multiPrompt}
+          setMultiPrompt={setMultiPrompt}
           seed={seed}
           setSeed={setSeed}
           maxDuration={currentModel.maxDuration}
           minDuration={currentModel.minDuration}
           supportsMultiShot={currentModel.supportsMultiShot}
           supportsSeed={currentModel.supportsSeed}
+          mode={mode}
+          soundRequired={currentModel.soundRequired}
         />
       );
     case 'kling-o3-4k':
@@ -279,9 +366,15 @@ export function HomeParamControls({
           supportsOffPeak={currentModel.supportsOffPeak}
           seed={seed}
           setSeed={setSeed}
+          supportsSeed={currentModel.supportsSeed}
           movementAmplitude={movementAmplitude}
           setMovementAmplitude={setMovementAmplitude}
           supportsMovementAmplitude={currentModel.supportsMovementAmplitude}
+          supportsIsRec={currentModel.supportsIsRec}
+          style={style}
+          setStyle={setStyle}
+          styleOptions={currentModel.styleOptions}
+          mode={mode}
         />
       );
     case 'wan-video':
@@ -308,6 +401,21 @@ export function HomeParamControls({
           supportsNegativePrompt={currentModel.supportsNegativePrompt}
           maxDuration={currentModel.maxDuration}
           minDuration={currentModel.minDuration}
+          audioSetting={audioSetting}
+          setAudioSetting={setAudioSetting}
+          drivingAudio={drivingAudio}
+          setDrivingAudio={setDrivingAudio}
+          audioUrl={audioUrl}
+          setAudioUrl={setAudioUrl}
+          referenceVoice={referenceVoice}
+          setReferenceVoice={setReferenceVoice}
+          supportsAudioSetting={currentModel.supportsAudioSetting}
+          supportsDrivingAudio={currentModel.supportsDrivingAudio}
+          supportsAudioUrl={currentModel.supportsAudioUrl}
+          supportsRefImages={currentModel.supportsRefImages}
+          supportsRefVideos={currentModel.supportsRefVideos}
+          supportsReferenceVoice={currentModel.supportsReferenceVoice}
+          mode={mode}
         />
       );
     case 'wan-i2v':
@@ -322,8 +430,11 @@ export function HomeParamControls({
           setPromptExtend={setPromptExtend}
           audio={audio}
           setAudio={setAudio}
+          audioUrl={audioUrl}
+          setAudioUrl={setAudioUrl}
           supportsPromptExtend={currentModel.supportsPromptExtend}
           supportsAudio={currentModel.supportsAudio}
+          supportsAudioUrl={currentModel.supportsAudioUrl}
           maxDuration={currentModel.maxDuration}
           minDuration={currentModel.minDuration}
         />
@@ -367,6 +478,10 @@ export function HomeParamControls({
           minDuration={currentModel.minDuration}
           seed={seed}
           setSeed={setSeed}
+          audioSetting={audioSetting}
+          setAudioSetting={setAudioSetting}
+          supportsAudioSetting={currentModel.supportsAudioSetting}
+          mode={mode}
         />
       );
     case 'ltx-video':
@@ -393,6 +508,7 @@ export function HomeParamControls({
           durationOptions={currentModel.durationOptions}
           maxDuration={currentModel.maxDuration}
           minDuration={currentModel.minDuration}
+          mode={mode}
         />
       );
     case 'bza-video-v3':
@@ -439,6 +555,7 @@ export function HomeParamControls({
           enableThinking={enableThinking}
           setEnableThinking={setEnableThinking}
           detailOptions={currentModel.detailOptions}
+          maxSystemPromptLength={currentModel.maxSystemPromptLength}
         />
       );
     case 'joycaption':

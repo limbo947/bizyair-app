@@ -65,6 +65,9 @@ export function useFileUpload({
   setImageUrls,
   setLastFrameUrls,
   setVideoUrls,
+  setRefImages,
+  setFirstClipUrls,
+  setFirstFrameUrls,
 }) {
   const handleFileSelect = useCallback(async () => {
     await pickAndUpload({
@@ -102,5 +105,41 @@ export function useFileUpload({
     });
   }, [apiKey, setShowApiKeyInput, setError, setIsUploading, setVideoUrls]);
 
-  return { handleFileSelect, handleLastFrameSelect, handleVideoSelect };
+  const handleRefImageSelect = useCallback(async () => {
+    await pickAndUpload({
+      mimeType: 'image/*',
+      uploadFn: uploadImageFile,
+      apiKey,
+      setShowApiKeyInput,
+      setError,
+      setIsUploading,
+      setUrls: setRefImages,
+    });
+  }, [apiKey, setShowApiKeyInput, setError, setIsUploading, setRefImages]);
+
+  const handleFirstClipSelect = useCallback(async () => {
+    await pickAndUpload({
+      mimeType: 'video/*',
+      uploadFn: uploadVideoFile,
+      apiKey,
+      setShowApiKeyInput,
+      setError,
+      setIsUploading,
+      setUrls: setFirstClipUrls,
+    });
+  }, [apiKey, setShowApiKeyInput, setError, setIsUploading, setFirstClipUrls]);
+
+  const handleFirstFrameSelect = useCallback(async () => {
+    await pickAndUpload({
+      mimeType: 'image/*',
+      uploadFn: uploadImageFile,
+      apiKey,
+      setShowApiKeyInput,
+      setError,
+      setIsUploading,
+      setUrls: setFirstFrameUrls,
+    });
+  }, [apiKey, setShowApiKeyInput, setError, setIsUploading, setFirstFrameUrls]);
+
+  return { handleFileSelect, handleLastFrameSelect, handleVideoSelect, handleRefImageSelect, handleFirstClipSelect, handleFirstFrameSelect };
 }
