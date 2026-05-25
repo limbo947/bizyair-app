@@ -31,7 +31,7 @@ if ($appJsonRaw -match '"reactNativeArchitectures"\s*:\s*\[\s*"arm64-v8a"\s*\]')
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Write-Host "`n[2/8] Auto-incrementing version..." -ForegroundColor Yellow
 
-$appJsonContent = Get-Content $appJsonPath -Raw
+$appJsonContent = [System.IO.File]::ReadAllText($appJsonPath).TrimStart([char]0xFEFF)
 $appJson = $appJsonContent | ConvertFrom-Json
 $oldVersion = $appJson.expo.version
 $versionParts = $oldVersion -split '\.'
