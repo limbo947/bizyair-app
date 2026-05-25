@@ -3,20 +3,31 @@ import {
   StyleSheet,
   Text,
   View,
-  TextInput,
   TouchableOpacity,
   Image,
-  ScrollView,
   ActivityIndicator,
-  Modal,
   FlatList,
   Platform,
+  NativeModules,
+  Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
+import { getVideoThumbnailAsync } from 'expo-video-thumbnails';
 import { useAppContext } from '../context/AppContext';
+import { HistoryModals } from '../components/HistoryModals';
+import { HistoryFilters } from '../components/HistoryFilters';
+import { VideoPlayer } from '../components/VideoPlayer';
+import { AudioPlayer } from '../components/AudioPlayer';
+import { ImageViewer } from '../components/ImageViewer';
+import { TextResultView } from '../components/TextResultView';
 import { PAGE_SIZE, TAB_HISTORY } from '../constants/models';
-import { Colors, Shadows, Radius, Spacing } from '../constants/theme';
+import { isTokenPricedModel } from '../utils/modelHelpers';
+import { Radius, Spacing } from '../constants/theme';
+import { useThemedStyles } from '../hooks/useThemedStyles';
+import { useTheme } from '../context/ThemeContext';
+
+const { AndroidDownloadManager } = NativeModules;
 
 const ACTIVE_STATUSES = ['Pending', 'Running', 'Saving'];
 const FINAL_STATUSES = ['Success', 'Failed'];
@@ -26,15 +37,6 @@ const SORT_OPTIONS = [
   { key: 'oldest', label: '最早优先' },
   { key: 'price_high', label: '价格高→低' },
   { key: 'price_low', label: '价格低→高' },
-];
-
-const FILTER_OPTIONS = [
-  { key: 'all', label: '全部' },
-  { key: 'Pending', label: '排队中' },
-  { key: 'Running', label: '生成中' },
-  { key: 'Saving', label: '转存中' },
-  { key: 'Success', label: '已完成' },
-  { key: 'Failed', label: '失败' },
 ];
 
 function formatDuration(startedAt, completedAt) {
@@ -61,17 +63,19 @@ function triggerDownload(url, filename) {
     document.body.appendChild(anchor);
     anchor.click();
     document.body.removeChild(anchor);
+  } else if (Platform.OS === 'android' && AndroidDownloadManager) {
+    AndroidDownloadManager.downloadFile(url, filename || 'image.jpg');
   } else {
-    const { Linking } = require('react-native');
     Linking.openURL(url);
   }
 }
 
 export function HistoryScreen() {
+  const styles = useThemedStyles(createStyles);
+  const { colors } = useTheme();
   const {
     history,
-    setHistory,
-    persistHistory,
+    removeHistoryItems,
     activeTab,
     refreshRunningTasks,
     totalCoinsSpent,
@@ -82,20 +86,23 @@ export function HistoryScreen() {
   const [filterBy, setFilterBy] = useState('all');
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [previewImage, setPreviewImage] = useState(null);
+  const [videoPreview, setVideoPreview] = useState({ visible: false, url: null });
+  const [audioPreview, setAudioPreview] = useState({ visible: false, url: null });
+  const [textPreview, setTextPreview] = useState({ visible: false, text: '' });
   const [logModal, setLogModal] = useState(null);
   const [showSortPicker, setShowSortPicker] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
   const [batchMode, setBatchMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [isDownloading, setIsDownloading] = useState(false);
+  const downloadingRef = useRef(new Set());
   const [deleteConfirmBatch, setDeleteConfirmBatch] = useState(false);
-  const [copied, setCopied] = useState(null);
-  const [toastMsg, setToastMsg] = useState('');
-  const toastTimer = useRef(null);
   const [tick, setTick] = useState(0);
   const flatListRef = useRef(null);
   const prevActiveTab = useRef(activeTab);
   const tickRef = useRef(null);
+  const thumbCache = useRef({});
+  const [thumbVersion, setThumbVersion] = useState(0);
 
   const hasActiveTasks = history.some((h) => ACTIVE_STATUSES.includes(h.status));
 
@@ -131,11 +138,11 @@ export function HistoryScreen() {
       );
     }
     if (filterBy !== 'all') {
-      items = items.filter((item) => item.status === filterBy);
+      items = items.filter((item) => item.outputType === filterBy);
     }
     switch (sortBy) {
-      case 'newest': items.sort((a, b) => (parseInt(b.id) || 0) - (parseInt(a.id) || 0)); break;
-      case 'oldest': items.sort((a, b) => (parseInt(a.id) || 0) - (parseInt(b.id) || 0)); break;
+      case 'newest': items.sort((a, b) => (b.startedAt || 0) - (a.startedAt || 0)); break;
+      case 'oldest': items.sort((a, b) => (a.startedAt || 0) - (b.startedAt || 0)); break;
       case 'price_high': items.sort((a, b) => (b.price || 0) - (a.price || 0)); break;
       case 'price_low': items.sort((a, b) => (a.price || 0) - (b.price || 0)); break;
     }
@@ -145,36 +152,62 @@ export function HistoryScreen() {
   const displayedItems = useMemo(() => filteredHistory.slice(0, visibleCount), [filteredHistory, visibleCount]);
   const hasMore = visibleCount < filteredHistory.length;
 
+  useEffect(() => {
+    const videoItems = displayedItems
+      .filter((item) => item.outputType === 'video' && item.videoUrl && !thumbCache.current[item.videoUrl]);
+    if (videoItems.length === 0) return;
+    let cancelled = false;
+    const loadThumbnails = async () => {
+      for (const item of videoItems) {
+        if (cancelled) break;
+        try {
+          const { uri } = await getVideoThumbnailAsync(item.videoUrl, { time: 2000 });
+          if (!cancelled && uri) {
+            thumbCache.current[item.videoUrl] = uri;
+            setThumbVersion((v) => v + 1);
+          }
+        } catch {}
+      }
+    };
+    loadThumbnails();
+    return () => { cancelled = true; };
+  }, [displayedItems]);
+
   const loadMore = useCallback(() => { if (hasMore) setVisibleCount((prev) => prev + PAGE_SIZE); }, [hasMore]);
   const handleSearch = useCallback((text) => { setSearchText(text); setVisibleCount(PAGE_SIZE); }, []);
   const handleSortChange = useCallback((key) => { setSortBy(key); setShowSortPicker(false); setVisibleCount(PAGE_SIZE); }, []);
   const handleFilterChange = useCallback((key) => { setFilterBy(key); setVisibleCount(PAGE_SIZE); setBatchMode(false); setSelectedIds(new Set()); }, []);
 
   const handleDelete = useCallback((id) => {
-    const updated = history.filter((item) => item.id !== id);
-    setHistory(updated); persistHistory(updated);
+    removeHistoryItems((item) => item.id === id);
     setSelectedIds((prev) => { const next = new Set(prev); next.delete(id); return next; });
     setDeleteConfirmId(null);
-  }, [history, setHistory, persistHistory]);
+  }, [removeHistoryItems]);
 
   const handleBatchDelete = useCallback(() => {
     if (selectedIds.size === 0) return;
-    const updated = history.filter((item) => !selectedIds.has(item.id));
-    setHistory(updated); persistHistory(updated);
+    removeHistoryItems((item) => selectedIds.has(item.id));
     setSelectedIds(new Set()); setBatchMode(false); setDeleteConfirmBatch(false);
-  }, [history, setHistory, persistHistory, selectedIds]);
+  }, [removeHistoryItems, selectedIds]);
 
   const handleDownload = useCallback((item) => {
-    if (!item.imageUrl) return;
-    triggerDownload(item.imageUrl, `bizyair_${item.id}.jpg`);
-  }, []);
+    if (isDownloading || downloadingRef.current.has(item.id)) return;
+    downloadingRef.current.add(item.id);
+    const ext = item.outputType === 'video' ? '.mp4' : item.outputType === 'audio' ? `.${item.responseFormat || 'mp3'}` : '.jpg';
+    const url = item.videoUrl || item.audioUrl || item.imageUrl;
+    if (!url) { downloadingRef.current.delete(item.id); return; }
+    triggerDownload(url, `bizyair_${item.id}${ext}`);
+    setTimeout(() => downloadingRef.current.delete(item.id), 2000);
+  }, [isDownloading]);
 
   const handleBatchDownload = useCallback(async () => {
-    const items = history.filter((item) => selectedIds.has(item.id) && item.imageUrl);
+    const items = history.filter((item) => selectedIds.has(item.id) && (item.imageUrl || item.videoUrl || item.audioUrl));
     if (items.length === 0) return;
     setIsDownloading(true);
     for (let i = 0; i < items.length; i++) {
-      triggerDownload(items[i].imageUrl, `bizyair_${items[i].id}.jpg`);
+      const url = items[i].videoUrl || items[i].audioUrl || items[i].imageUrl;
+      const ext = items[i].outputType === 'video' ? '.mp4' : items[i].outputType === 'audio' ? `.${items[i].responseFormat || 'mp3'}` : '.jpg';
+      triggerDownload(url, `bizyair_${items[i].id}${ext}`);
       if (i < items.length - 1) await new Promise((resolve) => setTimeout(resolve, 500));
     }
     setIsDownloading(false); setBatchMode(false); setSelectedIds(new Set());
@@ -211,20 +244,55 @@ export function HistoryScreen() {
         ) : null}
         <TouchableOpacity
           style={styles.historyCardInner}
-          onPress={() => { if (batchMode) toggleSelect(item.id); else if (item.imageUrl) setPreviewImage({ url: item.imageUrl, prompt: item.prompt }); }}
-          disabled={batchMode ? false : !item.imageUrl}
+          onPress={() => {
+            if (batchMode) toggleSelect(item.id);
+            else if (item.outputType === 'video' && item.videoUrl) {
+              setVideoPreview({ visible: true, url: item.videoUrl });
+            } else if (item.outputType === 'text' && item.textResult) {
+              setTextPreview({ visible: true, text: item.textResult });
+            } else if (item.outputType === 'audio' && item.audioUrl) {
+              setAudioPreview({ visible: true, url: item.audioUrl });
+            } else if (item.imageUrl) setPreviewImage({ url: item.imageUrl, prompt: item.prompt });
+          }}
+          disabled={batchMode ? false : !(item.imageUrl || item.videoUrl || item.textResult || item.audioUrl)}
           activeOpacity={batchMode ? 0.6 : 0.7}
         >
           <View style={styles.historyThumbWrap}>
-            {item.imageUrl ? (
+            {item.outputType === 'video' && item.videoUrl ? (
+              <View style={styles.thumbContainer}>
+                {thumbCache.current[item.videoUrl] ? (
+                  <Image source={{ uri: thumbCache.current[item.videoUrl] }} style={styles.historyThumb} />
+                ) : (
+                  <View style={[styles.historyThumbPlaceholder, styles.historyThumbVideo]}>
+                    <Ionicons name="videocam" size={32} color={colors.primary} />
+                  </View>
+                )}
+                <View style={styles.thumbPlayOverlay}>
+                  <Ionicons name="play-circle" size={28} color="rgba(255,255,255,0.9)" />
+                </View>
+              </View>
+            ) : item.outputType === 'audio' && item.audioUrl ? (
+              <View style={styles.thumbContainer}>
+                <View style={[styles.historyThumbPlaceholder, styles.historyThumbAudio]}>
+                  <Ionicons name="musical-notes" size={32} color={colors.purple} />
+                </View>
+                <View style={styles.thumbPlayOverlay}>
+                  <Ionicons name="play-circle" size={28} color="rgba(255,255,255,0.9)" />
+                </View>
+              </View>
+            ) : item.outputType === 'text' && item.textResult ? (
+              <View style={[styles.historyThumbPlaceholder, styles.historyThumbText]}>
+                <Ionicons name="document-text" size={32} color={colors.primary} />
+              </View>
+            ) : item.imageUrl ? (
               <Image source={{ uri: item.imageUrl }} style={styles.historyThumb} />
             ) : item.status === 'Failed' ? (
               <View style={[styles.historyThumbPlaceholder, styles.historyThumbFailed]}>
-                <Ionicons name="close-circle-outline" size={32} color={Colors.error} />
+                <Ionicons name="close-circle-outline" size={32} color={colors.error} />
               </View>
             ) : (
               <View style={styles.historyThumbPlaceholder}>
-                <ActivityIndicator color={Colors.textTertiary} />
+                <ActivityIndicator color={colors.textTertiary} />
               </View>
             )}
           </View>
@@ -233,51 +301,47 @@ export function HistoryScreen() {
             <Text style={styles.historyMeta}>{item.modelName} · {item.actualResolution || item.resolution} · {item.date}</Text>
             {duration ? <Text style={styles.historyDuration}>⏱ 用时 {duration}</Text> : null}
             <View style={styles.historyBottomRow}>
-              <Text style={styles.historyPrice}>{item.price} 金币</Text>
+              <Text style={styles.historyPrice}>{isTokenPricedModel(item.modelId) ? '按量计费' : `${item.price} 金币`}</Text>
               <View style={styles.historyActions}>
-                {item.imageUrl && !batchMode ? (
+                {((item.imageUrl && !batchMode) || (item.outputType === 'video' && item.videoUrl && !batchMode) || (item.outputType === 'audio' && item.audioUrl && !batchMode)) ? (
                   <TouchableOpacity style={[styles.iconButton, styles.iconButtonSuccess]} onPress={() => handleDownload(item)}>
-                    <Ionicons name="download" size={18} color={Colors.success} />
+                    <Ionicons name="download" size={18} color={colors.success} />
                   </TouchableOpacity>
                 ) : null}
                 {!batchMode ? (
                   <TouchableOpacity style={[styles.iconButton, styles.iconButtonPurple]} onPress={async () => {
                     await Clipboard.setStringAsync(item.prompt || '');
-                    setCopied(item.id);
-                    setToastMsg('已复制');
-                    if (toastTimer.current) clearTimeout(toastTimer.current);
-                    toastTimer.current = setTimeout(() => { setCopied(null); setToastMsg(''); }, 2000);
                   }}>
-                    <Ionicons name={copied === item.id ? 'checkmark-circle' : 'copy'} size={18} color={copied === item.id ? Colors.success : Colors.purple} />
+                    <Ionicons name="copy" size={18} color={colors.purple} />
                   </TouchableOpacity>
                 ) : null}
                 <TouchableOpacity style={[styles.iconButton, styles.iconButtonPrimary]} onPress={() => setLogModal(item)}>
-                  <Ionicons name="document-text" size={18} color={Colors.primary} />
+                  <Ionicons name="document-text" size={18} color={colors.primary} />
                 </TouchableOpacity>
                 {!batchMode ? (
                   <TouchableOpacity style={[styles.iconButton, styles.iconButtonError]} onPress={() => setDeleteConfirmId(item.id)}>
-                    <Ionicons name="trash" size={18} color={Colors.error} />
+                    <Ionicons name="trash" size={18} color={colors.error} />
                   </TouchableOpacity>
                 ) : null}
                 {item.status === 'Pending' ? (
                   <View style={[styles.iconButton, styles.iconButtonWarning]}>
-                    <Ionicons name="time" size={16} color={Colors.warning} />
+                    <Ionicons name="time" size={16} color={colors.warning} />
                   </View>
                 ) : item.status === 'Running' ? (
                   <View style={[styles.iconButton, styles.iconButtonRunning]}>
-                    <ActivityIndicator size="small" color={Colors.primary} />
+                    <ActivityIndicator size="small" color={colors.primary} />
                   </View>
                 ) : item.status === 'Saving' ? (
                   <View style={[styles.iconButton, styles.iconButtonPurple]}>
-                    <Ionicons name="cloud-upload" size={16} color={Colors.purple} />
+                    <Ionicons name="cloud-upload" size={16} color={colors.purple} />
                   </View>
                 ) : item.status === 'Success' ? (
                   <View style={[styles.iconButton, styles.iconButtonSuccess]}>
-                    <Ionicons name="checkmark-circle" size={16} color={Colors.success} />
+                    <Ionicons name="checkmark-circle" size={16} color={colors.success} />
                   </View>
                 ) : (
                   <View style={[styles.iconButton, styles.iconButtonError]}>
-                    <Ionicons name="close-circle" size={16} color={Colors.error} />
+                    <Ionicons name="close-circle" size={16} color={colors.error} />
                   </View>
                 )}
               </View>
@@ -289,14 +353,14 @@ export function HistoryScreen() {
         </TouchableOpacity>
       </View>
     );
-  }, [selectedIds, batchMode, toggleSelect, handleDownload, copied]);
+  }, [selectedIds, batchMode, toggleSelect, handleDownload]);
 
   const renderFooter = useCallback(() => {
     if (!hasMore) {
       if (filteredHistory.length > 0) return <View style={styles.footerEnd}><Text style={styles.footerEndText}>已加载全部 {filteredHistory.length} 条记录</Text></View>;
       return null;
     }
-    return <View style={styles.footerLoading}><ActivityIndicator color={Colors.primary} /><Text style={styles.footerLoadingText}>加载更多...</Text></View>;
+    return <View style={styles.footerLoading}><ActivityIndicator color={colors.primary} /><Text style={styles.footerLoadingText}>加载更多...</Text></View>;
   }, [hasMore, filteredHistory.length]);
 
   const renderEmpty = useCallback(() => {
@@ -306,227 +370,114 @@ export function HistoryScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.searchBar}>
-        <View style={styles.searchInputWrap}>
-          <Ionicons name="search" size={18} color={Colors.textTertiary} />
-          <TextInput style={styles.searchInput} placeholder="搜索提示词、模型名..." value={searchText} onChangeText={handleSearch} placeholderTextColor={Colors.textPlaceholder} />
-          {searchText.length > 0 ? (
-            <TouchableOpacity onPress={() => handleSearch('')}><Text style={styles.clearSearch}>✕</Text></TouchableOpacity>
-          ) : null}
-        </View>
-      </View>
+      <HistoryFilters
+        history={history}
+        searchText={searchText}
+        filterBy={filterBy}
+        sortBy={sortBy}
+        batchMode={batchMode}
+        selectedIds={selectedIds}
+        isDownloading={isDownloading}
+        activeCount={activeCount}
+        successCount={successCount}
+        failedCount={failedCount}
+        totalCoinsSpent={totalCoinsSpent}
+        onSearchChange={handleSearch}
+        onFilterChange={handleFilterChange}
+        onSortPress={() => setShowSortPicker(true)}
+        onToggleBatchMode={toggleBatchMode}
+        onSelectAll={selectAll}
+        onDeselectAll={deselectAll}
+        onBatchDeletePress={() => setDeleteConfirmBatch(true)}
+        onBatchDownload={handleBatchDownload}
+      />
 
-      <View style={styles.filterBar}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScrollContent}>
-          {FILTER_OPTIONS.map((opt) => (
-            <TouchableOpacity key={opt.key} style={[styles.filterChip, filterBy === opt.key && styles.filterChipActive]} onPress={() => handleFilterChange(opt.key)}>
-              <Text style={[styles.filterChipText, filterBy === opt.key && styles.filterChipTextActive]}>{opt.label}{opt.key === 'all' ? ` (${history.length})` : ''}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-        <TouchableOpacity style={styles.sortButton} onPress={() => setShowSortPicker(true)}>
-          <Ionicons name="funnel-outline" size={18} color={Colors.textSecondary} />
-        </TouchableOpacity>
-      </View>
+      <FlatList ref={flatListRef} data={displayedItems} keyExtractor={(item) => item.id} renderItem={renderItem} extraData={{ selectedIds, tick, thumbVersion }} ListEmptyComponent={renderEmpty} ListFooterComponent={renderFooter} onEndReached={loadMore} onEndReachedThreshold={0.3} contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false} />
 
-      {history.length > 0 ? (
-        <View style={styles.batchBar}>
-          <TouchableOpacity style={[styles.batchToggleButton, batchMode && styles.batchToggleButtonActive]} onPress={toggleBatchMode}>
-            <Text style={[styles.batchToggleText, batchMode && styles.batchToggleTextActive]}>{batchMode ? '取消批量' : '批量操作'}</Text>
-          </TouchableOpacity>
-          {batchMode ? (
-            <View style={styles.batchActions}>
-              <TouchableOpacity style={styles.batchActionButton} onPress={selectAll}><Text style={styles.batchActionText}>全选</Text></TouchableOpacity>
-              <TouchableOpacity style={styles.batchActionButton} onPress={deselectAll}><Text style={styles.batchActionText}>取消</Text></TouchableOpacity>
-              <Text style={styles.batchCount}>已选 {selectedIds.size}/{history.length}</Text>
-              <TouchableOpacity style={[styles.batchActionButton, styles.batchDeleteButton]} onPress={() => setDeleteConfirmBatch(true)} disabled={selectedIds.size === 0}>
-                <Text style={[styles.batchActionText, styles.batchDeleteText]}>删除({selectedIds.size})</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.batchActionButton, styles.batchDownloadBtn]} onPress={handleBatchDownload} disabled={selectedIds.size === 0 || isDownloading}>
-                <Text style={[styles.batchActionText, styles.batchDownloadText]}>{isDownloading ? '下载中...' : `下载(${selectedIds.size})`}</Text>
-              </TouchableOpacity>
-            </View>
-          ) : null}
-        </View>
-      ) : null}
-
-      <View style={styles.statsBar}>
-        <View style={styles.statItem}><Text style={styles.statValue}>{activeCount}</Text><Text style={styles.statLabel}>进行中</Text></View>
-        <View style={styles.statDivider} />
-        <View style={styles.statItem}><Text style={[styles.statValue, { color: Colors.success }]}>{successCount}</Text><Text style={styles.statLabel}>已完成</Text></View>
-        <View style={styles.statDivider} />
-        <View style={styles.statItem}><Text style={[styles.statValue, { color: Colors.error }]}>{failedCount}</Text><Text style={styles.statLabel}>失败</Text></View>
-        <View style={styles.statDivider} />
-        <View style={styles.statItem}><Text style={[styles.statValue, { color: Colors.warning }]}>{totalCoinsSpent}</Text><Text style={styles.statLabel}>总金币</Text></View>
-      </View>
-
-      <FlatList ref={flatListRef} data={displayedItems} keyExtractor={(item) => item.id} renderItem={renderItem} extraData={{ selectedIds, tick }} ListEmptyComponent={renderEmpty} ListFooterComponent={renderFooter} onEndReached={loadMore} onEndReachedThreshold={0.3} contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false} />
-
-      <Modal visible={!!previewImage} transparent animationType="fade" onRequestClose={() => { setPreviewImage(null); }}>
-        <TouchableOpacity
-          style={styles.previewOverlay}
-          activeOpacity={1}
-          onPress={() => setPreviewImage(null)}
-        >
-          <Image source={{ uri: previewImage?.url }} style={styles.modalImage} resizeMode="contain" />
-        </TouchableOpacity>
-      </Modal>
-
-      <Modal visible={!!logModal} transparent animationType="fade" onRequestClose={() => setLogModal(null)}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.logModalContent}>
-            <View style={styles.logModalHeader}>
-              <Text style={styles.logModalTitle}>响应日志</Text>
-              <TouchableOpacity onPress={() => setLogModal(null)}><Text style={styles.logModalClose}>✕</Text></TouchableOpacity>
-            </View>
-            <ScrollView style={styles.logModalScroll}>
-              <Text style={styles.logModalText}>{logModal?.lastResponse ? JSON.stringify(logModal.lastResponse, null, 2) : '暂无响应信息'}</Text>
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
-
-      <Modal visible={deleteConfirmId !== null} transparent animationType="fade" onRequestClose={() => setDeleteConfirmId(null)}>
-        <View style={styles.confirmOverlay}>
-          <View style={styles.confirmBox}>
-            <Text style={styles.confirmTitle}>确认删除</Text>
-            <Text style={styles.confirmMessage}>确定要删除这条记录吗？此操作不可恢复。</Text>
-            <View style={styles.confirmActions}>
-              <TouchableOpacity style={styles.confirmCancelButton} onPress={() => setDeleteConfirmId(null)}><Text style={styles.confirmCancelText}>取消</Text></TouchableOpacity>
-              <TouchableOpacity style={styles.confirmDeleteButton} onPress={() => handleDelete(deleteConfirmId)}><Text style={styles.confirmDeleteText}>删除</Text></TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      <Modal visible={deleteConfirmBatch} transparent animationType="fade" onRequestClose={() => setDeleteConfirmBatch(false)}>
-        <View style={styles.confirmOverlay}>
-          <View style={styles.confirmBox}>
-            <Text style={styles.confirmTitle}>确认批量删除</Text>
-            <Text style={styles.confirmMessage}>确定要删除选中的 {selectedIds.size} 条记录吗？此操作不可恢复。</Text>
-            <View style={styles.confirmActions}>
-              <TouchableOpacity style={styles.confirmCancelButton} onPress={() => setDeleteConfirmBatch(false)}><Text style={styles.confirmCancelText}>取消</Text></TouchableOpacity>
-              <TouchableOpacity style={styles.confirmDeleteButton} onPress={handleBatchDelete}><Text style={styles.confirmDeleteText}>删除</Text></TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      <Modal visible={showSortPicker} transparent animationType="fade" onRequestClose={() => setShowSortPicker(false)}>
-        <TouchableOpacity style={styles.pickerOverlay} activeOpacity={1} onPress={() => setShowSortPicker(false)}>
-          <View style={styles.pickerContent}>
-            <Text style={styles.pickerTitle}>排序方式</Text>
-            {SORT_OPTIONS.map((opt) => (
-              <TouchableOpacity key={opt.key} style={[styles.pickerOption, sortBy === opt.key && styles.pickerOptionActive]} onPress={() => handleSortChange(opt.key)}>
-                <Text style={[styles.pickerOptionText, sortBy === opt.key && styles.pickerOptionTextActive]}>{opt.label}</Text>
-                {sortBy === opt.key ? <Text style={styles.pickerCheck}>✓</Text> : null}
-              </TouchableOpacity>
-            ))}
-          </View>
-        </TouchableOpacity>
-      </Modal>
-
-      {toastMsg ? (
-        <View style={styles.toast}>
-          <Ionicons name="checkmark-circle" size={18} color={Colors.textInverse} />
-          <Text style={styles.toastText}>{toastMsg}</Text>
-        </View>
-      ) : null}
+      <HistoryModals
+        logModal={logModal}
+        setLogModal={setLogModal}
+        deleteConfirmId={deleteConfirmId}
+        setDeleteConfirmId={setDeleteConfirmId}
+        deleteConfirmBatch={deleteConfirmBatch}
+        setDeleteConfirmBatch={setDeleteConfirmBatch}
+        showSortPicker={showSortPicker}
+        setShowSortPicker={setShowSortPicker}
+        handleDelete={handleDelete}
+        handleBatchDelete={handleBatchDelete}
+        selectedIds={selectedIds}
+        handleSortChange={handleSortChange}
+        sortBy={sortBy}
+        SORT_OPTIONS={SORT_OPTIONS}
+      />
+      <VideoPlayer
+        visible={videoPreview.visible}
+        videoUrl={videoPreview.url}
+        onClose={() => setVideoPreview({ visible: false, url: null })}
+      />
+      <AudioPlayer
+        visible={audioPreview.visible}
+        audioUrl={audioPreview.url}
+        onClose={() => setAudioPreview({ visible: false, url: null })}
+      />
+      <TextResultView
+        visible={textPreview.visible}
+        text={textPreview.text}
+        onClose={() => setTextPreview({ visible: false, text: '' })}
+      />
+      <ImageViewer
+        visible={!!previewImage}
+        imageUrl={previewImage?.url}
+        prompt={previewImage?.prompt}
+        onClose={() => setPreviewImage(null)}
+      />
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.bg },
-  searchBar: { backgroundColor: Colors.card, paddingHorizontal: Spacing.lg, paddingTop: Spacing.md, paddingBottom: Spacing.sm, borderBottomWidth: 0.5, borderBottomColor: Colors.separator },
-  searchInputWrap: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.bg, borderRadius: Radius.sm, paddingHorizontal: Spacing.md, height: 40, gap: Spacing.sm },
-  searchInput: { flex: 1, fontSize: 15, color: Colors.textPrimary, paddingVertical: 0 },
-  clearSearch: { fontSize: 16, color: Colors.textTertiary, paddingHorizontal: 4 },
-  filterBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.card, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, borderBottomWidth: 0.5, borderBottomColor: Colors.separator },
-  filterScrollContent: { gap: Spacing.sm, paddingRight: Spacing.sm },
-  filterChip: { paddingHorizontal: Spacing.md, paddingVertical: 5, borderRadius: Radius.full, backgroundColor: Colors.bg },
-  filterChipActive: { backgroundColor: Colors.primary },
-  filterChipText: { fontSize: 13, color: Colors.textSecondary, fontWeight: '500' },
-  filterChipTextActive: { color: Colors.textInverse, fontWeight: '600' },
-  sortButton: { paddingHorizontal: Spacing.sm, paddingVertical: Spacing.xs, marginLeft: 4 },
-  batchBar: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', backgroundColor: Colors.card, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, borderBottomWidth: 0.5, borderBottomColor: Colors.separator, gap: Spacing.sm },
-  batchToggleButton: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: Radius.full, backgroundColor: Colors.primaryBg },
-  batchToggleButtonActive: { backgroundColor: Colors.primary },
-  batchToggleText: { fontSize: 13, color: Colors.primary, fontWeight: '600' },
-  batchToggleTextActive: { color: Colors.textInverse, fontWeight: '600' },
-  batchActions: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, flexWrap: 'wrap' },
-  batchActionButton: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: Radius.full, backgroundColor: Colors.bg },
-  batchActionText: { fontSize: 12, color: Colors.textSecondary, fontWeight: '500' },
-  batchCount: { fontSize: 12, color: Colors.textPrimary, fontWeight: '600', marginHorizontal: 4 },
-  batchDeleteButton: { backgroundColor: Colors.errorBg },
-  batchDeleteText: { color: Colors.error },
-  batchDownloadBtn: { backgroundColor: Colors.successBg },
-  batchDownloadText: { color: Colors.success },
-  statsBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.card, paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md, borderBottomWidth: 0.5, borderBottomColor: Colors.separator },
-  statItem: { alignItems: 'center', flex: 1 },
-  statValue: { fontSize: 17, fontWeight: '700', color: Colors.primary },
-  statLabel: { fontSize: 10, color: Colors.textTertiary, marginTop: 2 },
-  statDivider: { width: 0.5, height: 24, backgroundColor: Colors.separator },
+const createStyles = (colors) => ({
+  container: { flex: 1, backgroundColor: colors.bg },
   listContent: { paddingHorizontal: Spacing.sm, paddingTop: Spacing.md, paddingBottom: Spacing.xxl },
-  historyCard: { flexDirection: 'row', backgroundColor: Colors.card, borderRadius: Radius.xs, marginBottom: Spacing.sm, overflow: 'hidden' },
-  checkboxArea: { width: 44, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.bg },
-  checkbox: { width: 22, height: 22, borderRadius: Radius.full, borderWidth: 1.5, borderColor: Colors.disabled, alignItems: 'center', justifyContent: 'center' },
-  checkboxChecked: { backgroundColor: Colors.primary, borderColor: Colors.primary },
-  checkboxMark: { color: Colors.textInverse, fontSize: 14, fontWeight: '600' },
+  historyCard: { flexDirection: 'row', backgroundColor: colors.card, borderRadius: Radius.xs, marginBottom: Spacing.sm, overflow: 'hidden' },
+  checkboxArea: { width: 44, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg },
+  checkbox: { width: 22, height: 22, borderRadius: Radius.full, borderWidth: 1.5, borderColor: colors.disabled, alignItems: 'center', justifyContent: 'center' },
+  checkboxChecked: { backgroundColor: colors.primary, borderColor: colors.primary },
+  checkboxMark: { color: colors.textInverse, fontSize: 14, fontWeight: '600' },
   historyCardInner: { flex: 1, flexDirection: 'row', alignItems: 'stretch' },
   historyThumbWrap: { marginLeft: 6, marginVertical: 6, width: 88 },
+  thumbContainer: { flex: 1, width: '100%', position: 'relative', borderRadius: Radius.xs, overflow: 'hidden' },
+  thumbPlayOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center', justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.25)',
+  },
   historyThumb: { width: '100%', flex: 1, resizeMode: 'cover', borderRadius: Radius.xs },
-  historyThumbPlaceholder: { flex: 1, width: '100%', backgroundColor: Colors.bg, alignItems: 'center', justifyContent: 'center' },
-  historyThumbFailed: { backgroundColor: Colors.errorBg },
+  historyThumbPlaceholder: { flex: 1, width: '100%', backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
+  historyThumbFailed: { backgroundColor: colors.errorBg },
+  historyThumbVideo: { backgroundColor: colors.primaryBg },
+  historyThumbAudio: { backgroundColor: colors.purpleBg },
+  historyThumbText: { backgroundColor: colors.primaryBg },
   historyInfo: { flex: 1, padding: Spacing.md, justifyContent: 'space-between', alignSelf: 'center' },
-  historyPrompt: { fontSize: 14, color: Colors.textPrimary, fontWeight: '500', lineHeight: 18 },
-  historyMeta: { fontSize: 12, color: Colors.textTertiary, marginTop: 3 },
-  historyDuration: { fontSize: 12, color: Colors.success, marginTop: 2, fontWeight: '500' },
+  historyPrompt: { fontSize: 14, color: colors.textPrimary, fontWeight: '500', lineHeight: 18 },
+  historyMeta: { fontSize: 12, color: colors.textTertiary, marginTop: 3 },
+  historyDuration: { fontSize: 12, color: colors.success, marginTop: 2, fontWeight: '500' },
   historyBottomRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 },
-  historyPrice: { fontSize: 13, color: Colors.warning, fontWeight: '700' },
+  historyPrice: { fontSize: 13, color: colors.warning, fontWeight: '700' },
   historyActions: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   iconButton: { width: 28, height: 28, borderRadius: Radius.xs, alignItems: 'center', justifyContent: 'center' },
-  iconButtonSuccess: { backgroundColor: Colors.successBg },
-  iconButtonPurple: { backgroundColor: Colors.purpleBg },
-  iconButtonPrimary: { backgroundColor: Colors.primaryBg },
-  iconButtonError: { backgroundColor: Colors.errorBg },
-  iconButtonWarning: { backgroundColor: Colors.warningBg },
-  iconButtonRunning: { backgroundColor: Colors.primaryBg },
-  historyError: { fontSize: 11, color: Colors.error, marginTop: 2 },
+  iconButtonSuccess: { backgroundColor: colors.successBg },
+  iconButtonPurple: { backgroundColor: colors.purpleBg },
+  iconButtonPrimary: { backgroundColor: colors.primaryBg },
+  iconButtonError: { backgroundColor: colors.errorBg },
+  iconButtonWarning: { backgroundColor: colors.warningBg },
+  iconButtonRunning: { backgroundColor: colors.primaryBg },
+  historyError: { fontSize: 11, color: colors.error, marginTop: 2 },
   emptyContainer: { alignItems: 'center', justifyContent: 'center', paddingTop: 60 },
   emptyIcon: { fontSize: 48, marginBottom: Spacing.md },
-  emptyTitle: { fontSize: 20, color: Colors.textPrimary, fontWeight: '700', marginBottom: 6 },
-  emptySubtitle: { fontSize: 14, color: Colors.textTertiary },
+  emptyTitle: { fontSize: 20, color: colors.textPrimary, fontWeight: '700', marginBottom: 6 },
+  emptySubtitle: { fontSize: 14, color: colors.textTertiary },
   footerEnd: { alignItems: 'center', paddingVertical: Spacing.xl },
-  footerEndText: { fontSize: 13, color: Colors.disabled },
+  footerEndText: { fontSize: 13, color: colors.disabled },
   footerLoading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: Spacing.xl, gap: Spacing.sm },
-  footerLoadingText: { fontSize: 13, color: Colors.textTertiary },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
-  modalImage: { width: '100%', height: '80%' },
-  previewOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center' },
-  logModalContent: { width: '90%', maxHeight: '80%', backgroundColor: '#1C1C1E', borderRadius: Radius.lg, overflow: 'hidden' },
-  logModalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: Spacing.lg, borderBottomWidth: 0.5, borderBottomColor: '#38383A' },
-  logModalTitle: { fontSize: 17, fontWeight: '600', color: Colors.textInverse },
-  logModalClose: { fontSize: 20, color: Colors.textTertiary, fontWeight: '600', paddingHorizontal: 8 },
-  logModalScroll: { padding: Spacing.lg, maxHeight: 500 },
-  logModalText: { fontSize: 13, color: '#98989D', fontFamily: 'monospace' },
-  pickerOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'center', alignItems: 'center' },
-  pickerContent: { width: '80%', backgroundColor: Colors.card, borderRadius: Radius.lg, padding: Spacing.xl },
-  pickerTitle: { fontSize: 17, fontWeight: '600', color: Colors.textPrimary, marginBottom: Spacing.lg, textAlign: 'center' },
-  pickerOption: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12, paddingHorizontal: Spacing.lg, borderRadius: Radius.sm, marginBottom: 2 },
-  pickerOptionActive: { backgroundColor: Colors.primaryBg },
-  pickerOptionText: { fontSize: 16, color: Colors.textSecondary },
-  pickerOptionTextActive: { color: Colors.primary, fontWeight: '600' },
-  pickerCheck: { fontSize: 18, color: Colors.primary, fontWeight: '600' },
-  confirmOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'center', alignItems: 'center' },
-  confirmBox: { width: '82%', backgroundColor: Colors.card, borderRadius: Radius.xl, padding: Spacing.xxl },
-  confirmTitle: { fontSize: 18, fontWeight: '600', color: Colors.textPrimary, marginBottom: Spacing.sm, textAlign: 'center' },
-  confirmMessage: { fontSize: 15, color: Colors.textSecondary, lineHeight: 22, marginBottom: Spacing.xl, textAlign: 'center' },
-  confirmActions: { flexDirection: 'row', gap: Spacing.md },
-  confirmCancelButton: { flex: 1, paddingVertical: 12, borderRadius: Radius.md, backgroundColor: Colors.bg, alignItems: 'center' },
-  confirmCancelText: { fontSize: 17, color: Colors.primary, fontWeight: '600' },
-  confirmDeleteButton: { flex: 1, paddingVertical: 12, borderRadius: Radius.md, backgroundColor: Colors.error, alignItems: 'center' },
-  confirmDeleteText: { fontSize: 17, color: Colors.textInverse, fontWeight: '600' },
-  toast: { position: 'absolute', bottom: 100, left: '50%', transform: [{ translateX: -70 }], flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, backgroundColor: 'rgba(28,28,30,0.88)', paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md, borderRadius: Radius.full, ...Shadows.lg },
-  toastText: { color: Colors.textInverse, fontSize: 14, fontWeight: '600' },
+  footerLoadingText: { fontSize: 13, color: colors.textTertiary },
 });

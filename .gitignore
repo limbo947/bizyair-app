@@ -39,13 +39,17 @@ yarn-error.*
 # IDE
 .claude/
 .trae/
+.codebuddy/
 
 # typescript
 *.tsbuildinfo
 
+# signing keys backup (local only, do not commit)
+keystore-backup/
 # generated native folders
 /ios
 /android
 
 # other
+apk/
 myplan.md

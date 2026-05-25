@@ -5,15 +5,21 @@ import {
   Animated,
   Platform,
   StatusBar as RNStatusBar,
+  BackHandler,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppProvider, useAppContext } from './src/context/AppContext';
+import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import { TabBar } from './src/components/TabBar';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { HistoryScreen } from './src/screens/HistoryScreen';
+import { ModelSelectScreen } from './src/screens/ModelSelectScreen';
 import { TAB_HOME, TAB_FADE_OUT_MS, TAB_FADE_IN_MS } from './src/constants/models';
-import { Colors } from './src/constants/theme';
+
+const PAGE_HOME = 'home';
+const PAGE_HISTORY = 'history';
+const PAGE_MODEL_SELECT = 'model-select';
 
 function AppNavigator() {
   const {
@@ -21,32 +27,46 @@ function AppNavigator() {
     setActiveTab,
     saveActiveTab,
     history,
+    homeState,
+    saveHomeState,
   } = useAppContext();
+  const { colors, themeMode } = useTheme();
 
+  const [currentPage, setCurrentPage] = useState(PAGE_HOME);
   const [statusBarHeight, setStatusBarHeight] = useState(0);
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const tabRef = useRef(activeTab);
 
+  // 当 activeTab 从 AsyncStorage 异步加载后，同步 currentPage
   useEffect(() => {
-    // 动态计算状态栏高度（仅 Android）
+    const page = activeTab === TAB_HOME ? PAGE_HOME : PAGE_HISTORY;
+    setCurrentPage(page);
+    tabRef.current = activeTab;
+  }, [activeTab]);
+
+  useEffect(() => {
     if (Platform.OS === 'android') {
       setStatusBarHeight(RNStatusBar.currentHeight || 0);
     }
   }, []);
 
   const handleTabChange = useCallback((tab) => {
-    if (tab === tabRef.current) return;
+    if (tab === tabRef.current) {
+      // 即使是当前 tab，也确保 currentPage 与 activeTab 同步
+      const page = tab === TAB_HOME ? PAGE_HOME : PAGE_HISTORY;
+      if (currentPage !== page) setCurrentPage(page);
+      return;
+    }
 
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: TAB_FADE_OUT_MS,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 0,
+      duration: TAB_FADE_OUT_MS,
+      useNativeDriver: true,
+    }).start(() => {
       tabRef.current = tab;
       setActiveTab(tab);
       saveActiveTab(tab);
+      setCurrentPage(tab === TAB_HOME ? PAGE_HOME : PAGE_HISTORY);
 
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -54,26 +74,65 @@ function AppNavigator() {
         useNativeDriver: true,
       }).start();
     });
-  }, [fadeAnim, setActiveTab, saveActiveTab]);
+  }, [fadeAnim, setActiveTab, saveActiveTab, currentPage]);
+
+  const handleOpenModelSelect = useCallback(() => {
+    setCurrentPage(PAGE_MODEL_SELECT);
+  }, []);
+
+  const handleCloseModelSelect = useCallback(() => {
+    setCurrentPage(tabRef.current === TAB_HOME ? PAGE_HOME : PAGE_HISTORY);
+  }, []);
+
+  useEffect(() => {
+    const onBackPress = () => {
+      if (currentPage === PAGE_MODEL_SELECT) {
+        handleCloseModelSelect();
+        return true;
+      }
+      return false;
+    };
+
+    BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => BackHandler.removeEventListener('hardwareBackPress', onBackPress);
+  }, [currentPage, handleCloseModelSelect]);
+
+  const handleSelectModel = useCallback((modelId, mode) => {
+    saveHomeState({ modelId, ...(mode ? { mode } : {}) });
+    handleCloseModelSelect();
+  }, [saveHomeState, handleCloseModelSelect]);
 
   const activeCount = history.filter(
     (h) => ['Pending', 'Running', 'Saving'].includes(h.status)
   ).length;
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
-      <StatusBar style="dark" backgroundColor={Colors.card} />
-      <View style={{ height: statusBarHeight, backgroundColor: Colors.card }} />
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={['bottom']}>
+      <StatusBar style={themeMode === 'dark' ? 'light' : 'dark'} backgroundColor={colors.card} />
+      <View style={{ height: statusBarHeight, backgroundColor: colors.card }} />
       <View style={styles.contentWrapper}>
-        <Animated.View style={[styles.content, { opacity: fadeAnim, overflow: 'hidden' }]}>
-          {activeTab === TAB_HOME ? <HomeScreen /> : <HistoryScreen />}
+        <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
+          {currentPage === PAGE_MODEL_SELECT ? (
+            <ModelSelectScreen
+              currentModelId={homeState.modelId}
+              onSelectModel={handleSelectModel}
+              onBack={handleCloseModelSelect}
+            />
+          ) : activeTab === TAB_HOME ? (
+            <HomeScreen onOpenModelSelect={handleOpenModelSelect} />
+          ) : (
+            <HistoryScreen />
+          )}
         </Animated.View>
       </View>
-      <TabBar
-        activeTab={activeTab}
-        onTabChange={handleTabChange}
-        historyBadge={activeCount}
-      />
+
+      {currentPage !== PAGE_MODEL_SELECT && (
+        <TabBar
+          activeTab={activeTab}
+          onTabChange={handleTabChange}
+          historyBadge={activeCount}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -81,15 +140,17 @@ function AppNavigator() {
 export default function App() {
   return (
     <SafeAreaProvider>
-      <AppProvider>
-        <AppNavigator />
-      </AppProvider>
+      <ThemeProvider>
+        <AppProvider>
+          <AppNavigator />
+        </AppProvider>
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.bg },
+  container: { flex: 1 },
   contentWrapper: { flex: 1, overflow: 'hidden' },
   content: { flex: 1 },
 });

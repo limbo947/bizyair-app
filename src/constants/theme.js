@@ -1,4 +1,5 @@
-export const Colors = {
+// ── Light Color Palette ──
+export const LightColors = {
   primary: '#007AFF',
   primaryHover: '#0066D6',
   primaryLight: '#4DA2FF',
@@ -36,6 +37,81 @@ export const Colors = {
   groupedBg: '#FFFFFF',
 };
 
+// ── Dark Color Palette (iOS dark mode conventions) ──
+export const DarkColors = {
+  primary: '#007AFF',
+  primaryHover: '#0066D6',
+  primaryLight: '#4DA2FF',
+  primaryBg: '#1C2D4A',
+  primaryBorder: '#2A4A7F',
+  primaryDisabled: '#2A4A7F',
+  success: '#34C759',
+  successBg: '#1A3A2A',
+  successBorder: '#2A5A3A',
+  warning: '#FF9500',
+  warningBg: '#3A2A1A',
+  warningBorder: '#5A3A1A',
+  error: '#FF3B30',
+  errorBg: '#3A1A1A',
+  errorBorder: '#5A2A2A',
+  info: '#5AC8FA',
+  infoBg: '#1A2A3A',
+  infoBorder: '#2A4A5A',
+  purple: '#AF52DE',
+  purpleBg: '#2A1A3A',
+  purpleBorder: '#4A2A5A',
+  bg: '#000000',
+  card: '#1C1C1E',
+  border: '#38383A',
+  divider: '#38383A',
+  inputBg: '#2C2C2E',
+  disabled: '#48484A',
+  disabledBg: '#38383A',
+  textPrimary: '#FFFFFF',
+  textSecondary: '#EBEBF5',
+  textTertiary: '#8E8E93',
+  textPlaceholder: '#48484A',
+  textInverse: '#000000',
+  separator: '#38383A',
+  groupedBg: '#000000',
+};
+
+// ── Theme Factory ──
+export function createTheme(mode) {
+  const colors = mode === 'dark' ? DarkColors : LightColors;
+  return {
+    mode,
+    colors,
+    Radius,
+    Spacing,
+    STATUS_COLORS: {
+      Pending: colors.warning,
+      Running: colors.primary,
+      Saving: colors.purple,
+      Success: colors.success,
+      Failed: colors.error,
+    },
+    STATUS_BG: {
+      Pending: colors.warningBg,
+      Running: colors.primaryBg,
+      Saving: colors.purpleBg,
+      Success: colors.successBg,
+      Failed: colors.errorBg,
+    },
+  };
+}
+
+// ── Backward-compatible default exports (light mode) ──
+// Colors is mutable — ThemeProvider updates it when theme changes.
+// This allows all existing StyleSheet.create({ ... Colors.xxx }) and inline
+// Colors.xxx references to automatically reflect the current theme.
+export const Colors = { ...LightColors };
+
+export function updateColors(mode) {
+  const src = mode === 'dark' ? DarkColors : LightColors;
+  Object.keys(src).forEach((key) => { Colors[key] = src[key]; });
+}
+
 export const Radius = {
   xs: 6,
   sm: 8,
@@ -53,13 +129,6 @@ export const Spacing = {
   lg: 16,
   xl: 20,
   xxl: 28,
-};
-
-export const Shadows = {
-  sm: { shadowColor: '#000', shadowOffset: { width: 0, height: 0.5 }, shadowOpacity: 0.08, shadowRadius: 4, elevation: 1 },
-  md: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2 },
-  lg: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 12, elevation: 4 },
-  xl: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 20, elevation: 8 },
 };
 
 export const STATUS_COLORS = {
