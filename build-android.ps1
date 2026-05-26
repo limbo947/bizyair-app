@@ -19,8 +19,9 @@ Write-Host "`n[1/8] Verifying architecture config..." -ForegroundColor Yellow
 
 $appJsonPath = Join-Path $ScriptDir "app.json"
 $appJsonRaw = Get-Content $appJsonPath -Raw
-if ($appJsonRaw -match '"reactNativeArchitectures"\s*:\s*\[\s*"arm64-v8a"\s*\]') {
-    Write-Host "  app.json: reactNativeArchitectures = arm64-v8a OK" -ForegroundColor Green
+$archMatch = $appJsonRaw -match '"reactNativeArchitectures"\s*:\s*\[([^\]]+)\]'
+if ($archMatch) {
+    Write-Host "  app.json: reactNativeArchitectures = $($matches[1].Trim()) OK" -ForegroundColor Green
 } else {
     Write-Host "  app.json architecture config error" -ForegroundColor Red
     exit 1
@@ -40,6 +41,17 @@ $newVersion = $versionParts -join '.'
 $appJson.expo.version = $newVersion
 [System.IO.File]::WriteAllText($appJsonPath, ($appJson | ConvertTo-Json -Depth 10))
 Write-Host "  Version: $oldVersion -> $newVersion" -ForegroundColor Green
+
+$architectures = $appJson.expo.plugins | ForEach-Object {
+    if ($_ -is [Array] -and $_[0] -eq "expo-build-properties") {
+        $prop = $_[1]
+        if ($prop.android.reactNativeArchitectures) {
+            return $prop.android.reactNativeArchitectures
+        }
+    }
+}
+if (-not $architectures) { $architectures = @("arm64-v8a") }
+Write-Host "  Architectures: $($architectures -join ', ')" -ForegroundColor Green
 
 git add app.json 2>&1 | Out-Null
 git commit -m "chore: bump version to $newVersion" --no-verify 2>&1 | Out-Null
@@ -172,7 +184,8 @@ Write-Host "`n[8/8] Building Release APK..." -ForegroundColor Yellow
 $androidDir = Join-Path $ScriptDir "android"
 Push-Location $androidDir
 try {
-    .\gradlew.bat assembleRelease -PreactNativeArchitectures=arm64-v8a 2>&1 | ForEach-Object {
+    $archsArg = ($architectures -join ',')
+    .\gradlew.bat assembleRelease "-PreactNativeArchitectures=$archsArg" 2>&1 | ForEach-Object {
         $line = $_ -as [string]
         if ($line) { Write-Host $line }
     }
