@@ -114,21 +114,25 @@ function AppNavigator() {
       <StatusBar style={themeMode === 'dark' ? 'light' : 'dark'} backgroundColor={colors.card} />
       <View style={{ height: statusBarHeight, backgroundColor: colors.card }} />
       <View style={styles.contentWrapper}>
-        <ErrorBoundary>
-          <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
-            {currentPage === PAGE_MODEL_SELECT ? (
+        <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
+          {currentPage === PAGE_MODEL_SELECT ? (
+            <ErrorBoundary>
               <ModelSelectScreen
                 currentModelId={homeState.modelId}
                 onSelectModel={handleSelectModel}
                 onBack={handleCloseModelSelect}
               />
-            ) : activeTab === TAB_HOME ? (
+            </ErrorBoundary>
+          ) : activeTab === TAB_HOME ? (
+            <ErrorBoundary>
               <HomeScreen onOpenModelSelect={handleOpenModelSelect} />
-            ) : (
+            </ErrorBoundary>
+          ) : (
+            <ErrorBoundary>
               <HistoryScreen />
-            )}
-          </Animated.View>
-        </ErrorBoundary>
+            </ErrorBoundary>
+          )}
+        </Animated.View>
       </View>
 
       {currentPage !== PAGE_MODEL_SELECT && (

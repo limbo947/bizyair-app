@@ -104,7 +104,7 @@ export function HistoryScreen() {
   const thumbCache = useRef({});
   const [thumbVersion, setThumbVersion] = useState(0);
 
-  const hasActiveTasks = history.some((h) => ACTIVE_STATUSES.includes(h.status));
+  const hasActiveTasks = Array.isArray(history) && history.some((h) => h && ACTIVE_STATUSES.includes(h.status));
 
   useEffect(() => {
     if (hasActiveTasks) {
@@ -127,6 +127,7 @@ export function HistoryScreen() {
   }, [activeTab, refreshRunningTasks]);
 
   const filteredHistory = useMemo(() => {
+    if (!Array.isArray(history)) return [];
     let items = [...history];
     if (searchText.trim()) {
       const kw = searchText.trim().toLowerCase();
@@ -201,6 +202,7 @@ export function HistoryScreen() {
   }, [isDownloading]);
 
   const handleBatchDownload = useCallback(async () => {
+    if (!Array.isArray(history)) return;
     const items = history.filter((item) => selectedIds.has(item.id) && (item.imageUrl || item.videoUrl || item.audioUrl));
     if (items.length === 0) return;
     setIsDownloading(true);
@@ -221,12 +223,12 @@ export function HistoryScreen() {
     setBatchMode((prev) => { if (prev) setSelectedIds(new Set()); return !prev; });
   }, []);
 
-  const selectAll = useCallback(() => { setSelectedIds(new Set(filteredHistory.map((item) => item.id))); }, [filteredHistory]);
+  const selectAll = useCallback(() => { if (Array.isArray(filteredHistory)) setSelectedIds(new Set(filteredHistory.map((item) => item.id))); }, [filteredHistory]);
   const deselectAll = useCallback(() => { setSelectedIds(new Set()); }, []);
 
-  const activeCount = history.filter((h) => ACTIVE_STATUSES.includes(h.status)).length;
-  const successCount = history.filter((h) => h.status === 'Success').length;
-  const failedCount = history.filter((h) => h.status === 'Failed').length;
+  const activeCount = Array.isArray(history) ? history.filter((h) => h && ACTIVE_STATUSES.includes(h.status)).length : 0;
+  const successCount = Array.isArray(history) ? history.filter((h) => h && h.status === 'Success').length : 0;
+  const failedCount = Array.isArray(history) ? history.filter((h) => h && h.status === 'Failed').length : 0;
 
   const renderItem = useCallback(({ item }) => {
     const isSelected = selectedIds.has(item.id);
@@ -364,9 +366,10 @@ export function HistoryScreen() {
   }, [hasMore, filteredHistory.length]);
 
   const renderEmpty = useCallback(() => {
-    if (history.length === 0) return <View style={styles.emptyContainer}><Text style={styles.emptyIcon}>📭</Text><Text style={styles.emptyTitle}>暂无历史记录</Text><Text style={styles.emptySubtitle}>开始创作，你的作品将在这里展示</Text></View>;
+    const histLen = Array.isArray(history) ? history.length : 0;
+    if (histLen === 0) return <View style={styles.emptyContainer}><Text style={styles.emptyIcon}>📭</Text><Text style={styles.emptyTitle}>暂无历史记录</Text><Text style={styles.emptySubtitle}>开始创作，你的作品将在这里展示</Text></View>;
     return <View style={styles.emptyContainer}><Text style={styles.emptyIcon}>🔍</Text><Text style={styles.emptyTitle}>未找到匹配记录</Text><Text style={styles.emptySubtitle}>尝试调整搜索条件或筛选器</Text></View>;
-  }, [history.length]);
+  }, [history, styles]);
 
   return (
     <View style={styles.container}>

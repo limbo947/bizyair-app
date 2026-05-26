@@ -68,7 +68,11 @@ export function AppProvider({ children }) {
       const stored = await AsyncStorage.getItem(API_KEYS_STORAGE_KEY);
       let keys = [];
       if (stored) {
-        keys = JSON.parse(stored);
+        const parsed = JSON.parse(stored);
+        keys = Array.isArray(parsed) ? parsed : [];
+        if (!Array.isArray(parsed)) {
+          console.warn('API Keys 数据异常（非数组），已重置');
+        }
       } else {
         const legacyKey = await AsyncStorage.getItem(API_KEY_STORAGE_KEY);
         if (legacyKey) {
@@ -77,9 +81,9 @@ export function AppProvider({ children }) {
       }
       setApiKeys(keys);
       const activeId = await AsyncStorage.getItem(ACTIVE_KEY_ID_KEY);
-      const active = activeId && keys.find((k) => k.id === activeId)
-        ? keys.find((k) => k.id === activeId)
-        : keys[0];
+      const active = activeId && Array.isArray(keys) && keys.find((k) => k && k.id === activeId)
+        ? keys.find((k) => k && k.id === activeId)
+        : (Array.isArray(keys) ? keys[0] : undefined);
       if (active) {
         setApiKey(active.key);
         setActiveApiKeyId(active.id);

@@ -51,7 +51,8 @@ export function ModelSelectScreen({ currentModelId, onSelectModel, onBack }) {
       return allModelEntries;
     }
     if (selectedCategory === 'favorite') {
-      return allModelEntries.filter((m) => favorites.includes(m.id));
+      const favs = Array.isArray(favorites) ? favorites : [];
+      return allModelEntries.filter((m) => favs.includes(m.id));
     }
     return allModelEntries.filter((m) => m.categories.includes(selectedCategory));
   }, [selectedCategory, favorites, allModelEntries]);
@@ -92,7 +93,7 @@ export function ModelSelectScreen({ currentModelId, onSelectModel, onBack }) {
       key,
       ...value,
       count: key === 'favorite'
-        ? favorites.length
+        ? (Array.isArray(favorites) ? favorites.length : 0)
         : allModelEntries.filter((m) => m.categories.includes(key)).length,
     })),
   ];
