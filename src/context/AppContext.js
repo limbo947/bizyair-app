@@ -151,8 +151,16 @@ export function AppProvider({ children }) {
       const stored = await AsyncStorage.getItem(HISTORY_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
-        setHistory(parsed);
-        resumeTimerRef.current = setTimeout(() => resumeRunningPolling(parsed), 500);
+        if (Array.isArray(parsed)) {
+          const validItems = parsed.filter((item) => item && typeof item === 'object' && item.id);
+          if (validItems.length !== parsed.length) {
+            console.warn(`历史记录数据异常，已过滤 ${parsed.length - validItems.length} 条无效记录`);
+          }
+          setHistory(validItems);
+          resumeTimerRef.current = setTimeout(() => resumeRunningPolling(validItems), 500);
+        } else {
+          console.warn('历史记录数据异常（非数组），已重置');
+        }
       }
     } catch (e) {
       console.error('加载历史记录失败:', e);
@@ -347,8 +355,9 @@ export function AppProvider({ children }) {
 
   const resumeRunningPolling = useCallback((historyItems) => {
     const items = historyItems || historyRef.current;
+    if (!Array.isArray(items)) return;
     const running = items.filter(
-      (h) => h.status === 'Running' && h.requestId
+      (h) => h && h.status === 'Running' && h.requestId
     );
     running.forEach((item) => {
       const ak = item.taskApiKey || apiKey || ENV_API_KEY;
@@ -360,8 +369,10 @@ export function AppProvider({ children }) {
   }, [apiKey, querySingleTask, startPolling]);
 
   const refreshRunningTasks = useCallback(async () => {
-    const running = historyRef.current.filter(
-      (h) => h.status === 'Running' && h.requestId
+    const current = historyRef.current;
+    if (!Array.isArray(current)) return;
+    const running = current.filter(
+      (h) => h && h.status === 'Running' && h.requestId
     );
     const results = await Promise.allSettled(
       running.map((item) => {
@@ -384,7 +395,12 @@ export function AppProvider({ children }) {
     try {
       const stored = await AsyncStorage.getItem(HOME_STATE_KEY);
       if (stored) {
-        setHomeState({ ...DEFAULT_HOME_STATE, ...JSON.parse(stored) });
+        const parsed = JSON.parse(stored);
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          setHomeState({ ...DEFAULT_HOME_STATE, ...parsed });
+        } else {
+          console.warn('主页状态数据异常，已重置');
+        }
       }
     } catch (e) {
       console.error('加载主页状态失败:', e);
@@ -432,7 +448,11 @@ export function AppProvider({ children }) {
       const stored = await AsyncStorage.getItem(STORAGE_KEYS.favorites);
       if (stored) {
         const parsed = JSON.parse(stored);
-        const validModels = parsed.filter((modelId) => MODELS[modelId]);
+        if (!Array.isArray(parsed)) {
+          console.warn('常用模型数据异常（非数组），已重置');
+          return;
+        }
+        const validModels = parsed.filter((modelId) => typeof modelId === 'string' && MODELS[modelId]);
         if (validModels.length > 0) {
           setFavorites(validModels);
         }

@@ -15,6 +15,7 @@ import { TabBar } from './src/components/TabBar';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { HistoryScreen } from './src/screens/HistoryScreen';
 import { ModelSelectScreen } from './src/screens/ModelSelectScreen';
+import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { TAB_HOME, TAB_FADE_OUT_MS, TAB_FADE_IN_MS } from './src/constants/models';
 
 const PAGE_HOME = 'home';
@@ -102,28 +103,32 @@ function AppNavigator() {
     handleCloseModelSelect();
   }, [saveHomeState, handleCloseModelSelect]);
 
-  const activeCount = history.filter(
-    (h) => ['Pending', 'Running', 'Saving'].includes(h.status)
-  ).length;
+  const activeCount = Array.isArray(history)
+    ? history.filter(
+        (h) => h && ['Pending', 'Running', 'Saving'].includes(h.status)
+      ).length
+    : 0;
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={['bottom']}>
       <StatusBar style={themeMode === 'dark' ? 'light' : 'dark'} backgroundColor={colors.card} />
       <View style={{ height: statusBarHeight, backgroundColor: colors.card }} />
       <View style={styles.contentWrapper}>
-        <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
-          {currentPage === PAGE_MODEL_SELECT ? (
-            <ModelSelectScreen
-              currentModelId={homeState.modelId}
-              onSelectModel={handleSelectModel}
-              onBack={handleCloseModelSelect}
-            />
-          ) : activeTab === TAB_HOME ? (
-            <HomeScreen onOpenModelSelect={handleOpenModelSelect} />
-          ) : (
-            <HistoryScreen />
-          )}
-        </Animated.View>
+        <ErrorBoundary>
+          <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
+            {currentPage === PAGE_MODEL_SELECT ? (
+              <ModelSelectScreen
+                currentModelId={homeState.modelId}
+                onSelectModel={handleSelectModel}
+                onBack={handleCloseModelSelect}
+              />
+            ) : activeTab === TAB_HOME ? (
+              <HomeScreen onOpenModelSelect={handleOpenModelSelect} />
+            ) : (
+              <HistoryScreen />
+            )}
+          </Animated.View>
+        </ErrorBoundary>
       </View>
 
       {currentPage !== PAGE_MODEL_SELECT && (
