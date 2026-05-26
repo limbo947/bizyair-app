@@ -35,8 +35,7 @@
         {
           "android": {
             "reactNativeArchitectures": [
-              "arm64-v8a",
-              "x86_64"
+              "arm64-v8a"
             ],
             "compileSdk": 35,
             "targetSdk": 35,
