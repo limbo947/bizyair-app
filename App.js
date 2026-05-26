@@ -11,11 +11,11 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppProvider, useAppContext } from './src/context/AppContext';
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
+import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { TabBar } from './src/components/TabBar';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { HistoryScreen } from './src/screens/HistoryScreen';
 import { ModelSelectScreen } from './src/screens/ModelSelectScreen';
-import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { TAB_HOME, TAB_FADE_OUT_MS, TAB_FADE_IN_MS } from './src/constants/models';
 
 const PAGE_HOME = 'home';
@@ -116,21 +116,15 @@ function AppNavigator() {
       <View style={styles.contentWrapper}>
         <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
           {currentPage === PAGE_MODEL_SELECT ? (
-            <ErrorBoundary>
-              <ModelSelectScreen
-                currentModelId={homeState.modelId}
-                onSelectModel={handleSelectModel}
-                onBack={handleCloseModelSelect}
-              />
-            </ErrorBoundary>
+            <ModelSelectScreen
+              currentModelId={homeState.modelId}
+              onSelectModel={handleSelectModel}
+              onBack={handleCloseModelSelect}
+            />
           ) : activeTab === TAB_HOME ? (
-            <ErrorBoundary>
-              <HomeScreen onOpenModelSelect={handleOpenModelSelect} />
-            </ErrorBoundary>
+            <HomeScreen onOpenModelSelect={handleOpenModelSelect} />
           ) : (
-            <ErrorBoundary>
-              <HistoryScreen />
-            </ErrorBoundary>
+            <HistoryScreen />
           )}
         </Animated.View>
       </View>
@@ -151,7 +145,9 @@ export default function App() {
     <SafeAreaProvider>
       <ThemeProvider>
         <AppProvider>
-          <AppNavigator />
+          <ErrorBoundary>
+            <AppNavigator />
+          </ErrorBoundary>
         </AppProvider>
       </ThemeProvider>
     </SafeAreaProvider>
