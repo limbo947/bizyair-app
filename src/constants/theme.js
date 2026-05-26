@@ -86,6 +86,8 @@ export function createTheme(mode) {
     Spacing,
     STATUS_COLORS: {
       Pending: colors.warning,
+      Queuing: colors.warning,
+      Preparing: colors.info,
       Running: colors.primary,
       Saving: colors.purple,
       Success: colors.success,
@@ -93,6 +95,8 @@ export function createTheme(mode) {
     },
     STATUS_BG: {
       Pending: colors.warningBg,
+      Queuing: colors.warningBg,
+      Preparing: colors.infoBg,
       Running: colors.primaryBg,
       Saving: colors.purpleBg,
       Success: colors.successBg,
@@ -133,6 +137,8 @@ export const Spacing = {
 
 export const STATUS_COLORS = {
   Pending: Colors.warning,
+  Queuing: Colors.warning,
+  Preparing: Colors.info,
   Running: Colors.primary,
   Saving: Colors.purple,
   Success: Colors.success,
@@ -141,6 +147,8 @@ export const STATUS_COLORS = {
 
 export const STATUS_BG = {
   Pending: Colors.warningBg,
+  Queuing: Colors.warningBg,
+  Preparing: Colors.infoBg,
   Running: Colors.primaryBg,
   Saving: Colors.purpleBg,
   Success: Colors.successBg,

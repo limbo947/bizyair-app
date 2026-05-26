@@ -15,11 +15,13 @@ import { TabBar } from './src/components/TabBar';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { HistoryScreen } from './src/screens/HistoryScreen';
 import { ModelSelectScreen } from './src/screens/ModelSelectScreen';
-import { TAB_HOME, TAB_FADE_OUT_MS, TAB_FADE_IN_MS } from './src/constants/models';
+import { WebappScreen } from './src/screens/WebappScreen';
+import { TAB_HOME, TAB_WEBAPP, TAB_FADE_OUT_MS, TAB_FADE_IN_MS } from './src/constants/models';
 
 const PAGE_HOME = 'home';
 const PAGE_HISTORY = 'history';
 const PAGE_MODEL_SELECT = 'model-select';
+const PAGE_WEBAPP = 'webapp';
 
 function PageContainer({ page, homeState, handleSelectModel, handleCloseModelSelect, handleOpenModelSelect, activeTab }) {
   if (page === PAGE_MODEL_SELECT) {
@@ -30,6 +32,9 @@ function PageContainer({ page, homeState, handleSelectModel, handleCloseModelSel
         onBack={handleCloseModelSelect}
       />
     );
+  }
+  if (activeTab === TAB_WEBAPP) {
+    return <WebappScreen />;
   }
   if (activeTab === TAB_HOME) {
     return <HomeScreen onOpenModelSelect={handleOpenModelSelect} />;
@@ -54,7 +59,7 @@ function AppNavigator() {
   const tabRef = useRef(activeTab);
 
   useEffect(() => {
-    const page = activeTab === TAB_HOME ? PAGE_HOME : PAGE_HISTORY;
+    const page = activeTab === TAB_HOME ? PAGE_HOME : activeTab === TAB_WEBAPP ? PAGE_WEBAPP : PAGE_HISTORY;
     setCurrentPage(page);
     tabRef.current = activeTab;
   }, [activeTab]);
@@ -67,7 +72,7 @@ function AppNavigator() {
 
   const handleTabChange = useCallback((tab) => {
     if (tab === tabRef.current) {
-      const page = tab === TAB_HOME ? PAGE_HOME : PAGE_HISTORY;
+      const page = tab === TAB_HOME ? PAGE_HOME : tab === TAB_WEBAPP ? PAGE_WEBAPP : PAGE_HISTORY;
       if (currentPage !== page) setCurrentPage(page);
       return;
     }
@@ -80,7 +85,7 @@ function AppNavigator() {
       tabRef.current = tab;
       setActiveTab(tab);
       saveActiveTab(tab);
-      setCurrentPage(tab === TAB_HOME ? PAGE_HOME : PAGE_HISTORY);
+      setCurrentPage(tab === TAB_HOME ? PAGE_HOME : tab === TAB_WEBAPP ? PAGE_WEBAPP : PAGE_HISTORY);
 
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -95,7 +100,7 @@ function AppNavigator() {
   }, []);
 
   const handleCloseModelSelect = useCallback(() => {
-    setCurrentPage(tabRef.current === TAB_HOME ? PAGE_HOME : PAGE_HISTORY);
+    setCurrentPage(tabRef.current === TAB_HOME ? PAGE_HOME : tabRef.current === TAB_WEBAPP ? PAGE_WEBAPP : PAGE_HISTORY);
   }, []);
 
   useEffect(() => {

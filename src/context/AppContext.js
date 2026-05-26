@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { queryTaskResult, fetchUserInfo, fetchWalletBalance } from '../services/apiClient';
+import { queryTaskResult, fetchUserInfo, fetchWalletBalance, queryWebappTaskDetail, queryWebappTaskOutputs } from '../services/apiClient';
 import {
   ENV_API_KEY,
   HISTORY_KEY,
@@ -9,6 +9,7 @@ import {
   ACTIVE_KEY_ID_KEY,
   ACTIVE_TAB_KEY,
   TAB_HOME,
+  TAB_WEBAPP,
   HOME_STATE_KEY,
   TOTAL_COINS_KEY,
   POLLING_INTERVAL_MS,
@@ -174,7 +175,7 @@ export function AppProvider({ children }) {
   const loadActiveTab = async () => {
     try {
       const stored = await AsyncStorage.getItem(ACTIVE_TAB_KEY);
-      if (stored === TAB_HOME || stored === 'history') setActiveTab(stored);
+      if (stored === TAB_HOME || stored === TAB_WEBAPP || stored === 'history') setActiveTab(stored);
     } catch (e) {
       console.error('加载导航状态失败:', e);
     }
@@ -276,6 +277,26 @@ export function AppProvider({ children }) {
     return {};
   }
 
+  function extractWebappResult(outputs) {
+    if (!Array.isArray(outputs) || outputs.length === 0) return {};
+    const first = outputs[0];
+    const ext = (first.output_ext || '').toLowerCase();
+    const url = first.object_url || '';
+    if (['.mp4', '.mov', '.avi', '.webm'].includes(ext)) {
+      return { outputType: 'video', videoUrl: url, resultUrl: url };
+    }
+    if (['.mp3', '.wav', '.ogg', '.flac', '.aac'].includes(ext)) {
+      return { outputType: 'audio', audioUrl: url, resultUrl: url };
+    }
+    if (['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp'].includes(ext)) {
+      return { outputType: 'image', imageUrl: url, resultUrl: url };
+    }
+    if (url) {
+      return { outputType: 'image', imageUrl: url, resultUrl: url };
+    }
+    return {};
+  }
+
   const startPolling = useCallback((id, requestId, ak) => {
     if (pollingRef.current[id]) return;
 
@@ -305,6 +326,72 @@ export function AppProvider({ children }) {
             errorMessage: result.message || '任务失败',
             completedAt: Date.now(),
             lastResponse: result,
+          });
+        }
+      } catch (err) {
+        failCount++;
+        if (failCount >= MAX_POLL_FAILS) {
+          clearInterval(interval);
+          delete pollingRef.current[id];
+          updateHistoryItem(id, {
+            status: 'Failed',
+            errorMessage: `连续${MAX_POLL_FAILS}次轮询失败: ${err.message || '网络异常'}`,
+            completedAt: Date.now(),
+            lastResponse: { status: 'Failed', error: err.message },
+          });
+        }
+      }
+    }, POLLING_INTERVAL_MS);
+
+    pollingRef.current[id] = interval;
+  }, [updateHistoryItem]);
+
+  const startWebappPolling = useCallback((id, requestId, ak) => {
+    if (pollingRef.current[id]) return;
+
+    let failCount = 0;
+
+    const mapStatus = (s) => {
+      if (s === 'Queuing' || s === 'Preparing') return 'Pending';
+      if (s === 'Canceled') return 'Failed';
+      return s;
+    };
+
+    const interval = setInterval(async () => {
+      try {
+        const detail = await queryWebappTaskDetail(ak, requestId);
+        failCount = 0;
+        const rawStatus = detail.status;
+        const mappedStatus = mapStatus(rawStatus);
+        updateHistoryItem(id, { status: mappedStatus, lastResponse: detail });
+
+        if (rawStatus === 'Success') {
+          clearInterval(interval);
+          delete pollingRef.current[id];
+          try {
+            const outputData = await queryWebappTaskOutputs(ak, requestId);
+            const taskResult = extractWebappResult(outputData.outputs);
+            updateHistoryItem(id, {
+              status: 'Success',
+              ...taskResult,
+              completedAt: Date.now(),
+              lastResponse: { ...detail, outputs: outputData.outputs },
+            });
+          } catch (outputErr) {
+            updateHistoryItem(id, {
+              status: 'Success',
+              completedAt: Date.now(),
+              lastResponse: detail,
+            });
+          }
+        } else if (rawStatus === 'Failed' || rawStatus === 'Canceled') {
+          clearInterval(interval);
+          delete pollingRef.current[id];
+          updateHistoryItem(id, {
+            status: mappedStatus,
+            errorMessage: detail.error_message || (rawStatus === 'Canceled' ? '任务已取消' : '任务失败'),
+            completedAt: Date.now(),
+            lastResponse: detail,
           });
         }
       } catch (err) {
@@ -361,16 +448,20 @@ export function AppProvider({ children }) {
     const items = historyItems || historyRef.current;
     if (!Array.isArray(items)) return;
     const running = items.filter(
-      (h) => h && h.status === 'Running' && h.requestId
+      (h) => h && (h.status === 'Running' || h.status === 'Pending') && h.requestId
     );
     running.forEach((item) => {
       const ak = item.taskApiKey || apiKey || ENV_API_KEY;
       if (ak) {
-        querySingleTask(item, ak);
-        startPolling(item.id, item.requestId, ak);
+        if (item.source === 'webapp') {
+          startWebappPolling(item.id, item.requestId, ak);
+        } else {
+          querySingleTask(item, ak);
+          startPolling(item.id, item.requestId, ak);
+        }
       }
     });
-  }, [apiKey, querySingleTask, startPolling]);
+  }, [apiKey, querySingleTask, startPolling, startWebappPolling]);
 
   const refreshRunningTasks = useCallback(async () => {
     const current = historyRef.current;
@@ -531,6 +622,7 @@ export function AppProvider({ children }) {
     persistHistory,
     updateHistoryItem,
     startPolling,
+    startWebappPolling,
     refreshRunningTasks,
     resumeRunningPolling,
     homeState,

@@ -1,13 +1,14 @@
 import React from 'react';
 import { View, TouchableOpacity, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { TAB_HOME, TAB_HISTORY } from '../constants/models';
+import { TAB_HOME, TAB_WEBAPP, TAB_HISTORY } from '../constants/models';
 import { Radius } from '../constants/theme';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { useTheme } from '../context/ThemeContext';
 
 const TABS = [
   { key: TAB_HOME, label: '主页', icon: 'home-outline', iconActive: 'home' },
+  { key: TAB_WEBAPP, label: 'AI应用', icon: 'grid-outline', iconActive: 'grid' },
   { key: TAB_HISTORY, label: '历史', icon: 'time-outline', iconActive: 'time' },
 ];
 

@@ -1062,13 +1062,15 @@ export const SIZE_PRESETS = [
   { label: '2:3', width: 1024, height: 1536 },
 ];
 
-export const STATUS_LABELS = { Pending: '排队中', Running: '生成中', Saving: '转存中', Success: '已完成', Failed: '失败' };
+export const STATUS_LABELS = { Pending: '排队中', Queuing: '排队中', Preparing: '准备中', Running: '生成中', Saving: '转存中', Success: '已完成', Failed: '失败' };
 export const STATUS_COLORS = THEME_STATUS_COLORS;
 export const STATUS_BG = THEME_STATUS_BG;
 export const QUALITY_LABELS = { low: '低', medium: '中', high: '高' };
 
 export const API_HOST = 'https://api.bizyair.cn';
 export const API_BASE = `${API_HOST}/x/v1/modelzoo/tasks/openapi`;
+export const WEBAPP_API_BASE = `${API_HOST}/w/v1/webapp/task/openapi`;
+export const WEBAPP_DETAIL_URL = `${API_HOST}/x/v1/webapp`;
 export const UPLOAD_TOKEN_URL = `${API_HOST}/x/v1/upload/token`;
 export const COMMIT_RESOURCE_URL = `${API_HOST}/x/v1/input_resource/commit`;
 export const USER_METADATA_URL = `${API_HOST}/x/v1/user/metadata`;
@@ -1090,5 +1092,6 @@ export const ACTIVE_TAB_KEY = '@active_tab';
 export const HOME_STATE_KEY = '@home_state';
 export const TOTAL_COINS_KEY = '@total_coins_spent';
 export const TAB_HOME = 'home';
+export const TAB_WEBAPP = 'webapp';
 export const TAB_HISTORY = 'history';
 export const PAGE_SIZE = 20;
