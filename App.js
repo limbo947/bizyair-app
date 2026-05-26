@@ -11,7 +11,6 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppProvider, useAppContext } from './src/context/AppContext';
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
-import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { TabBar } from './src/components/TabBar';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { HistoryScreen } from './src/screens/HistoryScreen';
@@ -21,6 +20,22 @@ import { TAB_HOME, TAB_FADE_OUT_MS, TAB_FADE_IN_MS } from './src/constants/model
 const PAGE_HOME = 'home';
 const PAGE_HISTORY = 'history';
 const PAGE_MODEL_SELECT = 'model-select';
+
+function PageContainer({ page, homeState, handleSelectModel, handleCloseModelSelect, handleOpenModelSelect, activeTab }) {
+  if (page === PAGE_MODEL_SELECT) {
+    return (
+      <ModelSelectScreen
+        currentModelId={homeState.modelId}
+        onSelectModel={handleSelectModel}
+        onBack={handleCloseModelSelect}
+      />
+    );
+  }
+  if (activeTab === TAB_HOME) {
+    return <HomeScreen onOpenModelSelect={handleOpenModelSelect} />;
+  }
+  return <HistoryScreen />;
+}
 
 function AppNavigator() {
   const {
@@ -38,7 +53,6 @@ function AppNavigator() {
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const tabRef = useRef(activeTab);
 
-  // 当 activeTab 从 AsyncStorage 异步加载后，同步 currentPage
   useEffect(() => {
     const page = activeTab === TAB_HOME ? PAGE_HOME : PAGE_HISTORY;
     setCurrentPage(page);
@@ -53,7 +67,6 @@ function AppNavigator() {
 
   const handleTabChange = useCallback((tab) => {
     if (tab === tabRef.current) {
-      // 即使是当前 tab，也确保 currentPage 与 activeTab 同步
       const page = tab === TAB_HOME ? PAGE_HOME : PAGE_HISTORY;
       if (currentPage !== page) setCurrentPage(page);
       return;
@@ -94,8 +107,14 @@ function AppNavigator() {
       return false;
     };
 
-    BackHandler.addEventListener('hardwareBackPress', onBackPress);
-    return () => BackHandler.removeEventListener('hardwareBackPress', onBackPress);
+    const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => {
+      if (subscription && typeof subscription.remove === 'function') {
+        subscription.remove();
+      } else {
+        BackHandler.removeEventListener('hardwareBackPress', onBackPress);
+      }
+    };
   }, [currentPage, handleCloseModelSelect]);
 
   const handleSelectModel = useCallback((modelId, mode) => {
@@ -115,17 +134,14 @@ function AppNavigator() {
       <View style={{ height: statusBarHeight, backgroundColor: colors.card }} />
       <View style={styles.contentWrapper}>
         <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
-          {currentPage === PAGE_MODEL_SELECT ? (
-            <ModelSelectScreen
-              currentModelId={homeState.modelId}
-              onSelectModel={handleSelectModel}
-              onBack={handleCloseModelSelect}
-            />
-          ) : activeTab === TAB_HOME ? (
-            <HomeScreen onOpenModelSelect={handleOpenModelSelect} />
-          ) : (
-            <HistoryScreen />
-          )}
+          <PageContainer
+            page={currentPage}
+            activeTab={activeTab}
+            homeState={homeState}
+            handleSelectModel={handleSelectModel}
+            handleCloseModelSelect={handleCloseModelSelect}
+            handleOpenModelSelect={handleOpenModelSelect}
+          />
         </Animated.View>
       </View>
 
@@ -145,9 +161,7 @@ export default function App() {
     <SafeAreaProvider>
       <ThemeProvider>
         <AppProvider>
-          <ErrorBoundary>
-            <AppNavigator />
-          </ErrorBoundary>
+          <AppNavigator />
         </AppProvider>
       </ThemeProvider>
     </SafeAreaProvider>
