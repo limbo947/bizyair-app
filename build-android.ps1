@@ -184,6 +184,7 @@ Write-Host "`n[8/8] Building Release APK..." -ForegroundColor Yellow
 $androidDir = Join-Path $ScriptDir "android"
 Push-Location $androidDir
 try {
+    $env:NODE_ENV = "production"
     $archsArg = ($architectures -join ',')
     .\gradlew.bat assembleRelease "-PreactNativeArchitectures=$archsArg" 2>&1 | ForEach-Object {
         $line = $_ -as [string]
