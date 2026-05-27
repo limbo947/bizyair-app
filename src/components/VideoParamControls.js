@@ -63,10 +63,10 @@ export function SeedanceVideoControls({
       </View>
       <View style={styles.card}>
         <ParamLabel label="分辨率" required={isResolutionRequired} />
-        <View style={styles.selectorRow}>
+        <View style={styles.ratioGrid}>
           {resolutions.map((r) => (
-            <TouchableOpacity key={r} style={[styles.selectorButton, resolution === r && styles.selectorButtonActive]} onPress={() => setResolution(r)}>
-              <Text style={[styles.selectorText, resolution === r && styles.selectorTextActive]}>{r}</Text>
+            <TouchableOpacity key={r} style={[styles.ratioButton, resolution === r && styles.ratioButtonActive]} onPress={() => setResolution(r)}>
+              <Text style={[styles.ratioText, resolution === r && styles.ratioTextActive]}>{r}</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -302,10 +302,10 @@ export function ViduVideoControls({
     <>
       <View style={styles.card}>
         <ParamLabel label="分辨率" required={isResolutionRequired} />
-        <View style={styles.selectorRow}>
+        <View style={styles.ratioGrid}>
           {resolutions.map((r) => (
-            <TouchableOpacity key={r} style={[styles.selectorButton, resolution === r && styles.selectorButtonActive]} onPress={() => setResolution(r)}>
-              <Text style={[styles.selectorText, resolution === r && styles.selectorTextActive]}>{r}</Text>
+            <TouchableOpacity key={r} style={[styles.ratioButton, resolution === r && styles.ratioButtonActive]} onPress={() => setResolution(r)}>
+              <Text style={[styles.ratioText, resolution === r && styles.ratioTextActive]}>{r}</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -429,10 +429,10 @@ export function WanVideoControls({
       )}
       <View style={styles.card}>
         <ParamLabel label="分辨率" required />
-        <View style={styles.selectorRow}>
+        <View style={styles.ratioGrid}>
           {resolutions.map((r) => (
-            <TouchableOpacity key={r} style={[styles.selectorButton, resolution === r && styles.selectorButtonActive]} onPress={() => setResolution(r)}>
-              <Text style={[styles.selectorText, resolution === r && styles.selectorTextActive]}>{r}</Text>
+            <TouchableOpacity key={r} style={[styles.ratioButton, resolution === r && styles.ratioButtonActive]} onPress={() => setResolution(r)}>
+              <Text style={[styles.ratioText, resolution === r && styles.ratioTextActive]}>{r}</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -521,10 +521,10 @@ export function WanI2VControls({
     <>
       <View style={styles.card}>
         <ParamLabel label="分辨率" required />
-        <View style={styles.selectorRow}>
+        <View style={styles.ratioGrid}>
           {resolutions.map((r) => (
-            <TouchableOpacity key={r} style={[styles.selectorButton, resolution === r && styles.selectorButtonActive]} onPress={() => setResolution(r)}>
-              <Text style={[styles.selectorText, resolution === r && styles.selectorTextActive]}>{r}</Text>
+            <TouchableOpacity key={r} style={[styles.ratioButton, resolution === r && styles.ratioButtonActive]} onPress={() => setResolution(r)}>
+              <Text style={[styles.ratioText, resolution === r && styles.ratioTextActive]}>{r}</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -580,14 +580,14 @@ export function HailuoVideoControls({
     <>
       <View style={styles.card}>
         <ParamLabel label="分辨率" required />
-        <View style={styles.selectorRow}>
+        <View style={styles.ratioGrid}>
           {resolutions.map((r) => (
-            <TouchableOpacity key={r} style={[styles.selectorButton, resolution === r && styles.selectorButtonActive]} onPress={() => {
+            <TouchableOpacity key={r} style={[styles.ratioButton, resolution === r && styles.ratioButtonActive]} onPress={() => {
               setResolution(r);
               const newAllowed = resolutionDurationMap ? (resolutionDurationMap[r] || durationOptions) : durationOptions;
               if (!newAllowed.includes(duration)) setDuration(newAllowed[0]);
             }}>
-              <Text style={[styles.selectorText, resolution === r && styles.selectorTextActive]}>{r}</Text>
+              <Text style={[styles.ratioText, resolution === r && styles.ratioTextActive]}>{r}</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -640,38 +640,43 @@ export function HappyHorseVideoControls({
   const { styles, colors } = useStyles();
   const durArray = [];
   for (let i = minDuration || 3; i <= (maxDuration || 15); i++) durArray.push(i);
+  const isVideoEdit = mode === 'video-edit';
   return (
     <>
-      <View style={styles.card}>
-        <ParamLabel label="宽高比" required={false} />
-        <View style={styles.ratioGrid}>
-          {videoRatios.map((r) => (
-            <TouchableOpacity key={r} style={[styles.ratioButton, aspectRatio === r && styles.ratioButtonActive]} onPress={() => setAspectRatio(r)}>
-              <Text style={[styles.ratioText, aspectRatio === r && styles.ratioTextActive]}>{r}</Text>
-            </TouchableOpacity>
-          ))}
+      {!isVideoEdit && (
+        <View style={styles.card}>
+          <ParamLabel label="宽高比" required={false} />
+          <View style={styles.ratioGrid}>
+            {videoRatios.map((r) => (
+              <TouchableOpacity key={r} style={[styles.ratioButton, aspectRatio === r && styles.ratioButtonActive]} onPress={() => setAspectRatio(r)}>
+                <Text style={[styles.ratioText, aspectRatio === r && styles.ratioTextActive]}>{r}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
-      </View>
+      )}
       <View style={styles.card}>
         <ParamLabel label="分辨率" required={false} />
-        <View style={styles.selectorRow}>
+        <View style={styles.ratioGrid}>
           {resolutions.map((r) => (
-            <TouchableOpacity key={r} style={[styles.selectorButton, resolution === r && styles.selectorButtonActive]} onPress={() => setResolution(r)}>
-              <Text style={[styles.selectorText, resolution === r && styles.selectorTextActive]}>{r}</Text>
+            <TouchableOpacity key={r} style={[styles.ratioButton, resolution === r && styles.ratioButtonActive]} onPress={() => setResolution(r)}>
+              <Text style={[styles.ratioText, resolution === r && styles.ratioTextActive]}>{r}</Text>
             </TouchableOpacity>
           ))}
         </View>
       </View>
-      <View style={styles.card}>
-        <ParamLabel label="时长 (秒)" required={false} />
-        <View style={styles.selectorRow}>
-          {durArray.map((d) => (
-            <TouchableOpacity key={d} style={[styles.selectorButtonSmall, duration === d && styles.selectorButtonActive]} onPress={() => setDuration(d)}>
-              <Text style={[styles.selectorText, duration === d && styles.selectorTextActive]}>{d}</Text>
-            </TouchableOpacity>
-          ))}
+      {!isVideoEdit && (
+        <View style={styles.card}>
+          <ParamLabel label="时长 (秒)" required={false} />
+          <View style={styles.selectorRow}>
+            {durArray.map((d) => (
+              <TouchableOpacity key={d} style={[styles.selectorButtonSmall, duration === d && styles.selectorButtonActive]} onPress={() => setDuration(d)}>
+                <Text style={[styles.selectorText, duration === d && styles.selectorTextActive]}>{d}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
-      </View>
+      )}
       {supportsWatermark && (
         <View style={styles.card}>
           <View style={styles.switchRow}>
@@ -738,10 +743,10 @@ export function BzaVideoXControls({
     <>
       <View style={styles.card}>
         <ParamLabel label="分辨率" required />
-        <View style={styles.selectorRow}>
+        <View style={styles.ratioGrid}>
           {resolutions.map((r) => (
-            <TouchableOpacity key={r} style={[styles.selectorButton, resolution === r && styles.selectorButtonActive]} onPress={() => setResolution(r)}>
-              <Text style={[styles.selectorText, resolution === r && styles.selectorTextActive]}>{r}</Text>
+            <TouchableOpacity key={r} style={[styles.ratioButton, resolution === r && styles.ratioButtonActive]} onPress={() => setResolution(r)}>
+              <Text style={[styles.ratioText, resolution === r && styles.ratioTextActive]}>{r}</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -783,10 +788,10 @@ export function BzaVideoV3Controls({
     <>
       <View style={styles.card}>
         <ParamLabel label="分辨率" required />
-        <View style={styles.selectorRow}>
+        <View style={styles.ratioGrid}>
           {resolutions.map((r) => (
-            <TouchableOpacity key={r} style={[styles.selectorButton, resolution === r && styles.selectorButtonActive]} onPress={() => setResolution(r)}>
-              <Text style={[styles.selectorText, resolution === r && styles.selectorTextActive]}>{r}</Text>
+            <TouchableOpacity key={r} style={[styles.ratioButton, resolution === r && styles.ratioButtonActive]} onPress={() => setResolution(r)}>
+              <Text style={[styles.ratioText, resolution === r && styles.ratioTextActive]}>{r}</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -819,8 +824,8 @@ const createStyles = (colors) => ({
   card: { backgroundColor: colors.card, padding: Spacing.lg, borderRadius: Radius.md, marginBottom: Spacing.md },
   label: { fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginBottom: Spacing.sm, textTransform: 'uppercase', letterSpacing: 0.5 },
   selectorRow: { flexDirection: 'row', gap: Spacing.sm, flexWrap: 'wrap' },
-  selectorButton: { flex: 1, minWidth: 60, paddingVertical: 10, borderRadius: Radius.sm, backgroundColor: colors.bg, alignItems: 'center' },
-  selectorButtonSmall: { paddingVertical: 8, paddingHorizontal: 10, borderRadius: Radius.sm, backgroundColor: colors.bg, alignItems: 'center' },
+  selectorButton: { flex: 1, minWidth: 60, paddingVertical: 10, borderRadius: Radius.sm, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
+  selectorButtonSmall: { paddingVertical: 8, paddingHorizontal: 10, borderRadius: Radius.sm, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
   selectorButtonActive: { backgroundColor: colors.primary },
   selectorText: { fontSize: 13, color: colors.textSecondary, fontWeight: '500' },
   selectorTextActive: { color: colors.textInverse, fontWeight: '600' },

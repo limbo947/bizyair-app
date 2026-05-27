@@ -30,9 +30,9 @@ const createStyles = (colors) => ({
   confirmTitle: { fontSize: 18, fontWeight: '600', color: colors.textPrimary, marginBottom: Spacing.sm, textAlign: 'center' },
   confirmMessage: { fontSize: 15, color: colors.textSecondary, lineHeight: 22, marginBottom: Spacing.xl, textAlign: 'center' },
   confirmActions: { flexDirection: 'row', gap: Spacing.md },
-  confirmCancelButton: { flex: 1, paddingVertical: 12, borderRadius: Radius.md, backgroundColor: colors.bg, alignItems: 'center' },
+  confirmCancelButton: { flex: 1, paddingVertical: 12, borderRadius: Radius.md, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
   confirmCancelText: { fontSize: 17, color: colors.primary, fontWeight: '600' },
-  confirmDeleteButton: { flex: 1, paddingVertical: 12, borderRadius: Radius.md, backgroundColor: colors.error, alignItems: 'center' },
+  confirmDeleteButton: { flex: 1, paddingVertical: 12, borderRadius: Radius.md, backgroundColor: colors.error, alignItems: 'center', justifyContent: 'center' },
   confirmDeleteText: { fontSize: 17, color: colors.textInverse, fontWeight: '600' },
 });
 

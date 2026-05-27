@@ -355,7 +355,7 @@ const createStyles = (colors) => ({
     backgroundColor: colors.bg,
     borderRadius: Radius.md,
     paddingVertical: Spacing.md,
-    paddingHorizontal: 6,
+    paddingHorizontal: 8,
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.md,

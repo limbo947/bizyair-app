@@ -202,7 +202,7 @@ export function WanSizeControls({ currentResolutions, resolution, setResolution,
               <TextInput style={styles.dimInput} value={customHeight} onChangeText={setCustomHeight} keyboardType="numeric" />
             </View>
           </View>
-          <Text style={styles.priceHint}>宽高范围: 768~4096，宽高比1:8~8:1</Text>
+          <Text style={styles.priceHint}>{mode === 'image-to-image' ? '宽高范围: 768~2048，总像素上限 2048×2048' : '宽高范围: 768~4096，宽高比1:8~8:1'}</Text>
         </View>
       )}
       {supportsEnableSequential && (
@@ -213,7 +213,7 @@ export function WanSizeControls({ currentResolutions, resolution, setResolution,
           </View>
         </View>
       )}
-      {supportsThinkingMode && !enableSequential && (
+      {supportsThinkingMode && mode !== 'image-to-image' && !enableSequential && (
         <View style={styles.card}>
           <View style={styles.switchRow}>
             <ParamLabel label="增强推理" required={false} style={{ marginBottom: 0 }} />
@@ -229,7 +229,7 @@ export function WanSizeControls({ currentResolutions, resolution, setResolution,
           </View>
         </View>
       )}
-      {supportsColorPalette && (
+      {supportsColorPalette && !enableSequential && (
         <View style={styles.card}>
           <ParamLabel label="调色板" required={false} />
           <TextInput style={styles.dimInputFull} value={colorPalette || ''} onChangeText={setColorPalette} placeholder="输入调色板 JSON 或留空" placeholderTextColor={colors.textTertiary} />
@@ -241,7 +241,7 @@ export function WanSizeControls({ currentResolutions, resolution, setResolution,
           <TextInput style={styles.dimInputFull} value={bboxList || ''} onChangeText={setBboxList} placeholder="输入 bbox JSON 数组或留空" placeholderTextColor={colors.textTertiary} multiline />
         </View>
       )}
-      {supportsSeed && (
+      {supportsSeed && mode !== 'image-to-image' && (
         <View style={styles.card}>
           <ParamLabel label="种子" required={false} />
           <TextInput style={styles.dimInputFull} value={seed || ''} onChangeText={(text) => setSeed(text.replace(/[^0-9-]/g, ''))} keyboardType="numeric" placeholder="-1 为随机" placeholderTextColor={colors.textTertiary} />
@@ -313,7 +313,7 @@ const createStyles = (colors) => ({
   card: { backgroundColor: colors.card, padding: Spacing.lg, borderRadius: Radius.md, marginBottom: Spacing.md },
   label: { fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginBottom: Spacing.sm, textTransform: 'uppercase', letterSpacing: 0.5 },
   selectorRow: { flexDirection: 'row', gap: Spacing.sm },
-  selectorButton: { flex: 1, paddingVertical: 10, borderRadius: Radius.sm, backgroundColor: colors.bg, alignItems: 'center' },
+  selectorButton: { flex: 1, minWidth: 60, paddingVertical: 10, borderRadius: Radius.sm, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
   selectorButtonActive: { backgroundColor: colors.primary },
   selectorText: { fontSize: 14, color: colors.textSecondary, fontWeight: '500' },
   selectorTextActive: { color: colors.textInverse, fontWeight: '600' },
@@ -325,7 +325,7 @@ const createStyles = (colors) => ({
   ratioText: { fontSize: 13, color: colors.textSecondary, fontWeight: '500' },
   ratioTextActive: { color: colors.textInverse, fontWeight: '600' },
   presetGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
-  presetButton: { width: '30%', paddingVertical: 10, borderRadius: Radius.sm, backgroundColor: colors.bg, alignItems: 'center' },
+  presetButton: { width: '30%', paddingVertical: 10, borderRadius: Radius.sm, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
   presetButtonActive: { backgroundColor: colors.primary },
   presetLabel: { fontSize: 14, color: colors.textSecondary, fontWeight: '500' },
   presetLabelActive: { color: colors.textInverse, fontWeight: '600' },

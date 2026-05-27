@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, TouchableOpacity, Text, TextInput, ScrollView } from 'react-native';
+import React, { useState } from 'react';
+import { View, TouchableOpacity, Text, TextInput, ScrollView, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Radius, Spacing } from '../constants/theme';
 import { useThemedStyles } from '../hooks/useThemedStyles';
@@ -11,6 +11,12 @@ const FILTER_OPTIONS = [
   { key: 'video', label: '视频' },
   { key: 'audio', label: '音频' },
   { key: 'text', label: '文本' },
+];
+
+const SOURCE_OPTIONS = [
+  { key: 'all', label: '全部来源' },
+  { key: 'model', label: '模型' },
+  { key: 'webapp', label: 'AI应用' },
 ];
 
 const createStyles = (colors) => ({
@@ -25,13 +31,23 @@ const createStyles = (colors) => ({
   filterChipText: { fontSize: 13, color: colors.textSecondary, fontWeight: '500' },
   filterChipTextActive: { color: colors.textInverse, fontWeight: '600' },
   sortButton: { paddingHorizontal: Spacing.sm, paddingVertical: Spacing.xs, marginLeft: 4 },
+  sourceButton: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.sm, paddingVertical: Spacing.xs, marginLeft: 4, gap: 2 },
+  sourceButtonText: { fontSize: 12, color: colors.textSecondary, fontWeight: '500' },
+  sourcePickerOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'center', alignItems: 'center' },
+  sourcePickerContent: { width: '70%', backgroundColor: colors.card, borderRadius: Radius.lg, padding: Spacing.xl },
+  sourcePickerTitle: { fontSize: 17, fontWeight: '600', color: colors.textPrimary, marginBottom: Spacing.lg, textAlign: 'center' },
+  sourcePickerOption: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12, paddingHorizontal: Spacing.lg, borderRadius: Radius.sm, marginBottom: 2 },
+  sourcePickerOptionActive: { backgroundColor: colors.primaryBg },
+  sourcePickerOptionText: { fontSize: 16, color: colors.textSecondary },
+  sourcePickerOptionTextActive: { color: colors.primary, fontWeight: '600' },
+  sourcePickerCheck: { fontSize: 18, color: colors.primary, fontWeight: '600' },
   batchBar: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', backgroundColor: colors.card, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, borderBottomWidth: 0.5, borderBottomColor: colors.separator, gap: Spacing.sm },
   batchToggleButton: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: Radius.full, backgroundColor: colors.primaryBg },
   batchToggleButtonActive: { backgroundColor: colors.primary },
   batchToggleText: { fontSize: 13, color: colors.primary, fontWeight: '600' },
   batchToggleTextActive: { color: colors.textInverse, fontWeight: '600' },
   batchActions: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, flexWrap: 'wrap' },
-  batchActionButton: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: Radius.full, backgroundColor: colors.bg },
+  batchActionButton: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: Radius.full, backgroundColor: colors.bg, justifyContent: 'center', alignItems: 'center' },
   batchActionText: { fontSize: 12, color: colors.textSecondary, fontWeight: '500' },
   batchCount: { fontSize: 12, color: colors.textPrimary, fontWeight: '600', marginHorizontal: 4 },
   batchDeleteButton: { backgroundColor: colors.errorBg },
@@ -50,6 +66,7 @@ export function HistoryFilters({
   searchText,
   filterBy,
   sortBy,
+  sourceFilter,
   batchMode,
   selectedIds,
   isDownloading,
@@ -60,6 +77,7 @@ export function HistoryFilters({
   onSearchChange,
   onFilterChange,
   onSortPress,
+  onSourceFilterChange,
   onToggleBatchMode,
   onSelectAll,
   onDeselectAll,
@@ -68,6 +86,9 @@ export function HistoryFilters({
 }) {
   const styles = useThemedStyles(createStyles);
   const { colors } = useTheme();
+  const [showSourcePicker, setShowSourcePicker] = useState(false);
+
+  const currentSourceLabel = SOURCE_OPTIONS.find(o => o.key === sourceFilter)?.label || '全部来源';
 
   return (
     <View>
@@ -89,10 +110,28 @@ export function HistoryFilters({
             </TouchableOpacity>
           ))}
         </ScrollView>
+        <TouchableOpacity style={styles.sourceButton} onPress={() => setShowSourcePicker(true)}>
+          <Text style={styles.sourceButtonText}>{currentSourceLabel}</Text>
+          <Ionicons name="chevron-down" size={14} color={colors.textSecondary} />
+        </TouchableOpacity>
         <TouchableOpacity style={styles.sortButton} onPress={onSortPress}>
           <Ionicons name="funnel-outline" size={18} color={colors.textSecondary} />
         </TouchableOpacity>
       </View>
+
+      <Modal visible={showSourcePicker} transparent animationType="fade" onRequestClose={() => setShowSourcePicker(false)}>
+        <TouchableOpacity style={styles.sourcePickerOverlay} activeOpacity={1} onPress={() => setShowSourcePicker(false)}>
+          <View style={styles.sourcePickerContent}>
+            <Text style={styles.sourcePickerTitle}>来源筛选</Text>
+            {SOURCE_OPTIONS.map((opt) => (
+              <TouchableOpacity key={opt.key} style={[styles.sourcePickerOption, sourceFilter === opt.key && styles.sourcePickerOptionActive]} onPress={() => { onSourceFilterChange(opt.key); setShowSourcePicker(false); }}>
+                <Text style={[styles.sourcePickerOptionText, sourceFilter === opt.key && styles.sourcePickerOptionTextActive]}>{opt.label}</Text>
+                {sourceFilter === opt.key ? <Text style={styles.sourcePickerCheck}>✓</Text> : null}
+              </TouchableOpacity>
+            ))}
+          </View>
+        </TouchableOpacity>
+      </Modal>
 
       {history.length > 0 ? (
         <View style={styles.batchBar}>

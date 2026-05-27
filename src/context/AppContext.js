@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { queryTaskResult, fetchUserInfo, fetchWalletBalance, queryWebappTaskDetail, queryWebappTaskOutputs } from '../services/apiClient';
+import { queryTaskResult, fetchUserInfo, fetchWalletBalance, queryWebappTaskDetail, queryWebappTaskOutputs, cancelWebappTask, interruptWebappTask } from '../services/apiClient';
 import {
   ENV_API_KEY,
   HISTORY_KEY,
@@ -263,7 +263,7 @@ export function AppProvider({ children }) {
     if (!outputs) return {};
 
     if (outputs.videos?.length > 0) {
-      return { outputType: 'video', videoUrl: outputs.videos[0], resultUrl: outputs.videos[0] };
+      return { outputType: 'video', videoUrl: outputs.videos[0], videoUrls: outputs.videos, resultUrl: outputs.videos[0] };
     }
     if (outputs.audios?.length > 0) {
       return { outputType: 'audio', audioUrl: outputs.audios[0], resultUrl: outputs.audios[0] };
@@ -272,7 +272,12 @@ export function AppProvider({ children }) {
       return { outputType: 'text', textResult: outputs.texts[0], resultUrl: null };
     }
     if (outputs.images?.length > 0) {
-      return { outputType: 'image', imageUrl: outputs.images[0], resultUrl: outputs.images[0] };
+      return {
+        outputType: 'image',
+        imageUrl: outputs.images[0],
+        imageUrls: outputs.images,
+        resultUrl: outputs.images[0],
+      };
     }
     return {};
   }
@@ -283,16 +288,19 @@ export function AppProvider({ children }) {
     const ext = (first.output_ext || '').toLowerCase();
     const url = first.object_url || '';
     if (['.mp4', '.mov', '.avi', '.webm'].includes(ext)) {
-      return { outputType: 'video', videoUrl: url, resultUrl: url };
+      const videoUrls = outputs.filter(o => ['.mp4', '.mov', '.avi', '.webm'].includes((o.output_ext || '').toLowerCase())).map(o => o.object_url);
+      return { outputType: 'video', videoUrl: url, resultUrl: url, videoUrls };
     }
     if (['.mp3', '.wav', '.ogg', '.flac', '.aac'].includes(ext)) {
       return { outputType: 'audio', audioUrl: url, resultUrl: url };
     }
     if (['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp'].includes(ext)) {
-      return { outputType: 'image', imageUrl: url, resultUrl: url };
+      const imageUrls = outputs.filter(o => ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp'].includes((o.output_ext || '').toLowerCase())).map(o => o.object_url);
+      return { outputType: 'image', imageUrl: url, imageUrls, resultUrl: url };
     }
     if (url) {
-      return { outputType: 'image', imageUrl: url, resultUrl: url };
+      const imageUrls = outputs.map(o => o.object_url).filter(Boolean);
+      return { outputType: 'image', imageUrl: url, imageUrls, resultUrl: url };
     }
     return {};
   }
@@ -353,7 +361,7 @@ export function AppProvider({ children }) {
 
     const mapStatus = (s) => {
       if (s === 'Queuing' || s === 'Preparing') return 'Pending';
-      if (s === 'Canceled') return 'Failed';
+      if (s === 'Canceled') return 'Canceled';
       return s;
     };
 
@@ -377,7 +385,7 @@ export function AppProvider({ children }) {
               completedAt: Date.now(),
               lastResponse: { ...detail, outputs: outputData.outputs },
             });
-          } catch (outputErr) {
+          } catch (_outputErr) {
             updateHistoryItem(id, {
               status: 'Success',
               completedAt: Date.now(),
@@ -387,9 +395,10 @@ export function AppProvider({ children }) {
         } else if (rawStatus === 'Failed' || rawStatus === 'Canceled') {
           clearInterval(interval);
           delete pollingRef.current[id];
+          const isCanceled = rawStatus === 'Canceled' || mappedStatus === 'Canceled';
           updateHistoryItem(id, {
-            status: mappedStatus,
-            errorMessage: detail.error_message || (rawStatus === 'Canceled' ? '任务已取消' : '任务失败'),
+            status: isCanceled ? 'Canceled' : mappedStatus,
+            errorMessage: detail.error_message || (isCanceled ? '任务已取消' : '任务失败'),
             completedAt: Date.now(),
             lastResponse: detail,
           });
@@ -477,6 +486,77 @@ export function AppProvider({ children }) {
     );
     return results;
   }, [apiKey, querySingleTask]);
+
+  const stopPolling = useCallback(async (id) => {
+    // 查找对应的历史记录项
+    const item = historyRef.current.find((h) => h.id === id);
+    if (!item) return;
+    const ak = item.taskApiKey || apiKey || ENV_API_KEY;
+    const requestId = item.requestId;
+
+    if (!requestId || !ak || item.source !== 'webapp') {
+      // 非 webapp 任务暂无服务端取消 API，仅本地停止轮询
+      if (pollingRef.current[id]) {
+        clearInterval(pollingRef.current[id]);
+        delete pollingRef.current[id];
+      }
+      updateHistoryItem(id, {
+        status: 'Failed',
+        errorMessage: '任务已终止',
+        completedAt: Date.now(),
+      });
+      return;
+    }
+
+    // AI 应用任务：先查询任务状态，根据实际状态选择 cancel 或 interrupt
+    // 发起请求后不终止轮询，继续轮询等待服务端状态同步为 Canceled
+    const MAX_RETRIES = 5;
+    let lastError = null;
+
+    // 第一步：查询任务状态
+    let currentStatus = item.status;
+    for (let i = 0; i < MAX_RETRIES; i++) {
+      try {
+        const detail = await queryWebappTaskDetail(ak, requestId);
+        if (detail.status) {
+          currentStatus = detail.status;
+          break;
+        }
+      } catch (err) {
+        lastError = err;
+      }
+      if (i < MAX_RETRIES - 1) await new Promise((r) => setTimeout(r, 3000));
+    }
+
+    // 根据查询到的状态选择 cancel 或 interrupt
+    // Queuing/Preparing -> cancel; Running -> interrupt
+    const shouldCancel = currentStatus === 'Queuing' || currentStatus === 'Preparing';
+    const apiFn = shouldCancel ? cancelWebappTask : interruptWebappTask;
+
+    for (let i = 0; i < MAX_RETRIES; i++) {
+      try {
+        const result = await apiFn(ak, requestId);
+        if (result.code === 20000) {
+          // 请求成功，更新为中间状态，继续轮询
+          updateHistoryItem(id, {
+            status: 'Pending',
+            errorMessage: '取消中...',
+          });
+          return;
+        }
+        lastError = new Error(`服务端返回错误码: ${result.code}`);
+      } catch (err) {
+        lastError = err;
+      }
+      // 重试间隔 3s
+      if (i < MAX_RETRIES - 1) await new Promise((r) => setTimeout(r, 3000));
+    }
+    // 全部重试失败，不停止轮询，仅更新为"取消失败"提示状态
+    // 保留 pollingRef 让用户可以再次点击终止按钮重试
+    updateHistoryItem(id, {
+      errorMessage: `取消失败: ${lastError?.message || '未知错误'}`,
+    });
+  }, [apiKey, updateHistoryItem]);
 
   const saveActiveTab = async (tab) => {
     try {
@@ -623,6 +703,7 @@ export function AppProvider({ children }) {
     updateHistoryItem,
     startPolling,
     startWebappPolling,
+    stopPolling,
     refreshRunningTasks,
     resumeRunningPolling,
     homeState,

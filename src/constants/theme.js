@@ -143,6 +143,7 @@ export const STATUS_COLORS = {
   Saving: Colors.purple,
   Success: Colors.success,
   Failed: Colors.error,
+  Canceled: Colors.textTertiary,
 };
 
 export const STATUS_BG = {
@@ -153,4 +154,5 @@ export const STATUS_BG = {
   Saving: Colors.purpleBg,
   Success: Colors.successBg,
   Failed: Colors.errorBg,
+  Canceled: Colors.bg,
 };

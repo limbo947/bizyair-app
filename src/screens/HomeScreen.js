@@ -262,9 +262,9 @@ export function HomeScreen({ onOpenModelSelect }) {
       case 'width-height':
         return { ...base, width: parseInt(customWidth), height: parseInt(customHeight), negativePrompt, seed, batchSize };
       case 'seedance-video':
-        return { ...base, resolution, aspectRatio, duration, generateAudio, seed: seed ? parseInt(seed) : undefined, webSearch, returnLastFrame, imageUrls, firstFrameUrls, lastFrameUrls, videoUrls };
+        return { ...base, resolution, aspectRatio, duration, generateAudio, seed: seed !== '' && seed !== undefined ? parseInt(seed) : undefined, webSearch, returnLastFrame, imageUrls, firstFrameUrls, lastFrameUrls, videoUrls };
       case 'kling-video':
-        return { ...base, aspectRatio, duration, sound, multiShot, shotType, multiPrompt, seed: seed ? parseInt(seed) : undefined, firstFrameUrls, lastFrameUrls };
+        return { ...base, aspectRatio, duration, sound, multiShot, shotType, multiPrompt, seed: seed !== '' && seed !== undefined ? parseInt(seed) : undefined, firstFrameUrls, lastFrameUrls };
       case 'kling-o3-4k':
         return { ...base, aspectRatio, duration, sound, keepOriginalSound, multiShot, shotType, multiPrompt, imageUrls, videoUrls };
       case 'vidu-video':
@@ -694,7 +694,6 @@ export function HomeScreen({ onOpenModelSelect }) {
           <ResizableTextInput
             value={prompt}
             onChangeText={setPrompt}
-            hideClear
             placeholder={
               paramType === 'llm-chat' ? '输入你的问题，支持深度思考...'
               : paramType === 'vision-g' ? '描述图片内容或提出问题...'

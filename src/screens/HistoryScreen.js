@@ -8,11 +8,12 @@ import {
   ActivityIndicator,
   FlatList,
   Platform,
-  NativeModules,
-  Linking,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
+import * as FileSystem from 'expo-file-system';
+import * as MediaLibrary from 'expo-media-library';
 import { getVideoThumbnailAsync } from 'expo-video-thumbnails';
 import { useAppContext } from '../context/AppContext';
 import { HistoryModals } from '../components/HistoryModals';
@@ -27,10 +28,8 @@ import { Radius, Spacing } from '../constants/theme';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { useTheme } from '../context/ThemeContext';
 
-const { AndroidDownloadManager } = NativeModules;
-
 const ACTIVE_STATUSES = ['Pending', 'Running', 'Saving'];
-const FINAL_STATUSES = ['Success', 'Failed'];
+const FINAL_STATUSES = ['Success', 'Failed', 'Canceled'];
 
 const SORT_OPTIONS = [
   { key: 'newest', label: '最新优先' },
@@ -54,7 +53,7 @@ function formatDuration(startedAt, completedAt) {
   return `${hours}时${remainMinutes}分`;
 }
 
-function triggerDownload(url, filename) {
+async function triggerDownload(url, filename) {
   if (Platform.OS === 'web') {
     const anchor = document.createElement('a');
     anchor.href = url;
@@ -63,29 +62,44 @@ function triggerDownload(url, filename) {
     document.body.appendChild(anchor);
     anchor.click();
     document.body.removeChild(anchor);
-  } else if (Platform.OS === 'android' && AndroidDownloadManager) {
-    AndroidDownloadManager.downloadFile(url, filename || 'image.jpg');
-  } else {
-    Linking.openURL(url);
+    return;
+  }
+
+  // Android / iOS：使用 expo-file-system + expo-media-library
+  try {
+    const { status } = await MediaLibrary.requestPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('权限不足', '需要存储权限才能保存文件');
+      return;
+    }
+    const localUri = `${FileSystem.cacheDirectory}${filename || 'download'}`;
+    const downloadResult = await FileSystem.downloadAsync(url, localUri);
+    await MediaLibrary.createAssetAsync(downloadResult.uri);
+    Alert.alert('下载成功', '文件已保存到相册');
+  } catch (err) {
+    Alert.alert('下载失败', err.message || '请检查网络连接');
   }
 }
 
 export function HistoryScreen() {
   const styles = useThemedStyles(createStyles);
-  const { colors } = useTheme();
+  const { colors, theme } = useTheme();
   const {
     history,
     removeHistoryItems,
     activeTab,
     refreshRunningTasks,
     totalCoinsSpent,
+    stopPolling,
   } = useAppContext();
 
   const [searchText, setSearchText] = useState('');
   const [sortBy, setSortBy] = useState('newest');
   const [filterBy, setFilterBy] = useState('all');
+  const [sourceFilter, setSourceFilter] = useState('all');
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [previewImage, setPreviewImage] = useState(null);
+  const [previewImageUrls, setPreviewImageUrls] = useState(null);
   const [videoPreview, setVideoPreview] = useState({ visible: false, url: null });
   const [audioPreview, setAudioPreview] = useState({ visible: false, url: null });
   const [textPreview, setTextPreview] = useState({ visible: false, text: '' });
@@ -141,6 +155,11 @@ export function HistoryScreen() {
     if (filterBy !== 'all') {
       items = items.filter((item) => item.outputType === filterBy);
     }
+    if (sourceFilter === 'model') {
+      items = items.filter((item) => item.source !== 'webapp');
+    } else if (sourceFilter === 'webapp') {
+      items = items.filter((item) => item.source === 'webapp');
+    }
     switch (sortBy) {
       case 'newest': items.sort((a, b) => (b.startedAt || 0) - (a.startedAt || 0)); break;
       case 'oldest': items.sort((a, b) => (a.startedAt || 0) - (b.startedAt || 0)); break;
@@ -148,7 +167,7 @@ export function HistoryScreen() {
       case 'price_low': items.sort((a, b) => (a.price || 0) - (b.price || 0)); break;
     }
     return items;
-  }, [history, searchText, sortBy, filterBy]);
+  }, [history, searchText, sortBy, filterBy, sourceFilter]);
 
   const displayedItems = useMemo(() => filteredHistory.slice(0, visibleCount), [filteredHistory, visibleCount]);
   const hasMore = visibleCount < filteredHistory.length;
@@ -178,6 +197,7 @@ export function HistoryScreen() {
   const handleSearch = useCallback((text) => { setSearchText(text); setVisibleCount(PAGE_SIZE); }, []);
   const handleSortChange = useCallback((key) => { setSortBy(key); setShowSortPicker(false); setVisibleCount(PAGE_SIZE); }, []);
   const handleFilterChange = useCallback((key) => { setFilterBy(key); setVisibleCount(PAGE_SIZE); setBatchMode(false); setSelectedIds(new Set()); }, []);
+  const handleSourceFilterChange = useCallback((key) => { setSourceFilter(key); setVisibleCount(PAGE_SIZE); setBatchMode(false); setSelectedIds(new Set()); }, []);
 
   const handleDelete = useCallback((id) => {
     removeHistoryItems((item) => item.id === id);
@@ -230,10 +250,24 @@ export function HistoryScreen() {
   const successCount = Array.isArray(history) ? history.filter((h) => h && h.status === 'Success').length : 0;
   const failedCount = Array.isArray(history) ? history.filter((h) => h && h.status === 'Failed').length : 0;
 
+  const STATUS_LABELS = {
+    Pending: '等待中',
+    Running: '运行中',
+    Saving: '保存中',
+    Success: '已完成',
+    Failed: '失败',
+    Canceled: '已取消',
+  };
+
   const renderItem = useCallback(({ item }) => {
     const isSelected = selectedIds.has(item.id);
     const isFinal = FINAL_STATUSES.includes(item.status);
     const duration = isFinal ? formatDuration(item.startedAt, item.completedAt) : ACTIVE_STATUSES.includes(item.status) ? formatDuration(item.startedAt, null) : null;
+    const statusLabel = STATUS_LABELS[item.status] || item.status;
+    const statusColor = theme.STATUS_COLORS[item.status] || colors.textTertiary;
+    const statusBg = theme.STATUS_BG[item.status] || colors.bg;
+    const isActive = ACTIVE_STATUSES.includes(item.status);
+    const isWebapp = item.source === 'webapp';
 
     return (
       <View style={styles.historyCard}>
@@ -254,7 +288,10 @@ export function HistoryScreen() {
               setTextPreview({ visible: true, text: item.textResult });
             } else if (item.outputType === 'audio' && item.audioUrl) {
               setAudioPreview({ visible: true, url: item.audioUrl });
-            } else if (item.imageUrl) setPreviewImage({ url: item.imageUrl, prompt: item.prompt });
+            } else if (item.imageUrl) {
+              setPreviewImage({ url: item.imageUrl, prompt: item.prompt });
+              setPreviewImageUrls(item.imageUrls || null);
+            }
           }}
           disabled={batchMode ? false : !(item.imageUrl || item.videoUrl || item.textResult || item.audioUrl)}
           activeOpacity={batchMode ? 0.6 : 0.7}
@@ -287,7 +324,28 @@ export function HistoryScreen() {
                 <Ionicons name="document-text" size={32} color={colors.primary} />
               </View>
             ) : item.imageUrl ? (
-              <Image source={{ uri: item.imageUrl }} style={styles.historyThumb} />
+              item.imageUrls && item.imageUrls.length > 1 ? (
+                <View style={styles.thumbGrid}>
+                  {item.imageUrls.slice(0, 4).map((url, idx) => (
+                    <Image
+                      key={`${item.id}_thumb_${idx}`}
+                      source={{ uri: url }}
+                      style={[
+                        styles.thumbGridItem,
+                        item.imageUrls.length === 2 && styles.thumbGridItem2,
+                        item.imageUrls.length === 3 && idx === 0 && styles.thumbGridItem3First,
+                      ]}
+                    />
+                  ))}
+                  {item.imageUrls.length > 4 ? (
+                    <View style={styles.thumbGridOverlay}>
+                      <Text style={styles.thumbGridOverlayText}>+{item.imageUrls.length - 4}</Text>
+                    </View>
+                  ) : null}
+                </View>
+              ) : (
+                <Image source={{ uri: item.imageUrl }} style={styles.historyThumb} />
+              )
             ) : item.status === 'Failed' ? (
               <View style={[styles.historyThumbPlaceholder, styles.historyThumbFailed]}>
                 <Ionicons name="close-circle-outline" size={32} color={colors.error} />
@@ -299,11 +357,29 @@ export function HistoryScreen() {
             )}
           </View>
           <View style={styles.historyInfo}>
-            <Text style={styles.historyPrompt} numberOfLines={2}>{item.prompt}</Text>
+            <View style={styles.historyInfoHeader}>
+              <Text style={styles.historyPrompt} numberOfLines={2}>{item.prompt}</Text>
+              {isWebapp && isActive && !batchMode ? (
+                <TouchableOpacity style={styles.stopButton} onPress={() => stopPolling(item.id)} activeOpacity={0.7}>
+                  <Ionicons name="stop-circle" size={18} color={colors.error} />
+                  <Text style={styles.stopButtonText}>终止</Text>
+                </TouchableOpacity>
+              ) : null}
+            </View>
             <Text style={styles.historyMeta}>{item.modelName} · {item.actualResolution || item.resolution} · {item.date}</Text>
-            {duration ? <Text style={styles.historyDuration}>⏱ 用时 {duration}</Text> : null}
+            {(duration || item.status) ? (
+              <View style={styles.historyDurationRow}>
+                {duration ? <Text style={styles.historyDuration}>⏱ {duration}</Text> : null}
+                <View style={[styles.statusBadge, { backgroundColor: statusBg }]}>
+                  {isActive ? <ActivityIndicator size="small" color={statusColor} style={styles.statusSpinner} /> : null}
+                  <Text style={[styles.statusText, { color: statusColor }]}>{statusLabel}</Text>
+                </View>
+              </View>
+            ) : null}
             <View style={styles.historyBottomRow}>
-              <Text style={styles.historyPrice}>{isTokenPricedModel(item.modelId) ? '按量计费' : `${item.price} 金币`}</Text>
+              {!isWebapp ? (
+                <Text style={styles.historyPrice}>{isTokenPricedModel(item.modelId) ? '按量计费' : `${item.price} 金币`}</Text>
+              ) : <View />}
               <View style={styles.historyActions}>
                 {((item.imageUrl && !batchMode) || (item.outputType === 'video' && item.videoUrl && !batchMode) || (item.outputType === 'audio' && item.audioUrl && !batchMode)) ? (
                   <TouchableOpacity style={[styles.iconButton, styles.iconButtonSuccess]} onPress={() => handleDownload(item)}>
@@ -325,31 +401,10 @@ export function HistoryScreen() {
                     <Ionicons name="trash" size={18} color={colors.error} />
                   </TouchableOpacity>
                 ) : null}
-                {item.status === 'Pending' ? (
-                  <View style={[styles.iconButton, styles.iconButtonWarning]}>
-                    <Ionicons name="time" size={16} color={colors.warning} />
-                  </View>
-                ) : item.status === 'Running' ? (
-                  <View style={[styles.iconButton, styles.iconButtonRunning]}>
-                    <ActivityIndicator size="small" color={colors.primary} />
-                  </View>
-                ) : item.status === 'Saving' ? (
-                  <View style={[styles.iconButton, styles.iconButtonPurple]}>
-                    <Ionicons name="cloud-upload" size={16} color={colors.purple} />
-                  </View>
-                ) : item.status === 'Success' ? (
-                  <View style={[styles.iconButton, styles.iconButtonSuccess]}>
-                    <Ionicons name="checkmark-circle" size={16} color={colors.success} />
-                  </View>
-                ) : (
-                  <View style={[styles.iconButton, styles.iconButtonError]}>
-                    <Ionicons name="close-circle" size={16} color={colors.error} />
-                  </View>
-                )}
               </View>
             </View>
-            {item.status === 'Failed' && item.errorMessage ? (
-              <Text style={styles.historyError} numberOfLines={1}>{item.errorMessage}</Text>
+            {item.errorMessage ? (
+              <Text style={[styles.historyError, item.status !== 'Failed' && styles.historyErrorWarning]} numberOfLines={1}>{item.errorMessage}</Text>
             ) : null}
           </View>
         </TouchableOpacity>
@@ -378,6 +433,7 @@ export function HistoryScreen() {
         searchText={searchText}
         filterBy={filterBy}
         sortBy={sortBy}
+        sourceFilter={sourceFilter}
         batchMode={batchMode}
         selectedIds={selectedIds}
         isDownloading={isDownloading}
@@ -388,6 +444,7 @@ export function HistoryScreen() {
         onSearchChange={handleSearch}
         onFilterChange={handleFilterChange}
         onSortPress={() => setShowSortPicker(true)}
+        onSourceFilterChange={handleSourceFilterChange}
         onToggleBatchMode={toggleBatchMode}
         onSelectAll={selectAll}
         onDeselectAll={deselectAll}
@@ -431,8 +488,9 @@ export function HistoryScreen() {
       <ImageViewer
         visible={!!previewImage}
         imageUrl={previewImage?.url}
+        imageUrls={previewImageUrls}
         prompt={previewImage?.prompt}
-        onClose={() => setPreviewImage(null)}
+        onClose={() => { setPreviewImage(null); setPreviewImageUrls(null); }}
       />
     </View>
   );
@@ -460,12 +518,55 @@ const createStyles = (colors) => ({
   historyThumbVideo: { backgroundColor: colors.primaryBg },
   historyThumbAudio: { backgroundColor: colors.purpleBg },
   historyThumbText: { backgroundColor: colors.primaryBg },
+  thumbGrid: {
+    width: '100%',
+    flex: 1,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    borderRadius: Radius.xs,
+    overflow: 'hidden',
+    gap: 2,
+    backgroundColor: colors.bg,
+  },
+  thumbGridItem: {
+    width: '48%',
+    height: '48%',
+    borderRadius: 2,
+    resizeMode: 'cover',
+  },
+  thumbGridItem2: {
+    width: '48%',
+    height: '100%',
+  },
+  thumbGridItem3First: {
+    width: '100%',
+    height: '48%',
+  },
+  thumbGridOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: Radius.xs,
+  },
+  thumbGridOverlayText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '700',
+  },
   historyInfo: { flex: 1, padding: Spacing.md, justifyContent: 'space-between', alignSelf: 'center' },
-  historyPrompt: { fontSize: 14, color: colors.textPrimary, fontWeight: '500', lineHeight: 18 },
+  historyInfoHeader: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: Spacing.sm },
+  stopButton: { flexDirection: 'row', alignItems: 'center', gap: 2, paddingHorizontal: Spacing.sm, paddingVertical: 3, borderRadius: Radius.full, backgroundColor: colors.errorBg },
+  stopButtonText: { fontSize: 12, color: colors.error, fontWeight: '600' },
+  historyPrompt: { fontSize: 14, color: colors.textPrimary, fontWeight: '500', lineHeight: 18, flex: 1 },
   historyMeta: { fontSize: 12, color: colors.textTertiary, marginTop: 3 },
-  historyDuration: { fontSize: 12, color: colors.success, marginTop: 2, fontWeight: '500' },
+  historyDurationRow: { flexDirection: 'row', alignItems: 'center', marginTop: 2, gap: Spacing.sm },
+  historyDuration: { fontSize: 12, color: colors.success, fontWeight: '500' },
+  statusBadge: { flexDirection: 'row', alignItems: 'center', borderRadius: Radius.full, paddingHorizontal: Spacing.sm, paddingVertical: 2, gap: 3 },
+  statusSpinner: { marginRight: 0 },
+  statusText: { fontSize: 11, fontWeight: '600' },
   historyBottomRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 },
-  historyPrice: { fontSize: 13, color: colors.warning, fontWeight: '700' },
+  historyPrice: { fontSize: 13, color: colors.warning, fontWeight: '700', lineHeight: 18 },
   historyActions: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   iconButton: { width: 28, height: 28, borderRadius: Radius.xs, alignItems: 'center', justifyContent: 'center' },
   iconButtonSuccess: { backgroundColor: colors.successBg },
@@ -475,6 +576,7 @@ const createStyles = (colors) => ({
   iconButtonWarning: { backgroundColor: colors.warningBg },
   iconButtonRunning: { backgroundColor: colors.primaryBg },
   historyError: { fontSize: 11, color: colors.error, marginTop: 2 },
+  historyErrorWarning: { color: colors.warning },
   emptyContainer: { alignItems: 'center', justifyContent: 'center', paddingTop: 60 },
   emptyIcon: { fontSize: 48, marginBottom: Spacing.md },
   emptyTitle: { fontSize: 20, color: colors.textPrimary, fontWeight: '700', marginBottom: 6 },

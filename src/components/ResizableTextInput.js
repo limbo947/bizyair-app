@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { Text, View, TextInput, TouchableOpacity, PanResponder } from 'react-native';
+import { View, TextInput, PanResponder, Platform } from 'react-native';
 import { Radius, Spacing } from '../constants/theme';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { useTheme } from '../context/ThemeContext';
@@ -9,7 +9,7 @@ const MIN_HEIGHT = 80;
 const MAX_HEIGHT = 400;
 
 /**
- * 可调整高度的多行输入框，带"清空"按钮和右下角拖拽手柄。
+ * 可调整高度的多行输入框，带右下角拖拽手柄。
  */
 export function ResizableTextInput({
   value,
@@ -21,7 +21,6 @@ export function ResizableTextInput({
   inputStyle,
   minHeight,
   maxHeight,
-  hideClear = false,
 }) {
   const styles = useThemedStyles(createStyles);
   const { colors } = useTheme();
@@ -60,15 +59,6 @@ export function ResizableTextInput({
         textAlignVertical="top"
         showsVerticalScrollIndicator={false}
       />
-      {!hideClear && value && value.length > 0 ? (
-        <TouchableOpacity
-          style={styles.clearButton}
-          onPress={() => onChangeText('')}
-          activeOpacity={0.6}
-        >
-          <Text style={styles.clearButtonText}>清空</Text>
-        </TouchableOpacity>
-      ) : null}
       <View style={styles.resizeHandle} {...panResponder.panHandlers}>
         <MaterialCommunityIcons name="resize-bottom-right" size={14} color={colors.textTertiary} />
       </View>
@@ -81,34 +71,16 @@ const createStyles = (colors) => ({
     position: 'relative',
     borderRadius: Radius.sm,
     backgroundColor: colors.bg,
-    overflow: 'hidden',
   },
   input: {
     fontSize: 14,
     color: colors.textPrimary,
-    lineHeight: 20,
     textAlignVertical: 'top',
     borderWidth: 0,
     borderRadius: Radius.sm,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.sm,
-    paddingRight: 24,
+    padding: Spacing.sm,
     backgroundColor: colors.bg,
-  },
-  clearButton: {
-    position: 'absolute',
-    top: 4,
-    right: 28,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: Radius.xs,
-    zIndex: 2,
-    backgroundColor: colors.bg,
-  },
-  clearButtonText: {
-    fontSize: 12,
-    color: '#4A9EF5',
-    fontWeight: '500',
+    ...(Platform.OS === 'android' ? { includeFontPadding: false, fontFamily: 'System' } : {}),
   },
   resizeHandle: {
     position: 'absolute',

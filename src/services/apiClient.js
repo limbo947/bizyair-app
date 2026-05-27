@@ -368,6 +368,42 @@ async function fetchWebappDetail(id) {
   return result.data;
 }
 
+/**
+ * 取消排队中的 WebApp 任务。
+ * @param {string} apiKey - API 密钥
+ * @param {string} requestId - 任务ID
+ * @returns {Promise<object>} 响应数据
+ */
+async function cancelWebappTask(apiKey, requestId) {
+  const url = `${WEBAPP_API_BASE}/openapi/cancel?requestId=${encodeURIComponent(requestId)}`;
+  const result = await request(url, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+  });
+  return result;
+}
+
+/**
+ * 中断运行中的 WebApp 任务。
+ * @param {string} apiKey - API 密钥
+ * @param {string} requestId - 任务ID
+ * @returns {Promise<object>} 响应数据
+ */
+async function interruptWebappTask(apiKey, requestId) {
+  const url = `${WEBAPP_API_BASE}/openapi/interrupt?requestId=${encodeURIComponent(requestId)}`;
+  const result = await request(url, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+  });
+  return result;
+}
+
 export {
   submitImageTask,
   submitVideoTask,
@@ -387,4 +423,6 @@ export {
   queryWebappTaskDetail,
   queryWebappTaskOutputs,
   fetchWebappDetail,
+  cancelWebappTask,
+  interruptWebappTask,
 };

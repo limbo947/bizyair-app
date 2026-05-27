@@ -228,10 +228,12 @@ export function buildPayload(modelId, mode, params) {
     case 'happyhorse-video':
       payload.prompt = params.prompt;
       payload.resolution = params.resolution || model.defaultResolution || '1080P';
-      if (params.aspectRatio) payload.ratio = params.aspectRatio;
-      if (params.duration) payload.duration = params.duration;
+      if (mode !== 'video-edit') {
+        if (params.aspectRatio) payload.ratio = params.aspectRatio;
+        if (params.duration) payload.duration = params.duration;
+      }
       if (model.supportsWatermark) payload.watermark = params.watermark !== undefined ? params.watermark : (model.defaultWatermark !== undefined ? model.defaultWatermark : true);
-      if (params.seed) payload.seed = params.seed;
+      if (params.seed !== undefined && params.seed !== null && params.seed !== '') payload.seed = parseInt(params.seed);
       if (mode === 'image-to-video' && params.imageUrls?.length) {
         payload.first_frame = params.imageUrls;
       }

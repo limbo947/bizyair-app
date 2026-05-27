@@ -22,6 +22,7 @@ import { generateId } from '../utils/helpers';
 import { ENV_API_KEY } from '../constants/models';
 import { Radius, Spacing } from '../constants/theme';
 import { useThemedStyles } from '../hooks/useThemedStyles';
+import { ResizableTextInput } from '../components/ResizableTextInput';
 import { ApiKeyDropdown } from '../components/ApiKeyDropdown';
 
 const WEBAPP_SAVED_LIST_KEY = '@webapp_saved_list';
@@ -231,22 +232,6 @@ export function WebappScreen() {
     });
   }, [originalTypes]);
 
-  // 数值步进
-  const stepValue = useCallback((key, direction) => {
-    const nodeInfo = inputNodes.find(n => n.variable_name === key);
-    const opts = nodeInfo ? parseFieldOptions(nodeInfo.field_options) : {};
-    const step = opts.step || 1;
-    const min = opts.min;
-    const max = opts.max;
-    setInputValues(prev => {
-      const current = Number(prev[key]) || 0;
-      let next = current + direction * step;
-      if (min !== undefined) next = Math.max(min, next);
-      if (max !== undefined) next = Math.min(max, next);
-      return { ...prev, [key]: next };
-    });
-  }, [inputNodes]);
-
   const handleFileUpload = useCallback(async (key, mediaType) => {
     const ek = apiKey.trim() || ENV_API_KEY;
     if (!ek) { setShowApiKeyInput(true); setError('请先配置API密钥'); return; }
@@ -339,40 +324,6 @@ export function WebappScreen() {
     ]);
   }, [savedApps]);
 
-  // 从列表直接提交任务
-  const submitFromList = useCallback(async (app) => {
-    const ek = apiKey.trim() || ENV_API_KEY;
-    if (!ek) { setShowApiKeyInput(true); return; }
-    const id = generateId();
-    const now = Date.now();
-    const cleanInputValues = { ...app.inputValues };
-    const types = app.originalTypes || {};
-    for (const key of Object.keys(cleanInputValues)) {
-      if (types[key] === 'number' && typeof cleanInputValues[key] === 'string') {
-        const num = Number(cleanInputValues[key]);
-        if (!isNaN(num)) cleanInputValues[key] = num;
-      }
-    }
-    const appName = app.name || `AI应用 #${app.webAppId}`;
-    const entry = {
-      id, source: 'webapp', webAppId: Number(app.webAppId), outputType: 'image',
-      prompt: appName, resolution: '', aspectRatio: '', price: 0,
-      mode: 'webapp', modelId: 'webapp', modelName: appName,
-      status: 'Pending', errorMessage: '', lastResponse: null,
-      startedAt: now, completedAt: null,
-      date: new Date(now).toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }),
-    };
-    await addToHistory(entry);
-    await refreshUserInfo().catch(() => {});
-    try {
-      const requestId = await submitWebappTask(ek, app.webAppId, cleanInputValues);
-      updateHistoryItem(id, { status: 'Pending', requestId, taskApiKey: ek, lastResponse: { status: 'Pending', request_id: requestId } });
-      startWebappPolling(id, requestId, ek);
-    } catch (err) {
-      updateHistoryItem(id, { status: 'Failed', errorMessage: err.message, lastResponse: { status: 'Failed', error: err.message } });
-    }
-  }, [apiKey, addToHistory, refreshUserInfo, updateHistoryItem, startWebappPolling]);
-
   // 编辑模式提交任务
   const handleSubmit = async () => {
     if (!webAppId) { setError('请先获取应用信息或解析 API 代码'); return; }
@@ -428,15 +379,12 @@ export function WebappScreen() {
         {item.appDetail?.intro ? <Text style={styles.listItemIntro} numberOfLines={1}>{item.appDetail.intro}</Text> : null}
       </TouchableOpacity>
       <View style={styles.listItemActions}>
-        <TouchableOpacity style={styles.listItemSubmitBtn} onPress={() => submitFromList(item)} activeOpacity={0.7}>
-          <Ionicons name="play-outline" size={18} color={colors.primary} />
-        </TouchableOpacity>
         <TouchableOpacity style={styles.listItemDeleteBtn} onPress={() => deleteApp(item.id)} activeOpacity={0.7}>
           <Ionicons name="trash-outline" size={16} color={colors.error} />
         </TouchableOpacity>
       </View>
     </View>
-  ), [colors, enterEditMode, submitFromList, deleteApp, styles]);
+  ), [colors, enterEditMode, deleteApp, styles]);
 
   if (mode === 'list') {
     return (
@@ -492,7 +440,7 @@ export function WebappScreen() {
           <View style={styles.emptyState}>
             <Ionicons name="apps-outline" size={48} color={colors.textTertiary} />
             <Text style={styles.emptyText}>暂无应用</Text>
-            <Text style={styles.emptySubtext}>点击右上角"新增"添加应用</Text>
+            <Text style={styles.emptySubtext}>点击右上角&ldquo;新增&rdquo;添加应用</Text>
           </View>
         ) : (
           <FlatList
@@ -537,11 +485,12 @@ export function WebappScreen() {
           </View>
         ) : null}
 
-        {/* 输入卡片 */}
+        {/* 输入卡片 - 仅新增模式显示 */}
+        {!editingAppId && (
         <View style={styles.card}>
           <View style={styles.labelRow}>
             <Ionicons name="search-outline" size={16} color={colors.primary} />
-            <Text style={styles.label}>应用 URL / API 代码</Text>
+            <Text style={styles.label}>应用网址/示例API</Text>
             <View style={{ flex: 1 }} />
             {apiCodeText.length > 0 ? (
               <TouchableOpacity onPress={() => setApiCodeText('')}>
@@ -553,7 +502,7 @@ export function WebappScreen() {
             style={styles.codeInput}
             value={apiCodeText}
             onChangeText={setApiCodeText}
-            placeholder="粘贴应用 URL 或示例 API 代码..."
+            placeholder="粘贴应用网址或示例API代码...公开的AI应用建议使用网址导入，未公开的AI应用无法使用网址导入"
             placeholderTextColor={colors.textPlaceholder}
             multiline
             autoCapitalize="none"
@@ -571,6 +520,7 @@ export function WebappScreen() {
             </TouchableOpacity>
           </View>
         </View>
+        )}
 
         {parseError ? <Text style={styles.parseErrorText}>{parseError}</Text> : null}
 
@@ -588,7 +538,7 @@ export function WebappScreen() {
                   {appDetail.base_model ? <Text style={styles.appInfoModel}>基础模型: {appDetail.base_model}</Text> : null}
                   <Text style={styles.appInfoId}>WebApp #{webAppId}</Text>
                 </View>
-                {appDetail.intro ? <Text style={styles.appInfoIntro} numberOfLines={3}>{appDetail.intro}</Text> : null}
+                {appDetail.intro ? <Text style={styles.appInfoIntro}>{appDetail.intro}</Text> : null}
               </View>
             ) : null}
           </View>
@@ -617,8 +567,17 @@ export function WebappScreen() {
 
           return (
             <View style={styles.paramCard} key={key}>
-              <Text style={styles.paramLabel}>{fieldLabel}</Text>
-              <Text style={styles.paramKey}>{key}</Text>
+              <View style={styles.paramHeader}>
+                <View>
+                  <Text style={styles.paramLabel}>{fieldLabel}</Text>
+                  <Text style={styles.paramKey}>{key}</Text>
+                </View>
+                {(fieldType === 'customtext' || fieldType === 'string' || ((fieldType === 'number' || fieldType === 'slider') && String(inputValues[key]).length > 0)) ? (
+                  <TouchableOpacity onPress={() => handleParamChange(key, fieldType === 'number' || fieldType === 'slider' ? '' : '')}>
+                    <Text style={styles.clearButtonText}>清空</Text>
+                  </TouchableOpacity>
+                ) : null}
+              </View>
 
               {isFileUpload ? (
                 <View style={styles.imageParamContainer}>
@@ -656,24 +615,16 @@ export function WebappScreen() {
                 </TouchableOpacity>
               ) : fieldType === 'number' || fieldType === 'slider' ? (
                 <View>
-                  <View style={styles.stepperRow}>
-                    <TouchableOpacity style={styles.stepperBtn} onPress={() => stepValue(key, -1)} activeOpacity={0.7}>
-                      <Ionicons name="remove" size={16} color={colors.textPrimary} />
-                    </TouchableOpacity>
-                    <TextInput
-                      style={styles.stepperInput}
-                      value={String(inputValues[key])}
-                      onChangeText={(text) => handleParamChange(key, text)}
-                      placeholder={key}
-                      placeholderTextColor={colors.textPlaceholder}
-                      keyboardType="number-pad"
-                      autoCapitalize="none"
-                      autoCorrect={false}
-                    />
-                    <TouchableOpacity style={styles.stepperBtn} onPress={() => stepValue(key, 1)} activeOpacity={0.7}>
-                      <Ionicons name="add" size={16} color={colors.textPrimary} />
-                    </TouchableOpacity>
-                  </View>
+                  <TextInput
+                    style={styles.paramInput}
+                    value={String(inputValues[key])}
+                    onChangeText={(text) => handleParamChange(key, text)}
+                    placeholder={key}
+                    placeholderTextColor={colors.textPlaceholder}
+                    keyboardType="number-pad"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
                   {fieldOpts.min !== undefined || fieldOpts.max !== undefined ? (
                     <Text style={styles.rangeHint}>
                       范围: {fieldOpts.min ?? '-∞'} ~ {fieldOpts.max ?? '∞'}
@@ -682,16 +633,28 @@ export function WebappScreen() {
                   ) : null}
                 </View>
               ) : fieldType === 'customtext' ? (
-                <TextInput style={[styles.paramInput, styles.paramInputMultiline]} value={String(inputValues[key])} onChangeText={(text) => handleParamChange(key, text)} placeholder={key} placeholderTextColor={colors.textPlaceholder} multiline autoCapitalize="none" autoCorrect={false} />
+                <ResizableTextInput
+                  value={String(inputValues[key])}
+                  onChangeText={(text) => handleParamChange(key, text)}
+                  placeholder={key}
+                  placeholderTextColor={colors.textPlaceholder}
+                />
               ) : fieldType === 'toggle' ? (
                 <TouchableOpacity style={styles.toggleContainer} onPress={() => handleParamChange(key, !inputValues[key])} activeOpacity={0.7}>
                   <View style={[styles.toggleTrack, inputValues[key] && styles.toggleTrackActive]}>
-                    <View style={[styles.toggleThumb, inputValues[key] && styles.toggleThumbActive]} />
+                    <View style={[styles.toggleThumb, inputValues[key] && { marginLeft: 20 }]} />
                   </View>
                   <Text style={styles.toggleLabel}>{inputValues[key] ? '开启' : '关闭'}</Text>
                 </TouchableOpacity>
+              ) : typeof value === 'string' && value.length > 50 ? (
+                <ResizableTextInput
+                  value={String(inputValues[key])}
+                  onChangeText={(text) => handleParamChange(key, text)}
+                  placeholder={key}
+                  placeholderTextColor={colors.textPlaceholder}
+                />
               ) : (
-                <TextInput style={[styles.paramInput, typeof value === 'string' && value.length > 50 && styles.paramInputMultiline]} value={String(inputValues[key])} onChangeText={(text) => handleParamChange(key, text)} placeholder={key} placeholderTextColor={colors.textPlaceholder} multiline={typeof value === 'string' && value.length > 50} autoCapitalize="none" autoCorrect={false} />
+                <TextInput style={styles.paramInput} value={String(inputValues[key])} onChangeText={(text) => handleParamChange(key, text)} placeholder={key} placeholderTextColor={colors.textPlaceholder} autoCapitalize="none" autoCorrect={false} />
               )}
             </View>
           );
@@ -781,7 +744,6 @@ const createStyles = (colors) => ({
   listItemId: { fontSize: 12, color: colors.textTertiary, fontFamily: 'monospace' },
   listItemIntro: { fontSize: 12, color: colors.textTertiary, lineHeight: 18 },
   listItemActions: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, marginLeft: Spacing.sm },
-  listItemSubmitBtn: { width: 36, height: 36, borderRadius: 18, borderWidth: 1, borderColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
   listItemDeleteBtn: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 80 },
   emptyText: { fontSize: 16, color: colors.textTertiary, marginTop: Spacing.md },
@@ -818,16 +780,12 @@ const createStyles = (colors) => ({
 
   // 参数卡片
   paramCard: { backgroundColor: colors.card, padding: Spacing.lg, borderRadius: Radius.md, marginBottom: Spacing.sm },
+  paramHeader: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 2 },
   paramLabel: { fontSize: 14, fontWeight: '600', color: colors.textPrimary, marginBottom: 2 },
-  paramKey: { fontSize: 11, color: colors.textTertiary, marginBottom: Spacing.xs, fontFamily: 'monospace' },
+  paramKey: { fontSize: 11, color: colors.textTertiary, fontFamily: 'monospace' },
   paramInput: { fontSize: 14, color: colors.textPrimary, backgroundColor: colors.bg, borderRadius: Radius.sm, padding: Spacing.md },
   paramInputMultiline: { minHeight: 80, textAlignVertical: 'top' },
   rangeHint: { fontSize: 11, color: colors.textTertiary, marginTop: 4 },
-
-  // 步进器
-  stepperRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
-  stepperBtn: { width: 36, height: 36, borderRadius: Radius.sm, backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.separator, alignItems: 'center', justifyContent: 'center' },
-  stepperInput: { flex: 1, fontSize: 14, color: colors.textPrimary, backgroundColor: colors.bg, borderRadius: Radius.sm, padding: Spacing.md, textAlign: 'center' },
 
   // 文件上传
   imageParamContainer: { gap: Spacing.sm },
@@ -839,10 +797,10 @@ const createStyles = (colors) => ({
 
   // Toggle
   toggleContainer: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
-  toggleTrack: { width: 44, height: 24, borderRadius: 12, backgroundColor: colors.separator, padding: 2, justifyContent: 'center' },
+  toggleTrack: { width: 44, height: 24, borderRadius: 12, backgroundColor: colors.separator, padding: 2 },
   toggleTrackActive: { backgroundColor: colors.primary },
   toggleThumb: { width: 20, height: 20, borderRadius: 10, backgroundColor: colors.textInverse },
-  toggleThumbActive: { alignSelf: 'flex-end' },
+  toggleThumbActive: {},
   toggleLabel: { fontSize: 14, color: colors.textSecondary },
 
   // Combo 就地下拉
