@@ -8,6 +8,7 @@ import { Pressable, Text,
   Modal,
   FlatList,
   Alert, } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -119,6 +120,7 @@ async function persistSavedApps(list) {
 }
 
 export function WebappScreen() {
+  const insets = useSafeAreaInsets();
   const {
     apiKey, setApiKey, saveApiKey, apiKeys, activeApiKeyId,
     addApiKey, removeApiKey, switchApiKey, renameApiKey,
@@ -389,7 +391,7 @@ export function WebappScreen() {
   if (mode === 'list') {
     return (
       <View style={styles.container}>
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: insets.top }]}>
           {userInfo && (apiKey || ENV_API_KEY) ? (
             <View style={styles.headerInner}>
               <Pressable style={({ pressed }) => [styles.headerLeft, pressed && { opacity: 0.7 }]} onPress={() => setShowApiKeyDropdown(true)} >
@@ -459,7 +461,7 @@ export function WebappScreen() {
   // ============ 编辑模式渲染 ============
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top }]}>
         <View style={styles.headerInner}>
           <Pressable style={({ pressed }) => [styles.backButton, pressed && { opacity: 0.7 }]} onPress={() => setMode('list')} >
             <Ionicons name="arrow-back" size={22} color={colors.textPrimary} />

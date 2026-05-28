@@ -85,6 +85,7 @@ export function HistoryProvider({ children }) {
   const resumeTimerRef = useRef(null);
   const homeStateRef = useRef(homeState);
 
+  /* eslint-disable react-hooks/exhaustive-deps -- cleanup needs latest ref value at unmount time */
   useEffect(() => {
     return () => {
       if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
@@ -95,6 +96,7 @@ export function HistoryProvider({ children }) {
       });
     };
   }, []);
+  /* eslint-enable react-hooks/exhaustive-deps */
 
   useEffect(() => {
     historyRef.current = history;

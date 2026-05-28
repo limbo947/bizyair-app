@@ -62,6 +62,7 @@ const createStyles = (colors) => ({
 });
 
 export function HistoryFilters({
+  topInset,
   history,
   searchText,
   filterBy,
@@ -92,7 +93,7 @@ export function HistoryFilters({
 
   return (
     <View>
-      <View style={styles.searchBar}>
+      <View style={[styles.searchBar, { paddingTop: Spacing.md + (topInset || 0) }]}>
         <View style={styles.searchInputWrap}>
           <Ionicons name="search" size={18} color={colors.textTertiary} />
           <TextInput style={styles.searchInput} placeholder="搜索提示词、模型名..." value={searchText} onChangeText={onSearchChange} placeholderTextColor={colors.textPlaceholder} />

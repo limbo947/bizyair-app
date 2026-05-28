@@ -116,6 +116,7 @@ if ($Clean) {
 #  [5/8] expo prebuild
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Write-Host "`n[5/8] Running expo prebuild..." -ForegroundColor Yellow
+$env:CI = "1"
 npx expo prebuild --platform android --clean
 if ($LASTEXITCODE -ne 0) {
     Write-Host "  prebuild FAILED!" -ForegroundColor Red
@@ -186,15 +187,23 @@ Push-Location $androidDir
 try {
     $env:NODE_ENV = "production"
     $archsArg = ($architectures -join ',')
+    $savedEAP = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
     .\gradlew.bat assembleRelease "-PreactNativeArchitectures=$archsArg" 2>&1 | ForEach-Object {
-        $line = $_ -as [string]
-        if ($line) { Write-Host $line }
+        if ($_ -is [System.Management.Automation.ErrorRecord]) {
+            Write-Host $_.ToString() -ForegroundColor Gray
+        } else {
+            $line = $_ -as [string]
+            if ($line) { Write-Host $line }
+        }
     }
+    $ErrorActionPreference = $savedEAP
     if ($LASTEXITCODE -ne 0) {
         Write-Host "  Build FAILED!" -ForegroundColor Red
         exit 1
     }
 } finally {
+    $ErrorActionPreference = $savedEAP
     Pop-Location
 }
 

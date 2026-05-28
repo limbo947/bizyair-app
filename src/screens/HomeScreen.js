@@ -5,6 +5,7 @@ import { Pressable, Text,
   Keyboard,
   ScrollView,
   ActivityIndicator, } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useApiKeyContext } from '../context/ApiKeyContext';
@@ -246,6 +247,7 @@ function homeParamReducer(state, action) {
 }
 
 export function HomeScreen({ onOpenModelSelect }) {
+  const insets = useSafeAreaInsets();
   const {
     apiKey,
     setApiKey,
@@ -375,6 +377,7 @@ export function HomeScreen({ onOpenModelSelect }) {
     if (currentModes.length > 0 && !currentModes.includes(mode)) {
       stateDispatch({ type: 'SET_MODE', value: currentModes[0] });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally omit resolution/aspectRatio to avoid overriding user selection
   }, [modelId, mode, paramType, currentResolutions, currentRatios, currentModes]);
 
   useEffect(() => {
@@ -712,7 +715,7 @@ export function HomeScreen({ onOpenModelSelect }) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top }]}>
         {userInfo && (apiKey || ENV_API_KEY) ? (
           <View style={styles.headerInner}>
             <Pressable

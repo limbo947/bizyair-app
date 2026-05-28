@@ -6,6 +6,7 @@ import { Pressable, StyleSheet,
   FlatList,
   Platform,
   Alert, } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
@@ -286,6 +287,7 @@ const HistoryCard = React.memo(function HistoryCard({
 });
 
 export function HistoryScreen() {
+  const insets = useSafeAreaInsets();
   const styles = useThemedStyles(createStyles);
   const { colors } = useTheme();
   const {
@@ -468,6 +470,7 @@ export function HistoryScreen() {
       return null;
     }
     return <View style={styles.footerLoading}><ActivityIndicator color={colors.primary} /><Text style={styles.footerLoadingText}>加载更多...</Text></View>;
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- styles/colors only change on theme switch
   }, [hasMore, filteredHistory.length]);
 
   const renderEmpty = useCallback(() => {
@@ -479,6 +482,7 @@ export function HistoryScreen() {
   return (
     <View style={styles.container}>
       <HistoryFilters
+        topInset={insets.top}
         history={history}
         searchText={searchText}
         filterBy={filterBy}

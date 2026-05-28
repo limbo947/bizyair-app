@@ -97,6 +97,7 @@ export function ImageViewer({ visible, imageUrl, imageUrls, prompt, onClose }) {
       translateY.setValue(0);
       slideX.setValue(0);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- Animated.Value refs are stable
   }, [visible]);
 
   useEffect(() => {
@@ -107,6 +108,14 @@ export function ImageViewer({ visible, imageUrl, imageUrls, prompt, onClose }) {
         (imgW, imgH) => setImageSize({ width: imgW, height: imgH }),
         () => setImageSize(null)
       );
+    }
+    if (urlsRef.current.length > 1) {
+      const preloadIndices = [currentIndex - 1, currentIndex + 1];
+      preloadIndices.forEach((i) => {
+        if (i >= 0 && i < urlsRef.current.length) {
+          Image.prefetch(urlsRef.current[i]);
+        }
+      });
     }
   }, [currentIndex]);
 
@@ -120,7 +129,6 @@ export function ImageViewer({ visible, imageUrl, imageUrls, prompt, onClose }) {
   const goToIndex = useCallback((index) => {
     if (index < 0 || index >= urlsRef.current.length) return;
     resetTransform();
-    setImageSize(null);
     setCurrentIndex(index);
     slideX.setValue(0);
   }, [resetTransform, slideX]);
@@ -256,6 +264,7 @@ export function ImageViewer({ visible, imageUrl, imageUrls, prompt, onClose }) {
                 style={[styles.image, { width: displayWidth, height: displayHeight }]}
                 contentFit="contain"
                 cachePolicy="memory-disk"
+                transition={150}
               />
             ) : null}
           </Animated.View>

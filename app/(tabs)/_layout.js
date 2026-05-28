@@ -1,5 +1,6 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHistoryContext } from '../../src/context/HistoryContext';
 import { useTheme } from '../../src/context/ThemeContext';
 
@@ -8,6 +9,7 @@ const ACTIVE_STATUSES = ['Pending', 'Running', 'Saving'];
 export default function TabLayout() {
   const { colors } = useTheme();
   const { history } = useHistoryContext();
+  const insets = useSafeAreaInsets();
 
   const activeCount = Array.isArray(history)
     ? history.filter((h) => h && ACTIVE_STATUSES.includes(h.status)).length
@@ -22,8 +24,8 @@ export default function TabLayout() {
         backgroundColor: colors.card,
         borderTopColor: colors.separator,
         borderTopWidth: 0.5,
-        height: 60,
-        paddingBottom: 6,
+        height: 60 + insets.bottom,
+        paddingBottom: 6 + insets.bottom,
         paddingTop: 4,
       },
       tabBarLabelStyle: {

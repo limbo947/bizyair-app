@@ -3,6 +3,7 @@ import { Pressable, Text,
   View,
   ScrollView,
   FlatList, } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { MODELS } from '../constants/models';
 import { CATEGORIES, MANUFACTURERS, FAVORITES_MAX_COUNT } from '../constants/modelMeta';
@@ -12,6 +13,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useFavoritesContext } from '../context/FavoritesContext';
 
 export function ModelSelectScreen({ currentModelId, onSelectModel, onBack }) {
+  const insets = useSafeAreaInsets();
   const styles = useThemedStyles(createStyles);
   const { colors } = useTheme();
   const { favorites, saveFavorites, isFavorite } = useFavoritesContext();
@@ -98,7 +100,7 @@ export function ModelSelectScreen({ currentModelId, onSelectModel, onBack }) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top }]}>
         <Pressable
           style={({ pressed }) => [styles.backButton, pressed && { opacity: 0.7 }]} onPress={onBack} >
           <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
