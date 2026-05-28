@@ -3,7 +3,7 @@
                  "name":  "Bizyair assistant",
                  "slug":  "bizyair-assistant",
                  "scheme":  "bizyair",
-                 "version":  "1.0.18",
+                 "version":  "1.0.19",
                  "orientation":  "portrait",
                  "icon":  "./assets/icon.png",
                  "userInterfaceStyle":  "light",
