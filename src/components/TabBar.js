@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TouchableOpacity, Text } from 'react-native';
+import { Pressable, View, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { TAB_HOME, TAB_WEBAPP, TAB_HISTORY } from '../constants/models';
 import { Radius } from '../constants/theme';
@@ -72,12 +72,9 @@ export function TabBar({ activeTab, onTabChange, historyBadge }) {
       {TABS.map((tab) => {
         const isActive = activeTab === tab.key;
         return (
-          <TouchableOpacity
+          <Pressable
             key={tab.key}
-            style={styles.tab}
-            onPress={() => onTabChange(tab.key)}
-            activeOpacity={0.6}
-          >
+            style={({ pressed }) => [styles.tab, pressed && { opacity: 0.7 }]} onPress={() => onTabChange(tab.key)} >
             <View style={styles.iconWrap}>
               <Ionicons
                 name={isActive ? tab.iconActive : tab.icon}
@@ -95,7 +92,7 @@ export function TabBar({ activeTab, onTabChange, historyBadge }) {
             <Text style={[styles.label, isActive && styles.labelActive]}>
               {tab.label}
             </Text>
-          </TouchableOpacity>
+          </Pressable>
         );
       })}
     </View>

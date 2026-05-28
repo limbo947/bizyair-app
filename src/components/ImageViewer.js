@@ -1,10 +1,9 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
+  Pressable,
   StyleSheet,
   Text,
   View,
-  TouchableOpacity,
-  Image,
   Modal,
   Animated,
   PanResponder,
@@ -12,9 +11,11 @@ import {
   StatusBar,
   Platform,
   Alert,
+  Image as RNImage,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
-import * as FileSystem from 'expo-file-system';
+import { File, Paths } from 'expo-file-system';
 import * as MediaLibrary from 'expo-media-library';
 import { Spacing } from '../constants/theme';
 
@@ -32,16 +33,15 @@ async function triggerDownload(url) {
     return;
   }
 
-  // Android / iOS
   try {
     const { status } = await MediaLibrary.requestPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert('权限不足', '需要存储权限才能保存图片');
       return;
     }
-    const localUri = `${FileSystem.cacheDirectory}bizyair_image.jpg`;
-    const downloadResult = await FileSystem.downloadAsync(url, localUri);
-    await MediaLibrary.createAssetAsync(downloadResult.uri);
+    const destination = new File(Paths.cache, 'bizyair_image.jpg');
+    const downloadedFile = await File.downloadFileAsync(url, destination);
+    await MediaLibrary.createAssetAsync(downloadedFile.uri);
     Alert.alert('下载成功', '图片已保存到相册');
   } catch (err) {
     Alert.alert('下载失败', err.message || '请检查网络连接');
@@ -51,7 +51,6 @@ async function triggerDownload(url) {
 export function ImageViewer({ visible, imageUrl, imageUrls, prompt, onClose }) {
   const urlsRef = useRef([]);
   urlsRef.current = imageUrls?.length > 0 ? imageUrls : (imageUrl ? [imageUrl] : []);
-  const urls = urlsRef.current;
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [imageSize, setImageSize] = useState(null);
@@ -62,16 +61,35 @@ export function ImageViewer({ visible, imageUrl, imageUrls, prompt, onClose }) {
   const translateY = useRef(new Animated.Value(0)).current;
   const slideX = useRef(new Animated.Value(0)).current;
 
+  const baseScale = useRef(1);
   const lastScale = useRef(1);
   const lastDistance = useRef(0);
   const lastTranslateX = useRef(0);
   const lastTranslateY = useRef(0);
-  const baseScale = useRef(1);
   const gestureMoved = useRef(false);
+
+  const currentIndexRef = useRef(0);
+  const onCloseRef = useRef(onClose);
+  const translateXValue = useRef(0);
+  const translateYValue = useRef(0);
+  const lastTapTime = useRef(0);
+
+  useEffect(() => { currentIndexRef.current = currentIndex; }, [currentIndex]);
+  useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
+
+  useEffect(() => {
+    const xId = translateX.addListener(({ value }) => { translateXValue.current = value; });
+    const yId = translateY.addListener(({ value }) => { translateYValue.current = value; });
+    return () => {
+      translateX.removeListener(xId);
+      translateY.removeListener(yId);
+    };
+  }, [translateX, translateY]);
 
   useEffect(() => {
     if (visible) {
       setCurrentIndex(0);
+      currentIndexRef.current = 0;
       setShowInfo(true);
       baseScale.current = 1;
       scale.setValue(1);
@@ -79,18 +97,18 @@ export function ImageViewer({ visible, imageUrl, imageUrls, prompt, onClose }) {
       translateY.setValue(0);
       slideX.setValue(0);
     }
-  }, [visible, scale, slideX, translateX, translateY]);
+  }, [visible]);
 
   useEffect(() => {
-    const url = urls[currentIndex];
+    const url = urlsRef.current[currentIndex];
     if (url) {
-      Image.getSize(
+      RNImage.getSize(
         url,
         (imgW, imgH) => setImageSize({ width: imgW, height: imgH }),
         () => setImageSize(null)
       );
     }
-  }, [currentIndex, urls]);
+  }, [currentIndex]);
 
   const resetTransform = useCallback(() => {
     baseScale.current = 1;
@@ -107,14 +125,17 @@ export function ImageViewer({ visible, imageUrl, imageUrls, prompt, onClose }) {
     slideX.setValue(0);
   }, [resetTransform, slideX]);
 
+  const goToIndexRef = useRef(goToIndex);
+  useEffect(() => { goToIndexRef.current = goToIndex; }, [goToIndex]);
+
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
-      onStartShouldSetPanResponderCapture: () => true,
+      onMoveShouldSetPanResponder: () => true,
       onPanResponderGrant: () => {
         lastScale.current = baseScale.current;
-        lastTranslateX.current = (translateX)._value || 0;
-        lastTranslateY.current = (translateY)._value || 0;
+        lastTranslateX.current = translateXValue.current;
+        lastTranslateY.current = translateYValue.current;
         gestureMoved.current = false;
       },
       onPanResponderMove: (evt, gestureState) => {
@@ -135,20 +156,31 @@ export function ImageViewer({ visible, imageUrl, imageUrls, prompt, onClose }) {
             scale.setValue(clampedScale);
           }
           lastDistance.current = distance;
-        } else if (touches && touches.length === 1 && baseScale.current > 1) {
-          const newX = lastTranslateX.current + gestureState.dx;
-          const newY = lastTranslateY.current + gestureState.dy;
-          translateX.setValue(newX);
-          translateY.setValue(newY);
-        } else if (touches && touches.length === 1 && baseScale.current <= 1 && urls.length > 1) {
-          slideX.setValue(gestureState.dx);
+        } else if (touches && touches.length === 1) {
+          if (baseScale.current > 1) {
+            const newX = lastTranslateX.current + gestureState.dx;
+            const newY = lastTranslateY.current + gestureState.dy;
+            translateX.setValue(newX);
+            translateY.setValue(newY);
+          } else if (urlsRef.current.length > 1) {
+            slideX.setValue(gestureState.dx);
+          }
         }
       },
       onPanResponderRelease: (evt, gestureState) => {
         lastDistance.current = 0;
+
         if (!gestureMoved.current) {
-          setShowInfo((v) => !v);
+          const now = Date.now();
+          if (now - lastTapTime.current < 300) {
+            onCloseRef.current();
+            lastTapTime.current = 0;
+          } else {
+            lastTapTime.current = now;
+            setShowInfo((v) => !v);
+          }
         }
+
         if (baseScale.current <= 1.1) {
           Animated.parallel([
             Animated.spring(scale, { toValue: 1, useNativeDriver: true }),
@@ -157,16 +189,16 @@ export function ImageViewer({ visible, imageUrl, imageUrls, prompt, onClose }) {
           ]).start();
           baseScale.current = 1;
 
-          if (urls.length > 1 && Math.abs(gestureState.dx) > SCREEN_WIDTH * 0.15) {
+          if (urlsRef.current.length > 1 && Math.abs(gestureState.dx) > SCREEN_WIDTH * 0.15) {
             const direction = gestureState.dx > 0 ? -1 : 1;
-            const nextIndex = currentIndex + direction;
-            if (nextIndex >= 0 && nextIndex < urls.length) {
+            const nextIndex = currentIndexRef.current + direction;
+            if (nextIndex >= 0 && nextIndex < urlsRef.current.length) {
               Animated.timing(slideX, {
                 toValue: -direction * SCREEN_WIDTH,
                 duration: 200,
                 useNativeDriver: true,
               }).start(() => {
-                goToIndex(nextIndex);
+                goToIndexRef.current(nextIndex);
               });
             } else {
               Animated.spring(slideX, { toValue: 0, useNativeDriver: true }).start();
@@ -174,6 +206,12 @@ export function ImageViewer({ visible, imageUrl, imageUrls, prompt, onClose }) {
           } else {
             Animated.spring(slideX, { toValue: 0, useNativeDriver: true }).start();
           }
+        }
+      },
+      onPanResponderTerminate: () => {
+        lastDistance.current = 0;
+        if (baseScale.current <= 1.1) {
+          Animated.spring(slideX, { toValue: 0, useNativeDriver: true }).start();
         }
       },
     })
@@ -188,7 +226,7 @@ export function ImageViewer({ visible, imageUrl, imageUrls, prompt, onClose }) {
 
   if (!visible) return null;
 
-  const currentUrl = urls[currentIndex];
+  const currentUrl = urlsRef.current[currentIndex];
 
   return (
     <Modal
@@ -199,15 +237,7 @@ export function ImageViewer({ visible, imageUrl, imageUrls, prompt, onClose }) {
     >
       <StatusBar barStyle="light-content" backgroundColor="rgba(0,0,0,0.85)" />
       <View style={styles.overlay}>
-        {/* 背景点击区域 - 点击关闭 */}
-        <TouchableOpacity
-          style={styles.backgroundTouch}
-          activeOpacity={1}
-          onPress={onClose}
-        />
-
-        {/* 图片区域 - 手势处理 */}
-        <View style={styles.imageArea} {...panResponder.panHandlers}>
+        <View style={StyleSheet.absoluteFillObject} {...panResponder.panHandlers}>
           <Animated.View
             style={[
               styles.imageWrapper,
@@ -224,7 +254,8 @@ export function ImageViewer({ visible, imageUrl, imageUrls, prompt, onClose }) {
               <Image
                 source={{ uri: currentUrl }}
                 style={[styles.image, { width: displayWidth, height: displayHeight }]}
-                resizeMode="contain"
+                contentFit="contain"
+                cachePolicy="memory-disk"
               />
             ) : null}
           </Animated.View>
@@ -233,40 +264,45 @@ export function ImageViewer({ visible, imageUrl, imageUrls, prompt, onClose }) {
         {showInfo ? (
           <>
             <View style={styles.topBar} pointerEvents="box-none">
-              <TouchableOpacity onPress={onClose} style={styles.iconBtn}>
+              <Pressable
+                style={({ pressed }) => [styles.iconBtn, pressed && { opacity: 0.7 }]}
+                onPress={onClose}
+              >
                 <Ionicons name="close" size={24} color="#fff" />
-              </TouchableOpacity>
-              {urls.length > 1 ? (
+              </Pressable>
+              {urlsRef.current.length > 1 ? (
                 <View style={styles.pageIndicator}>
-                  <Text style={styles.pageIndicatorText}>{currentIndex + 1} / {urls.length}</Text>
+                  <Text style={styles.pageIndicatorText}>
+                    {currentIndex + 1} / {urlsRef.current.length}
+                  </Text>
                 </View>
               ) : null}
-              <TouchableOpacity
-                style={styles.iconBtn}
+              <Pressable
+                style={({ pressed }) => [styles.iconBtn, pressed && { opacity: 0.7 }]}
                 onPress={() => triggerDownload(currentUrl)}
               >
                 <Ionicons name="download-outline" size={24} color="#fff" />
-              </TouchableOpacity>
+              </Pressable>
             </View>
 
-            {urls.length > 1 ? (
+            {urlsRef.current.length > 1 ? (
               <View style={styles.navButtons} pointerEvents="box-none">
                 {currentIndex > 0 ? (
-                  <TouchableOpacity
-                    style={[styles.navBtn, styles.navBtnLeft]}
+                  <Pressable
+                    style={({ pressed }) => [styles.navBtn, pressed && { opacity: 0.7 }]}
                     onPress={() => goToIndex(currentIndex - 1)}
                   >
                     <Ionicons name="chevron-back" size={28} color="#fff" />
-                  </TouchableOpacity>
-                ) : null}
-                {currentIndex < urls.length - 1 ? (
-                  <TouchableOpacity
-                    style={[styles.navBtn, styles.navBtnRight]}
+                  </Pressable>
+                ) : <View style={styles.navBtnPlaceholder} />}
+                {currentIndex < urlsRef.current.length - 1 ? (
+                  <Pressable
+                    style={({ pressed }) => [styles.navBtn, pressed && { opacity: 0.7 }]}
                     onPress={() => goToIndex(currentIndex + 1)}
                   >
                     <Ionicons name="chevron-forward" size={28} color="#fff" />
-                  </TouchableOpacity>
-                ) : null}
+                  </Pressable>
+                ) : <View style={styles.navBtnPlaceholder} />}
               </View>
             ) : null}
 
@@ -276,20 +312,26 @@ export function ImageViewer({ visible, imageUrl, imageUrls, prompt, onClose }) {
               </View>
             ) : null}
 
-            {urls.length > 1 ? (
+            {urlsRef.current.length > 1 ? (
               <View style={styles.thumbnailStrip} pointerEvents="box-none">
                 <View style={styles.thumbnailList}>
-                  {urls.map((url, idx) => (
-                    <TouchableOpacity
+                  {urlsRef.current.map((url, idx) => (
+                    <Pressable
                       key={`${url}_${idx}`}
-                      style={[
+                      style={({ pressed }) => [
                         styles.thumbnailItem,
                         idx === currentIndex && styles.thumbnailItemActive,
+                        pressed && { opacity: 0.7 },
                       ]}
                       onPress={() => goToIndex(idx)}
                     >
-                      <Image source={{ uri: url }} style={styles.thumbnailImage} />
-                    </TouchableOpacity>
+                      <Image
+                        source={{ uri: url }}
+                        style={styles.thumbnailImage}
+                        contentFit="cover"
+                        cachePolicy="memory-disk"
+                      />
+                    </Pressable>
                   ))}
                 </View>
               </View>
@@ -308,16 +350,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  backgroundTouch: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  imageArea: {
-    maxWidth: '95%',
-    maxHeight: '80%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   imageWrapper: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -368,12 +402,13 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.15)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  navBtnLeft: {},
-  navBtnRight: {},
+  navBtnPlaceholder: {
+    width: 40,
+    height: 40,
+  },
   bottomBar: {
     position: 'absolute',
     bottom: 0,

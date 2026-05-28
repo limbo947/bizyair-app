@@ -10,31 +10,72 @@
 - **增量 Gradle 构建（已有 android/ 目录时）**: `cd android && .\gradlew.bat assembleRelease -PreactNativeArchitectures=arm64-v8a`
 - **EAS Build（兜底方案）**: `npx eas build --platform android --profile preview --local`
 - **配置 API 密钥**: 复制 `.env.example` 为 `.env`，填入 `EXPO_PUBLIC_BIZYAIR_API_KEY=你的密钥`
+- **Lint 检查**: `npx eslint .`
 
 ## 技术栈与版本
 - Expo SDK 54，参考文档：https://docs.expo.dev/versions/v54.0.0/
 - React Native 0.81.5 + React 19，Hermes 引擎 + 新架构（New Arch）默认启用
 - 目标架构：Android arm64-v8a / Web
+- expo-router 文件路由（原生 Tab 导航 + Modal 路由）
+- expo-image（替代 RN Image，内存/磁盘双缓存）
+- expo-file-system OOP API（File/Paths，替代 legacy downloadAsync）
 - AsyncStorage 本地存储，expo-av 音频播放，react-native-markdown-display Markdown 渲染
 - jssha（阿里云 OSS HMAC-SHA1 签名）
 
 ## 项目结构
   *新增文件或修改文件后，及时更新本章节，保持与项目结构一致。*
 ```
-├── App.js                    # 导航容器（ThemeProvider + AppProvider + AppNavigator）
-├── index.js                  # 应用入口
+├── App.js                    # expo-router 入口（import 'expo-router/entry'）
+├── app/                      # expo-router 文件路由
+│   ├── _layout.js            # 根布局（SafeAreaProvider → ThemeProvider → AppProvider → Stack）
+│   ├── model-select.js       # 模型选择 Modal 路由（presentation: 'modal'）
+│   └── (tabs)/               # Tab 导航组
+│       ├── _layout.js        # Tab 配置（主页 / AI应用 / 历史，含活跃任务角标）
+│       ├── index.js          # 主页 → HomeScreen
+│       ├── webapp.js         # AI应用 → WebappScreen
+│       └── history.js        # 历史 → HistoryScreen
 ├── api.js                    # API 兼容层（重新导出 services/utils/constants 的公共接口）
-├── package.json              # 依赖配置
+├── package.json              # 依赖配置（main: expo-router/entry）
 ├── package-lock.json         # 依赖锁定
-├── app.json                  # Expo 配置
+├── app.json                  # Expo 配置（scheme: bizyair）
 ├── eas.json                  # EAS Build 配置
 ├── build-android.ps1         # APK 一键构建脚本（prebuild → 修补 → Gradle）
 ├── scripts/                  # 构建辅助脚本
 │   └── patch-android-build.ps1  # post-prebuild 配置修补（签名/ProGuard/allowBackup）
 ├── src/
-│   ├── context/              # 全局状态管理（AppContext + ThemeContext）
-│   ├── screens/              # 页面级组件（HomeScreen / HistoryScreen / ModelSelectScreen）
-│   ├── components/           # UI 组件（20 个，按功能拆分）
+│   ├── context/              # 全局状态管理
+│   │   ├── ApiKeyContext.js  # API 密钥、多密钥切换、钱包余额
+│   │   ├── HistoryContext.js # 历史记录、轮询、homeState
+│   │   ├── FavoritesContext.js # 收藏模型管理
+│   │   ├── AppContext.js     # 组合 Provider（ApiKey → History → Favorites）+ activeTab
+│   │   └── ThemeContext.js   # 亮/暗主题
+│   ├── screens/              # 页面级组件
+│   │   ├── HomeScreen.js    # 主页（useReducer 68 action types + expo-image + Pressable）
+│   │   ├── HistoryScreen.js # 历史（HistoryCard memo + DurationDisplay 独立定时器 + FlatList）
+│   │   ├── ModelSelectScreen.js # 模型选择（FlatList 虚拟化 + Pressable）
+│   │   └── WebappScreen.js  # AI 应用
+│   ├── components/           # UI 组件（21 个，按功能拆分）
+│   │   ├── HomeParamControls.js  # paramType 路由分发
+│   │   ├── VideoParamControls.js # 视频模型参数（10 种，Switch 用 Pressable 包裹）
+│   │   ├── ParamControls.js      # 图片模型参数（6 种）
+│   │   ├── LLMControls.js        # LLM 参数
+│   │   ├── VisionParamControls.js # 视觉理解参数
+│   │   ├── TTSControls.js        # TTS 参数
+│   │   ├── ImageViewer.js        # 图片预览（PanResponder 双指缩放 + 左右划切换）
+│   │   ├── ModelSelector.js      # 模型选择器
+│   │   ├── FavoriteModelsLayer.js # 收藏模型浮层
+│   │   ├── ApiKeyDropdown.js     # 密钥管理下拉
+│   │   ├── UserInfoCard.js       # 用户信息卡片
+│   │   ├── HistoryFilters.js     # 历史筛选
+│   │   ├── HistoryModals.js      # 历史弹窗
+│   │   ├── VideoPlayer.js        # 视频播放
+│   │   ├── AudioPlayer.js        # 音频播放
+│   │   ├── MarkdownRenderer.js   # Markdown 渲染
+│   │   ├── TextResultView.js     # 文本结果展示
+│   │   ├── ResizableTextInput.js # 自适应输入框
+│   │   ├── StatusBadge.js        # 状态徽章
+│   │   ├── ErrorBoundary.js      # 错误边界
+│   │   └── TabBar.js             # 已被 expo-router 替代，保留未删除
 │   ├── constants/            # 常量定义（models / modelMeta / ratios / theme）
 │   ├── hooks/                # 自定义 Hooks（useFileUpload / useThemedStyles）
 │   ├── utils/                # 工具函数（modelHelpers / payloadBuilder / helpers）
@@ -54,20 +95,25 @@
 
 ## 架构概览
 
-### Provider 链与页面
+### Provider 链与路由
 ```
-SafeAreaProvider > ThemeProvider > AppProvider > AppNavigator
+expo-router entry → app/_layout.js
+SafeAreaProvider → ThemeProvider → AppProvider → Stack
+AppProvider = ApiKeyProvider → HistoryProvider → FavoritesProvider
 ```
 - `ThemeProvider` — 亮/暗主题（`useTheme()`），持久化到 AsyncStorage。
-- `AppProvider` — 全部业务状态：API 密钥、历史记录、轮询、收藏等。
-- `AppNavigator` — 三个页面状态切换（Home / History / ModelSelect），含淡入淡出动画。底部 TabBar 切换 Home / History，ModelSelectScreen 全屏覆盖。HistoryScreen 支持搜索、筛选、排序、批量操作、分页加载。
+- `ApiKeyProvider` — API 密钥、多密钥切换、钱包余额（`useApiKeyContext()`）。
+- `HistoryProvider` — 历史记录、轮询、homeState（`useHistoryContext()`）。
+- `FavoritesProvider` — 收藏模型管理（`useFavoritesContext()`）。
+- `AppProvider` — 组合以上三个 Provider + activeTab 导航状态。
+- 路由：expo-router 文件路由，`(tabs)/` 组提供三标签导航，`model-select` 提供 Modal 路由。
 
 ### 任务提交 → 轮询 → 结果
 1. 用户在 `HomeScreen` 选模型、填参数，点击生成。
 2. `HomeParamControls.js` 根据模型的 `paramType` 路由到对应控件组件渲染表单。
 3. `payloadBuilder.js` 将前端 camelCase 参数映射为 API snake_case 请求体。
 4. `apiClient.js` 调用 `submitTask()` 提交，返回 `requestId`。
-5. `AppContext` 添加历史记录（Pending/Running），`startPolling()` 每 3 秒轮询状态。
+5. `HistoryContext` 添加历史记录（Pending/Running），`startPolling()` 每 3 秒轮询状态。
 6. 轮询成功后提取输出 URL；连续 5 次失败标记 Failed。启动时 `resumeRunningPolling()` 自动恢复。
 
 ### paramType 驱动
@@ -87,10 +133,6 @@ SafeAreaProvider > ThemeProvider > AppProvider > AppNavigator
 
 ### API 请求封装
 `apiClient.js` 的 `request()` 统一封装：15 秒超时（AbortController）、指数退避重试（最多 3 次）、错误分类（超时/服务端/客户端）。
-
-## 项目图标规则
-- 优先从 @expo/vector-icons 图标库中选择图标
-- 如果图标库中没有合适的图标，再考虑其他图标库（如 Material Icons、Feather Icons 等）
 
 ## 错误处理
 - 所有 API 调用必须处理超时、重试和状态码

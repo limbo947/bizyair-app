@@ -1,16 +1,15 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import {
-  Text,
+import React, { useState, useEffect, useCallback, useMemo, useReducer, useRef } from 'react';
+import { Pressable, Text,
   View,
   TextInput,
-  TouchableOpacity,
   Keyboard,
-  Image,
   ScrollView,
-  ActivityIndicator,
-} from 'react-native';
+  ActivityIndicator, } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { useAppContext } from '../context/AppContext';
+import { useApiKeyContext } from '../context/ApiKeyContext';
+import { useHistoryContext } from '../context/HistoryContext';
+import { useFavoritesContext } from '../context/FavoritesContext';
 import { useTheme } from '../context/ThemeContext';
 import { submitImageTask, submitVideoTask, submitLLMTask, submitVisionTask, submitTTSTask } from '../services/apiClient';
 import { calculatePrice, getRatios, getResolutions, getModelInfo, getActualResolution, getModelModes, getOutputType } from '../utils/modelHelpers';
@@ -41,6 +40,211 @@ const MODE_LABELS = {
   'text-to-audio': '语音合成',
 };
 
+const initialState = {
+  modelId: 'bza-image-b2-base',
+  mode: 'text-to-image',
+  prompt: '',
+  imageUrls: [],
+  resolution: '2K',
+  aspectRatio: '4:3',
+  quality: 'medium',
+  sizePreset: 0,
+  customWidth: '1024',
+  customHeight: '1024',
+  duration: 5,
+  generateAudio: false,
+  sound: false,
+  multiShot: false,
+  shotType: 'customize',
+  multiPrompt: '',
+  negativePrompt: '',
+  promptExtend: true,
+  watermark: true,
+  seed: '',
+  display: 'horizontal',
+  keepOriginalSound: false,
+  audio: false,
+  offPeak: false,
+  isRec: false,
+  promptOptimizer: true,
+  fastPretreatment: false,
+  aigcWatermark: false,
+  movementAmplitude: 'auto',
+  videoUrls: [],
+  firstFrameUrls: [],
+  lastFrameUrls: [],
+  mediaUrls: [],
+  firstClipUrls: [],
+  refImages: [],
+  audioSetting: '',
+  drivingAudio: '',
+  audioUrl: '',
+  referenceVoice: '',
+  bboxList: '',
+  systemPrompt: '',
+  temperature: 1.0,
+  maxTokens: 32768,
+  enableThinking: true,
+  enableSearch: false,
+  detail: 'medium',
+  captionType: 'Descriptive',
+  captionLength: 'medium-length',
+  doSample: false,
+  extraOptions: '',
+  nameInput: '',
+  customPrompt: '',
+  voice: 'vivian',
+  responseFormat: 'mp3',
+  instructions: '',
+  language: 'Auto',
+  speed: 1.0,
+  enableSequential: false,
+  thinkingMode: false,
+  colorPalette: '',
+  batchSize: 1,
+  webSearch: false,
+  returnLastFrame: false,
+  topP: 0.95,
+  style: 'general',
+};
+
+function homeParamReducer(state, action) {
+  switch (action.type) {
+    case 'SET_PARAMS':
+      return { ...state, ...action.params };
+    case 'SET_MODEL_ID':
+      return { ...state, modelId: action.value };
+    case 'SET_MODE':
+      return { ...state, mode: action.value };
+    case 'SET_PROMPT':
+      return { ...state, prompt: action.value };
+    case 'SET_IMAGE_URLS':
+      return { ...state, imageUrls: action.value };
+    case 'SET_RESOLUTION':
+      return { ...state, resolution: action.value };
+    case 'SET_ASPECT_RATIO':
+      return { ...state, aspectRatio: action.value };
+    case 'SET_QUALITY':
+      return { ...state, quality: action.value };
+    case 'SET_SIZE_PRESET':
+      return { ...state, sizePreset: action.value };
+    case 'SET_CUSTOM_WIDTH':
+      return { ...state, customWidth: action.value };
+    case 'SET_CUSTOM_HEIGHT':
+      return { ...state, customHeight: action.value };
+    case 'SET_DURATION':
+      return { ...state, duration: action.value };
+    case 'SET_GENERATE_AUDIO':
+      return { ...state, generateAudio: action.value };
+    case 'SET_SOUND':
+      return { ...state, sound: action.value };
+    case 'SET_MULTI_SHOT':
+      return { ...state, multiShot: action.value };
+    case 'SET_SHOT_TYPE':
+      return { ...state, shotType: action.value };
+    case 'SET_MULTI_PROMPT':
+      return { ...state, multiPrompt: action.value };
+    case 'SET_NEGATIVE_PROMPT':
+      return { ...state, negativePrompt: action.value };
+    case 'SET_PROMPT_EXTEND':
+      return { ...state, promptExtend: action.value };
+    case 'SET_WATERMARK':
+      return { ...state, watermark: action.value };
+    case 'SET_SEED':
+      return { ...state, seed: action.value };
+    case 'SET_DISPLAY':
+      return { ...state, display: action.value };
+    case 'SET_KEEP_ORIGINAL_SOUND':
+      return { ...state, keepOriginalSound: action.value };
+    case 'SET_AUDIO':
+      return { ...state, audio: action.value };
+    case 'SET_OFF_PEAK':
+      return { ...state, offPeak: action.value };
+    case 'SET_IS_REC':
+      return { ...state, isRec: action.value };
+    case 'SET_PROMPT_OPTIMIZER':
+      return { ...state, promptOptimizer: action.value };
+    case 'SET_FAST_PRETREATMENT':
+      return { ...state, fastPretreatment: action.value };
+    case 'SET_AIGC_WATERMARK':
+      return { ...state, aigcWatermark: action.value };
+    case 'SET_MOVEMENT_AMPLITUDE':
+      return { ...state, movementAmplitude: action.value };
+    case 'SET_VIDEO_URLS':
+      return { ...state, videoUrls: action.value };
+    case 'SET_FIRST_FRAME_URLS':
+      return { ...state, firstFrameUrls: action.value };
+    case 'SET_LAST_FRAME_URLS':
+      return { ...state, lastFrameUrls: action.value };
+    case 'SET_FIRST_CLIP_URLS':
+      return { ...state, firstClipUrls: action.value };
+    case 'SET_REF_IMAGES':
+      return { ...state, refImages: action.value };
+    case 'SET_AUDIO_SETTING':
+      return { ...state, audioSetting: action.value };
+    case 'SET_DRIVING_AUDIO':
+      return { ...state, drivingAudio: action.value };
+    case 'SET_AUDIO_URL':
+      return { ...state, audioUrl: action.value };
+    case 'SET_REFERENCE_VOICE':
+      return { ...state, referenceVoice: action.value };
+    case 'SET_BBOX_LIST':
+      return { ...state, bboxList: action.value };
+    case 'SET_SYSTEM_PROMPT':
+      return { ...state, systemPrompt: action.value };
+    case 'SET_TEMPERATURE':
+      return { ...state, temperature: action.value };
+    case 'SET_MAX_TOKENS':
+      return { ...state, maxTokens: action.value };
+    case 'SET_ENABLE_THINKING':
+      return { ...state, enableThinking: action.value };
+    case 'SET_ENABLE_SEARCH':
+      return { ...state, enableSearch: action.value };
+    case 'SET_DETAIL':
+      return { ...state, detail: action.value };
+    case 'SET_CAPTION_TYPE':
+      return { ...state, captionType: action.value };
+    case 'SET_CAPTION_LENGTH':
+      return { ...state, captionLength: action.value };
+    case 'SET_DO_SAMPLE':
+      return { ...state, doSample: action.value };
+    case 'SET_EXTRA_OPTIONS':
+      return { ...state, extraOptions: action.value };
+    case 'SET_NAME_INPUT':
+      return { ...state, nameInput: action.value };
+    case 'SET_CUSTOM_PROMPT':
+      return { ...state, customPrompt: action.value };
+    case 'SET_VOICE':
+      return { ...state, voice: action.value };
+    case 'SET_RESPONSE_FORMAT':
+      return { ...state, responseFormat: action.value };
+    case 'SET_INSTRUCTIONS':
+      return { ...state, instructions: action.value };
+    case 'SET_LANGUAGE':
+      return { ...state, language: action.value };
+    case 'SET_SPEED':
+      return { ...state, speed: action.value };
+    case 'SET_ENABLE_SEQUENTIAL':
+      return { ...state, enableSequential: action.value };
+    case 'SET_THINKING_MODE':
+      return { ...state, thinkingMode: action.value };
+    case 'SET_COLOR_PALETTE':
+      return { ...state, colorPalette: action.value };
+    case 'SET_BATCH_SIZE':
+      return { ...state, batchSize: action.value };
+    case 'SET_WEB_SEARCH':
+      return { ...state, webSearch: action.value };
+    case 'SET_RETURN_LAST_FRAME':
+      return { ...state, returnLastFrame: action.value };
+    case 'SET_TOP_P':
+      return { ...state, topP: action.value };
+    case 'SET_STYLE':
+      return { ...state, style: action.value };
+    default:
+      return state;
+  }
+}
+
 export function HomeScreen({ onOpenModelSelect }) {
   const {
     apiKey,
@@ -52,93 +256,71 @@ export function HomeScreen({ onOpenModelSelect }) {
     removeApiKey,
     switchApiKey,
     renameApiKey,
+    userInfo,
+    walletBalance,
+    refreshUserInfo,
+  } = useApiKeyContext();
+  const {
     addToHistory,
     startPolling,
     updateHistoryItem,
     homeState,
     saveHomeState,
     addCoinsSpent,
-    userInfo,
-    walletBalance,
-    refreshUserInfo,
-    favorites,
     history,
-  } = useAppContext();
+  } = useHistoryContext();
+  const { favorites } = useFavoritesContext();
   const { themeMode, toggleTheme, colors } = useTheme();
   const styles = useThemedStyles(createStyles);
 
-  const [modelId, setModelId] = useState(homeState.modelId);
-  const [mode, setMode] = useState(homeState.mode);
-  const [prompt, setPrompt] = useState(homeState.prompt);
-  const [imageUrls, setImageUrls] = useState(homeState.imageUrls);
-  const [resolution, setResolution] = useState(homeState.resolution);
-  const [aspectRatio, setAspectRatio] = useState(homeState.aspectRatio);
-  const [quality, setQuality] = useState(homeState.quality);
-  const [sizePreset, setSizePreset] = useState(homeState.sizePreset);
-  const [customWidth, setCustomWidth] = useState(homeState.customWidth);
-  const [customHeight, setCustomHeight] = useState(homeState.customHeight);
-  const [duration, setDuration] = useState(homeState.duration || 5);
-  const [generateAudio, setGenerateAudio] = useState(homeState.generateAudio || false);
-  const [sound, setSound] = useState(homeState.sound || false);
-  const [multiShot, setMultiShot] = useState(homeState.multiShot || false);
-  const [shotType, setShotType] = useState(homeState.shotType || 'customize');
-  const [multiPrompt, setMultiPrompt] = useState(homeState.multiPrompt || '');
-  const [negativePrompt, setNegativePrompt] = useState(homeState.negativePrompt || '');
-  const [promptExtend, setPromptExtend] = useState(homeState.promptExtend !== undefined ? homeState.promptExtend : true);
-  const [watermark, setWatermark] = useState(homeState.watermark !== undefined ? homeState.watermark : true);
-  const [seed, setSeed] = useState(homeState.seed || '');
-  const [display, setDisplay] = useState(homeState.display || 'horizontal');
-  const [keepOriginalSound, setKeepOriginalSound] = useState(homeState.keepOriginalSound || false);
-  const [audio, setAudio] = useState(homeState.audio || false);
-  const [offPeak, setOffPeak] = useState(homeState.offPeak || false);
-  const [isRec, setIsRec] = useState(homeState.isRec || false);
-  const [promptOptimizer, setPromptOptimizer] = useState(homeState.promptOptimizer !== undefined ? homeState.promptOptimizer : true);
-  const [fastPretreatment, setFastPretreatment] = useState(homeState.fastPretreatment || false);
-  const [aigcWatermark, setAigcWatermark] = useState(homeState.aigcWatermark !== undefined ? homeState.aigcWatermark : false);
-  const [movementAmplitude, setMovementAmplitude] = useState(homeState.movementAmplitude || 'auto');
-  const [videoUrls, setVideoUrls] = useState(homeState.videoUrls || []);
-  const [firstFrameUrls, setFirstFrameUrls] = useState(homeState.firstFrameUrls || []);
-  const [lastFrameUrls, setLastFrameUrls] = useState(homeState.lastFrameUrls || []);
-  const [mediaUrls] = useState(homeState.mediaUrls || []);
-  const [firstClipUrls, setFirstClipUrls] = useState(homeState.firstClipUrls || []);
-  const [refImages, setRefImages] = useState(homeState.refImages || []);
-  const [audioSetting, setAudioSetting] = useState(homeState.audioSetting || '');
-  const [drivingAudio, setDrivingAudio] = useState(homeState.drivingAudio || '');
-  const [audioUrl, setAudioUrl] = useState(homeState.audioUrl || '');
-  const [referenceVoice, setReferenceVoice] = useState(homeState.referenceVoice || '');
-  const [bboxList, setBboxList] = useState(homeState.bboxList || '');
-  const [systemPrompt, setSystemPrompt] = useState(homeState.systemPrompt || '');
-  const [temperature, setTemperature] = useState(homeState.temperature ?? 1.0);
-  const [maxTokens, setMaxTokens] = useState(homeState.maxTokens || 32768);
-  const [enableThinking, setEnableThinking] = useState(homeState.enableThinking !== undefined ? homeState.enableThinking : true);
-  const [enableSearch, setEnableSearch] = useState(homeState.enableSearch !== undefined ? homeState.enableSearch : false);
-  const [detail, setDetail] = useState(homeState.detail || 'medium');
-  const [captionType, setCaptionType] = useState(homeState.captionType || 'Descriptive');
-  const [captionLength, setCaptionLength] = useState(homeState.captionLength || 'medium-length');
-  const [doSample, setDoSample] = useState(homeState.doSample !== undefined ? homeState.doSample : false);
-  const [extraOptions, setExtraOptions] = useState(homeState.extraOptions || '');
-  const [nameInput, setNameInput] = useState(homeState.nameInput || '');
-  const [customPrompt, setCustomPrompt] = useState(homeState.customPrompt || '');
-  const [voice, setVoice] = useState(homeState.voice || 'vivian');
-  const [responseFormat, setResponseFormat] = useState(homeState.responseFormat || 'mp3');
-  const [instructions, setInstructions] = useState(homeState.instructions || '');
-  const [language, setLanguage] = useState(homeState.language || 'Auto');
-  const [speed, setSpeed] = useState(homeState.speed || 1.0);
-  const [enableSequential, setEnableSequential] = useState(homeState.enableSequential || false);
-  const [thinkingMode, setThinkingMode] = useState(homeState.thinkingMode || false);
-  const [colorPalette, setColorPalette] = useState(homeState.colorPalette || '');
-  const [batchSize, setBatchSize] = useState(homeState.batchSize || 1);
-  const [webSearch, setWebSearch] = useState(homeState.webSearch || false);
-  const [returnLastFrame, setReturnLastFrame] = useState(homeState.returnLastFrame || false);
-  const [topP, setTopP] = useState(homeState.topP ?? 0.95);
-  const [style, setStyle] = useState(homeState.style || 'general');
+  const [state, stateDispatch] = useReducer(homeParamReducer, {
+    ...initialState,
+    ...homeState,
+  });
+
+  const selfSaveRef = useRef(false);
+  const stateRef = useRef(state);
+  useEffect(() => { stateRef.current = state; }, [state]);
+
+  useEffect(() => {
+    if (selfSaveRef.current) {
+      selfSaveRef.current = false;
+      return;
+    }
+    const s = stateRef.current;
+    const patch = {};
+    if (homeState.modelId !== undefined && homeState.modelId !== s.modelId) {
+      patch.modelId = homeState.modelId;
+    }
+    if (homeState.mode !== undefined && homeState.mode !== s.mode) {
+      patch.mode = homeState.mode;
+    }
+    if (Object.keys(patch).length > 0) {
+      stateDispatch({ type: 'SET_PARAMS', params: patch });
+    }
+  }, [homeState.modelId, homeState.mode]);
+  const {
+    modelId, mode, prompt, imageUrls, resolution, aspectRatio, quality,
+    sizePreset, customWidth, customHeight, duration, generateAudio, sound,
+    multiShot, shotType, multiPrompt, negativePrompt, promptExtend,
+    watermark, seed, display, keepOriginalSound, audio, offPeak, isRec,
+    promptOptimizer, fastPretreatment, aigcWatermark, movementAmplitude,
+    videoUrls, firstFrameUrls, lastFrameUrls, mediaUrls, firstClipUrls,
+    refImages, audioSetting, drivingAudio, audioUrl, referenceVoice,
+    bboxList, systemPrompt, temperature, maxTokens, enableThinking,
+    enableSearch, detail, captionType, captionLength, doSample,
+    extraOptions, nameInput, customPrompt, voice, responseFormat,
+    instructions, language, speed, enableSequential, thinkingMode,
+    colorPalette, batchSize, webSearch, returnLastFrame, topP, style,
+  } = state;
+
+  const [showFavorites, setShowFavorites] = useState(false);
+  const [showApiKeyDropdown, setShowApiKeyDropdown] = useState(false);
   const [showApiKeyInput, setShowApiKeyInput] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
-  const [showFavorites, setShowFavorites] = useState(false);
-  const [showApiKeyDropdown, setShowApiKeyDropdown] = useState(false);
 
   const handleSaveApiKey = async () => {
     if (!apiKey.trim() || isSaving) return;
@@ -171,54 +353,40 @@ export function HomeScreen({ onOpenModelSelect }) {
   useEffect(() => {
     const model = getModelInfo(modelId);
     if (currentResolutions.length > 0 && !currentResolutions.includes(resolution)) {
-      setResolution(model.defaultResolution || currentResolutions[0]);
+      stateDispatch({ type: 'SET_RESOLUTION', value: model.defaultResolution || currentResolutions[0] });
     }
-    // 宽高比：不在可选列表时重置
     if (currentRatios.length > 0 && !currentRatios.includes(aspectRatio)) {
-      setAspectRatio(currentRatios[0]);
+      stateDispatch({ type: 'SET_ASPECT_RATIO', value: currentRatios[0] });
     }
-    // 模型特定默认值重置
-    if (model.defaultWatermark !== undefined) setWatermark(model.defaultWatermark);
-    if (model.defaultThinkingMode !== undefined) setThinkingMode(model.defaultThinkingMode);
-    if (model.defaultPromptExtend !== undefined) setPromptExtend(model.defaultPromptExtend);
-    if (model.defaultAudio !== undefined) setAudio(model.defaultAudio);
-    if (model.defaultAudioSetting !== undefined) setAudioSetting(model.defaultAudioSetting);
-    if (model.defaultDuration !== undefined) setDuration(model.defaultDuration);
-    if (model.defaultSound !== undefined) setSound(model.defaultSound);
-    if (model.defaultKeepOriginalSound !== undefined) setKeepOriginalSound(model.defaultKeepOriginalSound);
-    if (model.defaultTemperature !== undefined) setTemperature(model.defaultTemperature);
-    if (model.defaultMaxTokens !== undefined) setMaxTokens(model.defaultMaxTokens);
-    if (model.defaultSpeed !== undefined) setSpeed(model.defaultSpeed);
-    if (model.defaultVoice !== undefined) setVoice(model.defaultVoice);
-    if (model.defaultFormat !== undefined) setResponseFormat(model.defaultFormat);
-    if (model.defaultLanguage !== undefined) setLanguage(model.defaultLanguage);
-    // 验证当前模式是否被模型支持，不支持则切换到第一个可用模式
+    if (model.defaultWatermark !== undefined) stateDispatch({ type: 'SET_WATERMARK', value: model.defaultWatermark });
+    if (model.defaultThinkingMode !== undefined) stateDispatch({ type: 'SET_THINKING_MODE', value: model.defaultThinkingMode });
+    if (model.defaultPromptExtend !== undefined) stateDispatch({ type: 'SET_PROMPT_EXTEND', value: model.defaultPromptExtend });
+    if (model.defaultAudio !== undefined) stateDispatch({ type: 'SET_AUDIO', value: model.defaultAudio });
+    if (model.defaultAudioSetting !== undefined) stateDispatch({ type: 'SET_AUDIO_SETTING', value: model.defaultAudioSetting });
+    if (model.defaultDuration !== undefined) stateDispatch({ type: 'SET_DURATION', value: model.defaultDuration });
+    if (model.defaultSound !== undefined) stateDispatch({ type: 'SET_SOUND', value: model.defaultSound });
+    if (model.defaultKeepOriginalSound !== undefined) stateDispatch({ type: 'SET_KEEP_ORIGINAL_SOUND', value: model.defaultKeepOriginalSound });
+    if (model.defaultTemperature !== undefined) stateDispatch({ type: 'SET_TEMPERATURE', value: model.defaultTemperature });
+    if (model.defaultMaxTokens !== undefined) stateDispatch({ type: 'SET_MAX_TOKENS', value: model.defaultMaxTokens });
+    if (model.defaultSpeed !== undefined) stateDispatch({ type: 'SET_SPEED', value: model.defaultSpeed });
+    if (model.defaultVoice !== undefined) stateDispatch({ type: 'SET_VOICE', value: model.defaultVoice });
+    if (model.defaultFormat !== undefined) stateDispatch({ type: 'SET_RESPONSE_FORMAT', value: model.defaultFormat });
+    if (model.defaultLanguage !== undefined) stateDispatch({ type: 'SET_LANGUAGE', value: model.defaultLanguage });
     if (currentModes.length > 0 && !currentModes.includes(mode)) {
-      setMode(currentModes[0]);
+      stateDispatch({ type: 'SET_MODE', value: currentModes[0] });
     }
   }, [modelId, mode, paramType, currentResolutions, currentRatios, currentModes]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      saveHomeState({
-        modelId, mode, prompt, imageUrls, resolution, aspectRatio,
-        quality, sizePreset, customWidth, customHeight,
-        duration, generateAudio, sound, multiShot, shotType, multiPrompt,
-        negativePrompt, promptExtend, watermark, seed, display,
-        keepOriginalSound, audio, offPeak, isRec, promptOptimizer,
-        fastPretreatment, aigcWatermark, movementAmplitude, videoUrls, firstFrameUrls,
-        lastFrameUrls, mediaUrls, refImages, audioSetting, drivingAudio, audioUrl, referenceVoice, bboxList,
-        systemPrompt, temperature, maxTokens, enableThinking, enableSearch,
-        detail, captionType, captionLength, doSample, extraOptions,
-        nameInput, customPrompt, voice, responseFormat, instructions,
-        language, speed, enableSequential, thinkingMode, colorPalette, batchSize, webSearch, returnLastFrame, topP, style,
-      });
+      selfSaveRef.current = true;
+      saveHomeState(state);
     }, 500);
     return () => clearTimeout(timer);
-  }, [modelId, mode, prompt, imageUrls, resolution, aspectRatio, quality, sizePreset, customWidth, customHeight, saveHomeState, duration, generateAudio, sound, multiShot, shotType, multiPrompt, negativePrompt, promptExtend, watermark, seed, display, keepOriginalSound, audio, offPeak, isRec, promptOptimizer, fastPretreatment, aigcWatermark, movementAmplitude, videoUrls, firstFrameUrls, lastFrameUrls, mediaUrls, refImages, audioSetting, drivingAudio, audioUrl, referenceVoice, bboxList, systemPrompt, temperature, maxTokens, enableThinking, enableSearch, detail, captionType, captionLength, doSample, extraOptions, nameInput, customPrompt, voice, responseFormat, instructions, language, speed, enableSequential, thinkingMode, colorPalette, batchSize, webSearch, returnLastFrame, topP, style]);
+  }, [state, saveHomeState]);
 
   const handleModelSelect = (id) => {
-    setModelId(id);
+    stateDispatch({ type: 'SET_MODEL_ID', value: id });
   };
 
   const handleOpenFavorites = () => {
@@ -236,12 +404,12 @@ export function HomeScreen({ onOpenModelSelect }) {
     setShowApiKeyInput,
     setError,
     setIsUploading,
-    setImageUrls,
-    setLastFrameUrls,
-    setVideoUrls,
-    setRefImages,
-    setFirstClipUrls,
-    setFirstFrameUrls,
+    setImageUrls: (urls) => stateDispatch({ type: 'SET_IMAGE_URLS', value: urls }),
+    setLastFrameUrls: (urls) => stateDispatch({ type: 'SET_LAST_FRAME_URLS', value: urls }),
+    setVideoUrls: (urls) => stateDispatch({ type: 'SET_VIDEO_URLS', value: urls }),
+    setRefImages: (urls) => stateDispatch({ type: 'SET_REF_IMAGES', value: urls }),
+    setFirstClipUrls: (urls) => stateDispatch({ type: 'SET_FIRST_CLIP_URLS', value: urls }),
+    setFirstFrameUrls: (urls) => stateDispatch({ type: 'SET_FIRST_FRAME_URLS', value: urls }),
   });
 
   // ⚠️ 同步风险：此 switch(paramType) 需与 HomeParamControls 的 switch 保持同步。
@@ -429,115 +597,115 @@ export function HomeScreen({ onOpenModelSelect }) {
       currentResolutions={currentResolutions}
       currentRatios={currentRatios}
       resolution={resolution}
-      setResolution={setResolution}
+      setResolution={(v) => stateDispatch({ type: 'SET_RESOLUTION', value: v })}
       aspectRatio={aspectRatio}
-      setAspectRatio={setAspectRatio}
+      setAspectRatio={(v) => stateDispatch({ type: 'SET_ASPECT_RATIO', value: v })}
       quality={quality}
-      setQuality={setQuality}
+      setQuality={(v) => stateDispatch({ type: 'SET_QUALITY', value: v })}
       sizePreset={sizePreset}
-      setSizePreset={setSizePreset}
+      setSizePreset={(v) => stateDispatch({ type: 'SET_SIZE_PRESET', value: v })}
       customWidth={customWidth}
-      setCustomWidth={setCustomWidth}
+      setCustomWidth={(v) => stateDispatch({ type: 'SET_CUSTOM_WIDTH', value: v })}
       customHeight={customHeight}
-      setCustomHeight={setCustomHeight}
+      setCustomHeight={(v) => stateDispatch({ type: 'SET_CUSTOM_HEIGHT', value: v })}
       duration={duration}
-      setDuration={setDuration}
+      setDuration={(v) => stateDispatch({ type: 'SET_DURATION', value: v })}
       generateAudio={generateAudio}
-      setGenerateAudio={setGenerateAudio}
+      setGenerateAudio={(v) => stateDispatch({ type: 'SET_GENERATE_AUDIO', value: v })}
       seed={seed}
-      setSeed={setSeed}
+      setSeed={(v) => stateDispatch({ type: 'SET_SEED', value: v })}
       sound={sound}
-      setSound={setSound}
+      setSound={(v) => stateDispatch({ type: 'SET_SOUND', value: v })}
       multiShot={multiShot}
-      setMultiShot={setMultiShot}
+      setMultiShot={(v) => stateDispatch({ type: 'SET_MULTI_SHOT', value: v })}
       shotType={shotType}
-      setShotType={setShotType}
+      setShotType={(v) => stateDispatch({ type: 'SET_SHOT_TYPE', value: v })}
       multiPrompt={multiPrompt}
-      setMultiPrompt={setMultiPrompt}
+      setMultiPrompt={(v) => stateDispatch({ type: 'SET_MULTI_PROMPT', value: v })}
       keepOriginalSound={keepOriginalSound}
-      setKeepOriginalSound={setKeepOriginalSound}
+      setKeepOriginalSound={(v) => stateDispatch({ type: 'SET_KEEP_ORIGINAL_SOUND', value: v })}
       negativePrompt={negativePrompt}
-      setNegativePrompt={setNegativePrompt}
+      setNegativePrompt={(v) => stateDispatch({ type: 'SET_NEGATIVE_PROMPT', value: v })}
       promptExtend={promptExtend}
-      setPromptExtend={setPromptExtend}
+      setPromptExtend={(v) => stateDispatch({ type: 'SET_PROMPT_EXTEND', value: v })}
       watermark={watermark}
-      setWatermark={setWatermark}
+      setWatermark={(v) => stateDispatch({ type: 'SET_WATERMARK', value: v })}
       display={display}
-      setDisplay={setDisplay}
+      setDisplay={(v) => stateDispatch({ type: 'SET_DISPLAY', value: v })}
       audio={audio}
-      setAudio={setAudio}
+      setAudio={(v) => stateDispatch({ type: 'SET_AUDIO', value: v })}
       offPeak={offPeak}
-      setOffPeak={setOffPeak}
+      setOffPeak={(v) => stateDispatch({ type: 'SET_OFF_PEAK', value: v })}
       isRec={isRec}
-      setIsRec={setIsRec}
+      setIsRec={(v) => stateDispatch({ type: 'SET_IS_REC', value: v })}
       promptOptimizer={promptOptimizer}
-      setPromptOptimizer={setPromptOptimizer}
+      setPromptOptimizer={(v) => stateDispatch({ type: 'SET_PROMPT_OPTIMIZER', value: v })}
       fastPretreatment={fastPretreatment}
-      setFastPretreatment={setFastPretreatment}
+      setFastPretreatment={(v) => stateDispatch({ type: 'SET_FAST_PRETREATMENT', value: v })}
       aigcWatermark={aigcWatermark}
-      setAigcWatermark={setAigcWatermark}
+      setAigcWatermark={(v) => stateDispatch({ type: 'SET_AIGC_WATERMARK', value: v })}
       movementAmplitude={movementAmplitude}
-      setMovementAmplitude={setMovementAmplitude}
+      setMovementAmplitude={(v) => stateDispatch({ type: 'SET_MOVEMENT_AMPLITUDE', value: v })}
       systemPrompt={systemPrompt}
-      setSystemPrompt={setSystemPrompt}
+      setSystemPrompt={(v) => stateDispatch({ type: 'SET_SYSTEM_PROMPT', value: v })}
       temperature={temperature}
-      setTemperature={setTemperature}
+      setTemperature={(v) => stateDispatch({ type: 'SET_TEMPERATURE', value: v })}
       maxTokens={maxTokens}
-      setMaxTokens={setMaxTokens}
+      setMaxTokens={(v) => stateDispatch({ type: 'SET_MAX_TOKENS', value: v })}
       enableThinking={enableThinking}
-      setEnableThinking={setEnableThinking}
+      setEnableThinking={(v) => stateDispatch({ type: 'SET_ENABLE_THINKING', value: v })}
       enableSearch={enableSearch}
-      setEnableSearch={setEnableSearch}
+      setEnableSearch={(v) => stateDispatch({ type: 'SET_ENABLE_SEARCH', value: v })}
       detail={detail}
-      setDetail={setDetail}
+      setDetail={(v) => stateDispatch({ type: 'SET_DETAIL', value: v })}
       captionType={captionType}
-      setCaptionType={setCaptionType}
+      setCaptionType={(v) => stateDispatch({ type: 'SET_CAPTION_TYPE', value: v })}
       captionLength={captionLength}
-      setCaptionLength={setCaptionLength}
+      setCaptionLength={(v) => stateDispatch({ type: 'SET_CAPTION_LENGTH', value: v })}
       doSample={doSample}
-      setDoSample={setDoSample}
+      setDoSample={(v) => stateDispatch({ type: 'SET_DO_SAMPLE', value: v })}
       extraOptions={extraOptions}
-      setExtraOptions={setExtraOptions}
+      setExtraOptions={(v) => stateDispatch({ type: 'SET_EXTRA_OPTIONS', value: v })}
       nameInput={nameInput}
-      setNameInput={setNameInput}
+      setNameInput={(v) => stateDispatch({ type: 'SET_NAME_INPUT', value: v })}
       customPrompt={customPrompt}
-      setCustomPrompt={setCustomPrompt}
+      setCustomPrompt={(v) => stateDispatch({ type: 'SET_CUSTOM_PROMPT', value: v })}
       voice={voice}
-      setVoice={setVoice}
+      setVoice={(v) => stateDispatch({ type: 'SET_VOICE', value: v })}
       responseFormat={responseFormat}
-      setResponseFormat={setResponseFormat}
+      setResponseFormat={(v) => stateDispatch({ type: 'SET_RESPONSE_FORMAT', value: v })}
       instructions={instructions}
-      setInstructions={setInstructions}
+      setInstructions={(v) => stateDispatch({ type: 'SET_INSTRUCTIONS', value: v })}
       language={language}
-      setLanguage={setLanguage}
+      setLanguage={(v) => stateDispatch({ type: 'SET_LANGUAGE', value: v })}
       speed={speed}
-      setSpeed={setSpeed}
+      setSpeed={(v) => stateDispatch({ type: 'SET_SPEED', value: v })}
       enableSequential={enableSequential}
-      setEnableSequential={setEnableSequential}
+      setEnableSequential={(v) => stateDispatch({ type: 'SET_ENABLE_SEQUENTIAL', value: v })}
       thinkingMode={thinkingMode}
-      setThinkingMode={setThinkingMode}
+      setThinkingMode={(v) => stateDispatch({ type: 'SET_THINKING_MODE', value: v })}
       colorPalette={colorPalette}
-      setColorPalette={setColorPalette}
+      setColorPalette={(v) => stateDispatch({ type: 'SET_COLOR_PALETTE', value: v })}
       batchSize={batchSize}
-      setBatchSize={setBatchSize}
+      setBatchSize={(v) => stateDispatch({ type: 'SET_BATCH_SIZE', value: v })}
       webSearch={webSearch}
-      setWebSearch={setWebSearch}
+      setWebSearch={(v) => stateDispatch({ type: 'SET_WEB_SEARCH', value: v })}
       returnLastFrame={returnLastFrame}
-      setReturnLastFrame={setReturnLastFrame}
+      setReturnLastFrame={(v) => stateDispatch({ type: 'SET_RETURN_LAST_FRAME', value: v })}
       topP={topP}
-      setTopP={setTopP}
+      setTopP={(v) => stateDispatch({ type: 'SET_TOP_P', value: v })}
       style={style}
-      setStyle={setStyle}
+      setStyle={(v) => stateDispatch({ type: 'SET_STYLE', value: v })}
       audioSetting={audioSetting}
-      setAudioSetting={setAudioSetting}
+      setAudioSetting={(v) => stateDispatch({ type: 'SET_AUDIO_SETTING', value: v })}
       drivingAudio={drivingAudio}
-      setDrivingAudio={setDrivingAudio}
+      setDrivingAudio={(v) => stateDispatch({ type: 'SET_DRIVING_AUDIO', value: v })}
       audioUrl={audioUrl}
-      setAudioUrl={setAudioUrl}
+      setAudioUrl={(v) => stateDispatch({ type: 'SET_AUDIO_URL', value: v })}
       referenceVoice={referenceVoice}
-      setReferenceVoice={setReferenceVoice}
+      setReferenceVoice={(v) => stateDispatch({ type: 'SET_REFERENCE_VOICE', value: v })}
       bboxList={bboxList}
-      setBboxList={setBboxList}
+      setBboxList={(v) => stateDispatch({ type: 'SET_BBOX_LIST', value: v })}
       mode={mode}
     />
   );
@@ -547,12 +715,9 @@ export function HomeScreen({ onOpenModelSelect }) {
       <View style={styles.header}>
         {userInfo && (apiKey || ENV_API_KEY) ? (
           <View style={styles.headerInner}>
-            <TouchableOpacity
-              style={styles.headerLeft}
-              onPress={() => setShowApiKeyDropdown(true)}
-              activeOpacity={0.7}
-            >
-              <Image source={{ uri: userInfo.avatar }} style={styles.headerAvatar} />
+            <Pressable
+              style={({ pressed }) => [styles.headerLeft, pressed && { opacity: 0.7 }]} onPress={() => setShowApiKeyDropdown(true)} >
+              <Image source={{ uri: userInfo.avatar }} style={styles.headerAvatar} contentFit="cover" cachePolicy="memory-disk" transition={200} />
               <View style={styles.headerUserInfo}>
                 <View style={styles.headerNameRow}>
                   <Text style={styles.headerUserName}>{userInfo.name}</Text>
@@ -571,22 +736,16 @@ export function HomeScreen({ onOpenModelSelect }) {
                   </Text>
                 </View>
               </View>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.headerAllModelsButton}
-              onPress={handleOpenAllModels}
-              activeOpacity={0.7}
-            >
+            </Pressable>
+            <Pressable
+              style={({ pressed }) => [styles.headerAllModelsButton, pressed && { opacity: 0.7 }]} onPress={handleOpenAllModels} >
               <Text style={styles.headerAllModelsText}>所有模型</Text>
               <Ionicons name="apps-outline" size={18} color={colors.textPrimary} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.headerThemeButton}
-              onPress={toggleTheme}
-              activeOpacity={0.7}
-            >
+            </Pressable>
+            <Pressable
+              style={({ pressed }) => [styles.headerThemeButton, pressed && { opacity: 0.7 }]} onPress={toggleTheme} >
               <Ionicons name={themeMode === 'dark' ? 'sunny-outline' : 'moon-outline'} size={20} color={colors.textPrimary} />
-            </TouchableOpacity>
+            </Pressable>
           </View>
         ) : (
           <View style={styles.headerInner}>
@@ -604,18 +763,15 @@ export function HomeScreen({ onOpenModelSelect }) {
               />
             </View>
             {apiKey.trim() ? (
-              <TouchableOpacity
-                style={styles.headerSaveButton}
-                onPress={handleSaveApiKey}
-                activeOpacity={0.7}
-                disabled={isSaving}
+              <Pressable
+                style={({ pressed }) => [styles.headerSaveButton, pressed && { opacity: 0.7 }]} onPress={handleSaveApiKey} disabled={isSaving}
               >
                 {isSaving ? (
                   <ActivityIndicator size="small" color={colors.textInverse} />
                 ) : (
                   <Text style={styles.headerSaveButtonText}>保存</Text>
                 )}
-              </TouchableOpacity>
+              </Pressable>
             ) : (
               <View style={styles.headerAllModelsButton}>
                 <Text style={styles.headerAllModelsText}>所有模型</Text>
@@ -626,7 +782,7 @@ export function HomeScreen({ onOpenModelSelect }) {
         )}
       </View>
 
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" nestedScrollEnabled>
         {showApiKeyInput ? (
           <View style={styles.card}>
             <View style={styles.labelRow}>
@@ -643,9 +799,8 @@ export function HomeScreen({ onOpenModelSelect }) {
               placeholderTextColor={colors.textPlaceholder}
             />
             {apiKey.trim() ? (
-              <TouchableOpacity
-                style={styles.saveKeyButton}
-                onPress={handleSaveApiKey}
+              <Pressable
+                style={({ pressed }) => [styles.saveKeyButton, pressed && { opacity: 0.7 }]} onPress={handleSaveApiKey}
                 disabled={isSaving}
               >
                 {isSaving ? (
@@ -653,7 +808,7 @@ export function HomeScreen({ onOpenModelSelect }) {
                 ) : (
                   <Text style={styles.saveKeyButtonText}>保存密钥</Text>
                 )}
-              </TouchableOpacity>
+              </Pressable>
             ) : null}
           </View>
         ) : null}
@@ -667,15 +822,14 @@ export function HomeScreen({ onOpenModelSelect }) {
           />
           <View style={styles.modeToggle}>
             {currentModes.map((m) => (
-              <TouchableOpacity
+              <Pressable
                 key={m}
-                style={[styles.modeButton, mode === m && styles.modeButtonActive]}
-                onPress={() => setMode(m)}
+                style={({ pressed }) => [styles.modeButton, mode === m && styles.modeButtonActive, pressed && { opacity: 0.7 }]} onPress={() => stateDispatch({ type: 'SET_MODE', value: m })}
               >
                 <Text style={[styles.modeButtonText, mode === m && styles.modeButtonTextActive]}>
                   {MODE_LABELS[m] || m}
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
             ))}
           </View>
         </View>
@@ -686,14 +840,14 @@ export function HomeScreen({ onOpenModelSelect }) {
               提示词{paramType === 'dreamactor' ? <Text style={{ color: colors.textTertiary, fontWeight: '400' }}> (可选)</Text> : <Text style={{ color: '#E74C3C' }}> *</Text>}
             </Text>
             {prompt ? (
-              <TouchableOpacity onPress={() => setPrompt('')} activeOpacity={0.6}>
+              <Pressable style={({ pressed }) => pressed && { opacity: 0.6 }} onPress={() => stateDispatch({ type: 'SET_PROMPT', value: '' })} >
                 <Text style={styles.promptClearText}>清空</Text>
-              </TouchableOpacity>
+              </Pressable>
             ) : null}
           </View>
           <ResizableTextInput
             value={prompt}
-            onChangeText={setPrompt}
+            onChangeText={(v) => stateDispatch({ type: 'SET_PROMPT', value: v })}
             placeholder={
               paramType === 'llm-chat' ? '输入你的问题，支持深度思考...'
               : paramType === 'vision-g' ? '描述图片内容或提出问题...'
@@ -743,9 +897,8 @@ export function HomeScreen({ onOpenModelSelect }) {
                 return <>{label}{isRequired ? <Text style={{ color: '#E74C3C' }}> *</Text> : <Text style={{ color: colors.textTertiary, fontWeight: '400' }}> (可选)</Text>}</>;
               })()}
             </Text>
-            <TouchableOpacity
-              style={[styles.uploadButton, isUploading && styles.uploadButtonDisabled]}
-              onPress={handleFileSelect}
+            <Pressable
+              style={({ pressed }) => [styles.uploadButton, isUploading && styles.uploadButtonDisabled, pressed && { opacity: 0.7 }]} onPress={handleFileSelect}
               disabled={isUploading}
             >
               {isUploading ? (
@@ -756,21 +909,20 @@ export function HomeScreen({ onOpenModelSelect }) {
               <Text style={styles.uploadButtonText}>
                 {isUploading ? '上传中...' : '选择图片上传'}
               </Text>
-            </TouchableOpacity>
+            </Pressable>
             {imageUrls.length > 0 ? (
               <View style={styles.uploadedList}>
                 {imageUrls.map((url, i) => (
                   <View key={i} style={styles.uploadedItem}>
-                    <Image source={{ uri: url }} style={styles.uploadedThumb} resizeMode="cover" />
+                    <Image source={{ uri: url }} style={styles.uploadedThumb} contentFit="cover" cachePolicy="memory-disk" transition={200} />
                     <Text style={styles.uploadedName} numberOfLines={1}>
                       图片 {i + 1}
                     </Text>
-                    <TouchableOpacity
-                      style={styles.removeUploadedButton}
-                      onPress={() => setImageUrls(imageUrls.filter((_, j) => j !== i))}
+                    <Pressable
+                      style={({ pressed }) => [styles.removeUploadedButton, pressed && { opacity: 0.7 }]} onPress={() => stateDispatch({ type: 'SET_IMAGE_URLS', value: imageUrls.filter((_, j) => j !== i) })}
                     >
                       <Text style={styles.removeUploadedButtonText}>删除</Text>
-                    </TouchableOpacity>
+                    </Pressable>
                   </View>
                 ))}
               </View>
@@ -781,9 +933,8 @@ export function HomeScreen({ onOpenModelSelect }) {
         {mode === 'flf-to-video' || ((mode === 'image-to-video' || mode === 'video-extend') && paramType === 'wan-video') ? (
           <View style={styles.card}>
             <Text style={styles.label}>尾帧图片{mode === 'flf-to-video' ? '' : ' (可选)'}</Text>
-            <TouchableOpacity
-              style={[styles.uploadButton, isUploading && styles.uploadButtonDisabled]}
-              onPress={handleLastFrameSelect}
+            <Pressable
+              style={({ pressed }) => [styles.uploadButton, isUploading && styles.uploadButtonDisabled, pressed && { opacity: 0.7 }]} onPress={handleLastFrameSelect}
               disabled={isUploading}
             >
               {isUploading ? (
@@ -794,21 +945,20 @@ export function HomeScreen({ onOpenModelSelect }) {
               <Text style={styles.uploadButtonText}>
                 {isUploading ? '上传中...' : '选择尾帧图片'}
               </Text>
-            </TouchableOpacity>
+            </Pressable>
             {lastFrameUrls.length > 0 ? (
               <View style={styles.uploadedList}>
                 {lastFrameUrls.map((url, i) => (
                   <View key={i} style={styles.uploadedItem}>
-                    <Image source={{ uri: url }} style={styles.uploadedThumb} resizeMode="cover" />
+                    <Image source={{ uri: url }} style={styles.uploadedThumb} contentFit="cover" cachePolicy="memory-disk" transition={200} />
                     <Text style={styles.uploadedName} numberOfLines={1}>
                       尾帧 {i + 1}
                     </Text>
-                    <TouchableOpacity
-                      style={styles.removeUploadedButton}
-                      onPress={() => setLastFrameUrls(lastFrameUrls.filter((_, j) => j !== i))}
+                    <Pressable
+                      style={({ pressed }) => [styles.removeUploadedButton, pressed && { opacity: 0.7 }]} onPress={() => stateDispatch({ type: 'SET_LAST_FRAME_URLS', value: lastFrameUrls.filter((_, j) => j !== i) })}
                     >
                       <Text style={styles.removeUploadedButtonText}>删除</Text>
-                    </TouchableOpacity>
+                    </Pressable>
                   </View>
                 ))}
               </View>
@@ -819,9 +969,8 @@ export function HomeScreen({ onOpenModelSelect }) {
         {(mode === 'video-edit' || mode === 'reference-to-video' || mode === 'video-extend' || paramType === 'dreamactor') ? (
           <View style={styles.card}>
             <Text style={styles.label}>{paramType === 'dreamactor' ? '参考视频' : '上传视频'}</Text>
-            <TouchableOpacity
-              style={[styles.uploadButton, isUploading && styles.uploadButtonDisabled]}
-              onPress={handleVideoSelect}
+            <Pressable
+              style={({ pressed }) => [styles.uploadButton, isUploading && styles.uploadButtonDisabled, pressed && { opacity: 0.7 }]} onPress={handleVideoSelect}
               disabled={isUploading}
             >
               {isUploading ? (
@@ -832,7 +981,7 @@ export function HomeScreen({ onOpenModelSelect }) {
               <Text style={styles.uploadButtonText}>
                 {isUploading ? '上传中...' : '选择视频上传'}
               </Text>
-            </TouchableOpacity>
+            </Pressable>
             {videoUrls.length > 0 ? (
               <View style={styles.uploadedList}>
                 {videoUrls.map((url, i) => (
@@ -841,12 +990,11 @@ export function HomeScreen({ onOpenModelSelect }) {
                     <Text style={styles.uploadedName} numberOfLines={1}>
                       视频 {i + 1}
                     </Text>
-                    <TouchableOpacity
-                      style={styles.removeUploadedButton}
-                      onPress={() => setVideoUrls(videoUrls.filter((_, j) => j !== i))}
+                    <Pressable
+                      style={({ pressed }) => [styles.removeUploadedButton, pressed && { opacity: 0.7 }]} onPress={() => stateDispatch({ type: 'SET_VIDEO_URLS', value: videoUrls.filter((_, j) => j !== i) })}
                     >
                       <Text style={styles.removeUploadedButtonText}>删除</Text>
-                    </TouchableOpacity>
+                    </Pressable>
                   </View>
                 ))}
               </View>
@@ -858,9 +1006,8 @@ export function HomeScreen({ onOpenModelSelect }) {
         {(mode === 'reference-to-video' || mode === 'video-edit') && paramType === 'wan-video' ? (
           <View style={styles.card}>
             <Text style={styles.label}>首帧图片 (可选)</Text>
-            <TouchableOpacity
-              style={[styles.uploadButton, isUploading && styles.uploadButtonDisabled]}
-              onPress={handleFirstFrameSelect}
+            <Pressable
+              style={({ pressed }) => [styles.uploadButton, isUploading && styles.uploadButtonDisabled, pressed && { opacity: 0.7 }]} onPress={handleFirstFrameSelect}
               disabled={isUploading}
             >
               {isUploading ? (
@@ -871,21 +1018,20 @@ export function HomeScreen({ onOpenModelSelect }) {
               <Text style={styles.uploadButtonText}>
                 {isUploading ? '上传中...' : '选择首帧图片'}
               </Text>
-            </TouchableOpacity>
+            </Pressable>
             {firstFrameUrls.length > 0 ? (
               <View style={styles.uploadedList}>
                 {firstFrameUrls.map((url, i) => (
                   <View key={i} style={styles.uploadedItem}>
-                    <Image source={{ uri: url }} style={styles.uploadedThumb} resizeMode="cover" />
+                    <Image source={{ uri: url }} style={styles.uploadedThumb} contentFit="cover" cachePolicy="memory-disk" transition={200} />
                     <Text style={styles.uploadedName} numberOfLines={1}>
                       首帧 {i + 1}
                     </Text>
-                    <TouchableOpacity
-                      style={styles.removeUploadedButton}
-                      onPress={() => setFirstFrameUrls(firstFrameUrls.filter((_, j) => j !== i))}
+                    <Pressable
+                      style={({ pressed }) => [styles.removeUploadedButton, pressed && { opacity: 0.7 }]} onPress={() => stateDispatch({ type: 'SET_FIRST_FRAME_URLS', value: firstFrameUrls.filter((_, j) => j !== i) })}
                     >
                       <Text style={styles.removeUploadedButtonText}>删除</Text>
-                    </TouchableOpacity>
+                    </Pressable>
                   </View>
                 ))}
               </View>
@@ -897,9 +1043,8 @@ export function HomeScreen({ onOpenModelSelect }) {
         {mode === 'image-to-video' && paramType === 'wan-video' ? (
           <View style={styles.card}>
             <Text style={styles.label}>首段视频 (可选)</Text>
-            <TouchableOpacity
-              style={[styles.uploadButton, isUploading && styles.uploadButtonDisabled]}
-              onPress={handleFirstClipSelect}
+            <Pressable
+              style={({ pressed }) => [styles.uploadButton, isUploading && styles.uploadButtonDisabled, pressed && { opacity: 0.7 }]} onPress={handleFirstClipSelect}
               disabled={isUploading}
             >
               {isUploading ? (
@@ -910,7 +1055,7 @@ export function HomeScreen({ onOpenModelSelect }) {
               <Text style={styles.uploadButtonText}>
                 {isUploading ? '上传中...' : '选择首段视频'}
               </Text>
-            </TouchableOpacity>
+            </Pressable>
             {firstClipUrls.length > 0 ? (
               <View style={styles.uploadedList}>
                 {firstClipUrls.map((url, i) => (
@@ -919,12 +1064,11 @@ export function HomeScreen({ onOpenModelSelect }) {
                     <Text style={styles.uploadedName} numberOfLines={1}>
                       视频 {i + 1}
                     </Text>
-                    <TouchableOpacity
-                      style={styles.removeUploadedButton}
-                      onPress={() => setFirstClipUrls(firstClipUrls.filter((_, j) => j !== i))}
+                    <Pressable
+                      style={({ pressed }) => [styles.removeUploadedButton, pressed && { opacity: 0.7 }]} onPress={() => stateDispatch({ type: 'SET_FIRST_CLIP_URLS', value: firstClipUrls.filter((_, j) => j !== i) })}
                     >
                       <Text style={styles.removeUploadedButtonText}>删除</Text>
-                    </TouchableOpacity>
+                    </Pressable>
                   </View>
                 ))}
               </View>
@@ -936,9 +1080,8 @@ export function HomeScreen({ onOpenModelSelect }) {
         {mode === 'video-edit' && (paramType === 'wan-video' || paramType === 'happyhorse-video') ? (
           <View style={styles.card}>
             <Text style={styles.label}>参考图片 (可选)</Text>
-            <TouchableOpacity
-              style={[styles.uploadButton, isUploading && styles.uploadButtonDisabled]}
-              onPress={handleRefImageSelect}
+            <Pressable
+              style={({ pressed }) => [styles.uploadButton, isUploading && styles.uploadButtonDisabled, pressed && { opacity: 0.7 }]} onPress={handleRefImageSelect}
               disabled={isUploading}
             >
               {isUploading ? (
@@ -949,21 +1092,20 @@ export function HomeScreen({ onOpenModelSelect }) {
               <Text style={styles.uploadButtonText}>
                 {isUploading ? '上传中...' : '选择参考图片'}
               </Text>
-            </TouchableOpacity>
+            </Pressable>
             {refImages.length > 0 ? (
               <View style={styles.uploadedList}>
                 {refImages.map((url, i) => (
                   <View key={i} style={styles.uploadedItem}>
-                    <Image source={{ uri: url }} style={styles.uploadedThumb} resizeMode="cover" />
+                    <Image source={{ uri: url }} style={styles.uploadedThumb} contentFit="cover" cachePolicy="memory-disk" transition={200} />
                     <Text style={styles.uploadedName} numberOfLines={1}>
                       图片 {i + 1}
                     </Text>
-                    <TouchableOpacity
-                      style={styles.removeUploadedButton}
-                      onPress={() => setRefImages(refImages.filter((_, j) => j !== i))}
+                    <Pressable
+                      style={({ pressed }) => [styles.removeUploadedButton, pressed && { opacity: 0.7 }]} onPress={() => stateDispatch({ type: 'SET_REF_IMAGES', value: refImages.filter((_, j) => j !== i) })}
                     >
                       <Text style={styles.removeUploadedButtonText}>删除</Text>
-                    </TouchableOpacity>
+                    </Pressable>
                   </View>
                 ))}
               </View>
@@ -973,9 +1115,8 @@ export function HomeScreen({ onOpenModelSelect }) {
 
         {paramControls}
 
-        <TouchableOpacity
-          style={[styles.generateButton, isSubmitting && styles.generateButtonDisabled]}
-          onPress={handleGenerate}
+        <Pressable
+          style={({ pressed }) => [styles.generateButton, isSubmitting && styles.generateButtonDisabled, pressed && { opacity: 0.7 }]} onPress={handleGenerate}
           disabled={isSubmitting}
         >
           {isSubmitting ? (
@@ -986,7 +1127,7 @@ export function HomeScreen({ onOpenModelSelect }) {
               ? '提交中...'
               : `${MODE_LABELS[mode] || '生成'}${priceFormulaText ? '' : ` · ${livePrice} 金币`}`}
           </Text>
-        </TouchableOpacity>
+        </Pressable>
 
         {priceFormulaText ? (
           <Text style={styles.priceFormulaText}>{priceFormulaText}</Text>
@@ -1046,7 +1187,7 @@ const createStyles = (colors) => ({
   headerThemeButton: { padding: Spacing.sm, borderRadius: Radius.sm, backgroundColor: colors.bg },
   modelAndModeRow: { marginBottom: 6 },
   modeToggle: { flexDirection: 'row', borderRadius: 8, backgroundColor: colors.bg, padding: 1, gap: 4, marginTop: 6, borderWidth: 1, borderColor: colors.divider, height: 45 },
-  modeButton: { flex: 1, paddingVertical: Spacing.sm, borderRadius: Radius.xs, alignItems: 'center' },
+  modeButton: { flex: 1, paddingVertical: Spacing.sm, borderRadius: Radius.xs, alignItems: 'center', justifyContent: 'center' },
   modeButtonActive: { backgroundColor: colors.card },
   modeButtonText: { fontSize: 13, color: colors.textTertiary, fontWeight: '500' },
   modeButtonTextActive: { color: colors.primary, fontWeight: '600' },

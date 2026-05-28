@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, View, TextInput, TouchableOpacity, Switch } from 'react-native';
+import { Pressable, Text, View, TextInput, Switch } from 'react-native';
 import { Radius, Spacing } from '../constants/theme';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { useTheme } from '../context/ThemeContext';
@@ -45,9 +45,9 @@ export function SeedanceVideoControls({
         <ParamLabel label="宽高比" required={false} />
         <View style={styles.ratioGrid}>
           {videoRatios.map((r) => (
-            <TouchableOpacity key={r} style={[styles.ratioButton, aspectRatio === r && styles.ratioButtonActive]} onPress={() => setAspectRatio(r)}>
+            <Pressable key={r} style={({ pressed }) => [styles.ratioButton, aspectRatio === r && styles.ratioButtonActive, pressed && { opacity: 0.7 }]} onPress={() => setAspectRatio(r)}>
               <Text style={[styles.ratioText, aspectRatio === r && styles.ratioTextActive]}>{r}</Text>
-            </TouchableOpacity>
+            </Pressable>
           ))}
         </View>
       </View>
@@ -55,9 +55,9 @@ export function SeedanceVideoControls({
         <ParamLabel label="时长 (秒)" required={isDurationRequired} />
         <View style={styles.selectorRow}>
           {durationOptions.map((d) => (
-            <TouchableOpacity key={d} style={[styles.selectorButtonSmall, duration === d && styles.selectorButtonActive]} onPress={() => setDuration(d)}>
+            <Pressable key={d} style={({ pressed }) => [styles.selectorButtonSmall, duration === d && styles.selectorButtonActive, pressed && { opacity: 0.7 }]} onPress={() => setDuration(d)}>
               <Text style={[styles.selectorText, duration === d && styles.selectorTextActive]}>{d}</Text>
-            </TouchableOpacity>
+            </Pressable>
           ))}
         </View>
       </View>
@@ -65,34 +65,34 @@ export function SeedanceVideoControls({
         <ParamLabel label="分辨率" required={isResolutionRequired} />
         <View style={styles.ratioGrid}>
           {resolutions.map((r) => (
-            <TouchableOpacity key={r} style={[styles.ratioButton, resolution === r && styles.ratioButtonActive]} onPress={() => setResolution(r)}>
+            <Pressable key={r} style={({ pressed }) => [styles.ratioButton, resolution === r && styles.ratioButtonActive, pressed && { opacity: 0.7 }]} onPress={() => setResolution(r)}>
               <Text style={[styles.ratioText, resolution === r && styles.ratioTextActive]}>{r}</Text>
-            </TouchableOpacity>
+            </Pressable>
           ))}
         </View>
       </View>
       {supportsAudio && (
         <View style={styles.card}>
-          <View style={styles.switchRow}>
+          <Pressable style={styles.switchRow} onPress={() => setGenerateAudio(!generateAudio)}>
             <ParamLabel label="生成音频" required={false} style={{ marginBottom: 0 }} />
-            <Switch value={generateAudio} onValueChange={setGenerateAudio} trackColor={{ false: colors.bg, true: colors.primary }} />
-          </View>
+            <Switch value={generateAudio} trackColor={{ false: colors.bg, true: colors.primary }} pointerEvents="none" />
+          </Pressable>
         </View>
       )}
       {supportsWebSearch && mode === 'text-to-video' && (
         <View style={styles.card}>
-          <View style={styles.switchRow}>
+          <Pressable style={styles.switchRow} onPress={() => setWebSearch(!webSearch)}>
             <ParamLabel label="联网搜索" required={false} style={{ marginBottom: 0 }} />
-            <Switch value={webSearch} onValueChange={setWebSearch} trackColor={{ false: colors.bg, true: colors.primary }} />
-          </View>
+            <Switch value={webSearch} trackColor={{ false: colors.bg, true: colors.primary }} pointerEvents="none" />
+          </Pressable>
         </View>
       )}
       {supportsReturnLastFrame && (
         <View style={styles.card}>
-          <View style={styles.switchRow}>
+          <Pressable style={styles.switchRow} onPress={() => setReturnLastFrame(!returnLastFrame)}>
             <ParamLabel label="返回尾帧" required={false} style={{ marginBottom: 0 }} />
-            <Switch value={returnLastFrame} onValueChange={setReturnLastFrame} trackColor={{ false: colors.bg, true: colors.primary }} />
-          </View>
+            <Switch value={returnLastFrame} trackColor={{ false: colors.bg, true: colors.primary }} pointerEvents="none" />
+          </Pressable>
         </View>
       )}
       {supportsSeed && (
@@ -122,9 +122,9 @@ export function KlingVideoControls({
           <ParamLabel label="宽高比" required={false} />
           <View style={styles.selectorRow}>
             {videoRatios.map((r) => (
-              <TouchableOpacity key={r} style={[styles.selectorButton, aspectRatio === r && styles.selectorButtonActive]} onPress={() => setAspectRatio(r)}>
+              <Pressable key={r} style={({ pressed }) => [styles.selectorButton, aspectRatio === r && styles.selectorButtonActive, pressed && { opacity: 0.7 }]} onPress={() => setAspectRatio(r)}>
                 <Text style={[styles.selectorText, aspectRatio === r && styles.selectorTextActive]}>{r}</Text>
-              </TouchableOpacity>
+              </Pressable>
             ))}
           </View>
         </View>
@@ -133,25 +133,25 @@ export function KlingVideoControls({
         <ParamLabel label="时长 (秒)" required />
         <View style={styles.selectorRow}>
           {durArray.map((d) => (
-            <TouchableOpacity key={d} style={[styles.selectorButtonSmall, duration === d && styles.selectorButtonActive]} onPress={() => setDuration(d)}>
+            <Pressable key={d} style={({ pressed }) => [styles.selectorButtonSmall, duration === d && styles.selectorButtonActive, pressed && { opacity: 0.7 }]} onPress={() => setDuration(d)}>
               <Text style={[styles.selectorText, duration === d && styles.selectorTextActive]}>{d}</Text>
-            </TouchableOpacity>
+            </Pressable>
           ))}
         </View>
       </View>
       <View style={styles.card}>
-        <View style={styles.switchRow}>
+        <Pressable style={styles.switchRow} onPress={() => setSound(!sound)}>
           <ParamLabel label="添加音效" required={!!soundRequired} style={{ marginBottom: 0 }} />
-          <Switch value={sound} onValueChange={setSound} trackColor={{ false: colors.bg, true: colors.primary }} />
-        </View>
+          <Switch value={sound} trackColor={{ false: colors.bg, true: colors.primary }} pointerEvents="none" />
+        </Pressable>
       </View>
       {supportsMultiShot && (
         <>
           <View style={styles.card}>
-            <View style={styles.switchRow}>
+            <Pressable style={styles.switchRow} onPress={() => setMultiShot(!multiShot)}>
               <ParamLabel label="多镜头" required={false} style={{ marginBottom: 0 }} />
-              <Switch value={multiShot} onValueChange={setMultiShot} trackColor={{ false: colors.bg, true: colors.primary }} />
-            </View>
+              <Switch value={multiShot} trackColor={{ false: colors.bg, true: colors.primary }} pointerEvents="none" />
+            </Pressable>
           </View>
           {multiShot && (
             <>
@@ -159,9 +159,9 @@ export function KlingVideoControls({
                 <ParamLabel label="镜头类型" required={false} />
                 <View style={styles.selectorRow}>
                   {['customize', 'intelligence'].map((t) => (
-                    <TouchableOpacity key={t} style={[styles.selectorButton, shotType === t && styles.selectorButtonActive]} onPress={() => setShotType(t)}>
+                    <Pressable key={t} style={({ pressed }) => [styles.selectorButton, shotType === t && styles.selectorButtonActive, pressed && { opacity: 0.7 }]} onPress={() => setShotType(t)}>
                       <Text style={[styles.selectorText, shotType === t && styles.selectorTextActive]}>{t === 'customize' ? '自定义' : '智能'}</Text>
-                    </TouchableOpacity>
+                    </Pressable>
                   ))}
                 </View>
               </View>
@@ -200,9 +200,9 @@ export function KlingO34KControls({
           <ParamLabel label="宽高比" required={false} />
           <View style={styles.selectorRow}>
             {videoRatios.map((r) => (
-              <TouchableOpacity key={r} style={[styles.selectorButton, aspectRatio === r && styles.selectorButtonActive]} onPress={() => setAspectRatio(r)}>
+              <Pressable key={r} style={({ pressed }) => [styles.selectorButton, aspectRatio === r && styles.selectorButtonActive, pressed && { opacity: 0.7 }]} onPress={() => setAspectRatio(r)}>
                 <Text style={[styles.selectorText, aspectRatio === r && styles.selectorTextActive]}>{r}</Text>
-              </TouchableOpacity>
+              </Pressable>
             ))}
           </View>
         </View>
@@ -211,31 +211,31 @@ export function KlingO34KControls({
         <ParamLabel label="时长 (秒)" required />
         <View style={styles.selectorRow}>
           {durArray.map((d) => (
-            <TouchableOpacity key={d} style={[styles.selectorButtonSmall, duration === d && styles.selectorButtonActive]} onPress={() => setDuration(d)}>
+            <Pressable key={d} style={({ pressed }) => [styles.selectorButtonSmall, duration === d && styles.selectorButtonActive, pressed && { opacity: 0.7 }]} onPress={() => setDuration(d)}>
               <Text style={[styles.selectorText, duration === d && styles.selectorTextActive]}>{d}</Text>
-            </TouchableOpacity>
+            </Pressable>
           ))}
         </View>
       </View>
       <View style={styles.card}>
-        <View style={styles.switchRow}>
+        <Pressable style={styles.switchRow} onPress={() => setSound(!sound)}>
           <ParamLabel label="添加音效" required style={{ marginBottom: 0 }} />
-          <Switch value={sound} onValueChange={setSound} trackColor={{ false: colors.bg, true: colors.primary }} />
-        </View>
+          <Switch value={sound} trackColor={{ false: colors.bg, true: colors.primary }} pointerEvents="none" />
+        </Pressable>
       </View>
       <View style={styles.card}>
-        <View style={styles.switchRow}>
+        <Pressable style={styles.switchRow} onPress={() => setKeepOriginalSound(!keepOriginalSound)}>
           <ParamLabel label="保留原始声音" required style={{ marginBottom: 0 }} />
-          <Switch value={keepOriginalSound} onValueChange={setKeepOriginalSound} trackColor={{ false: colors.bg, true: colors.primary }} />
-        </View>
+          <Switch value={keepOriginalSound} trackColor={{ false: colors.bg, true: colors.primary }} pointerEvents="none" />
+        </Pressable>
       </View>
       {supportsMultiShot && (
         <>
           <View style={styles.card}>
-            <View style={styles.switchRow}>
+            <Pressable style={styles.switchRow} onPress={() => setMultiShot(!multiShot)}>
               <ParamLabel label="多镜头" required={false} style={{ marginBottom: 0 }} />
-              <Switch value={multiShot} onValueChange={setMultiShot} trackColor={{ false: colors.bg, true: colors.primary }} />
-            </View>
+              <Switch value={multiShot} trackColor={{ false: colors.bg, true: colors.primary }} pointerEvents="none" />
+            </Pressable>
           </View>
           {multiShot && (
             <>
@@ -243,9 +243,9 @@ export function KlingO34KControls({
                 <ParamLabel label="镜头类型" required={false} />
                 <View style={styles.selectorRow}>
                   {['customize', 'intelligence'].map((t) => (
-                    <TouchableOpacity key={t} style={[styles.selectorButton, shotType === t && styles.selectorButtonActive]} onPress={() => setShotType(t)}>
+                    <Pressable key={t} style={({ pressed }) => [styles.selectorButton, shotType === t && styles.selectorButtonActive, pressed && { opacity: 0.7 }]} onPress={() => setShotType(t)}>
                       <Text style={[styles.selectorText, shotType === t && styles.selectorTextActive]}>{t === 'customize' ? '自定义' : '智能'}</Text>
-                    </TouchableOpacity>
+                    </Pressable>
                   ))}
                 </View>
               </View>
@@ -304,9 +304,9 @@ export function ViduVideoControls({
         <ParamLabel label="分辨率" required={isResolutionRequired} />
         <View style={styles.ratioGrid}>
           {resolutions.map((r) => (
-            <TouchableOpacity key={r} style={[styles.ratioButton, resolution === r && styles.ratioButtonActive]} onPress={() => setResolution(r)}>
+            <Pressable key={r} style={({ pressed }) => [styles.ratioButton, resolution === r && styles.ratioButtonActive, pressed && { opacity: 0.7 }]} onPress={() => setResolution(r)}>
               <Text style={[styles.ratioText, resolution === r && styles.ratioTextActive]}>{r}</Text>
-            </TouchableOpacity>
+            </Pressable>
           ))}
         </View>
       </View>
@@ -315,9 +315,9 @@ export function ViduVideoControls({
           <ParamLabel label="风格" required={isStyleRequired} />
           <View style={styles.selectorRow}>
             {styleOptions.map((s) => (
-              <TouchableOpacity key={s} style={[styles.selectorButton, style === s && styles.selectorButtonActive]} onPress={() => setStyle(s)}>
+              <Pressable key={s} style={({ pressed }) => [styles.selectorButton, style === s && styles.selectorButtonActive, pressed && { opacity: 0.7 }]} onPress={() => setStyle(s)}>
                 <Text style={[styles.selectorText, style === s && styles.selectorTextActive]}>{s === 'general' ? '通用' : s === 'anime' ? '动漫' : s}</Text>
-              </TouchableOpacity>
+              </Pressable>
             ))}
           </View>
         </View>
@@ -326,9 +326,9 @@ export function ViduVideoControls({
         <ParamLabel label="宽高比" required={isAspectRatioRequired} />
         <View style={styles.selectorRow}>
           {videoRatios.map((r) => (
-            <TouchableOpacity key={r} style={[styles.selectorButton, aspectRatio === r && styles.selectorButtonActive]} onPress={() => setAspectRatio(r)}>
+            <Pressable key={r} style={({ pressed }) => [styles.selectorButton, aspectRatio === r && styles.selectorButtonActive, pressed && { opacity: 0.7 }]} onPress={() => setAspectRatio(r)}>
               <Text style={[styles.selectorText, aspectRatio === r && styles.selectorTextActive]}>{r}</Text>
-            </TouchableOpacity>
+            </Pressable>
           ))}
         </View>
       </View>
@@ -336,34 +336,34 @@ export function ViduVideoControls({
         <ParamLabel label="时长 (秒)" required={isDurationRequired} />
         <View style={styles.selectorRow}>
           {durArray.map((d) => (
-            <TouchableOpacity key={d} style={[styles.selectorButtonSmall, duration === d && styles.selectorButtonActive]} onPress={() => setDuration(d)}>
+            <Pressable key={d} style={({ pressed }) => [styles.selectorButtonSmall, duration === d && styles.selectorButtonActive, pressed && { opacity: 0.7 }]} onPress={() => setDuration(d)}>
               <Text style={[styles.selectorText, duration === d && styles.selectorTextActive]}>{d}</Text>
-            </TouchableOpacity>
+            </Pressable>
           ))}
         </View>
       </View>
       {supportsAudio && (
         <View style={styles.card}>
-          <View style={styles.switchRow}>
+          <Pressable style={styles.switchRow} onPress={() => setAudio(!audio)}>
             <ParamLabel label="生成音频" required={isAudioRequired} style={{ marginBottom: 0 }} />
-            <Switch value={audio} onValueChange={setAudio} trackColor={{ false: colors.bg, true: colors.primary }} />
-          </View>
+            <Switch value={audio} trackColor={{ false: colors.bg, true: colors.primary }} pointerEvents="none" />
+          </Pressable>
         </View>
       )}
       {supportsIsRec && (
         <View style={styles.card}>
-          <View style={styles.switchRow}>
+          <Pressable style={styles.switchRow} onPress={() => setIsRec(!isRec)}>
             <ParamLabel label="推荐提示词" required={isIsRecRequired} style={{ marginBottom: 0 }} />
-            <Switch value={isRec} onValueChange={setIsRec} trackColor={{ false: colors.bg, true: colors.primary }} />
-          </View>
+            <Switch value={isRec} trackColor={{ false: colors.bg, true: colors.primary }} pointerEvents="none" />
+          </Pressable>
         </View>
       )}
       {supportsOffPeak && (
         <View style={styles.card}>
-          <View style={styles.switchRow}>
+          <Pressable style={styles.switchRow} onPress={() => setOffPeak(!offPeak)}>
             <ParamLabel label="低谷模式" required={isOffPeakRequired} style={{ marginBottom: 0 }} />
-            <Switch value={offPeak} onValueChange={setOffPeak} trackColor={{ false: colors.bg, true: colors.primary }} />
-          </View>
+            <Switch value={offPeak} trackColor={{ false: colors.bg, true: colors.primary }} pointerEvents="none" />
+          </Pressable>
         </View>
       )}
       {supportsMovementAmplitude && (
@@ -371,9 +371,9 @@ export function ViduVideoControls({
           <ParamLabel label="运动幅度" required={isMovementAmplitudeRequired} />
           <View style={styles.selectorRow}>
             {['auto', 'small', 'medium', 'large'].map((m) => (
-              <TouchableOpacity key={m} style={[styles.selectorButton, movementAmplitude === m && styles.selectorButtonActive]} onPress={() => setMovementAmplitude(m)}>
+              <Pressable key={m} style={({ pressed }) => [styles.selectorButton, movementAmplitude === m && styles.selectorButtonActive, pressed && { opacity: 0.7 }]} onPress={() => setMovementAmplitude(m)}>
                 <Text style={[styles.selectorText, movementAmplitude === m && styles.selectorTextActive]}>{m === 'auto' ? '自动' : m === 'small' ? '小' : m === 'medium' ? '中' : '大'}</Text>
-              </TouchableOpacity>
+              </Pressable>
             ))}
           </View>
         </View>
@@ -420,9 +420,9 @@ export function WanVideoControls({
           <ParamLabel label="宽高比" required={isRatioRequired} />
           <View style={styles.selectorRow}>
             {effectiveRatios.map((r) => (
-              <TouchableOpacity key={r} style={[styles.selectorButton, aspectRatio === r && styles.selectorButtonActive]} onPress={() => setAspectRatio(r)}>
+              <Pressable key={r} style={({ pressed }) => [styles.selectorButton, aspectRatio === r && styles.selectorButtonActive, pressed && { opacity: 0.7 }]} onPress={() => setAspectRatio(r)}>
                 <Text style={[styles.selectorText, aspectRatio === r && styles.selectorTextActive]}>{r === 'default' ? '跟随视频' : r}</Text>
-              </TouchableOpacity>
+              </Pressable>
             ))}
           </View>
         </View>
@@ -431,9 +431,9 @@ export function WanVideoControls({
         <ParamLabel label="分辨率" required />
         <View style={styles.ratioGrid}>
           {resolutions.map((r) => (
-            <TouchableOpacity key={r} style={[styles.ratioButton, resolution === r && styles.ratioButtonActive]} onPress={() => setResolution(r)}>
+            <Pressable key={r} style={({ pressed }) => [styles.ratioButton, resolution === r && styles.ratioButtonActive, pressed && { opacity: 0.7 }]} onPress={() => setResolution(r)}>
               <Text style={[styles.ratioText, resolution === r && styles.ratioTextActive]}>{r}</Text>
-            </TouchableOpacity>
+            </Pressable>
           ))}
         </View>
       </View>
@@ -441,26 +441,26 @@ export function WanVideoControls({
         <ParamLabel label="时长 (秒)" required={isDurationRequired} />
         <View style={styles.selectorRow}>
           {durArray.map((d) => (
-            <TouchableOpacity key={d} style={[styles.selectorButtonSmall, duration === d && styles.selectorButtonActive]} onPress={() => setDuration(d)}>
+            <Pressable key={d} style={({ pressed }) => [styles.selectorButtonSmall, duration === d && styles.selectorButtonActive, pressed && { opacity: 0.7 }]} onPress={() => setDuration(d)}>
               <Text style={[styles.selectorText, duration === d && styles.selectorTextActive]}>{d}</Text>
-            </TouchableOpacity>
+            </Pressable>
           ))}
         </View>
       </View>
       {supportsPromptExtend && (
         <View style={styles.card}>
-          <View style={styles.switchRow}>
+          <Pressable style={styles.switchRow} onPress={() => setPromptExtend(!promptExtend)}>
             <ParamLabel label="智能改写" required={isPromptExtendRequired} style={{ marginBottom: 0 }} />
-            <Switch value={promptExtend} onValueChange={setPromptExtend} trackColor={{ false: colors.bg, true: colors.primary }} />
-          </View>
+            <Switch value={promptExtend} trackColor={{ false: colors.bg, true: colors.primary }} pointerEvents="none" />
+          </Pressable>
         </View>
       )}
       {supportsWatermark && (
         <View style={styles.card}>
-          <View style={styles.switchRow}>
+          <Pressable style={styles.switchRow} onPress={() => setWatermark(!watermark)}>
             <ParamLabel label="水印" required={isWatermarkRequired} style={{ marginBottom: 0 }} />
-            <Switch value={watermark} onValueChange={setWatermark} trackColor={{ false: colors.bg, true: colors.primary }} />
-          </View>
+            <Switch value={watermark} trackColor={{ false: colors.bg, true: colors.primary }} pointerEvents="none" />
+          </Pressable>
         </View>
       )}
       {supportsNegativePrompt && (
@@ -474,9 +474,9 @@ export function WanVideoControls({
           <ParamLabel label="音频设置" required={isAudioSettingRequired} />
           <View style={styles.selectorRow}>
             {['auto', 'origin'].map((opt) => (
-              <TouchableOpacity key={opt} style={[styles.selectorButton, audioSetting === opt && styles.selectorButtonActive]} onPress={() => setAudioSetting(opt)}>
+              <Pressable key={opt} style={({ pressed }) => [styles.selectorButton, audioSetting === opt && styles.selectorButtonActive, pressed && { opacity: 0.7 }]} onPress={() => setAudioSetting(opt)}>
                 <Text style={[styles.selectorText, audioSetting === opt && styles.selectorTextActive]}>{opt === 'auto' ? '自动' : '保留原声'}</Text>
-              </TouchableOpacity>
+              </Pressable>
             ))}
           </View>
         </View>
@@ -523,9 +523,9 @@ export function WanI2VControls({
         <ParamLabel label="分辨率" required />
         <View style={styles.ratioGrid}>
           {resolutions.map((r) => (
-            <TouchableOpacity key={r} style={[styles.ratioButton, resolution === r && styles.ratioButtonActive]} onPress={() => setResolution(r)}>
+            <Pressable key={r} style={({ pressed }) => [styles.ratioButton, resolution === r && styles.ratioButtonActive, pressed && { opacity: 0.7 }]} onPress={() => setResolution(r)}>
               <Text style={[styles.ratioText, resolution === r && styles.ratioTextActive]}>{r}</Text>
-            </TouchableOpacity>
+            </Pressable>
           ))}
         </View>
       </View>
@@ -533,26 +533,26 @@ export function WanI2VControls({
         <ParamLabel label="时长 (秒)" required />
         <View style={styles.selectorRow}>
           {durArray.map((d) => (
-            <TouchableOpacity key={d} style={[styles.selectorButtonSmall, duration === d && styles.selectorButtonActive]} onPress={() => setDuration(d)}>
+            <Pressable key={d} style={({ pressed }) => [styles.selectorButtonSmall, duration === d && styles.selectorButtonActive, pressed && { opacity: 0.7 }]} onPress={() => setDuration(d)}>
               <Text style={[styles.selectorText, duration === d && styles.selectorTextActive]}>{d}</Text>
-            </TouchableOpacity>
+            </Pressable>
           ))}
         </View>
       </View>
       {supportsPromptExtend && (
         <View style={styles.card}>
-          <View style={styles.switchRow}>
+          <Pressable style={styles.switchRow} onPress={() => setPromptExtend(!promptExtend)}>
             <ParamLabel label="智能改写" required style={{ marginBottom: 0 }} />
-            <Switch value={promptExtend} onValueChange={setPromptExtend} trackColor={{ false: colors.bg, true: colors.primary }} />
-          </View>
+            <Switch value={promptExtend} trackColor={{ false: colors.bg, true: colors.primary }} pointerEvents="none" />
+          </Pressable>
         </View>
       )}
       {supportsAudio && (
         <View style={styles.card}>
-          <View style={styles.switchRow}>
+          <Pressable style={styles.switchRow} onPress={() => setAudio(!audio)}>
             <ParamLabel label="生成音频" required={false} style={{ marginBottom: 0 }} />
-            <Switch value={audio} onValueChange={setAudio} trackColor={{ false: colors.bg, true: colors.primary }} />
-          </View>
+            <Switch value={audio} trackColor={{ false: colors.bg, true: colors.primary }} pointerEvents="none" />
+          </Pressable>
         </View>
       )}
       {supportsAudioUrl && (
@@ -582,13 +582,13 @@ export function HailuoVideoControls({
         <ParamLabel label="分辨率" required />
         <View style={styles.ratioGrid}>
           {resolutions.map((r) => (
-            <TouchableOpacity key={r} style={[styles.ratioButton, resolution === r && styles.ratioButtonActive]} onPress={() => {
+            <Pressable key={r} style={({ pressed }) => [styles.ratioButton, resolution === r && styles.ratioButtonActive, pressed && { opacity: 0.7 }]} onPress={() => {
               setResolution(r);
               const newAllowed = resolutionDurationMap ? (resolutionDurationMap[r] || durationOptions) : durationOptions;
               if (!newAllowed.includes(duration)) setDuration(newAllowed[0]);
             }}>
               <Text style={[styles.ratioText, resolution === r && styles.ratioTextActive]}>{r}</Text>
-            </TouchableOpacity>
+            </Pressable>
           ))}
         </View>
       </View>
@@ -596,34 +596,34 @@ export function HailuoVideoControls({
         <ParamLabel label="时长 (秒)" required />
         <View style={styles.selectorRow}>
           {allowedDurations.map((d) => (
-            <TouchableOpacity key={d} style={[styles.selectorButton, validDuration === d && styles.selectorButtonActive]} onPress={() => setDuration(d)}>
+            <Pressable key={d} style={({ pressed }) => [styles.selectorButton, validDuration === d && styles.selectorButtonActive, pressed && { opacity: 0.7 }]} onPress={() => setDuration(d)}>
               <Text style={[styles.selectorText, validDuration === d && styles.selectorTextActive]}>{d}s</Text>
-            </TouchableOpacity>
+            </Pressable>
           ))}
         </View>
       </View>
       {supportsPromptOptimizer && (
         <View style={styles.card}>
-          <View style={styles.switchRow}>
+          <Pressable style={styles.switchRow} onPress={() => setPromptOptimizer(!promptOptimizer)}>
             <ParamLabel label="Prompt 优化" required={false} style={{ marginBottom: 0 }} />
-            <Switch value={promptOptimizer} onValueChange={setPromptOptimizer} trackColor={{ false: colors.bg, true: colors.primary }} />
-          </View>
+            <Switch value={promptOptimizer} trackColor={{ false: colors.bg, true: colors.primary }} pointerEvents="none" />
+          </Pressable>
         </View>
       )}
       {supportsFastPretreatment && (
         <View style={styles.card}>
-          <View style={styles.switchRow}>
+          <Pressable style={styles.switchRow} onPress={() => setFastPretreatment(!fastPretreatment)}>
             <ParamLabel label="快速预处理" required={false} style={{ marginBottom: 0 }} />
-            <Switch value={fastPretreatment} onValueChange={setFastPretreatment} trackColor={{ false: colors.bg, true: colors.primary }} />
-          </View>
+            <Switch value={fastPretreatment} trackColor={{ false: colors.bg, true: colors.primary }} pointerEvents="none" />
+          </Pressable>
         </View>
       )}
       {supportsWatermark && (
         <View style={styles.card}>
-          <View style={styles.switchRow}>
+          <Pressable style={styles.switchRow} onPress={() => setAigcWatermark(!aigcWatermark)}>
             <ParamLabel label="AI 水印" required={false} style={{ marginBottom: 0 }} />
-            <Switch value={aigcWatermark} onValueChange={setAigcWatermark} trackColor={{ false: colors.bg, true: colors.primary }} />
-          </View>
+            <Switch value={aigcWatermark} trackColor={{ false: colors.bg, true: colors.primary }} pointerEvents="none" />
+          </Pressable>
         </View>
       )}
     </>
@@ -648,9 +648,9 @@ export function HappyHorseVideoControls({
           <ParamLabel label="宽高比" required={false} />
           <View style={styles.ratioGrid}>
             {videoRatios.map((r) => (
-              <TouchableOpacity key={r} style={[styles.ratioButton, aspectRatio === r && styles.ratioButtonActive]} onPress={() => setAspectRatio(r)}>
+              <Pressable key={r} style={({ pressed }) => [styles.ratioButton, aspectRatio === r && styles.ratioButtonActive, pressed && { opacity: 0.7 }]} onPress={() => setAspectRatio(r)}>
                 <Text style={[styles.ratioText, aspectRatio === r && styles.ratioTextActive]}>{r}</Text>
-              </TouchableOpacity>
+              </Pressable>
             ))}
           </View>
         </View>
@@ -659,9 +659,9 @@ export function HappyHorseVideoControls({
         <ParamLabel label="分辨率" required={false} />
         <View style={styles.ratioGrid}>
           {resolutions.map((r) => (
-            <TouchableOpacity key={r} style={[styles.ratioButton, resolution === r && styles.ratioButtonActive]} onPress={() => setResolution(r)}>
+            <Pressable key={r} style={({ pressed }) => [styles.ratioButton, resolution === r && styles.ratioButtonActive, pressed && { opacity: 0.7 }]} onPress={() => setResolution(r)}>
               <Text style={[styles.ratioText, resolution === r && styles.ratioTextActive]}>{r}</Text>
-            </TouchableOpacity>
+            </Pressable>
           ))}
         </View>
       </View>
@@ -670,19 +670,19 @@ export function HappyHorseVideoControls({
           <ParamLabel label="时长 (秒)" required={false} />
           <View style={styles.selectorRow}>
             {durArray.map((d) => (
-              <TouchableOpacity key={d} style={[styles.selectorButtonSmall, duration === d && styles.selectorButtonActive]} onPress={() => setDuration(d)}>
+              <Pressable key={d} style={({ pressed }) => [styles.selectorButtonSmall, duration === d && styles.selectorButtonActive, pressed && { opacity: 0.7 }]} onPress={() => setDuration(d)}>
                 <Text style={[styles.selectorText, duration === d && styles.selectorTextActive]}>{d}</Text>
-              </TouchableOpacity>
+              </Pressable>
             ))}
           </View>
         </View>
       )}
       {supportsWatermark && (
         <View style={styles.card}>
-          <View style={styles.switchRow}>
+          <Pressable style={styles.switchRow} onPress={() => setWatermark(!watermark)}>
             <ParamLabel label="水印" required={false} style={{ marginBottom: 0 }} />
-            <Switch value={watermark} onValueChange={setWatermark} trackColor={{ false: colors.bg, true: colors.primary }} />
-          </View>
+            <Switch value={watermark} trackColor={{ false: colors.bg, true: colors.primary }} pointerEvents="none" />
+          </Pressable>
         </View>
       )}
       {supportsAudioSetting && mode === 'video-edit' && (
@@ -690,9 +690,9 @@ export function HappyHorseVideoControls({
           <ParamLabel label="音频设置" required={false} />
           <View style={styles.selectorRow}>
             {['auto', 'origin'].map((opt) => (
-              <TouchableOpacity key={opt} style={[styles.selectorButton, audioSetting === opt && styles.selectorButtonActive]} onPress={() => setAudioSetting(opt)}>
+              <Pressable key={opt} style={({ pressed }) => [styles.selectorButton, audioSetting === opt && styles.selectorButtonActive, pressed && { opacity: 0.7 }]} onPress={() => setAudioSetting(opt)}>
                 <Text style={[styles.selectorText, audioSetting === opt && styles.selectorTextActive]}>{opt === 'auto' ? '自动' : '保留原声'}</Text>
-              </TouchableOpacity>
+              </Pressable>
             ))}
           </View>
         </View>
@@ -713,9 +713,9 @@ export function LtxVideoControls({ display, setDisplay, displayOptions, seed, se
         <ParamLabel label="显示方向" required={false} />
         <View style={styles.selectorRow}>
           {displayOptions.map((d) => (
-            <TouchableOpacity key={d} style={[styles.selectorButton, display === d && styles.selectorButtonActive]} onPress={() => setDisplay(d)}>
+            <Pressable key={d} style={({ pressed }) => [styles.selectorButton, display === d && styles.selectorButtonActive, pressed && { opacity: 0.7 }]} onPress={() => setDisplay(d)}>
               <Text style={[styles.selectorText, display === d && styles.selectorTextActive]}>{d === 'horizontal' ? '横屏' : '竖屏'}</Text>
-            </TouchableOpacity>
+            </Pressable>
           ))}
         </View>
       </View>
@@ -745,9 +745,9 @@ export function BzaVideoXControls({
         <ParamLabel label="分辨率" required />
         <View style={styles.ratioGrid}>
           {resolutions.map((r) => (
-            <TouchableOpacity key={r} style={[styles.ratioButton, resolution === r && styles.ratioButtonActive]} onPress={() => setResolution(r)}>
+            <Pressable key={r} style={({ pressed }) => [styles.ratioButton, resolution === r && styles.ratioButtonActive, pressed && { opacity: 0.7 }]} onPress={() => setResolution(r)}>
               <Text style={[styles.ratioText, resolution === r && styles.ratioTextActive]}>{r}</Text>
-            </TouchableOpacity>
+            </Pressable>
           ))}
         </View>
       </View>
@@ -756,9 +756,9 @@ export function BzaVideoXControls({
           <ParamLabel label="时长 (秒)" required />
           <View style={styles.selectorRow}>
             {durArray.map((d) => (
-              <TouchableOpacity key={d} style={[styles.selectorButtonSmall, duration === d && styles.selectorButtonActive]} onPress={() => setDuration(d)}>
+              <Pressable key={d} style={({ pressed }) => [styles.selectorButtonSmall, duration === d && styles.selectorButtonActive, pressed && { opacity: 0.7 }]} onPress={() => setDuration(d)}>
                 <Text style={[styles.selectorText, duration === d && styles.selectorTextActive]}>{d}s</Text>
-              </TouchableOpacity>
+              </Pressable>
             ))}
           </View>
         </View>
@@ -768,9 +768,9 @@ export function BzaVideoXControls({
           <ParamLabel label="宽高比" required />
           <View style={styles.selectorRow}>
             {videoRatios.map((r) => (
-              <TouchableOpacity key={r} style={[styles.selectorButton, aspectRatio === r && styles.selectorButtonActive]} onPress={() => setAspectRatio(r)}>
+              <Pressable key={r} style={({ pressed }) => [styles.selectorButton, aspectRatio === r && styles.selectorButtonActive, pressed && { opacity: 0.7 }]} onPress={() => setAspectRatio(r)}>
                 <Text style={[styles.selectorText, aspectRatio === r && styles.selectorTextActive]}>{r}</Text>
-              </TouchableOpacity>
+              </Pressable>
             ))}
           </View>
         </View>
@@ -790,9 +790,9 @@ export function BzaVideoV3Controls({
         <ParamLabel label="分辨率" required />
         <View style={styles.ratioGrid}>
           {resolutions.map((r) => (
-            <TouchableOpacity key={r} style={[styles.ratioButton, resolution === r && styles.ratioButtonActive]} onPress={() => setResolution(r)}>
+            <Pressable key={r} style={({ pressed }) => [styles.ratioButton, resolution === r && styles.ratioButtonActive, pressed && { opacity: 0.7 }]} onPress={() => setResolution(r)}>
               <Text style={[styles.ratioText, resolution === r && styles.ratioTextActive]}>{r}</Text>
-            </TouchableOpacity>
+            </Pressable>
           ))}
         </View>
       </View>
@@ -800,9 +800,9 @@ export function BzaVideoV3Controls({
         <ParamLabel label="宽高比" required />
         <View style={styles.selectorRow}>
           {videoRatios.map((r) => (
-            <TouchableOpacity key={r} style={[styles.selectorButton, aspectRatio === r && styles.selectorButtonActive]} onPress={() => setAspectRatio(r)}>
+            <Pressable key={r} style={({ pressed }) => [styles.selectorButton, aspectRatio === r && styles.selectorButtonActive, pressed && { opacity: 0.7 }]} onPress={() => setAspectRatio(r)}>
               <Text style={[styles.selectorText, aspectRatio === r && styles.selectorTextActive]}>{r}</Text>
-            </TouchableOpacity>
+            </Pressable>
           ))}
         </View>
       </View>

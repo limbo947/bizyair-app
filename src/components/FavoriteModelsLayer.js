@@ -2,7 +2,6 @@ import React from 'react';
 import {
   Text,
   View,
-  TouchableOpacity,
   ScrollView,
   Modal,
   Pressable,
@@ -138,7 +137,7 @@ export function FavoriteModelsLayer({
       animationType="fade"
       onRequestClose={onClose}
     >
-      <Pressable style={styles.overlay} onPress={onClose}>
+      <Pressable style={({ pressed }) => [styles.overlay, pressed && { opacity: 0.7 }]} onPress={onClose}>
         <View style={styles.dropdownContainer}>
           <View style={styles.dropdown}>
             <View style={styles.dropdownHeader}>
@@ -160,20 +159,17 @@ export function FavoriteModelsLayer({
                 </View>
               ) : (
                 favoriteModels.map((model, index) => (
-                  <TouchableOpacity
+                  <Pressable
                     key={model.id}
-                    style={[
+                    style={({ pressed }) => [
                       styles.dropdownItem,
                       currentModelId === model.id && styles.dropdownItemActive,
                       index < favoriteModels.length - 1 &&
                         styles.dropdownItemBorder,
-                    ]}
-                    onPress={() => {
+                    , pressed && { opacity: 0.7 }]} onPress={() => {
                       onSelectModel(model.id);
                       onClose();
-                    }}
-                    activeOpacity={0.7}
-                  >
+                    }} >
                     <Ionicons
                       name={model.icon.name}
                       size={20}
@@ -214,7 +210,7 @@ export function FavoriteModelsLayer({
                         color={colors.primary}
                       />
                     )}
-                  </TouchableOpacity>
+                  </Pressable>
                 ))
               )}
             </ScrollView>

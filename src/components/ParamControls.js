@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, View, TextInput, TouchableOpacity, Switch } from 'react-native';
+import { Pressable, Text, View, TextInput, Switch } from 'react-native';
 import { QUALITY_LABELS, SIZE_PRESETS } from '../constants/models';
 import { Radius, Spacing } from '../constants/theme';
 import { useThemedStyles } from '../hooks/useThemedStyles';
@@ -29,9 +29,9 @@ export function ResolutionRatioControls({ currentResolutions, currentRatios, res
         <ParamLabel label="分辨率" required={resolutionRequired !== false} />
         <View style={styles.selectorRow}>
           {currentResolutions.map((r) => (
-            <TouchableOpacity key={r} style={[styles.selectorButton, resolution === r && styles.selectorButtonActive]} onPress={() => setResolution(r)}>
+            <Pressable key={r} style={({ pressed }) => [styles.selectorButton, resolution === r && styles.selectorButtonActive, pressed && { opacity: 0.7 }]} onPress={() => setResolution(r)}>
               <Text style={[styles.selectorText, resolution === r && styles.selectorTextActive]}>{r}</Text>
-            </TouchableOpacity>
+            </Pressable>
           ))}
         </View>
       </View>
@@ -40,19 +40,19 @@ export function ResolutionRatioControls({ currentResolutions, currentRatios, res
           <ParamLabel label="宽高比" required={false} />
           <View style={styles.aspectRatioGrid}>
             {currentRatios.map((r) => (
-              <TouchableOpacity key={r} style={[styles.ratioButton, aspectRatio === r && styles.ratioButtonActive]} onPress={() => setAspectRatio(r)}>
+              <Pressable key={r} style={({ pressed }) => [styles.ratioButton, aspectRatio === r && styles.ratioButtonActive, pressed && { opacity: 0.7 }]} onPress={() => setAspectRatio(r)}>
                 <Text style={[styles.ratioText, aspectRatio === r && styles.ratioTextActive]}>{r}</Text>
-              </TouchableOpacity>
+              </Pressable>
             ))}
           </View>
         </View>
       )}
       {supportsWebSearch && (
         <View style={styles.card}>
-          <View style={styles.switchRow}>
+          <Pressable style={styles.switchRow} onPress={() => setWebSearch(!webSearch)}>
             <ParamLabel label="联网搜索" required={false} style={{ marginBottom: 0 }} />
-            <Switch value={webSearch} onValueChange={setWebSearch} trackColor={{ false: colors.bg, true: colors.primary }} />
-          </View>
+            <Switch value={webSearch} trackColor={{ false: colors.bg, true: colors.primary }} pointerEvents="none" />
+          </Pressable>
         </View>
       )}
       {supportsTemperature && (
@@ -98,11 +98,10 @@ export function WidthHeightQualityControls({ sizePreset, setSizePreset, customWi
         <ParamLabel label="尺寸预设" required={false} />
         <View style={styles.presetGrid}>
           {SIZE_PRESETS.map((p, i) => (
-            <TouchableOpacity key={i} style={[styles.presetButton, sizePreset === i && styles.presetButtonActive]}
-              onPress={() => { setSizePreset(i); setCustomWidth(String(p.width)); setCustomHeight(String(p.height)); }}>
+            <Pressable key={i} style={({ pressed }) => [styles.presetButton, sizePreset === i && styles.presetButtonActive, pressed && { opacity: 0.7 }]} onPress={() => { setSizePreset(i); setCustomWidth(String(p.width)); setCustomHeight(String(p.height)); }}>
               <Text style={[styles.presetLabel, sizePreset === i && styles.presetLabelActive]}>{p.label}</Text>
               <Text style={[styles.presetDims, sizePreset === i && styles.presetDimsActive]}>{p.width}×{p.height}</Text>
-            </TouchableOpacity>
+            </Pressable>
           ))}
         </View>
       </View>
@@ -132,9 +131,9 @@ export function WidthHeightQualityControls({ sizePreset, setSizePreset, customWi
         <ParamLabel label="质量" required />
         <View style={styles.selectorRow}>
           {(modelQualities || []).map((q) => (
-            <TouchableOpacity key={q} style={[styles.selectorButton, quality === q && styles.selectorButtonActive]} onPress={() => setQuality(q)}>
+            <Pressable key={q} style={({ pressed }) => [styles.selectorButton, quality === q && styles.selectorButtonActive, pressed && { opacity: 0.7 }]} onPress={() => setQuality(q)}>
               <Text style={[styles.selectorText, quality === q && styles.selectorTextActive]}>{QUALITY_LABELS[q] || q}</Text>
-            </TouchableOpacity>
+            </Pressable>
           ))}
         </View>
       </View>
@@ -149,9 +148,9 @@ export function SizeOnlyControls({ currentResolutions, resolution, setResolution
       <ParamLabel label="尺寸" required={false} />
       <View style={styles.selectorRow}>
         {currentResolutions.map((r) => (
-          <TouchableOpacity key={r} style={[styles.selectorButton, resolution === r && styles.selectorButtonActive]} onPress={() => setResolution(r)}>
+          <Pressable key={r} style={({ pressed }) => [styles.selectorButton, resolution === r && styles.selectorButtonActive, pressed && { opacity: 0.7 }]} onPress={() => setResolution(r)}>
             <Text style={[styles.selectorText, resolution === r && styles.selectorTextActive]}>{r}</Text>
-          </TouchableOpacity>
+          </Pressable>
         ))}
       </View>
     </View>
@@ -165,9 +164,9 @@ export function FluxKontextControls({ currentRatios, aspectRatio, setAspectRatio
       <ParamLabel label="宽高比" required={false} />
       <View style={styles.aspectRatioGrid}>
         {currentRatios.map((r) => (
-          <TouchableOpacity key={r} style={[styles.ratioButton, aspectRatio === r && styles.ratioButtonActive]} onPress={() => setAspectRatio(r)}>
+          <Pressable key={r} style={({ pressed }) => [styles.ratioButton, aspectRatio === r && styles.ratioButtonActive, pressed && { opacity: 0.7 }]} onPress={() => setAspectRatio(r)}>
             <Text style={[styles.ratioText, aspectRatio === r && styles.ratioTextActive]}>{r}</Text>
-          </TouchableOpacity>
+          </Pressable>
         ))}
       </View>
     </View>
@@ -182,9 +181,9 @@ export function WanSizeControls({ currentResolutions, resolution, setResolution,
         <ParamLabel label="尺寸" required />
         <View style={styles.selectorRow}>
           {currentResolutions.map((r) => (
-            <TouchableOpacity key={r} style={[styles.selectorButton, resolution === r && styles.selectorButtonActive]} onPress={() => setResolution(r)}>
+            <Pressable key={r} style={({ pressed }) => [styles.selectorButton, resolution === r && styles.selectorButtonActive, pressed && { opacity: 0.7 }]} onPress={() => setResolution(r)}>
               <Text style={[styles.selectorText, resolution === r && styles.selectorTextActive]}>{r === 'Custom' ? '自定义' : r}</Text>
-            </TouchableOpacity>
+            </Pressable>
           ))}
         </View>
       </View>
@@ -207,26 +206,26 @@ export function WanSizeControls({ currentResolutions, resolution, setResolution,
       )}
       {supportsEnableSequential && (
         <View style={styles.card}>
-          <View style={styles.switchRow}>
+          <Pressable style={styles.switchRow} onPress={() => setEnableSequential(!enableSequential)}>
             <ParamLabel label="组图模式" required={false} style={{ marginBottom: 0 }} />
-            <Switch value={enableSequential} onValueChange={setEnableSequential} trackColor={{ false: colors.bg, true: colors.primary }} />
-          </View>
+            <Switch value={enableSequential} trackColor={{ false: colors.bg, true: colors.primary }} pointerEvents="none" />
+          </Pressable>
         </View>
       )}
       {supportsThinkingMode && mode !== 'image-to-image' && !enableSequential && (
         <View style={styles.card}>
-          <View style={styles.switchRow}>
+          <Pressable style={styles.switchRow} onPress={() => setThinkingMode(!thinkingMode)}>
             <ParamLabel label="增强推理" required={false} style={{ marginBottom: 0 }} />
-            <Switch value={thinkingMode} onValueChange={setThinkingMode} trackColor={{ false: colors.bg, true: colors.primary }} />
-          </View>
+            <Switch value={thinkingMode} trackColor={{ false: colors.bg, true: colors.primary }} pointerEvents="none" />
+          </Pressable>
         </View>
       )}
       {supportsWatermark && (
         <View style={styles.card}>
-          <View style={styles.switchRow}>
+          <Pressable style={styles.switchRow} onPress={() => setWatermark(!watermark)}>
             <ParamLabel label="AI 水印" required={false} style={{ marginBottom: 0 }} />
-            <Switch value={watermark} onValueChange={setWatermark} trackColor={{ false: colors.bg, true: colors.primary }} />
-          </View>
+            <Switch value={watermark} trackColor={{ false: colors.bg, true: colors.primary }} pointerEvents="none" />
+          </Pressable>
         </View>
       )}
       {supportsColorPalette && !enableSequential && (
@@ -259,11 +258,10 @@ export function WidthHeightControls({ sizePreset, setSizePreset, customWidth, se
         <ParamLabel label="尺寸预设" required={false} />
         <View style={styles.presetGrid}>
           {SIZE_PRESETS.map((p, i) => (
-            <TouchableOpacity key={i} style={[styles.presetButton, sizePreset === i && styles.presetButtonActive]}
-              onPress={() => { setSizePreset(i); setCustomWidth(String(p.width)); setCustomHeight(String(p.height)); }}>
+            <Pressable key={i} style={({ pressed }) => [styles.presetButton, sizePreset === i && styles.presetButtonActive, pressed && { opacity: 0.7 }]} onPress={() => { setSizePreset(i); setCustomWidth(String(p.width)); setCustomHeight(String(p.height)); }}>
               <Text style={[styles.presetLabel, sizePreset === i && styles.presetLabelActive]}>{p.label}</Text>
               <Text style={[styles.presetDims, sizePreset === i && styles.presetDimsActive]}>{p.width}×{p.height}</Text>
-            </TouchableOpacity>
+            </Pressable>
           ))}
         </View>
       </View>
@@ -292,9 +290,9 @@ export function WidthHeightControls({ sizePreset, setSizePreset, customWidth, se
           <ParamLabel label="生成数量" required />
           <View style={styles.selectorRow}>
             {[1, 2, 3, 4].map((n) => (
-              <TouchableOpacity key={n} style={[styles.selectorButton, batchSize === n && styles.selectorButtonActive]} onPress={() => setBatchSize(n)}>
+              <Pressable key={n} style={({ pressed }) => [styles.selectorButton, batchSize === n && styles.selectorButtonActive, pressed && { opacity: 0.7 }]} onPress={() => setBatchSize(n)}>
                 <Text style={[styles.selectorText, batchSize === n && styles.selectorTextActive]}>{n}</Text>
-              </TouchableOpacity>
+              </Pressable>
             ))}
           </View>
         </View>

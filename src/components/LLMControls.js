@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Text, View, TextInput, Switch, TouchableOpacity, Alert } from 'react-native';
+import { Pressable, Text, View, TextInput, Switch, Alert } from 'react-native';
 import { Radius, Spacing } from '../constants/theme';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { useTheme } from '../context/ThemeContext';
@@ -153,21 +153,19 @@ export function LLMChatControls({
         <Text style={styles.label}>系统提示词<Text style={styles.required}> *</Text></Text>
         <View style={styles.presetRow}>
           {allPresets.map((p, i) => (
-            <TouchableOpacity
+            <Pressable
               key={p.label + i}
-              style={[styles.presetChip, systemPrompt === p.prompt && styles.presetChipActive]}
-              onPress={() => setSystemPrompt(systemPrompt === p.prompt ? '' : p.prompt)}
+              style={({ pressed }) => [styles.presetChip, systemPrompt === p.prompt && styles.presetChipActive, pressed && { opacity: 0.7 }]} onPress={() => setSystemPrompt(systemPrompt === p.prompt ? '' : p.prompt)}
               onLongPress={() => p.custom && handleDeletePreset(i - SYSTEM_PROMPT_PRESETS.length)}
             >
               <Text style={[styles.presetChipText, systemPrompt === p.prompt && styles.presetChipTextActive]}>{p.label}</Text>
-            </TouchableOpacity>
+            </Pressable>
           ))}
-          <TouchableOpacity
-            style={styles.presetChipAdd}
-            onPress={() => setShowAddPreset(!showAddPreset)}
+          <Pressable
+            style={({ pressed }) => [styles.presetChipAdd, pressed && { opacity: 0.7 }]} onPress={() => setShowAddPreset(!showAddPreset)}
           >
             <Text style={styles.presetChipAddText}>+ 新增</Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
         {showAddPreset && (
           <View style={styles.addPresetBox}>
@@ -186,12 +184,12 @@ export function LLMChatControls({
               minHeight={60}
             />
             <View style={styles.addPresetActions}>
-              <TouchableOpacity onPress={() => setShowAddPreset(false)}>
+              <Pressable style={({ pressed }) => pressed && { opacity: 0.7 }} onPress={() => setShowAddPreset(false)}>
                 <Text style={styles.addPresetCancel}>取消</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.addPresetConfirm} onPress={handleAddPreset}>
+              </Pressable>
+              <Pressable style={({ pressed }) => [styles.addPresetConfirm, pressed && { opacity: 0.7 }]} onPress={handleAddPreset}>
                 <Text style={styles.addPresetConfirmText}>保存</Text>
-              </TouchableOpacity>
+              </Pressable>
             </View>
           </View>
         )}
@@ -205,9 +203,9 @@ export function LLMChatControls({
         <View style={styles.hintRow}>
           <Text style={styles.hint}>长按自定义预设可删除</Text>
           {systemPrompt ? (
-            <TouchableOpacity onPress={() => setSystemPrompt('')} activeOpacity={0.6}>
+            <Pressable style={({ pressed }) => pressed && { opacity: 0.6 }} onPress={() => setSystemPrompt('')} >
               <Text style={styles.clearText}>清空</Text>
-            </TouchableOpacity>
+            </Pressable>
           ) : null}
         </View>
       </View>

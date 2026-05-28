@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Modal, ActivityIndicator, Platform } from 'react-native';
+import { Pressable, View, Text, Modal, ActivityIndicator, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Audio } from 'expo-av';
 import { Spacing } from '../constants/theme';
@@ -87,7 +87,7 @@ function WebAudioPlayer({ visible, audioUrl, onClose }) {
     <Modal visible={visible} animationType="fade" transparent={false} onRequestClose={onClose}>
       <View style={st.container}>
         <View style={st.header}>
-          <TouchableOpacity onPress={onClose} style={st.closeBtn}><Ionicons name="close" size={28} color={colors.textPrimary} /></TouchableOpacity>
+          <Pressable style={({ pressed }) => [st.closeBtn, pressed && { opacity: 0.7 }]} onPress={onClose}><Ionicons name="close" size={28} color={colors.textPrimary} /></Pressable>
           <Text style={st.title}>音频预览</Text>
           <View style={st.closeBtn} />
         </View>
@@ -105,15 +105,15 @@ function WebAudioPlayer({ visible, audioUrl, onClose }) {
           </View>
 
           <View style={st.controls}>
-            <TouchableOpacity style={st.playBtn} onPress={togglePlay} disabled={loading}>
+            <Pressable style={({ pressed }) => [st.playBtn, pressed && { opacity: 0.7 }]} onPress={togglePlay} disabled={loading}>
               {loading ? <ActivityIndicator color="#fff" size="small" /> : <Ionicons name={isPlaying ? 'pause' : 'play'} size={36} color="#fff" />}
-            </TouchableOpacity>
+            </Pressable>
           </View>
 
           <View style={st.volRow}>
-            <TouchableOpacity onPress={toggleMute} style={st.volIcon}>
+            <Pressable style={({ pressed }) => [st.volIcon, pressed && { opacity: 0.7 }]} onPress={toggleMute}>
               <Ionicons name={isMuted || volume === 0 ? 'volume-mute' : volume < 0.5 ? 'volume-low' : 'volume-medium'} size={20} color={colors.textSecondary} />
-            </TouchableOpacity>
+            </Pressable>
             <View ref={volBarRef} style={st.volArea} onClick={(e) => { if (!volBarRef.current) return; const r = volBarRef.current.getBoundingClientRect(); setVol(Math.max(0, Math.min(1, (e.clientX - r.left) / r.width))); }}>
               <View style={st.volBg}><View style={[st.volFill, { width: `${volPct}%` }]} /></View>
             </View>
@@ -178,7 +178,7 @@ function NativeAudioPlayer({ visible, audioUrl, onClose }) {
     <Modal visible={visible} animationType="fade" transparent={false} onRequestClose={onClose}>
       <View style={st.container}>
         <View style={st.header}>
-          <TouchableOpacity onPress={onClose} style={st.closeBtn}><Ionicons name="close" size={28} color={colors.textPrimary} /></TouchableOpacity>
+          <Pressable style={({ pressed }) => [st.closeBtn, pressed && { opacity: 0.7 }]} onPress={onClose}><Ionicons name="close" size={28} color={colors.textPrimary} /></Pressable>
           <Text style={st.title}>音频预览</Text>
           <View style={st.closeBtn} />
         </View>
@@ -189,25 +189,25 @@ function NativeAudioPlayer({ visible, audioUrl, onClose }) {
 
           <View style={st.progressRow}>
             <Text style={st.t}>{fmt(position)}</Text>
-            <TouchableOpacity style={st.progArea} activeOpacity={0.8} onPress={(e) => { e.currentTarget.measure((_, __, w) => seek(e.nativeEvent.locationX / w)); }}>
+            <Pressable style={({ pressed }) => [st.progArea, pressed && { opacity: 0.7 }]} onPress={(e) => { e.currentTarget.measure((_, __, w) => seek(e.nativeEvent.locationX / w)); }}>
               <View style={st.progBg}><View style={[st.progFill, { width: `${pct}%` }]} /></View>
-            </TouchableOpacity>
+            </Pressable>
             <Text style={st.t}>{fmt(duration)}</Text>
           </View>
 
           <View style={st.controls}>
-            <TouchableOpacity style={st.playBtn} onPress={handlePlay} disabled={isLoading}>
+            <Pressable style={({ pressed }) => [st.playBtn, pressed && { opacity: 0.7 }]} onPress={handlePlay} disabled={isLoading}>
               {isLoading ? <ActivityIndicator color="#fff" size="small" /> : <Ionicons name={isPlaying ? 'pause' : 'play'} size={36} color="#fff" />}
-            </TouchableOpacity>
+            </Pressable>
           </View>
 
           <View style={st.volRow}>
-            <TouchableOpacity onPress={toggleMute} style={st.volIcon}>
+            <Pressable style={({ pressed }) => [st.volIcon, pressed && { opacity: 0.7 }]} onPress={toggleMute}>
               <Ionicons name={isMuted || volume === 0 ? 'volume-mute' : volume < 0.5 ? 'volume-low' : 'volume-medium'} size={20} color={colors.textSecondary} />
-            </TouchableOpacity>
-            <TouchableOpacity style={st.volArea} activeOpacity={0.8} onPress={(e) => { e.currentTarget.measure((_, __, w) => { const v = Math.max(0, Math.min(1, e.nativeEvent.locationX / w)); setVolume(v); if (v > 0 && isMuted) setIsMuted(false); soundRef.current?.setVolumeAsync(v); }); }}>
+            </Pressable>
+            <Pressable style={({ pressed }) => [st.volArea, pressed && { opacity: 0.7 }]} onPress={(e) => { e.currentTarget.measure((_, __, w) => { const v = Math.max(0, Math.min(1, e.nativeEvent.locationX / w)); setVolume(v); if (v > 0 && isMuted) setIsMuted(false); soundRef.current?.setVolumeAsync(v); }); }}>
               <View style={st.volBg}><View style={[st.volFill, { width: `${isMuted ? 0 : volume * 100}%` }]} /></View>
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </View>
       </View>

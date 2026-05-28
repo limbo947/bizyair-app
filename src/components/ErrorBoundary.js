@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Pressable, View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { Spacing, Radius } from '../constants/theme';
@@ -55,13 +55,10 @@ function DefaultErrorFallback({ error, onRetry }) {
       <Text style={[defaultStyles.message, { color: colors.textSecondary }]}>
         {error?.message || '未知错误，请重试'}
       </Text>
-      <TouchableOpacity
-        style={[defaultStyles.retryButton, { backgroundColor: colors.primary }]}
-        onPress={onRetry}
-        activeOpacity={0.7}
-      >
+      <Pressable
+        style={({ pressed }) => [defaultStyles.retryButton, { backgroundColor: colors.primary }, pressed && { opacity: 0.7 }]} onPress={onRetry} >
         <Text style={defaultStyles.retryText}>重试</Text>
-      </TouchableOpacity>
+      </Pressable>
     </View>
   );
 }

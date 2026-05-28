@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Modal } from 'react-native';
+import { Pressable, View, Text, ScrollView, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import { Spacing } from '../constants/theme';
@@ -33,13 +33,13 @@ export function TextResultView({ visible, text, onClose }) {
     <Modal visible={visible} animationType="fade" transparent={false} onRequestClose={onClose}>
       <View style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+          <Pressable style={({ pressed }) => [styles.closeButton, pressed && { opacity: 0.7 }]} onPress={onClose}>
             <Ionicons name="close" size={28} color={colors.textPrimary} />
-          </TouchableOpacity>
+          </Pressable>
           <Text style={styles.title}>文本结果</Text>
-          <TouchableOpacity onPress={handleCopy} style={styles.copyButton}>
+          <Pressable style={({ pressed }) => [styles.copyButton, pressed && { opacity: 0.7 }]} onPress={handleCopy}>
             <Ionicons name="copy-outline" size={24} color={colors.primary} />
-          </TouchableOpacity>
+          </Pressable>
         </View>
         <ScrollView style={styles.content} contentContainerStyle={styles.contentInner}>
           <Text style={styles.textContent} selectable>{text || '暂无文本内容'}</Text>

@@ -1,21 +1,19 @@
-import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
-import {
-  StyleSheet,
+import React, { useState, useMemo, useCallback, useRef, useEffect, useReducer } from 'react';
+import { Pressable, StyleSheet,
   Text,
   View,
-  TouchableOpacity,
-  Image,
   ActivityIndicator,
   FlatList,
   Platform,
-  Alert,
-} from 'react-native';
+  Alert, } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
-import * as FileSystem from 'expo-file-system';
+import { File, Paths } from 'expo-file-system';
 import * as MediaLibrary from 'expo-media-library';
 import { getVideoThumbnailAsync } from 'expo-video-thumbnails';
 import { useAppContext } from '../context/AppContext';
+import { useHistoryContext } from '../context/HistoryContext';
 import { HistoryModals } from '../components/HistoryModals';
 import { HistoryFilters } from '../components/HistoryFilters';
 import { VideoPlayer } from '../components/VideoPlayer';
@@ -38,19 +36,37 @@ const SORT_OPTIONS = [
   { key: 'price_low', label: '价格低→高' },
 ];
 
-function formatDuration(startedAt, completedAt) {
-  if (!startedAt) return '--';
+const STATUS_LABELS = {
+  Pending: '等待中',
+  Running: '运行中',
+  Saving: '保存中',
+  Success: '已完成',
+  Failed: '失败',
+  Canceled: '已取消',
+};
+
+function DurationDisplay({ startedAt, completedAt, isFinal, isActive }) {
+  const [, forceUpdate] = useReducer((x) => x + 1, 0);
+
+  useEffect(() => {
+    if (!isActive || isFinal) return;
+    const timer = setInterval(() => forceUpdate(), 1000);
+    return () => clearInterval(timer);
+  }, [isActive, isFinal]);
+
+  if (!isFinal && !isActive) return null;
+
   const end = completedAt || Date.now();
-  const ms = end - startedAt;
-  if (ms < 0) return '--';
+  const ms = end - (startedAt || 0);
+  if (ms < 0) return <Text>--</Text>;
   const seconds = Math.floor(ms / 1000);
-  if (seconds < 60) return `${seconds}秒`;
+  if (seconds < 60) return <Text style={{ fontSize: 12, color: '#27AE60', fontWeight: '500' }}>{seconds}秒</Text>;
   const minutes = Math.floor(seconds / 60);
   const remainSeconds = seconds % 60;
-  if (minutes < 60) return `${minutes}分${remainSeconds}秒`;
+  if (minutes < 60) return <Text style={{ fontSize: 12, color: '#27AE60', fontWeight: '500' }}>{minutes}分{remainSeconds}秒</Text>;
   const hours = Math.floor(minutes / 60);
   const remainMinutes = minutes % 60;
-  return `${hours}时${remainMinutes}分`;
+  return <Text style={{ fontSize: 12, color: '#27AE60', fontWeight: '500' }}>{hours}时{remainMinutes}分</Text>;
 }
 
 async function triggerDownload(url, filename) {
@@ -72,26 +88,214 @@ async function triggerDownload(url, filename) {
       Alert.alert('权限不足', '需要存储权限才能保存文件');
       return;
     }
-    const localUri = `${FileSystem.cacheDirectory}${filename || 'download'}`;
-    const downloadResult = await FileSystem.downloadAsync(url, localUri);
-    await MediaLibrary.createAssetAsync(downloadResult.uri);
+    const destination = new File(Paths.cache, filename || 'download');
+    const downloadedFile = await File.downloadFileAsync(url, destination);
+    await MediaLibrary.createAssetAsync(downloadedFile.uri);
     Alert.alert('下载成功', '文件已保存到相册');
   } catch (err) {
     Alert.alert('下载失败', err.message || '请检查网络连接');
   }
 }
 
-export function HistoryScreen() {
+const HistoryCard = React.memo(function HistoryCard({
+  item,
+  isSelected,
+  batchMode,
+  toggleSelect,
+  handleDownload,
+  setLogModal,
+  setDeleteConfirmId,
+  setVideoPreview,
+  setTextPreview,
+  setAudioPreview,
+  setPreviewImage,
+  setPreviewImageUrls,
+  stopPolling,
+  thumbUri,
+}) {
   const styles = useThemedStyles(createStyles);
   const { colors, theme } = useTheme();
+
+  const [copied, setCopied] = useState(false);
+  const copiedTimer = useRef(null);
+
+  const handleCopy = useCallback(async () => {
+    await Clipboard.setStringAsync(item.prompt || '');
+    setCopied(true);
+    if (copiedTimer.current) clearTimeout(copiedTimer.current);
+    copiedTimer.current = setTimeout(() => setCopied(false), 1500);
+  }, [item.prompt]);
+
+  useEffect(() => {
+    return () => { if (copiedTimer.current) clearTimeout(copiedTimer.current); };
+  }, []);
+
+  const isFinal = FINAL_STATUSES.includes(item.status);
+  const statusLabel = STATUS_LABELS[item.status] || item.status;
+  const statusColor = theme.STATUS_COLORS[item.status] || colors.textTertiary;
+  const statusBg = theme.STATUS_BG[item.status] || colors.bg;
+  const isActive = ACTIVE_STATUSES.includes(item.status);
+  const isWebapp = item.source === 'webapp';
+
+  return (
+    <View style={styles.historyCard}>
+      {batchMode ? (
+        <Pressable style={({ pressed }) => [styles.checkboxArea, pressed && { opacity: 0.7 }]} onPress={() => toggleSelect(item.id)} >
+          <View style={[styles.checkbox, isSelected && styles.checkboxChecked]}>
+            {isSelected ? <Text style={styles.checkboxMark}>✓</Text> : null}
+          </View>
+        </Pressable>
+      ) : null}
+      <Pressable
+        style={({ pressed }) => [styles.historyCardInner, pressed && { opacity: batchMode ? 0.6 : 0.7 }]} onPress={() => {
+          if (batchMode) toggleSelect(item.id);
+          else if (item.outputType === 'video' && item.videoUrl) {
+            setVideoPreview({ visible: true, url: item.videoUrl });
+          } else if (item.outputType === 'text' && item.textResult) {
+            setTextPreview({ visible: true, text: item.textResult });
+          } else if (item.outputType === 'audio' && item.audioUrl) {
+            setAudioPreview({ visible: true, url: item.audioUrl });
+          } else if (item.imageUrl) {
+            setPreviewImage({ url: item.imageUrl, prompt: item.prompt });
+            setPreviewImageUrls(item.imageUrls || null);
+          }
+        }}
+        disabled={batchMode ? false : !(item.imageUrl || item.videoUrl || item.textResult || item.audioUrl)}
+      >
+        <View style={styles.historyThumbWrap}>
+          {item.outputType === 'video' && item.videoUrl ? (
+            <View style={styles.thumbContainer}>
+              {thumbUri ? (
+                <Image source={{ uri: thumbUri }} style={styles.historyThumb} contentFit="cover" cachePolicy="memory-disk" recyclingKey={`${item.id}_thumb`} transition={200} />
+              ) : (
+                <View style={[styles.historyThumbPlaceholder, styles.historyThumbVideo]}>
+                  <Ionicons name="videocam" size={32} color={colors.primary} />
+                </View>
+              )}
+              <View style={styles.thumbPlayOverlay}>
+                <Ionicons name="play-circle" size={28} color="rgba(255,255,255,0.9)" />
+              </View>
+            </View>
+          ) : item.outputType === 'audio' && item.audioUrl ? (
+            <View style={styles.thumbContainer}>
+              <View style={[styles.historyThumbPlaceholder, styles.historyThumbAudio]}>
+                <Ionicons name="musical-notes" size={32} color={colors.purple} />
+              </View>
+              <View style={styles.thumbPlayOverlay}>
+                <Ionicons name="play-circle" size={28} color="rgba(255,255,255,0.9)" />
+              </View>
+            </View>
+          ) : item.outputType === 'text' && item.textResult ? (
+            <View style={[styles.historyThumbPlaceholder, styles.historyThumbText]}>
+              <Ionicons name="document-text" size={32} color={colors.primary} />
+            </View>
+          ) : item.imageUrl ? (
+            item.imageUrls && item.imageUrls.length > 1 ? (
+              <View style={styles.thumbGrid}>
+                {item.imageUrls.slice(0, 4).map((url, idx) => (
+                  <Image
+                    key={`${item.id}_thumb_${idx}`}
+                    source={{ uri: url }}
+                    style={[
+                      styles.thumbGridItem,
+                      item.imageUrls.length === 2 && styles.thumbGridItem2,
+                      item.imageUrls.length === 3 && idx === 0 && styles.thumbGridItem3First,
+                    ]}
+                    contentFit="cover"
+                    cachePolicy="memory-disk"
+                    recyclingKey={`${item.id}_thumb_${idx}`}
+                    transition={200}
+                  />
+                ))}
+                {item.imageUrls.length > 4 ? (
+                  <View style={styles.thumbGridOverlay}>
+                    <Text style={styles.thumbGridOverlayText}>+{item.imageUrls.length - 4}</Text>
+                  </View>
+                ) : null}
+              </View>
+            ) : (
+              <Image source={{ uri: item.imageUrl }} style={styles.historyThumb} contentFit="cover" cachePolicy="memory-disk" recyclingKey={`${item.id}_thumb`} transition={200} />
+            )
+          ) : item.status === 'Failed' ? (
+            <View style={[styles.historyThumbPlaceholder, styles.historyThumbFailed]}>
+              <Ionicons name="close-circle-outline" size={32} color={colors.error} />
+            </View>
+          ) : (
+            <View style={styles.historyThumbPlaceholder}>
+              <ActivityIndicator color={colors.textTertiary} />
+            </View>
+          )}
+        </View>
+        <View style={styles.historyInfo}>
+          <View style={styles.historyInfoHeader}>
+            <Text style={styles.historyPrompt} numberOfLines={2}>{item.prompt}</Text>
+            {isWebapp && isActive && !batchMode ? (
+              <Pressable style={({ pressed }) => [styles.stopButton, pressed && { opacity: 0.7 }]} onPress={() => stopPolling(item.id)} >
+                <Ionicons name="stop-circle" size={18} color={colors.error} />
+                <Text style={styles.stopButtonText}>终止</Text>
+              </Pressable>
+            ) : null}
+          </View>
+          <Text style={styles.historyMeta}>{item.modelName}{(item.outputType === 'image' || item.outputType === 'video') && item.actualResolution ? ` · ${item.actualResolution}` : item.resolution ? ` · ${item.resolution}` : ''} · {item.date}</Text>
+          <View style={styles.historyDurationRow}>
+            <DurationDisplay startedAt={item.startedAt} completedAt={item.completedAt} isFinal={isFinal} isActive={isActive} />
+            <View style={[styles.statusBadge, { backgroundColor: statusBg }]}>
+              {isActive ? <ActivityIndicator size="small" color={statusColor} style={styles.statusSpinner} /> : null}
+              <Text style={[styles.statusText, { color: statusColor }]}>{statusLabel}</Text>
+            </View>
+          </View>
+          <View style={styles.historyBottomRow}>
+            {!isWebapp ? (
+              <Text style={styles.historyPrice}>{isTokenPricedModel(item.modelId) ? '按量计费' : `${item.price} 金币`}</Text>
+            ) : <View />}
+            <View style={styles.historyActions}>
+              {((item.imageUrl && !batchMode) || (item.outputType === 'video' && item.videoUrl && !batchMode) || (item.outputType === 'audio' && item.audioUrl && !batchMode)) ? (
+                <Pressable style={({ pressed }) => [styles.iconButton, styles.iconButtonSuccess, pressed && { opacity: 0.7 }]} onPress={() => handleDownload(item)}>
+                  <Ionicons name="download" size={18} color={colors.success} />
+                </Pressable>
+              ) : null}
+              {!batchMode ? (
+                <Pressable style={({ pressed }) => [styles.iconButton, copied ? styles.iconButtonCopied : styles.iconButtonPurple, pressed && { opacity: 0.7 }]} onPress={handleCopy}>
+                  <Ionicons name={copied ? 'checkmark' : 'copy'} size={18} color={copied ? colors.success : colors.purple} />
+                </Pressable>
+              ) : null}
+              <Pressable style={({ pressed }) => [styles.iconButton, styles.iconButtonPrimary, pressed && { opacity: 0.7 }]} onPress={() => setLogModal(item)}>
+                <Ionicons name="document-text" size={18} color={colors.primary} />
+              </Pressable>
+              {!batchMode ? (
+                <Pressable style={({ pressed }) => [styles.iconButton, styles.iconButtonError, pressed && { opacity: 0.7 }]} onPress={() => setDeleteConfirmId(item.id)}>
+                  <Ionicons name="trash" size={18} color={colors.error} />
+                </Pressable>
+              ) : null}
+            </View>
+          </View>
+          {item.errorMessage ? (
+            <Text style={[styles.historyError, item.status !== 'Failed' && styles.historyErrorWarning]} numberOfLines={1}>{item.errorMessage}</Text>
+          ) : null}
+        </View>
+      </Pressable>
+    </View>
+  );
+},
+(prevProps, nextProps) => {
+  return prevProps.item.id === nextProps.item.id &&
+    prevProps.item.status === nextProps.item.status &&
+    prevProps.isSelected === nextProps.isSelected &&
+    prevProps.batchMode === nextProps.batchMode &&
+    prevProps.thumbUri === nextProps.thumbUri;
+});
+
+export function HistoryScreen() {
+  const styles = useThemedStyles(createStyles);
+  const { colors } = useTheme();
   const {
     history,
     removeHistoryItems,
-    activeTab,
     refreshRunningTasks,
     totalCoinsSpent,
     stopPolling,
-  } = useAppContext();
+  } = useHistoryContext();
+  const { activeTab } = useAppContext();
 
   const [searchText, setSearchText] = useState('');
   const [sortBy, setSortBy] = useState('newest');
@@ -111,24 +315,10 @@ export function HistoryScreen() {
   const [isDownloading, setIsDownloading] = useState(false);
   const downloadingRef = useRef(new Set());
   const [deleteConfirmBatch, setDeleteConfirmBatch] = useState(false);
-  const [tick, setTick] = useState(0);
   const flatListRef = useRef(null);
   const prevActiveTab = useRef(activeTab);
-  const tickRef = useRef(null);
   const thumbCache = useRef({});
   const [thumbVersion, setThumbVersion] = useState(0);
-
-  const hasActiveTasks = Array.isArray(history) && history.some((h) => h && ACTIVE_STATUSES.includes(h.status));
-
-  useEffect(() => {
-    if (hasActiveTasks) {
-      tickRef.current = setInterval(() => setTick((t) => t + 1), 1000);
-    } else if (tickRef.current) {
-      clearInterval(tickRef.current);
-      tickRef.current = null;
-    }
-    return () => { if (tickRef.current) clearInterval(tickRef.current); };
-  }, [hasActiveTasks]);
 
   useEffect(() => {
     if (
@@ -250,167 +440,27 @@ export function HistoryScreen() {
   const successCount = Array.isArray(history) ? history.filter((h) => h && h.status === 'Success').length : 0;
   const failedCount = Array.isArray(history) ? history.filter((h) => h && h.status === 'Failed').length : 0;
 
-  const STATUS_LABELS = {
-    Pending: '等待中',
-    Running: '运行中',
-    Saving: '保存中',
-    Success: '已完成',
-    Failed: '失败',
-    Canceled: '已取消',
-  };
-
   const renderItem = useCallback(({ item }) => {
-    const isSelected = selectedIds.has(item.id);
-    const isFinal = FINAL_STATUSES.includes(item.status);
-    const duration = isFinal ? formatDuration(item.startedAt, item.completedAt) : ACTIVE_STATUSES.includes(item.status) ? formatDuration(item.startedAt, null) : null;
-    const statusLabel = STATUS_LABELS[item.status] || item.status;
-    const statusColor = theme.STATUS_COLORS[item.status] || colors.textTertiary;
-    const statusBg = theme.STATUS_BG[item.status] || colors.bg;
-    const isActive = ACTIVE_STATUSES.includes(item.status);
-    const isWebapp = item.source === 'webapp';
-
+    const thumbUri = item.outputType === 'video' && item.videoUrl ? thumbCache.current[item.videoUrl] : null;
     return (
-      <View style={styles.historyCard}>
-        {batchMode ? (
-          <TouchableOpacity style={styles.checkboxArea} onPress={() => toggleSelect(item.id)} activeOpacity={0.6}>
-            <View style={[styles.checkbox, isSelected && styles.checkboxChecked]}>
-              {isSelected ? <Text style={styles.checkboxMark}>✓</Text> : null}
-            </View>
-          </TouchableOpacity>
-        ) : null}
-        <TouchableOpacity
-          style={styles.historyCardInner}
-          onPress={() => {
-            if (batchMode) toggleSelect(item.id);
-            else if (item.outputType === 'video' && item.videoUrl) {
-              setVideoPreview({ visible: true, url: item.videoUrl });
-            } else if (item.outputType === 'text' && item.textResult) {
-              setTextPreview({ visible: true, text: item.textResult });
-            } else if (item.outputType === 'audio' && item.audioUrl) {
-              setAudioPreview({ visible: true, url: item.audioUrl });
-            } else if (item.imageUrl) {
-              setPreviewImage({ url: item.imageUrl, prompt: item.prompt });
-              setPreviewImageUrls(item.imageUrls || null);
-            }
-          }}
-          disabled={batchMode ? false : !(item.imageUrl || item.videoUrl || item.textResult || item.audioUrl)}
-          activeOpacity={batchMode ? 0.6 : 0.7}
-        >
-          <View style={styles.historyThumbWrap}>
-            {item.outputType === 'video' && item.videoUrl ? (
-              <View style={styles.thumbContainer}>
-                {thumbCache.current[item.videoUrl] ? (
-                  <Image source={{ uri: thumbCache.current[item.videoUrl] }} style={styles.historyThumb} />
-                ) : (
-                  <View style={[styles.historyThumbPlaceholder, styles.historyThumbVideo]}>
-                    <Ionicons name="videocam" size={32} color={colors.primary} />
-                  </View>
-                )}
-                <View style={styles.thumbPlayOverlay}>
-                  <Ionicons name="play-circle" size={28} color="rgba(255,255,255,0.9)" />
-                </View>
-              </View>
-            ) : item.outputType === 'audio' && item.audioUrl ? (
-              <View style={styles.thumbContainer}>
-                <View style={[styles.historyThumbPlaceholder, styles.historyThumbAudio]}>
-                  <Ionicons name="musical-notes" size={32} color={colors.purple} />
-                </View>
-                <View style={styles.thumbPlayOverlay}>
-                  <Ionicons name="play-circle" size={28} color="rgba(255,255,255,0.9)" />
-                </View>
-              </View>
-            ) : item.outputType === 'text' && item.textResult ? (
-              <View style={[styles.historyThumbPlaceholder, styles.historyThumbText]}>
-                <Ionicons name="document-text" size={32} color={colors.primary} />
-              </View>
-            ) : item.imageUrl ? (
-              item.imageUrls && item.imageUrls.length > 1 ? (
-                <View style={styles.thumbGrid}>
-                  {item.imageUrls.slice(0, 4).map((url, idx) => (
-                    <Image
-                      key={`${item.id}_thumb_${idx}`}
-                      source={{ uri: url }}
-                      style={[
-                        styles.thumbGridItem,
-                        item.imageUrls.length === 2 && styles.thumbGridItem2,
-                        item.imageUrls.length === 3 && idx === 0 && styles.thumbGridItem3First,
-                      ]}
-                    />
-                  ))}
-                  {item.imageUrls.length > 4 ? (
-                    <View style={styles.thumbGridOverlay}>
-                      <Text style={styles.thumbGridOverlayText}>+{item.imageUrls.length - 4}</Text>
-                    </View>
-                  ) : null}
-                </View>
-              ) : (
-                <Image source={{ uri: item.imageUrl }} style={styles.historyThumb} />
-              )
-            ) : item.status === 'Failed' ? (
-              <View style={[styles.historyThumbPlaceholder, styles.historyThumbFailed]}>
-                <Ionicons name="close-circle-outline" size={32} color={colors.error} />
-              </View>
-            ) : (
-              <View style={styles.historyThumbPlaceholder}>
-                <ActivityIndicator color={colors.textTertiary} />
-              </View>
-            )}
-          </View>
-          <View style={styles.historyInfo}>
-            <View style={styles.historyInfoHeader}>
-              <Text style={styles.historyPrompt} numberOfLines={2}>{item.prompt}</Text>
-              {isWebapp && isActive && !batchMode ? (
-                <TouchableOpacity style={styles.stopButton} onPress={() => stopPolling(item.id)} activeOpacity={0.7}>
-                  <Ionicons name="stop-circle" size={18} color={colors.error} />
-                  <Text style={styles.stopButtonText}>终止</Text>
-                </TouchableOpacity>
-              ) : null}
-            </View>
-            <Text style={styles.historyMeta}>{item.modelName} · {item.actualResolution || item.resolution} · {item.date}</Text>
-            {(duration || item.status) ? (
-              <View style={styles.historyDurationRow}>
-                {duration ? <Text style={styles.historyDuration}>⏱ {duration}</Text> : null}
-                <View style={[styles.statusBadge, { backgroundColor: statusBg }]}>
-                  {isActive ? <ActivityIndicator size="small" color={statusColor} style={styles.statusSpinner} /> : null}
-                  <Text style={[styles.statusText, { color: statusColor }]}>{statusLabel}</Text>
-                </View>
-              </View>
-            ) : null}
-            <View style={styles.historyBottomRow}>
-              {!isWebapp ? (
-                <Text style={styles.historyPrice}>{isTokenPricedModel(item.modelId) ? '按量计费' : `${item.price} 金币`}</Text>
-              ) : <View />}
-              <View style={styles.historyActions}>
-                {((item.imageUrl && !batchMode) || (item.outputType === 'video' && item.videoUrl && !batchMode) || (item.outputType === 'audio' && item.audioUrl && !batchMode)) ? (
-                  <TouchableOpacity style={[styles.iconButton, styles.iconButtonSuccess]} onPress={() => handleDownload(item)}>
-                    <Ionicons name="download" size={18} color={colors.success} />
-                  </TouchableOpacity>
-                ) : null}
-                {!batchMode ? (
-                  <TouchableOpacity style={[styles.iconButton, styles.iconButtonPurple]} onPress={async () => {
-                    await Clipboard.setStringAsync(item.prompt || '');
-                  }}>
-                    <Ionicons name="copy" size={18} color={colors.purple} />
-                  </TouchableOpacity>
-                ) : null}
-                <TouchableOpacity style={[styles.iconButton, styles.iconButtonPrimary]} onPress={() => setLogModal(item)}>
-                  <Ionicons name="document-text" size={18} color={colors.primary} />
-                </TouchableOpacity>
-                {!batchMode ? (
-                  <TouchableOpacity style={[styles.iconButton, styles.iconButtonError]} onPress={() => setDeleteConfirmId(item.id)}>
-                    <Ionicons name="trash" size={18} color={colors.error} />
-                  </TouchableOpacity>
-                ) : null}
-              </View>
-            </View>
-            {item.errorMessage ? (
-              <Text style={[styles.historyError, item.status !== 'Failed' && styles.historyErrorWarning]} numberOfLines={1}>{item.errorMessage}</Text>
-            ) : null}
-          </View>
-        </TouchableOpacity>
-      </View>
+      <HistoryCard
+        item={item}
+        isSelected={selectedIds.has(item.id)}
+        batchMode={batchMode}
+        toggleSelect={toggleSelect}
+        handleDownload={handleDownload}
+        setLogModal={setLogModal}
+        setDeleteConfirmId={setDeleteConfirmId}
+        setVideoPreview={setVideoPreview}
+        setTextPreview={setTextPreview}
+        setAudioPreview={setAudioPreview}
+        setPreviewImage={setPreviewImage}
+        setPreviewImageUrls={setPreviewImageUrls}
+        stopPolling={stopPolling}
+        thumbUri={thumbUri}
+      />
     );
-  }, [selectedIds, batchMode, toggleSelect, handleDownload]);
+  }, [selectedIds, batchMode, toggleSelect, handleDownload, stopPolling]);
 
   const renderFooter = useCallback(() => {
     if (!hasMore) {
@@ -452,7 +502,7 @@ export function HistoryScreen() {
         onBatchDownload={handleBatchDownload}
       />
 
-      <FlatList ref={flatListRef} data={displayedItems} keyExtractor={(item) => item.id} renderItem={renderItem} extraData={{ selectedIds, tick, thumbVersion }} ListEmptyComponent={renderEmpty} ListFooterComponent={renderFooter} onEndReached={loadMore} onEndReachedThreshold={0.3} contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false} />
+      <FlatList ref={flatListRef} data={displayedItems} keyExtractor={(item) => item.id} renderItem={renderItem} extraData={{ selectedIds, thumbVersion }} ListEmptyComponent={renderEmpty} ListFooterComponent={renderFooter} onEndReached={loadMore} onEndReachedThreshold={0.3} contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false} />
 
       <HistoryModals
         logModal={logModal}
@@ -571,6 +621,7 @@ const createStyles = (colors) => ({
   iconButton: { width: 28, height: 28, borderRadius: Radius.xs, alignItems: 'center', justifyContent: 'center' },
   iconButtonSuccess: { backgroundColor: colors.successBg },
   iconButtonPurple: { backgroundColor: colors.purpleBg },
+  iconButtonCopied: { backgroundColor: colors.successBg },
   iconButtonPrimary: { backgroundColor: colors.primaryBg },
   iconButtonError: { backgroundColor: colors.errorBg },
   iconButtonWarning: { backgroundColor: colors.warningBg },

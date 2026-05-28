@@ -1,13 +1,10 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import {
-  View,
+import { Pressable, View,
   Text,
-  TouchableOpacity,
   StyleSheet,
   Modal,
   ActivityIndicator,
-  Platform,
-} from 'react-native';
+  Platform, } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Video, ResizeMode } from 'expo-av';
 import { Spacing } from '../constants/theme';
@@ -98,7 +95,7 @@ function WebVideoPlayer({ visible, videoUrl, onClose }) {
       <View style={s.full}>
         {/* header */}
         <View style={s.header}>
-          <TouchableOpacity onPress={onClose} style={s.btn}><Ionicons name="chevron-down" size={28} color="#fff" /></TouchableOpacity>
+          <Pressable style={({ pressed }) => [s.btn, pressed && { opacity: 0.7 }]} onPress={onClose}><Ionicons name="chevron-down" size={28} color="#fff" /></Pressable>
           <Text style={s.title}>视频预览</Text>
           <View style={s.btn} />
         </View>
@@ -108,7 +105,7 @@ function WebVideoPlayer({ visible, videoUrl, onClose }) {
           <div ref={elRef} style={{ width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }} />
 
           {loading && !error ? <View style={s.loadingOverlay}><ActivityIndicator size="large" color="#fff" /><Text style={s.loadingText}>加载中...</Text></View> : null}
-          {!isPlaying && !loading && !error ? <TouchableOpacity style={s.bigPlay} onPress={togglePlay}><Ionicons name="play-circle" size={72} color="rgba(255,255,255,0.9)" /></TouchableOpacity> : null}
+          {!isPlaying && !loading && !error ? <Pressable style={({ pressed }) => [s.bigPlay, pressed && { opacity: 0.7 }]} onPress={togglePlay}><Ionicons name="play-circle" size={72} color="rgba(255,255,255,0.9)" /></Pressable> : null}
           {error ? <View style={s.center}><Ionicons name="alert-circle-outline" size={48} color="#999" /><Text style={s.errText}>{error}</Text></View> : null}
         </View>
 
@@ -123,8 +120,8 @@ function WebVideoPlayer({ visible, videoUrl, onClose }) {
           </View>
 
           <View style={s.ctrlRow}>
-            <TouchableOpacity style={s.ctrlBtn} onPress={togglePlay}><Ionicons name={isPlaying ? 'pause' : 'play'} size={32} color="#fff" /></TouchableOpacity>
-            <TouchableOpacity style={s.ctrlBtn} onPress={toggleMute}><Ionicons name={isMuted || volume === 0 ? 'volume-mute' : volume < 0.5 ? 'volume-low' : 'volume-medium'} size={24} color="#fff" /></TouchableOpacity>
+            <Pressable style={({ pressed }) => [s.ctrlBtn, pressed && { opacity: 0.7 }]} onPress={togglePlay}><Ionicons name={isPlaying ? 'pause' : 'play'} size={32} color="#fff" /></Pressable>
+            <Pressable style={({ pressed }) => [s.ctrlBtn, pressed && { opacity: 0.7 }]} onPress={toggleMute}><Ionicons name={isMuted || volume === 0 ? 'volume-mute' : volume < 0.5 ? 'volume-low' : 'volume-medium'} size={24} color="#fff" /></Pressable>
             <View style={s.volArea} onClick={(e) => { if (!e.currentTarget) return; const r = e.currentTarget.getBoundingClientRect(); setVol(Math.max(0, Math.min(1, (e.clientX - r.left) / r.width))); }}>
               <View style={s.volBg}><View style={[s.volFill, { width: `${volPct}%` }]} /></View>
             </View>
@@ -174,9 +171,9 @@ function NativeVideoPlayer({ visible, videoUrl, onClose }) {
 
   return (
     <Modal visible={visible} animationType="fade" transparent={false} onRequestClose={onClose}>
-      <TouchableOpacity style={s.full} activeOpacity={1}>
+      <Pressable style={s.full} >
         <View style={s.header}>
-          <TouchableOpacity onPress={onClose} style={s.btn}><Ionicons name="chevron-down" size={28} color="#fff" /></TouchableOpacity>
+          <Pressable style={({ pressed }) => [s.btn, pressed && { opacity: 0.7 }]} onPress={onClose}><Ionicons name="chevron-down" size={28} color="#fff" /></Pressable>
           <Text style={s.title}>视频预览</Text>
           <View style={s.btn} />
         </View>
@@ -185,27 +182,27 @@ function NativeVideoPlayer({ visible, videoUrl, onClose }) {
           {error ? <View style={s.center}><Ionicons name="alert-circle-outline" size={48} color="#999" /><Text style={s.errText}>{error}</Text></View>
           : <Video ref={videoRef} source={{ uri: videoUrl }} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} resizeMode={ResizeMode.CONTAIN} shouldPlay={false} isLooping={false} volume={isMuted ? 0 : volume} onPlaybackStatusUpdate={onPlayback} onError={() => { setError('视频加载失败'); setIsLoading(false); }} />}
           {isLoading && !error ? <View style={s.loadingOverlay}><ActivityIndicator size="large" color="#fff" /><Text style={s.loadingText}>加载中...</Text></View> : null}
-          {!isPlaying && !isLoading && !error ? <TouchableOpacity style={s.bigPlay} onPress={togglePlay}><Ionicons name="play-circle" size={72} color="rgba(255,255,255,0.9)" /></TouchableOpacity> : null}
+          {!isPlaying && !isLoading && !error ? <Pressable style={({ pressed }) => [s.bigPlay, pressed && { opacity: 0.7 }]} onPress={togglePlay}><Ionicons name="play-circle" size={72} color="rgba(255,255,255,0.9)" /></Pressable> : null}
         </View>
 
         <View style={s.ctrlBar}>
           <View style={s.progressRow}>
             <Text style={s.t}>{fmt(position)}</Text>
-            <TouchableOpacity style={s.progArea} activeOpacity={0.8} onPress={(e) => { e.currentTarget.measure((_, __, w) => seek(e.nativeEvent.locationX / w)); }}>
+            <Pressable style={({ pressed }) => [s.progArea, pressed && { opacity: 0.7 }]} onPress={(e) => { e.currentTarget.measure((_, __, w) => seek(e.nativeEvent.locationX / w)); }}>
               <View style={s.progBg}><View style={[s.progFill, { width: `${pct}%` }]} /></View>
-            </TouchableOpacity>
+            </Pressable>
             <Text style={s.t}>{fmt(duration)}</Text>
           </View>
 
           <View style={s.ctrlRow}>
-            <TouchableOpacity style={s.ctrlBtn} onPress={togglePlay}><Ionicons name={isPlaying ? 'pause' : 'play'} size={32} color="#fff" /></TouchableOpacity>
-            <TouchableOpacity style={s.ctrlBtn} onPress={toggleMute}><Ionicons name={isMuted || volume === 0 ? 'volume-mute' : volume < 0.5 ? 'volume-low' : 'volume-medium'} size={24} color="#fff" /></TouchableOpacity>
-            <TouchableOpacity style={s.volArea} activeOpacity={0.8} onPress={(e) => { e.currentTarget.measure((_, __, w) => { const v = Math.max(0, Math.min(1, e.nativeEvent.locationX / w)); setVolume(v); if (v > 0 && isMuted) setIsMuted(false); }); }}>
+            <Pressable style={({ pressed }) => [s.ctrlBtn, pressed && { opacity: 0.7 }]} onPress={togglePlay}><Ionicons name={isPlaying ? 'pause' : 'play'} size={32} color="#fff" /></Pressable>
+            <Pressable style={({ pressed }) => [s.ctrlBtn, pressed && { opacity: 0.7 }]} onPress={toggleMute}><Ionicons name={isMuted || volume === 0 ? 'volume-mute' : volume < 0.5 ? 'volume-low' : 'volume-medium'} size={24} color="#fff" /></Pressable>
+            <Pressable style={({ pressed }) => [s.volArea, pressed && { opacity: 0.7 }]} onPress={(e) => { e.currentTarget.measure((_, __, w) => { const v = Math.max(0, Math.min(1, e.nativeEvent.locationX / w)); setVolume(v); if (v > 0 && isMuted) setIsMuted(false); }); }}>
               <View style={s.volBg}><View style={[s.volFill, { width: `${isMuted ? 0 : volume * 100}%` }]} /></View>
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </View>
-      </TouchableOpacity>
+      </Pressable>
     </Modal>
   );
 }

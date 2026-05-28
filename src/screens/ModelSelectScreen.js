@@ -1,22 +1,20 @@
 import React, { useState, useMemo } from 'react';
-import {
-  Text,
+import { Pressable, Text,
   View,
-  TouchableOpacity,
   ScrollView,
-} from 'react-native';
+  FlatList, } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { MODELS } from '../constants/models';
 import { CATEGORIES, MANUFACTURERS, FAVORITES_MAX_COUNT } from '../constants/modelMeta';
 import { Radius, Spacing } from '../constants/theme';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { useTheme } from '../context/ThemeContext';
-import { useAppContext } from '../context/AppContext';
+import { useFavoritesContext } from '../context/FavoritesContext';
 
 export function ModelSelectScreen({ currentModelId, onSelectModel, onBack }) {
   const styles = useThemedStyles(createStyles);
   const { colors } = useTheme();
-  const { favorites, saveFavorites, isFavorite } = useAppContext();
+  const { favorites, saveFavorites, isFavorite } = useFavoritesContext();
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedModels, setSelectedModels] = useState([...favorites]);
@@ -101,26 +99,20 @@ export function ModelSelectScreen({ currentModelId, onSelectModel, onBack }) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={onBack}
-          activeOpacity={0.7}
-        >
+        <Pressable
+          style={({ pressed }) => [styles.backButton, pressed && { opacity: 0.7 }]} onPress={onBack} >
           <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
-        </TouchableOpacity>
+        </Pressable>
         <Text style={styles.headerTitle}>选择模型</Text>
-        <TouchableOpacity
-          style={styles.editButton}
-          onPress={toggleEditMode}
-          activeOpacity={0.7}
-        >
+        <Pressable
+          style={({ pressed }) => [styles.editButton, pressed && { opacity: 0.7 }]} onPress={toggleEditMode} >
           <Text style={[
             styles.editButtonText,
             isEditMode && styles.editButtonTextActive
           ]}>
             {isEditMode ? '完成' : '添加到常用模型'}
           </Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
       <View style={styles.body}>
@@ -129,17 +121,14 @@ export function ModelSelectScreen({ currentModelId, onSelectModel, onBack }) {
           showsVerticalScrollIndicator={false}
         >
           {categoryList.map((category) => (
-            <TouchableOpacity
+            <Pressable
               key={category.key}
-              style={[
+              style={({ pressed }) => [
                 styles.categoryItem,
                 selectedCategory === category.key && styles.categoryItemActive,
-              ]}
-              onPress={() => {
+              , pressed && { opacity: 0.7 }]} onPress={() => {
                 setSelectedCategory(category.key);
-              }}
-              activeOpacity={0.7}
-            >
+              }} >
               <Text
                 style={[
                   styles.categoryLabel,
@@ -156,72 +145,65 @@ export function ModelSelectScreen({ currentModelId, onSelectModel, onBack }) {
               >
                 {category.count}
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           ))}
         </ScrollView>
 
-        <ScrollView
+        <FlatList
           style={styles.modelList}
-          showsVerticalScrollIndicator={false}
-        >
-          {filteredModels.length === 0 ? (
+          data={filteredModels}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item: model }) => {
+            const isSelected = isEditMode ? selectedModels.includes(model.id) : currentModelId === model.id;
+            return (
+              <Pressable
+                key={model.id}
+                style={({ pressed }) => [
+                  styles.modelCard,
+                  isSelected && styles.modelCardActive,
+                , pressed && { opacity: 0.7 }]} onPress={() => handleModelPress(model.id, selectedCategory)} >
+                <View style={styles.modelCardHeader}>
+                  <Ionicons
+                    name={model.icon.name}
+                    size={24}
+                    color={model.icon.color}
+                    style={{ paddingLeft: 4, paddingRight: 4 }}
+                  />
+                  {isEditMode && (
+                    <View style={[
+                      styles.favoriteCheckbox,
+                      isSelected && styles.favoriteCheckboxChecked,
+                    ]}>
+                      {isSelected && (
+                        <Ionicons name="check" size={14} color="#fff" />
+                      )}
+                    </View>
+                  )}
+                  {!isEditMode && model.isFavorite && (
+                    <Ionicons name="star" size={16} color="#FFD700" />
+                  )}
+                </View>
+                <Text style={[styles.modelCardName, { paddingLeft: 6, paddingRight: 6 }]}>{model.name}</Text>
+                {model.manufacturerInfo && (
+                  <Text style={styles.modelCardManufacturer}>
+                    {model.manufacturerInfo.label}
+                  </Text>
+                )}
+              </Pressable>
+            );
+          }}
+          ListEmptyComponent={
             <View style={styles.emptyState}>
               <Text style={styles.emptyIcon}>📦</Text>
               <Text style={styles.emptyText}>暂无模型</Text>
               {selectedCategory === 'favorite' && !isEditMode && (
-                <>
-                  <Text style={styles.emptySubtext}>点击右上角添加常用模型</Text>
-                </>
+                <Text style={styles.emptySubtext}>点击右上角添加常用模型</Text>
               )}
             </View>
-          ) : (
-            <View style={styles.modelGrid}>
-              {filteredModels.map((model) => {
-                const isSelected = isEditMode ? selectedModels.includes(model.id) : currentModelId === model.id;
-                return (
-                  <TouchableOpacity
-                    key={model.id}
-                    style={[
-                      styles.modelCard,
-                      isSelected && styles.modelCardActive,
-                    ]}
-                    onPress={() => handleModelPress(model.id, selectedCategory)}
-                    activeOpacity={0.7}
-                  >
-                    <View style={styles.modelCardHeader}>
-                      <Ionicons
-                        name={model.icon.name}
-                        size={24}
-                        color={model.icon.color}
-                        style={{ paddingLeft: 4, paddingRight: 4 }}
-                      />
-                      {isEditMode && (
-                        <View style={[
-                          styles.favoriteCheckbox,
-                          isSelected && styles.favoriteCheckboxChecked,
-                        ]}>
-                          {isSelected && (
-                            <Ionicons name="check" size={14} color="#fff" />
-                          )}
-                        </View>
-                      )}
-                      {!isEditMode && model.isFavorite && (
-                        <Ionicons name="star" size={16} color="#FFD700" />
-                      )}
-                    </View>
-                    <Text style={[styles.modelCardName, { paddingLeft: 6, paddingRight: 6 }]}>{model.name}</Text>
-                    {model.manufacturerInfo && (
-                      <Text style={styles.modelCardManufacturer}>
-                        {model.manufacturerInfo.label}
-                      </Text>
-                    )}
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          )}
-
-        </ScrollView>
+          }
+          contentContainerStyle={styles.modelGrid}
+          showsVerticalScrollIndicator={false}
+        />
       </View>
     </View>
   );

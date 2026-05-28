@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
   Text,
   View,
-  TouchableOpacity,
   ScrollView,
   Modal,
   Pressable,
@@ -61,7 +60,7 @@ export function ApiKeyDropdown({
       animationType="fade"
       onRequestClose={onClose}
     >
-      <Pressable style={styles.overlay} onPress={onClose}>
+      <Pressable style={({ pressed }) => [styles.overlay, pressed && { opacity: 0.7 }]} onPress={onClose}>
         <View style={styles.dropdownContainer}>
           <Pressable>
             <View style={styles.dropdown}>
@@ -84,18 +83,15 @@ export function ApiKeyDropdown({
                 </View>
               ) : (
                 apiKeys.map((keyItem, index) => (
-                  <TouchableOpacity
+                  <Pressable
                     key={keyItem.id}
-                    style={[
+                    style={({ pressed }) => [
                       styles.dropdownItem,
                       activeApiKeyId === keyItem.id && styles.dropdownItemActive,
                       index < apiKeys.length - 1 && styles.dropdownItemBorder,
-                    ]}
-                    onPress={() => {
+                    , pressed && { opacity: 0.7 }]} onPress={() => {
                       onSwitchKey(keyItem.id);
-                    }}
-                    activeOpacity={0.7}
-                  >
+                    }} >
                     <View style={styles.itemContent}>
                       {editingKeyId === keyItem.id ? (
                         <TextInput
@@ -123,27 +119,21 @@ export function ApiKeyDropdown({
                         </Text>
                       )}
                     </View>
-                    <TouchableOpacity
-                      style={styles.editKeyNameButton}
-                      onPress={(e) => {
+                    <Pressable
+                      style={({ pressed }) => [styles.editKeyNameButton, pressed && { opacity: 0.7 }]} onPress={(e) => {
                         e.stopPropagation();
                         startRename(keyItem);
-                      }}
-                      activeOpacity={0.6}
-                    >
+                      }} >
                       <Ionicons name="pencil-outline" size={14} color={colors.textTertiary} />
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.deleteButton}
-                      onPress={(e) => {
+                    </Pressable>
+                    <Pressable
+                      style={({ pressed }) => [styles.deleteButton, pressed && { opacity: 0.7 }]} onPress={(e) => {
                         e.stopPropagation();
                         onDeleteKey(keyItem.id);
-                      }}
-                      activeOpacity={0.6}
-                    >
+                      }} >
                       <Ionicons name="trash-outline" size={16} color={colors.error} />
-                    </TouchableOpacity>
-                  </TouchableOpacity>
+                    </Pressable>
+                  </Pressable>
                 ))
               )}
             </ScrollView>
@@ -168,37 +158,28 @@ export function ApiKeyDropdown({
                   maxLength={30}
                 />
                 <View style={styles.addInputRow}>
-                  <TouchableOpacity
-                    style={styles.cancelButton}
-                    onPress={() => {
+                  <Pressable
+                    style={({ pressed }) => [styles.cancelButton, pressed && { opacity: 0.7 }]} onPress={() => {
                       setShowAddInput(false);
                       setNewKey('');
                       setNewKeyName('');
-                    }}
-                    activeOpacity={0.7}
-                  >
+                    }} >
                     <Text style={styles.cancelButtonText}>取消</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.addConfirmButton, !newKey.trim() && styles.addConfirmButtonDisabled]}
-                    onPress={handleAdd}
-                    disabled={!newKey.trim()}
-                    activeOpacity={0.7}
-                  >
+                  </Pressable>
+                  <Pressable
+                    style={({ pressed }) => [styles.addConfirmButton, !newKey.trim() && styles.addConfirmButtonDisabled, pressed && { opacity: 0.7 }]} onPress={handleAdd}
+                    disabled={!newKey.trim()} >
                     <Text style={styles.addConfirmButtonText}>添加</Text>
-                  </TouchableOpacity>
+                  </Pressable>
                 </View>
               </View>
             ) : (
               <View style={styles.dropdownFooter}>
-                <TouchableOpacity
-                  style={styles.addButton}
-                  onPress={() => setShowAddInput(true)}
-                  activeOpacity={0.7}
-                >
+                <Pressable
+                  style={({ pressed }) => [styles.addButton, pressed && { opacity: 0.7 }]} onPress={() => setShowAddInput(true)} >
                   <Ionicons name="add-circle-outline" size={18} color={colors.primary} />
                   <Text style={styles.addButtonText}>新增密钥</Text>
-                </TouchableOpacity>
+                </Pressable>
               </View>
             )}
           </View>
@@ -343,7 +324,7 @@ const createStyles = (colors) => ({
     backgroundColor: colors.bg,
     borderRadius: Radius.sm,
     paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
+    paddingVertical: 14,
     marginTop: Spacing.sm,
   },
   addInputRow: {
@@ -370,8 +351,7 @@ const createStyles = (colors) => ({
     backgroundColor: colors.bg,
     borderRadius: Radius.sm,
     paddingHorizontal: Spacing.sm,
-    paddingTop: 8,
-    paddingBottom: 8,
+    paddingVertical: 14,
     fontFamily: 'monospace',
   },
   addConfirmButton: {

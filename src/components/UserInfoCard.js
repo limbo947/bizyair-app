@@ -1,11 +1,9 @@
 import React from 'react';
-import {
-  Text,
+import { Pressable, Text,
   View,
   TextInput,
-  TouchableOpacity,
-  Image,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { ENV_API_KEY } from '../constants/models';
 import { Radius, Spacing } from '../constants/theme';
@@ -29,12 +27,9 @@ export function UserInfoCard({
   if (userInfo && (apiKey || ENV_API_KEY) && !showApiKeyInput) {
     return (
       <View style={[styles.card, styles.userCard]}>
-        <TouchableOpacity
-          style={styles.userCardTop}
-          onPress={onToggleExpand}
-          activeOpacity={0.7}
-        >
-          <Image source={{ uri: userInfo.avatar }} style={styles.userAvatar} />
+        <Pressable
+          style={({ pressed }) => [styles.userCardTop, pressed && { opacity: 0.7 }]} onPress={onToggleExpand} >
+          <Image source={{ uri: userInfo.avatar }} style={styles.userAvatar} contentFit="cover" />
           <View style={styles.userInfoText}>
             <Text style={styles.userName}>{userInfo.name}</Text>
             <View style={styles.userLevelRow}>
@@ -67,7 +62,7 @@ export function UserInfoCard({
             color={colors.textTertiary}
             style={{ marginLeft: Spacing.sm }}
           />
-        </TouchableOpacity>
+        </Pressable>
 
         {userCardExpanded ? (
           <>
@@ -102,21 +97,19 @@ export function UserInfoCard({
                 </Text>
                 <View style={styles.apiKeyActions}>
                   {apiKey || ENV_API_KEY ? (
-                    <TouchableOpacity
-                      style={styles.refreshKeyButton}
-                      onPress={onRefresh}
+                    <Pressable
+                      style={({ pressed }) => [styles.refreshKeyButton, pressed && { opacity: 0.7 }]} onPress={onRefresh}
                     >
                       <Ionicons name="refresh-outline" size={16} color={colors.primary} />
-                    </TouchableOpacity>
+                    </Pressable>
                   ) : null}
-                  <TouchableOpacity
-                    style={styles.changeKeyButton}
-                    onPress={onShowApiKeyInput}
+                  <Pressable
+                    style={({ pressed }) => [styles.changeKeyButton, pressed && { opacity: 0.7 }]} onPress={onShowApiKeyInput}
                   >
                     <Text style={styles.changeKeyButtonText}>
                       {apiKey || ENV_API_KEY ? '更换' : '输入'}
                     </Text>
-                  </TouchableOpacity>
+                  </Pressable>
                 </View>
               </View>
             </View>
@@ -143,12 +136,11 @@ export function UserInfoCard({
           placeholderTextColor={colors.textPlaceholder}
         />
         {apiKey.trim() ? (
-          <TouchableOpacity
-            style={styles.saveKeyButton}
-            onPress={onSaveApiKey}
+          <Pressable
+            style={({ pressed }) => [styles.saveKeyButton, pressed && { opacity: 0.7 }]} onPress={onSaveApiKey}
           >
             <Text style={styles.saveKeyButtonText}>保存密钥</Text>
-          </TouchableOpacity>
+          </Pressable>
         ) : null}
       </View>
     );
@@ -166,21 +158,19 @@ export function UserInfoCard({
         </Text>
         <View style={styles.apiKeyActions}>
           {apiKey || ENV_API_KEY ? (
-            <TouchableOpacity
-              style={styles.refreshKeyButton}
-              onPress={onRefresh}
+            <Pressable
+              style={({ pressed }) => [styles.refreshKeyButton, pressed && { opacity: 0.7 }]} onPress={onRefresh}
             >
               <Ionicons name="refresh-outline" size={16} color={colors.primary} />
-            </TouchableOpacity>
+            </Pressable>
           ) : null}
-          <TouchableOpacity
-            style={styles.changeKeyButton}
-            onPress={onShowApiKeyInput}
+          <Pressable
+            style={({ pressed }) => [styles.changeKeyButton, pressed && { opacity: 0.7 }]} onPress={onShowApiKeyInput}
           >
             <Text style={styles.changeKeyButtonText}>
               {apiKey || ENV_API_KEY ? '更换' : '输入'}
             </Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </View>
     </View>

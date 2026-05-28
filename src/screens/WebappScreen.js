@@ -1,21 +1,19 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import {
-  Text,
+import { Pressable, Text,
   View,
   TextInput,
-  TouchableOpacity,
   Keyboard,
   ScrollView,
   ActivityIndicator,
-  Image,
   Modal,
   FlatList,
-  Alert,
-} from 'react-native';
+  Alert, } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as DocumentPicker from 'expo-document-picker';
-import { useAppContext } from '../context/AppContext';
+import { useApiKeyContext } from '../context/ApiKeyContext';
+import { useHistoryContext } from '../context/HistoryContext';
 import { useTheme } from '../context/ThemeContext';
 import { submitWebappTask, uploadImageFile, uploadVideoFile, fetchWebappDetail } from '../services/apiClient';
 import { generateId } from '../utils/helpers';
@@ -124,9 +122,11 @@ export function WebappScreen() {
   const {
     apiKey, setApiKey, saveApiKey, apiKeys, activeApiKeyId,
     addApiKey, removeApiKey, switchApiKey, renameApiKey,
-    addToHistory, startWebappPolling, updateHistoryItem,
     userInfo, walletBalance, refreshUserInfo,
-  } = useAppContext();
+  } = useApiKeyContext();
+  const {
+    addToHistory, startWebappPolling, updateHistoryItem,
+  } = useHistoryContext();
   const { themeMode, toggleTheme, colors } = useTheme();
   const styles = useThemedStyles(createStyles);
 
@@ -368,7 +368,7 @@ export function WebappScreen() {
   // ============ 列表模式渲染 ============
   const renderListItem = useCallback(({ item }) => (
     <View style={styles.listItem}>
-      <TouchableOpacity style={styles.listItemContent} onPress={() => enterEditMode(item)} activeOpacity={0.7}>
+      <Pressable style={({ pressed }) => [styles.listItemContent, pressed && { opacity: 0.7 }]} onPress={() => enterEditMode(item)} >
         <View style={styles.listItemHeader}>
           <Text style={styles.listItemName} numberOfLines={1}>{item.name}</Text>
         </View>
@@ -377,11 +377,11 @@ export function WebappScreen() {
           <Text style={styles.listItemId}>WebApp #{item.webAppId}</Text>
         </View>
         {item.appDetail?.intro ? <Text style={styles.listItemIntro} numberOfLines={1}>{item.appDetail.intro}</Text> : null}
-      </TouchableOpacity>
+      </Pressable>
       <View style={styles.listItemActions}>
-        <TouchableOpacity style={styles.listItemDeleteBtn} onPress={() => deleteApp(item.id)} activeOpacity={0.7}>
+        <Pressable style={({ pressed }) => [styles.listItemDeleteBtn, pressed && { opacity: 0.7 }]} onPress={() => deleteApp(item.id)} >
           <Ionicons name="trash-outline" size={16} color={colors.error} />
-        </TouchableOpacity>
+        </Pressable>
       </View>
     </View>
   ), [colors, enterEditMode, deleteApp, styles]);
@@ -392,8 +392,8 @@ export function WebappScreen() {
         <View style={styles.header}>
           {userInfo && (apiKey || ENV_API_KEY) ? (
             <View style={styles.headerInner}>
-              <TouchableOpacity style={styles.headerLeft} onPress={() => setShowApiKeyDropdown(true)} activeOpacity={0.7}>
-                <Image source={{ uri: userInfo.avatar }} style={styles.headerAvatar} />
+              <Pressable style={({ pressed }) => [styles.headerLeft, pressed && { opacity: 0.7 }]} onPress={() => setShowApiKeyDropdown(true)} >
+                <Image source={{ uri: userInfo.avatar }} style={styles.headerAvatar} contentFit="cover" />
                 <View style={styles.headerUserInfo}>
                   <View style={styles.headerNameRow}>
                     <Text style={styles.headerUserName}>{userInfo.name}</Text>
@@ -406,10 +406,10 @@ export function WebappScreen() {
                     <Text style={[styles.headerBalanceText, { paddingLeft: 2, paddingTop: 2 }]}>{walletBalance?.gift_balance_amount ?? '--'}</Text>
                   </View>
                 </View>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.headerThemeButton} onPress={toggleTheme} activeOpacity={0.7}>
+              </Pressable>
+              <Pressable style={({ pressed }) => [styles.headerThemeButton, pressed && { opacity: 0.7 }]} onPress={toggleTheme} >
                 <Ionicons name={themeMode === 'dark' ? 'sunny-outline' : 'moon-outline'} size={20} color={colors.textPrimary} />
-              </TouchableOpacity>
+              </Pressable>
             </View>
           ) : (
             <View style={styles.headerInner}>
@@ -420,9 +420,9 @@ export function WebappScreen() {
                 <TextInput style={styles.headerApiInput} placeholder="输入Bizyair API Key" value={apiKey} onChangeText={setApiKey} secureTextEntry placeholderTextColor={colors.textPlaceholder} />
               </View>
               {apiKey.trim() ? (
-                <TouchableOpacity style={styles.headerSaveButton} onPress={handleSaveApiKey} activeOpacity={0.7} disabled={isSaving}>
+                <Pressable style={({ pressed }) => [styles.headerSaveButton, pressed && { opacity: 0.7 }]} onPress={handleSaveApiKey} disabled={isSaving}>
                   {isSaving ? <ActivityIndicator size="small" color={colors.textInverse} /> : <Text style={styles.headerSaveButtonText}>保存</Text>}
-                </TouchableOpacity>
+                </Pressable>
               ) : null}
             </View>
           )}
@@ -430,10 +430,10 @@ export function WebappScreen() {
 
         <View style={styles.listTitleBar}>
           <Text style={styles.listTitle}>AI 应用</Text>
-          <TouchableOpacity style={styles.addBtn} onPress={() => enterEditMode()} activeOpacity={0.7}>
+          <Pressable style={({ pressed }) => [styles.addBtn, pressed && { opacity: 0.7 }]} onPress={() => enterEditMode()} >
             <Ionicons name="add" size={20} color={colors.textInverse} />
             <Text style={styles.addBtnText}>新增</Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
 
         {savedApps.length === 0 ? (
@@ -461,9 +461,9 @@ export function WebappScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.headerInner}>
-          <TouchableOpacity style={styles.backButton} onPress={() => setMode('list')} activeOpacity={0.7}>
+          <Pressable style={({ pressed }) => [styles.backButton, pressed && { opacity: 0.7 }]} onPress={() => setMode('list')} >
             <Ionicons name="arrow-back" size={22} color={colors.textPrimary} />
-          </TouchableOpacity>
+          </Pressable>
           <Text style={styles.headerTitle}>{editingAppId ? '编辑应用' : '新增应用'}</Text>
           <View style={{ width: 40 }} />
         </View>
@@ -478,9 +478,9 @@ export function WebappScreen() {
             </View>
             <TextInput style={styles.apiKeyInput} placeholder="输入你的Bizyair API Key" value={apiKey} onChangeText={setApiKey} secureTextEntry maxLength={100} placeholderTextColor={colors.textPlaceholder} />
             {apiKey.trim() ? (
-              <TouchableOpacity style={styles.saveKeyButton} onPress={handleSaveApiKey} disabled={isSaving}>
+              <Pressable style={({ pressed }) => [styles.saveKeyButton, pressed && { opacity: 0.7 }]} onPress={handleSaveApiKey} disabled={isSaving}>
                 {isSaving ? <ActivityIndicator size="small" color={colors.textInverse} /> : <Text style={styles.saveKeyButtonText}>保存密钥</Text>}
-              </TouchableOpacity>
+              </Pressable>
             ) : null}
           </View>
         ) : null}
@@ -493,9 +493,9 @@ export function WebappScreen() {
             <Text style={styles.label}>应用网址/示例API</Text>
             <View style={{ flex: 1 }} />
             {apiCodeText.length > 0 ? (
-              <TouchableOpacity onPress={() => setApiCodeText('')}>
+              <Pressable style={({ pressed }) => pressed && { opacity: 0.7 }} onPress={() => setApiCodeText('')}>
                 <Text style={styles.clearButtonText}>清空</Text>
-              </TouchableOpacity>
+              </Pressable>
             ) : null}
           </View>
           <TextInput
@@ -510,14 +510,14 @@ export function WebappScreen() {
             spellCheck={false}
           />
           <View style={styles.parseButtonRow}>
-            <TouchableOpacity style={[styles.parseButton, isLoadingApp && styles.parseButtonDisabled, { flex: 1 }]} onPress={handleParse} activeOpacity={0.7} disabled={isLoadingApp}>
+            <Pressable style={({ pressed }) => [styles.parseButton, isLoadingApp && styles.parseButtonDisabled, { flex: 1 }, pressed && { opacity: 0.7 }]} onPress={handleParse} disabled={isLoadingApp}>
               {isLoadingApp ? <ActivityIndicator size="small" color={colors.textInverse} /> : <Ionicons name="search-outline" size={16} color={colors.textInverse} />}
               <Text style={styles.parseButtonText}>{isLoadingApp ? '获取中...' : '获取参数'}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.saveAppButton, !hasParsed && styles.saveAppButtonDisabled]} onPress={handleSaveApp} activeOpacity={0.7} disabled={!hasParsed}>
+            </Pressable>
+            <Pressable style={({ pressed }) => [styles.saveAppButton, !hasParsed && styles.saveAppButtonDisabled, pressed && { opacity: 0.7 }]} onPress={handleSaveApp} disabled={!hasParsed}>
               <Ionicons name="save-outline" size={16} color={hasParsed ? colors.primary : colors.textTertiary} />
               <Text style={[styles.saveAppButtonText, !hasParsed && { color: colors.textTertiary }]}>保存</Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </View>
         )}
@@ -527,11 +527,11 @@ export function WebappScreen() {
         {/* 应用信息卡片（可折叠） */}
         {hasParsed && appDetail ? (
           <View style={styles.appInfoCard}>
-            <TouchableOpacity style={styles.appInfoHeader} onPress={() => setAppInfoExpanded(!appInfoExpanded)} activeOpacity={0.7}>
+            <Pressable style={({ pressed }) => [styles.appInfoHeader, pressed && { opacity: 0.7 }]} onPress={() => setAppInfoExpanded(!appInfoExpanded)} >
               <Ionicons name="apps-outline" size={18} color={colors.primary} />
               <Text style={styles.appInfoName} numberOfLines={1}>{appDetail.name}</Text>
               <Ionicons name={appInfoExpanded ? 'chevron-up-outline' : 'chevron-down-outline'} size={16} color={colors.textTertiary} />
-            </TouchableOpacity>
+            </Pressable>
             {appInfoExpanded ? (
               <View style={styles.appInfoExpanded}>
                 <View style={styles.appInfoMeta}>
@@ -573,32 +573,31 @@ export function WebappScreen() {
                   <Text style={styles.paramKey}>{key}</Text>
                 </View>
                 {(fieldType === 'customtext' || fieldType === 'string' || ((fieldType === 'number' || fieldType === 'slider') && String(inputValues[key]).length > 0)) ? (
-                  <TouchableOpacity onPress={() => handleParamChange(key, fieldType === 'number' || fieldType === 'slider' ? '' : '')}>
+                  <Pressable style={({ pressed }) => pressed && { opacity: 0.7 }} onPress={() => handleParamChange(key, fieldType === 'number' || fieldType === 'slider' ? '' : '')}>
                     <Text style={styles.clearButtonText}>清空</Text>
-                  </TouchableOpacity>
+                  </Pressable>
                 ) : null}
               </View>
 
               {isFileUpload ? (
                 <View style={styles.imageParamContainer}>
                   {value && mediaType === 'image' ? (
-                    <Image source={{ uri: value }} style={styles.imagePreview} resizeMode="contain" />
+                    <Image source={{ uri: value }} style={styles.imagePreview} contentFit="contain" />
                   ) : value ? (
                     <View style={styles.fileInfoRow}>
                       <Ionicons name={fileInfoIcon} size={20} color={colors.primary} />
                       <Text style={styles.fileInfoText} numberOfLines={1}>{value.split('/').pop().split('?')[0]}</Text>
                     </View>
                   ) : null}
-                  <TouchableOpacity style={styles.uploadButton} onPress={() => handleFileUpload(key, mediaType)} disabled={uploadingKey === key} activeOpacity={0.7}>
+                  <Pressable style={({ pressed }) => [styles.uploadButton, pressed && { opacity: 0.7 }]} onPress={() => handleFileUpload(key, mediaType)} disabled={uploadingKey === key} >
                     {uploadingKey === key ? <ActivityIndicator size="small" color={colors.primary} /> : <Ionicons name={uploadIcon} size={18} color={colors.primary} />}
                     <Text style={styles.uploadButtonText}>{uploadLabel}</Text>
-                  </TouchableOpacity>
+                  </Pressable>
                 </View>
               ) : fieldType === 'combo' ? (
-                <TouchableOpacity
+                <Pressable
                   ref={ref => { if (ref) comboRefs.current[key] = ref; }}
-                  style={styles.comboButton}
-                  onPress={() => {
+                  style={({ pressed }) => [styles.comboButton, pressed && { opacity: 0.7 }]} onPress={() => {
                     const ref = comboRefs.current[key];
                     if (ref) {
                       ref.measure((x, y, width, height, pageX, pageY) => {
@@ -607,12 +606,10 @@ export function WebappScreen() {
                         setComboOptions(fieldOpts.values || []);
                       });
                     }
-                  }}
-                  activeOpacity={0.7}
-                >
+                  }} >
                   <Text style={styles.comboValue} numberOfLines={1}>{String(value)}</Text>
                   <Ionicons name={comboExpanded === key ? 'chevron-up' : 'chevron-down'} size={16} color={colors.textSecondary} />
-                </TouchableOpacity>
+                </Pressable>
               ) : fieldType === 'number' || fieldType === 'slider' ? (
                 <View>
                   <TextInput
@@ -640,12 +637,12 @@ export function WebappScreen() {
                   placeholderTextColor={colors.textPlaceholder}
                 />
               ) : fieldType === 'toggle' ? (
-                <TouchableOpacity style={styles.toggleContainer} onPress={() => handleParamChange(key, !inputValues[key])} activeOpacity={0.7}>
+                <Pressable style={({ pressed }) => [styles.toggleContainer, pressed && { opacity: 0.7 }]} onPress={() => handleParamChange(key, !inputValues[key])} >
                   <View style={[styles.toggleTrack, inputValues[key] && styles.toggleTrackActive]}>
                     <View style={[styles.toggleThumb, inputValues[key] && { marginLeft: 20 }]} />
                   </View>
                   <Text style={styles.toggleLabel}>{inputValues[key] ? '开启' : '关闭'}</Text>
-                </TouchableOpacity>
+                </Pressable>
               ) : typeof value === 'string' && value.length > 50 ? (
                 <ResizableTextInput
                   value={String(inputValues[key])}
@@ -660,31 +657,31 @@ export function WebappScreen() {
           );
         })}
 
-        <TouchableOpacity style={[styles.generateButton, isSubmitting && styles.generateButtonDisabled]} onPress={handleSubmit} disabled={isSubmitting}>
+        <Pressable style={({ pressed }) => [styles.generateButton, isSubmitting && styles.generateButtonDisabled, pressed && { opacity: 0.7 }]} onPress={handleSubmit} disabled={isSubmitting}>
           {isSubmitting ? <ActivityIndicator color={colors.textInverse} /> : null}
           <Text style={styles.generateButtonText}>{isSubmitting ? '提交中...' : '提交任务'}</Text>
-        </TouchableOpacity>
+        </Pressable>
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
       </ScrollView>
 
       {/* Combo 就地下拉 Modal */}
       <Modal visible={comboExpanded !== null} transparent animationType="none" onRequestClose={() => setComboExpanded(null)}>
-        <TouchableOpacity style={styles.comboOverlay} activeOpacity={1} onPress={() => setComboExpanded(null)}>
+        <Pressable style={styles.comboOverlay} onPress={() => setComboExpanded(null)}>
           <View style={[styles.comboDropdown, { top: comboLayout.y, left: comboLayout.x, width: comboLayout.width }]}>
             <ScrollView nestedScrollEnabled style={styles.comboDropdownScroll}>
               {comboOptions.map(item => (
-                <TouchableOpacity
+                <Pressable
                   key={String(item)}
-                  style={[styles.comboItem, item === inputValues[comboExpanded] && styles.comboItemActive]}
+                  style={({ pressed }) => [styles.comboItem, item === inputValues[comboExpanded] && styles.comboItemActive, pressed && { opacity: 0.7 }]}
                   onPress={() => { handleParamChange(comboExpanded, item); setComboExpanded(null); }}
                 >
                   <Text style={item === inputValues[comboExpanded] ? styles.comboItemTextActive : styles.comboItemText}>{item}</Text>
                   {item === inputValues[comboExpanded] ? <Ionicons name="checkmark" size={16} color={colors.primary} /> : null}
-                </TouchableOpacity>
+                </Pressable>
               ))}
             </ScrollView>
           </View>
-        </TouchableOpacity>
+        </Pressable>
       </Modal>
 
       {/* 保存名称弹窗 */}
@@ -694,12 +691,12 @@ export function WebappScreen() {
             <Text style={styles.saveNameTitle}>保存应用</Text>
             <TextInput style={styles.saveNameInput} value={saveNameText} onChangeText={setSaveNameText} placeholder="输入应用名称" placeholderTextColor={colors.textPlaceholder} autoFocus />
             <View style={styles.saveNameActions}>
-              <TouchableOpacity style={styles.saveNameCancel} onPress={() => setSaveNameVisible(false)}>
+              <Pressable style={({ pressed }) => [styles.saveNameCancel, pressed && { opacity: 0.7 }]} onPress={() => setSaveNameVisible(false)}>
                 <Text style={styles.saveNameCancelText}>取消</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.saveNameConfirm} onPress={confirmSaveApp}>
+              </Pressable>
+              <Pressable style={({ pressed }) => [styles.saveNameConfirm, pressed && { opacity: 0.7 }]} onPress={confirmSaveApp}>
                 <Text style={styles.saveNameConfirmText}>确定</Text>
-              </TouchableOpacity>
+              </Pressable>
             </View>
           </View>
         </View>

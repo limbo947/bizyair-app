@@ -1,8 +1,8 @@
 import React from 'react';
 import {
+  Pressable,
   Text,
   View,
-  TouchableOpacity,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Radius, Spacing } from '../constants/theme';
@@ -42,11 +42,8 @@ export function ModelSelector({
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity
-        style={styles.currentModelButton}
-        onPress={onOpenFavorites}
-        activeOpacity={0.7}
-      >
+      <Pressable
+        style={({ pressed }) => [styles.currentModelButton, pressed && { opacity: 0.7 }]} onPress={onOpenFavorites} >
         <Ionicons
           name={currentModel.icon.name}
           size={18}
@@ -55,7 +52,7 @@ export function ModelSelector({
         />
         <Text style={styles.currentModelName}>{currentModel.name}</Text>
         <Ionicons name="ellipsis-horizontal" size={18} color={colors.textTertiary} style={{ paddingLeft: 4, paddingRight: 4 }} />
-      </TouchableOpacity>
+      </Pressable>
     </View>
   );
 }

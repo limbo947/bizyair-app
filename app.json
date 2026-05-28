@@ -2,7 +2,8 @@
     "expo":  {
                  "name":  "Bizyair assistant",
                  "slug":  "bizyair-assistant",
-                 "version":  "1.0.17",
+                "scheme":  "bizyair",
+                "version":  "1.0.17",
                  "orientation":  "portrait",
                  "icon":  "./assets/icon.png",
                  "userInterfaceStyle":  "light",

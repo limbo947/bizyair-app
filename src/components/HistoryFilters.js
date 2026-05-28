@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, TouchableOpacity, Text, TextInput, ScrollView, Modal } from 'react-native';
+import { Pressable, View, Text, TextInput, ScrollView, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Radius, Spacing } from '../constants/theme';
 import { useThemedStyles } from '../hooks/useThemedStyles';
@@ -97,7 +97,7 @@ export function HistoryFilters({
           <Ionicons name="search" size={18} color={colors.textTertiary} />
           <TextInput style={styles.searchInput} placeholder="搜索提示词、模型名..." value={searchText} onChangeText={onSearchChange} placeholderTextColor={colors.textPlaceholder} />
           {searchText.length > 0 ? (
-            <TouchableOpacity onPress={() => onSearchChange('')}><Text style={styles.clearSearch}>✕</Text></TouchableOpacity>
+            <Pressable style={({ pressed }) => pressed && { opacity: 0.7 }} onPress={() => onSearchChange('')}><Text style={styles.clearSearch}>✕</Text></Pressable>
           ) : null}
         </View>
       </View>
@@ -105,50 +105,50 @@ export function HistoryFilters({
       <View style={styles.filterBar}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScrollContent}>
           {FILTER_OPTIONS.map((opt) => (
-            <TouchableOpacity key={opt.key} style={[styles.filterChip, filterBy === opt.key && styles.filterChipActive]} onPress={() => onFilterChange(opt.key)}>
+            <Pressable key={opt.key} style={({ pressed }) => [styles.filterChip, filterBy === opt.key && styles.filterChipActive, pressed && { opacity: 0.7 }]} onPress={() => onFilterChange(opt.key)}>
               <Text style={[styles.filterChipText, filterBy === opt.key && styles.filterChipTextActive]}>{opt.label}{opt.key === 'all' ? ` (${history.length})` : ''}</Text>
-            </TouchableOpacity>
+            </Pressable>
           ))}
         </ScrollView>
-        <TouchableOpacity style={styles.sourceButton} onPress={() => setShowSourcePicker(true)}>
+        <Pressable style={({ pressed }) => [styles.sourceButton, pressed && { opacity: 0.7 }]} onPress={() => setShowSourcePicker(true)}>
           <Text style={styles.sourceButtonText}>{currentSourceLabel}</Text>
           <Ionicons name="chevron-down" size={14} color={colors.textSecondary} />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.sortButton} onPress={onSortPress}>
+        </Pressable>
+        <Pressable style={({ pressed }) => [styles.sortButton, pressed && { opacity: 0.7 }]} onPress={onSortPress}>
           <Ionicons name="funnel-outline" size={18} color={colors.textSecondary} />
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
       <Modal visible={showSourcePicker} transparent animationType="fade" onRequestClose={() => setShowSourcePicker(false)}>
-        <TouchableOpacity style={styles.sourcePickerOverlay} activeOpacity={1} onPress={() => setShowSourcePicker(false)}>
+        <Pressable style={styles.sourcePickerOverlay} onPress={() => setShowSourcePicker(false)}>
           <View style={styles.sourcePickerContent}>
             <Text style={styles.sourcePickerTitle}>来源筛选</Text>
             {SOURCE_OPTIONS.map((opt) => (
-              <TouchableOpacity key={opt.key} style={[styles.sourcePickerOption, sourceFilter === opt.key && styles.sourcePickerOptionActive]} onPress={() => { onSourceFilterChange(opt.key); setShowSourcePicker(false); }}>
+              <Pressable key={opt.key} style={({ pressed }) => [styles.sourcePickerOption, sourceFilter === opt.key && styles.sourcePickerOptionActive, pressed && { opacity: 0.7 }]} onPress={() => { onSourceFilterChange(opt.key); setShowSourcePicker(false); }}>
                 <Text style={[styles.sourcePickerOptionText, sourceFilter === opt.key && styles.sourcePickerOptionTextActive]}>{opt.label}</Text>
                 {sourceFilter === opt.key ? <Text style={styles.sourcePickerCheck}>✓</Text> : null}
-              </TouchableOpacity>
+              </Pressable>
             ))}
           </View>
-        </TouchableOpacity>
+        </Pressable>
       </Modal>
 
       {history.length > 0 ? (
         <View style={styles.batchBar}>
-          <TouchableOpacity style={[styles.batchToggleButton, batchMode && styles.batchToggleButtonActive]} onPress={onToggleBatchMode}>
+          <Pressable style={({ pressed }) => [styles.batchToggleButton, batchMode && styles.batchToggleButtonActive, pressed && { opacity: 0.7 }]} onPress={onToggleBatchMode}>
             <Text style={[styles.batchToggleText, batchMode && styles.batchToggleTextActive]}>{batchMode ? '取消批量' : '批量操作'}</Text>
-          </TouchableOpacity>
+          </Pressable>
           {batchMode ? (
             <View style={styles.batchActions}>
-              <TouchableOpacity style={styles.batchActionButton} onPress={onSelectAll}><Text style={styles.batchActionText}>全选</Text></TouchableOpacity>
-              <TouchableOpacity style={styles.batchActionButton} onPress={onDeselectAll}><Text style={styles.batchActionText}>取消</Text></TouchableOpacity>
+              <Pressable style={({ pressed }) => [styles.batchActionButton, pressed && { opacity: 0.7 }]} onPress={onSelectAll}><Text style={styles.batchActionText}>全选</Text></Pressable>
+              <Pressable style={({ pressed }) => [styles.batchActionButton, pressed && { opacity: 0.7 }]} onPress={onDeselectAll}><Text style={styles.batchActionText}>取消</Text></Pressable>
               <Text style={styles.batchCount}>已选 {selectedIds.size}/{history.length}</Text>
-              <TouchableOpacity style={[styles.batchActionButton, styles.batchDeleteButton]} onPress={onBatchDeletePress} disabled={selectedIds.size === 0}>
+              <Pressable style={({ pressed }) => [styles.batchActionButton, styles.batchDeleteButton, pressed && { opacity: 0.7 }]} onPress={onBatchDeletePress} disabled={selectedIds.size === 0}>
                 <Text style={[styles.batchActionText, styles.batchDeleteText]}>删除({selectedIds.size})</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.batchActionButton, styles.batchDownloadBtn]} onPress={onBatchDownload} disabled={selectedIds.size === 0 || isDownloading}>
+              </Pressable>
+              <Pressable style={({ pressed }) => [styles.batchActionButton, styles.batchDownloadBtn, pressed && { opacity: 0.7 }]} onPress={onBatchDownload} disabled={selectedIds.size === 0 || isDownloading}>
                 <Text style={[styles.batchActionText, styles.batchDownloadText]}>{isDownloading ? '下载中...' : `下载(${selectedIds.size})`}</Text>
-              </TouchableOpacity>
+              </Pressable>
             </View>
           ) : null}
         </View>

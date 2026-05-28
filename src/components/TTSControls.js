@@ -1,10 +1,7 @@
 import React from 'react';
-import {
-  View,
+import { Pressable, View,
   Text,
-  TextInput,
-  TouchableOpacity,
-  } from 'react-native';
+  TextInput, } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Radius, Spacing } from '../constants/theme';
 import { useThemedStyles } from '../hooks/useThemedStyles';
@@ -41,13 +38,12 @@ export function TTSControls({
         <ParamLabel label="语音" required />
         <View style={styles.chipRow}>
           {(voices || []).map((v) => (
-            <TouchableOpacity
+            <Pressable
               key={v}
-              style={[styles.chip, voice === v && styles.chipActive]}
-              onPress={() => setVoice(v)}
+              style={({ pressed }) => [styles.chip, voice === v && styles.chipActive, pressed && { opacity: 0.7 }]} onPress={() => setVoice(v)}
             >
               <Text style={[styles.chipText, voice === v && styles.chipTextActive]}>{v}</Text>
-            </TouchableOpacity>
+            </Pressable>
           ))}
         </View>
       </View>
@@ -56,13 +52,12 @@ export function TTSControls({
         <ParamLabel label="输出格式" required={false} />
         <View style={styles.chipRow}>
           {(formats || []).map((f) => (
-            <TouchableOpacity
+            <Pressable
               key={f}
-              style={[styles.chip, responseFormat === f && styles.chipActive]}
-              onPress={() => setResponseFormat(f)}
+              style={({ pressed }) => [styles.chip, responseFormat === f && styles.chipActive, pressed && { opacity: 0.7 }]} onPress={() => setResponseFormat(f)}
             >
               <Text style={[styles.chipText, responseFormat === f && styles.chipTextActive]}>{f}</Text>
-            </TouchableOpacity>
+            </Pressable>
           ))}
         </View>
       </View>
@@ -71,13 +66,12 @@ export function TTSControls({
         <ParamLabel label="语言" required={false} />
         <View style={styles.chipRow}>
           {(languages || []).map((l) => (
-            <TouchableOpacity
+            <Pressable
               key={l}
-              style={[styles.chip, language === l && styles.chipActive]}
-              onPress={() => setLanguage(l)}
+              style={({ pressed }) => [styles.chip, language === l && styles.chipActive, pressed && { opacity: 0.7 }]} onPress={() => setLanguage(l)}
             >
               <Text style={[styles.chipText, language === l && styles.chipTextActive]}>{l}</Text>
-            </TouchableOpacity>
+            </Pressable>
           ))}
         </View>
       </View>
@@ -86,15 +80,14 @@ export function TTSControls({
         <View style={styles.labelRow}>
           <ParamLabel label="语速" required={false} style={{ marginBottom: 0 }} />
           <View style={styles.valueRow}>
-            <TouchableOpacity
-              style={styles.stepBtn}
-              onPress={() => {
+            <Pressable
+              style={({ pressed }) => [styles.stepBtn, pressed && { opacity: 0.7 }]} onPress={() => {
                 const v = Math.round((speed - 0.1) * 10) / 10;
                 if (v >= (speedRange?.[0] || 0.5)) setSpeed(v);
               }}
             >
               <Ionicons name="remove" size={18} color={colors.textSecondary} />
-            </TouchableOpacity>
+            </Pressable>
             <TextInput
               style={styles.valueInput}
               value={speed.toFixed(1)}
@@ -107,15 +100,14 @@ export function TTSControls({
               keyboardType="decimal-pad"
               selectTextOnFocus
             />
-            <TouchableOpacity
-              style={styles.stepBtn}
-              onPress={() => {
+            <Pressable
+              style={({ pressed }) => [styles.stepBtn, pressed && { opacity: 0.7 }]} onPress={() => {
                 const v = Math.round((speed + 0.1) * 10) / 10;
                 if (v <= (speedRange?.[1] || 2)) setSpeed(v);
               }}
             >
               <Ionicons name="add" size={18} color={colors.textSecondary} />
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </View>
       </View>
@@ -126,15 +118,14 @@ export function TTSControls({
           <Text style={styles.rangeHint}>1 ~ {maxTokensMax || 1024}</Text>
         </View>
         <View style={styles.inputRow}>
-          <TouchableOpacity
-            style={styles.stepBtn}
-            onPress={() => {
+          <Pressable
+            style={({ pressed }) => [styles.stepBtn, pressed && { opacity: 0.7 }]} onPress={() => {
               const v = Math.max(1, maxTokens - 128);
               setMaxTokens(v);
             }}
           >
             <Ionicons name="remove" size={18} color={colors.textSecondary} />
-          </TouchableOpacity>
+          </Pressable>
           <TextInput
             style={styles.inputSingle}
             value={String(maxTokens)}
@@ -147,15 +138,14 @@ export function TTSControls({
             placeholder={String(maxTokensMax || 1024)}
             placeholderTextColor={colors.textPlaceholder}
           />
-          <TouchableOpacity
-            style={styles.stepBtn}
-            onPress={() => {
+          <Pressable
+            style={({ pressed }) => [styles.stepBtn, pressed && { opacity: 0.7 }]} onPress={() => {
               const v = Math.min(maxTokensMax || 1024, maxTokens + 128);
               setMaxTokens(v);
             }}
           >
             <Ionicons name="add" size={18} color={colors.textSecondary} />
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </View>
 

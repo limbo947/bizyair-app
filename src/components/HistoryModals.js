@@ -1,11 +1,8 @@
 import React from 'react';
-import {
-  Text,
+import { Pressable, Text,
   View,
-  TouchableOpacity,
   ScrollView,
-  Modal,
-} from 'react-native';
+  Modal, } from 'react-native';
 import { Radius, Spacing } from '../constants/theme';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 
@@ -61,7 +58,7 @@ export function HistoryModals({
           <View style={styles.logModalContent}>
             <View style={styles.logModalHeader}>
               <Text style={styles.logModalTitle}>响应日志</Text>
-              <TouchableOpacity onPress={() => setLogModal(null)}><Text style={styles.logModalClose}>✕</Text></TouchableOpacity>
+              <Pressable style={({ pressed }) => pressed && { opacity: 0.7 }} onPress={() => setLogModal(null)}><Text style={styles.logModalClose}>✕</Text></Pressable>
             </View>
             <ScrollView style={styles.logModalScroll}>
               <Text style={styles.logModalText}>{logModal?.lastResponse ? JSON.stringify(logModal.lastResponse, null, 2) : '暂无响应信息'}</Text>
@@ -76,8 +73,8 @@ export function HistoryModals({
             <Text style={styles.confirmTitle}>确认删除</Text>
             <Text style={styles.confirmMessage}>确定要删除这条记录吗？此操作不可恢复。</Text>
             <View style={styles.confirmActions}>
-              <TouchableOpacity style={styles.confirmCancelButton} onPress={() => setDeleteConfirmId(null)}><Text style={styles.confirmCancelText}>取消</Text></TouchableOpacity>
-              <TouchableOpacity style={styles.confirmDeleteButton} onPress={() => handleDelete(deleteConfirmId)}><Text style={styles.confirmDeleteText}>删除</Text></TouchableOpacity>
+              <Pressable style={({ pressed }) => [styles.confirmCancelButton, pressed && { opacity: 0.7 }]} onPress={() => setDeleteConfirmId(null)}><Text style={styles.confirmCancelText}>取消</Text></Pressable>
+              <Pressable style={({ pressed }) => [styles.confirmDeleteButton, pressed && { opacity: 0.7 }]} onPress={() => handleDelete(deleteConfirmId)}><Text style={styles.confirmDeleteText}>删除</Text></Pressable>
             </View>
           </View>
         </View>
@@ -89,25 +86,25 @@ export function HistoryModals({
             <Text style={styles.confirmTitle}>确认批量删除</Text>
             <Text style={styles.confirmMessage}>确定要删除选中的 {selectedIds.size} 条记录吗？此操作不可恢复。</Text>
             <View style={styles.confirmActions}>
-              <TouchableOpacity style={styles.confirmCancelButton} onPress={() => setDeleteConfirmBatch(false)}><Text style={styles.confirmCancelText}>取消</Text></TouchableOpacity>
-              <TouchableOpacity style={styles.confirmDeleteButton} onPress={handleBatchDelete}><Text style={styles.confirmDeleteText}>删除</Text></TouchableOpacity>
+              <Pressable style={({ pressed }) => [styles.confirmCancelButton, pressed && { opacity: 0.7 }]} onPress={() => setDeleteConfirmBatch(false)}><Text style={styles.confirmCancelText}>取消</Text></Pressable>
+              <Pressable style={({ pressed }) => [styles.confirmDeleteButton, pressed && { opacity: 0.7 }]} onPress={handleBatchDelete}><Text style={styles.confirmDeleteText}>删除</Text></Pressable>
             </View>
           </View>
         </View>
       </Modal>
 
       <Modal visible={showSortPicker} transparent animationType="fade" onRequestClose={() => setShowSortPicker(false)}>
-        <TouchableOpacity style={styles.pickerOverlay} activeOpacity={1} onPress={() => setShowSortPicker(false)}>
+        <Pressable style={styles.pickerOverlay} onPress={() => setShowSortPicker(false)}>
           <View style={styles.pickerContent}>
             <Text style={styles.pickerTitle}>排序方式</Text>
             {SORT_OPTIONS.map((opt) => (
-              <TouchableOpacity key={opt.key} style={[styles.pickerOption, sortBy === opt.key && styles.pickerOptionActive]} onPress={() => handleSortChange(opt.key)}>
+              <Pressable key={opt.key} style={({ pressed }) => [styles.pickerOption, sortBy === opt.key && styles.pickerOptionActive, pressed && { opacity: 0.7 }]} onPress={() => handleSortChange(opt.key)}>
                 <Text style={[styles.pickerOptionText, sortBy === opt.key && styles.pickerOptionTextActive]}>{opt.label}</Text>
                 {sortBy === opt.key ? <Text style={styles.pickerCheck}>✓</Text> : null}
-              </TouchableOpacity>
+              </Pressable>
             ))}
           </View>
-        </TouchableOpacity>
+        </Pressable>
       </Modal>
     </>
   );
