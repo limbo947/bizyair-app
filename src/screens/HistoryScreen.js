@@ -407,10 +407,48 @@ export function HistoryScreen() {
     if (isDownloading || downloadingRef.current.has(item.id)) return;
     downloadingRef.current.add(item.id);
     const ext = item.outputType === 'video' ? '.mp4' : item.outputType === 'audio' ? `.${item.responseFormat || 'mp3'}` : '.jpg';
-    const url = item.videoUrl || item.audioUrl || item.imageUrl;
-    if (!url) { downloadingRef.current.delete(item.id); return; }
-    triggerDownload(url, `bizyair_${item.id}${ext}`);
-    setTimeout(() => downloadingRef.current.delete(item.id), 2000);
+    if (item.outputType === 'image' && item.imageUrls && item.imageUrls.length > 1) {
+      const urls = item.imageUrls;
+      (async () => {
+        try {
+          if (Platform.OS === 'web') {
+            for (let i = 0; i < urls.length; i++) {
+              const anchor = document.createElement('a');
+              anchor.href = urls[i];
+              anchor.download = `bizyair_${item.id}_${i + 1}${ext}`;
+              anchor.target = '_blank';
+              document.body.appendChild(anchor);
+              anchor.click();
+              document.body.removeChild(anchor);
+              if (i < urls.length - 1) await new Promise((r) => setTimeout(r, 300));
+            }
+          } else {
+            const { status } = await MediaLibrary.requestPermissionsAsync();
+            if (status !== 'granted') {
+              Alert.alert('权限不足', '需要存储权限才能保存文件');
+              return;
+            }
+            for (let i = 0; i < urls.length; i++) {
+              const filename = `bizyair_${item.id}_${i + 1}${ext}`;
+              const destination = new File(Paths.cache, filename);
+              const downloadedFile = await File.downloadFileAsync(urls[i], destination);
+              await MediaLibrary.createAssetAsync(downloadedFile.uri);
+              if (i < urls.length - 1) await new Promise((r) => setTimeout(r, 300));
+            }
+            Alert.alert('下载成功', `${urls.length} 张图片已保存到相册`);
+          }
+        } catch (err) {
+          Alert.alert('下载失败', err.message || '请检查网络连接');
+        } finally {
+          setTimeout(() => downloadingRef.current.delete(item.id), 2000);
+        }
+      })();
+    } else {
+      const url = item.videoUrl || item.audioUrl || item.imageUrl;
+      if (!url) { downloadingRef.current.delete(item.id); return; }
+      triggerDownload(url, `bizyair_${item.id}${ext}`);
+      setTimeout(() => downloadingRef.current.delete(item.id), 2000);
+    }
   }, [isDownloading]);
 
   const handleBatchDownload = useCallback(async () => {
@@ -419,9 +457,17 @@ export function HistoryScreen() {
     if (items.length === 0) return;
     setIsDownloading(true);
     for (let i = 0; i < items.length; i++) {
-      const url = items[i].videoUrl || items[i].audioUrl || items[i].imageUrl;
-      const ext = items[i].outputType === 'video' ? '.mp4' : items[i].outputType === 'audio' ? `.${items[i].responseFormat || 'mp3'}` : '.jpg';
-      triggerDownload(url, `bizyair_${items[i].id}${ext}`);
+      const item = items[i];
+      const ext = item.outputType === 'video' ? '.mp4' : item.outputType === 'audio' ? `.${item.responseFormat || 'mp3'}` : '.jpg';
+      if (item.outputType === 'image' && item.imageUrls && item.imageUrls.length > 1) {
+        for (let j = 0; j < item.imageUrls.length; j++) {
+          triggerDownload(item.imageUrls[j], `bizyair_${item.id}_${j + 1}${ext}`);
+          await new Promise((resolve) => setTimeout(resolve, 300));
+        }
+      } else {
+        const url = item.videoUrl || item.audioUrl || item.imageUrl;
+        triggerDownload(url, `bizyair_${item.id}${ext}`);
+      }
       if (i < items.length - 1) await new Promise((resolve) => setTimeout(resolve, 500));
     }
     setIsDownloading(false); setBatchMode(false); setSelectedIds(new Set());

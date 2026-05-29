@@ -30,9 +30,14 @@ const createStyles = (colors) => ({
   filterChipActive: { backgroundColor: colors.primary },
   filterChipText: { fontSize: 13, color: colors.textSecondary, fontWeight: '500' },
   filterChipTextActive: { color: colors.textInverse, fontWeight: '600' },
+  allChip: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.md, paddingVertical: 5, borderRadius: Radius.full, backgroundColor: colors.bg, gap: 4 },
+  allChipActive: { backgroundColor: colors.primary },
+  allChipText: { fontSize: 13, color: colors.textSecondary, fontWeight: '500' },
+  allChipTextActive: { color: colors.textInverse, fontWeight: '600' },
+  allChipBadge: { fontSize: 10, color: colors.textTertiary, fontWeight: '500' },
+  allChipBadgeActive: { color: 'rgba(255,255,255,0.8)', fontWeight: '600' },
+  allChipCaret: { marginTop: 1 },
   sortButton: { paddingHorizontal: Spacing.sm, paddingVertical: Spacing.xs, marginLeft: 4 },
-  sourceButton: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.sm, paddingVertical: Spacing.xs, marginLeft: 4, gap: 2 },
-  sourceButtonText: { fontSize: 12, color: colors.textSecondary, fontWeight: '500' },
   sourcePickerOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'center', alignItems: 'center' },
   sourcePickerContent: { width: '70%', backgroundColor: colors.card, borderRadius: Radius.lg, padding: Spacing.xl },
   sourcePickerTitle: { fontSize: 17, fontWeight: '600', color: colors.textPrimary, marginBottom: Spacing.lg, textAlign: 'center' },
@@ -89,7 +94,8 @@ export function HistoryFilters({
   const { colors } = useTheme();
   const [showSourcePicker, setShowSourcePicker] = useState(false);
 
-  const currentSourceLabel = SOURCE_OPTIONS.find(o => o.key === sourceFilter)?.label || '全部来源';
+  const sourceLabel = sourceFilter === 'model' ? '模型' : sourceFilter === 'webapp' ? 'AI应用' : '';
+  const isAllActive = filterBy === 'all';
 
   return (
     <View>
@@ -105,16 +111,36 @@ export function HistoryFilters({
 
       <View style={styles.filterBar}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScrollContent}>
-          {FILTER_OPTIONS.map((opt) => (
+          <Pressable
+            style={({ pressed }) => [
+              styles.allChip,
+              isAllActive && styles.allChipActive,
+              pressed && { opacity: 0.7 },
+            ]}
+            onPress={() => {
+              if (isAllActive) {
+                setShowSourcePicker(true);
+              } else {
+                onFilterChange('all');
+              }
+            }}
+          >
+            <Text style={[styles.allChipText, isAllActive && styles.allChipTextActive]}>
+              全部{sourceLabel ? `(${sourceLabel})` : ''} ({history.length})
+            </Text>
+            <Ionicons
+              name="chevron-down"
+              size={12}
+              color={isAllActive ? 'rgba(255,255,255,0.8)' : colors.textTertiary}
+              style={styles.allChipCaret}
+            />
+          </Pressable>
+          {FILTER_OPTIONS.filter(o => o.key !== 'all').map((opt) => (
             <Pressable key={opt.key} style={({ pressed }) => [styles.filterChip, filterBy === opt.key && styles.filterChipActive, pressed && { opacity: 0.7 }]} onPress={() => onFilterChange(opt.key)}>
-              <Text style={[styles.filterChipText, filterBy === opt.key && styles.filterChipTextActive]}>{opt.label}{opt.key === 'all' ? ` (${history.length})` : ''}</Text>
+              <Text style={[styles.filterChipText, filterBy === opt.key && styles.filterChipTextActive]}>{opt.label}</Text>
             </Pressable>
           ))}
         </ScrollView>
-        <Pressable style={({ pressed }) => [styles.sourceButton, pressed && { opacity: 0.7 }]} onPress={() => setShowSourcePicker(true)}>
-          <Text style={styles.sourceButtonText}>{currentSourceLabel}</Text>
-          <Ionicons name="chevron-down" size={14} color={colors.textSecondary} />
-        </Pressable>
         <Pressable style={({ pressed }) => [styles.sortButton, pressed && { opacity: 0.7 }]} onPress={onSortPress}>
           <Ionicons name="funnel-outline" size={18} color={colors.textSecondary} />
         </Pressable>

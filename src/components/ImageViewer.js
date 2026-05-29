@@ -11,7 +11,6 @@ import {
   StatusBar,
   Platform,
   Alert,
-  Image as RNImage,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,11 +20,11 @@ import { Spacing } from '../constants/theme';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-async function triggerDownload(url) {
+async function triggerDownload(url, filename) {
   if (Platform.OS === 'web') {
     const anchor = document.createElement('a');
     anchor.href = url;
-    anchor.download = 'bizyair_image.jpg';
+    anchor.download = filename || 'bizyair_image.jpg';
     anchor.target = '_blank';
     document.body.appendChild(anchor);
     anchor.click();
@@ -39,10 +38,43 @@ async function triggerDownload(url) {
       Alert.alert('权限不足', '需要存储权限才能保存图片');
       return;
     }
-    const destination = new File(Paths.cache, 'bizyair_image.jpg');
-    const downloadedFile = await File.downloadFileAsync(url, destination);
+    const dest = new File(Paths.cache, filename || 'bizyair_image.jpg');
+    const downloadedFile = await File.downloadFileAsync(url, dest);
     await MediaLibrary.createAssetAsync(downloadedFile.uri);
-    Alert.alert('下载成功', '图片已保存到相册');
+  } catch (err) {
+    Alert.alert('下载失败', err.message || '请检查网络连接');
+  }
+}
+
+async function triggerBatchDownload(urls) {
+  if (Platform.OS === 'web') {
+    for (let i = 0; i < urls.length; i++) {
+      const anchor = document.createElement('a');
+      anchor.href = urls[i];
+      anchor.download = `bizyair_image_${i + 1}.jpg`;
+      anchor.target = '_blank';
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
+      if (i < urls.length - 1) await new Promise((r) => setTimeout(r, 300));
+    }
+    return;
+  }
+
+  try {
+    const { status } = await MediaLibrary.requestPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('权限不足', '需要存储权限才能保存图片');
+      return;
+    }
+    for (let i = 0; i < urls.length; i++) {
+      const filename = `bizyair_image_${i + 1}.jpg`;
+      const dest = new File(Paths.cache, filename);
+      const downloadedFile = await File.downloadFileAsync(urls[i], dest);
+      await MediaLibrary.createAssetAsync(downloadedFile.uri);
+      if (i < urls.length - 1) await new Promise((r) => setTimeout(r, 300));
+    }
+    Alert.alert('下载成功', `${urls.length} 张图片已保存到相册`);
   } catch (err) {
     Alert.alert('下载失败', err.message || '请检查网络连接');
   }
@@ -53,8 +85,8 @@ export function ImageViewer({ visible, imageUrl, imageUrls, prompt, onClose }) {
   urlsRef.current = imageUrls?.length > 0 ? imageUrls : (imageUrl ? [imageUrl] : []);
 
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [imageSize, setImageSize] = useState(null);
   const [showInfo, setShowInfo] = useState(true);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const scale = useRef(new Animated.Value(1)).current;
   const translateX = useRef(new Animated.Value(0)).current;
@@ -97,18 +129,10 @@ export function ImageViewer({ visible, imageUrl, imageUrls, prompt, onClose }) {
       translateY.setValue(0);
       slideX.setValue(0);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- Animated.Value refs are stable
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
 
   useEffect(() => {
-    const url = urlsRef.current[currentIndex];
-    if (url) {
-      RNImage.getSize(
-        url,
-        (imgW, imgH) => setImageSize({ width: imgW, height: imgH }),
-        () => setImageSize(null)
-      );
-    }
     if (urlsRef.current.length > 1) {
       const preloadIndices = [currentIndex - 1, currentIndex + 1];
       preloadIndices.forEach((i) => {
@@ -135,6 +159,24 @@ export function ImageViewer({ visible, imageUrl, imageUrls, prompt, onClose }) {
 
   const goToIndexRef = useRef(goToIndex);
   useEffect(() => { goToIndexRef.current = goToIndex; }, [goToIndex]);
+
+  const handleDownload = useCallback(async () => {
+    if (isDownloading) return;
+    setIsDownloading(true);
+    try {
+      const urls = urlsRef.current;
+      if (urls.length > 1) {
+        await triggerBatchDownload(urls);
+      } else if (urls[0]) {
+        await triggerDownload(urls[0]);
+        if (Platform.OS !== 'web') {
+          Alert.alert('下载成功', '图片已保存到相册');
+        }
+      }
+    } finally {
+      setIsDownloading(false);
+    }
+  }, [isDownloading]);
 
   const panResponder = useRef(
     PanResponder.create({
@@ -225,13 +267,6 @@ export function ImageViewer({ visible, imageUrl, imageUrls, prompt, onClose }) {
     })
   ).current;
 
-  const displayWidth = imageSize
-    ? Math.min(imageSize.width, SCREEN_WIDTH * 0.95)
-    : SCREEN_WIDTH * 0.9;
-  const displayHeight = imageSize
-    ? Math.min((imageSize.height / imageSize.width) * displayWidth, SCREEN_HEIGHT * 0.8)
-    : SCREEN_WIDTH * 0.9;
-
   if (!visible) return null;
 
   const currentUrl = urlsRef.current[currentIndex];
@@ -261,10 +296,10 @@ export function ImageViewer({ visible, imageUrl, imageUrls, prompt, onClose }) {
             {currentUrl ? (
               <Image
                 source={{ uri: currentUrl }}
-                style={[styles.image, { width: displayWidth, height: displayHeight }]}
+                style={styles.image}
                 contentFit="contain"
                 cachePolicy="memory-disk"
-                transition={150}
+                recyclingKey={currentUrl}
               />
             ) : null}
           </Animated.View>
@@ -288,9 +323,10 @@ export function ImageViewer({ visible, imageUrl, imageUrls, prompt, onClose }) {
               ) : null}
               <Pressable
                 style={({ pressed }) => [styles.iconBtn, pressed && { opacity: 0.7 }]}
-                onPress={() => triggerDownload(currentUrl)}
+                onPress={handleDownload}
+                disabled={isDownloading}
               >
-                <Ionicons name="download-outline" size={24} color="#fff" />
+                <Ionicons name={isDownloading ? 'hourglass-outline' : 'download-outline'} size={24} color="#fff" />
               </Pressable>
             </View>
 
@@ -339,6 +375,7 @@ export function ImageViewer({ visible, imageUrl, imageUrls, prompt, onClose }) {
                         style={styles.thumbnailImage}
                         contentFit="cover"
                         cachePolicy="memory-disk"
+                        recyclingKey={`thumb_${idx}`}
                       />
                     </Pressable>
                   ))}
@@ -364,7 +401,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  image: {},
+  image: {
+    width: SCREEN_WIDTH,
+    height: SCREEN_HEIGHT,
+  },
   topBar: {
     position: 'absolute',
     top: 0,

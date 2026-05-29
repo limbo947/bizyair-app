@@ -339,9 +339,9 @@ export function HomeScreen({ onOpenModelSelect }) {
   };
 
   const currentModel = getModelInfo(modelId);
-  const currentRatios = getRatios(modelId, mode);
-  const currentResolutions = getResolutions(modelId, mode);
-  const currentModes = getModelModes(modelId);
+  const currentRatios = useMemo(() => getRatios(modelId, mode), [modelId, mode]);
+  const currentResolutions = useMemo(() => getResolutions(modelId, mode), [modelId, mode]);
+  const currentModes = useMemo(() => getModelModes(modelId), [modelId]);
   const paramType = currentModel.paramType;
 
   // 监听 LLM/Vision 模型的文本结果
@@ -354,30 +354,30 @@ export function HomeScreen({ onOpenModelSelect }) {
   // 模型切换时重置不合法的参数值
   useEffect(() => {
     const model = getModelInfo(modelId);
-    if (currentResolutions.length > 0 && !currentResolutions.includes(resolution)) {
+    const s = stateRef.current;
+    if (currentResolutions.length > 0 && !currentResolutions.includes(s.resolution)) {
       stateDispatch({ type: 'SET_RESOLUTION', value: model.defaultResolution || currentResolutions[0] });
     }
-    if (currentRatios.length > 0 && !currentRatios.includes(aspectRatio)) {
+    if (currentRatios.length > 0 && !currentRatios.includes(s.aspectRatio)) {
       stateDispatch({ type: 'SET_ASPECT_RATIO', value: currentRatios[0] });
     }
-    if (model.defaultWatermark !== undefined) stateDispatch({ type: 'SET_WATERMARK', value: model.defaultWatermark });
-    if (model.defaultThinkingMode !== undefined) stateDispatch({ type: 'SET_THINKING_MODE', value: model.defaultThinkingMode });
-    if (model.defaultPromptExtend !== undefined) stateDispatch({ type: 'SET_PROMPT_EXTEND', value: model.defaultPromptExtend });
-    if (model.defaultAudio !== undefined) stateDispatch({ type: 'SET_AUDIO', value: model.defaultAudio });
-    if (model.defaultAudioSetting !== undefined) stateDispatch({ type: 'SET_AUDIO_SETTING', value: model.defaultAudioSetting });
-    if (model.defaultDuration !== undefined) stateDispatch({ type: 'SET_DURATION', value: model.defaultDuration });
-    if (model.defaultSound !== undefined) stateDispatch({ type: 'SET_SOUND', value: model.defaultSound });
-    if (model.defaultKeepOriginalSound !== undefined) stateDispatch({ type: 'SET_KEEP_ORIGINAL_SOUND', value: model.defaultKeepOriginalSound });
-    if (model.defaultTemperature !== undefined) stateDispatch({ type: 'SET_TEMPERATURE', value: model.defaultTemperature });
-    if (model.defaultMaxTokens !== undefined) stateDispatch({ type: 'SET_MAX_TOKENS', value: model.defaultMaxTokens });
-    if (model.defaultSpeed !== undefined) stateDispatch({ type: 'SET_SPEED', value: model.defaultSpeed });
-    if (model.defaultVoice !== undefined) stateDispatch({ type: 'SET_VOICE', value: model.defaultVoice });
-    if (model.defaultFormat !== undefined) stateDispatch({ type: 'SET_RESPONSE_FORMAT', value: model.defaultFormat });
-    if (model.defaultLanguage !== undefined) stateDispatch({ type: 'SET_LANGUAGE', value: model.defaultLanguage });
-    if (currentModes.length > 0 && !currentModes.includes(mode)) {
+    if (model.defaultWatermark !== undefined && s.watermark !== model.defaultWatermark) stateDispatch({ type: 'SET_WATERMARK', value: model.defaultWatermark });
+    if (model.defaultThinkingMode !== undefined && s.thinkingMode !== model.defaultThinkingMode) stateDispatch({ type: 'SET_THINKING_MODE', value: model.defaultThinkingMode });
+    if (model.defaultPromptExtend !== undefined && s.promptExtend !== model.defaultPromptExtend) stateDispatch({ type: 'SET_PROMPT_EXTEND', value: model.defaultPromptExtend });
+    if (model.defaultAudio !== undefined && s.audio !== model.defaultAudio) stateDispatch({ type: 'SET_AUDIO', value: model.defaultAudio });
+    if (model.defaultAudioSetting !== undefined && s.audioSetting !== model.defaultAudioSetting) stateDispatch({ type: 'SET_AUDIO_SETTING', value: model.defaultAudioSetting });
+    if (model.defaultDuration !== undefined && s.duration !== model.defaultDuration) stateDispatch({ type: 'SET_DURATION', value: model.defaultDuration });
+    if (model.defaultSound !== undefined && s.sound !== model.defaultSound) stateDispatch({ type: 'SET_SOUND', value: model.defaultSound });
+    if (model.defaultKeepOriginalSound !== undefined && s.keepOriginalSound !== model.defaultKeepOriginalSound) stateDispatch({ type: 'SET_KEEP_ORIGINAL_SOUND', value: model.defaultKeepOriginalSound });
+    if (model.defaultTemperature !== undefined && s.temperature !== model.defaultTemperature) stateDispatch({ type: 'SET_TEMPERATURE', value: model.defaultTemperature });
+    if (model.defaultMaxTokens !== undefined && s.maxTokens !== model.defaultMaxTokens) stateDispatch({ type: 'SET_MAX_TOKENS', value: model.defaultMaxTokens });
+    if (model.defaultSpeed !== undefined && s.speed !== model.defaultSpeed) stateDispatch({ type: 'SET_SPEED', value: model.defaultSpeed });
+    if (model.defaultVoice !== undefined && s.voice !== model.defaultVoice) stateDispatch({ type: 'SET_VOICE', value: model.defaultVoice });
+    if (model.defaultFormat !== undefined && s.responseFormat !== model.defaultFormat) stateDispatch({ type: 'SET_RESPONSE_FORMAT', value: model.defaultFormat });
+    if (model.defaultLanguage !== undefined && s.language !== model.defaultLanguage) stateDispatch({ type: 'SET_LANGUAGE', value: model.defaultLanguage });
+    if (currentModes.length > 0 && !currentModes.includes(s.mode)) {
       stateDispatch({ type: 'SET_MODE', value: currentModes[0] });
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally omit resolution/aspectRatio to avoid overriding user selection
   }, [modelId, mode, paramType, currentResolutions, currentRatios, currentModes]);
 
   useEffect(() => {
@@ -389,7 +389,14 @@ export function HomeScreen({ onOpenModelSelect }) {
   }, [state, saveHomeState]);
 
   const handleModelSelect = (id) => {
-    stateDispatch({ type: 'SET_MODEL_ID', value: id });
+    const newModes = getModelModes(id);
+    const updates = { modelId: id };
+    if (newModes.length > 0 && !newModes.includes(stateRef.current.mode)) {
+      updates.mode = newModes[0];
+    }
+    selfSaveRef.current = true;
+    saveHomeState(updates);
+    stateDispatch({ type: 'SET_PARAMS', params: updates });
   };
 
   const handleOpenFavorites = () => {
@@ -595,6 +602,7 @@ export function HomeScreen({ onOpenModelSelect }) {
 
   const paramControls = (
     <HomeParamControls
+      key={paramType}
       paramType={paramType}
       currentModel={currentModel}
       currentResolutions={currentResolutions}

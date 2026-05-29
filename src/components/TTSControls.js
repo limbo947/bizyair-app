@@ -149,19 +149,18 @@ export function TTSControls({
         </View>
       </View>
 
-      {instructions !== undefined ? (
-        <View style={styles.card}>
-          <ParamLabel label="指令 (instructions)" required={false} />
-          <TextInput
-            style={styles.promptInput}
-            value={instructions}
-            onChangeText={setInstructions}
-            multiline
-            placeholder="可选：指定语音风格、情感等..."
-            placeholderTextColor={colors.textPlaceholder}
-          />
-        </View>
-      ) : null}
+      <View style={styles.card}>
+        <ParamLabel label="指令 (instructions)" required={false} />
+        <TextInput
+          style={styles.promptInput}
+          value={instructions}
+          onChangeText={setInstructions}
+          multiline
+          placeholder="可选：指定语音风格、情感等..."
+          placeholderTextColor={colors.textPlaceholder}
+          maxLength={2500}
+        />
+      </View>
     </>
   );
 }
