@@ -3,7 +3,7 @@
 基于 Expo SDK 54 的多模态 AI 助手，接入 BizyAir 平台 48 个模型，覆盖文生图、图生图、文生视频、图生视频、首尾帧、参考视频、视频编辑、视频延长、大语言模型、视觉理解、语音合成等 11 种功能模式。
 
 ## APK安装包
-- https://github.com/limbo947/bizyair-app/releases/tag/apk
+- https://github.com/limbo947/bizyair-app/releases/tag/test
 
 ## 快速开始
 
