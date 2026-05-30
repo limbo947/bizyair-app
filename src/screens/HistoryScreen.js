@@ -23,6 +23,7 @@ import { ImageViewer } from '../components/ImageViewer';
 import { TextResultView } from '../components/TextResultView';
 import { PAGE_SIZE, TAB_HISTORY } from '../constants/models';
 import { isTokenPricedModel } from '../utils/modelHelpers';
+import { triggerDownload } from '../utils/download';
 import { Radius, Spacing } from '../constants/theme';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { useTheme } from '../context/ThemeContext';
@@ -46,7 +47,7 @@ const STATUS_LABELS = {
   Canceled: '已取消',
 };
 
-function DurationDisplay({ startedAt, completedAt, isFinal, isActive }) {
+function DurationDisplay({ startedAt, completedAt, isFinal, isActive, colors }) {
   const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
   useEffect(() => {
@@ -61,41 +62,13 @@ function DurationDisplay({ startedAt, completedAt, isFinal, isActive }) {
   const ms = end - (startedAt || 0);
   if (ms < 0) return <Text>--</Text>;
   const seconds = Math.floor(ms / 1000);
-  if (seconds < 60) return <Text style={{ fontSize: 12, color: '#27AE60', fontWeight: '500' }}>{seconds}秒</Text>;
+  if (seconds < 60) return <Text style={{ fontSize: 12, color: colors.success, fontWeight: '500' }}>{seconds}秒</Text>;
   const minutes = Math.floor(seconds / 60);
   const remainSeconds = seconds % 60;
-  if (minutes < 60) return <Text style={{ fontSize: 12, color: '#27AE60', fontWeight: '500' }}>{minutes}分{remainSeconds}秒</Text>;
+  if (minutes < 60) return <Text style={{ fontSize: 12, color: colors.success, fontWeight: '500' }}>{minutes}分{remainSeconds}秒</Text>;
   const hours = Math.floor(minutes / 60);
   const remainMinutes = minutes % 60;
-  return <Text style={{ fontSize: 12, color: '#27AE60', fontWeight: '500' }}>{hours}时{remainMinutes}分</Text>;
-}
-
-async function triggerDownload(url, filename) {
-  if (Platform.OS === 'web') {
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = filename || 'image.jpg';
-    anchor.target = '_blank';
-    document.body.appendChild(anchor);
-    anchor.click();
-    document.body.removeChild(anchor);
-    return;
-  }
-
-  // Android / iOS：使用 expo-file-system + expo-media-library
-  try {
-    const { status } = await MediaLibrary.requestPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('权限不足', '需要存储权限才能保存文件');
-      return;
-    }
-    const destination = new File(Paths.cache, filename || 'download');
-    const downloadedFile = await File.downloadFileAsync(url, destination);
-    await MediaLibrary.createAssetAsync(downloadedFile.uri);
-    Alert.alert('下载成功', '文件已保存到相册');
-  } catch (err) {
-    Alert.alert('下载失败', err.message || '请检查网络连接');
-  }
+  return <Text style={{ fontSize: 12, color: colors.success, fontWeight: '500' }}>{hours}时{remainMinutes}分</Text>;
 }
 
 const HistoryCard = React.memo(function HistoryCard({
@@ -174,7 +147,7 @@ const HistoryCard = React.memo(function HistoryCard({
                 </View>
               )}
               <View style={styles.thumbPlayOverlay}>
-                <Ionicons name="play-circle" size={28} color="rgba(255,255,255,0.9)" />
+                <Ionicons name="play-circle" size={28} color={colors.textOnOverlay} />
               </View>
             </View>
           ) : item.outputType === 'audio' && item.audioUrl ? (
@@ -183,7 +156,7 @@ const HistoryCard = React.memo(function HistoryCard({
                 <Ionicons name="musical-notes" size={32} color={colors.purple} />
               </View>
               <View style={styles.thumbPlayOverlay}>
-                <Ionicons name="play-circle" size={28} color="rgba(255,255,255,0.9)" />
+                <Ionicons name="play-circle" size={28} color={colors.textOnOverlay} />
               </View>
             </View>
           ) : item.outputType === 'text' && item.textResult ? (
@@ -239,7 +212,7 @@ const HistoryCard = React.memo(function HistoryCard({
           </View>
           <Text style={styles.historyMeta}>{item.modelName}{(item.outputType === 'image' || item.outputType === 'video') && item.actualResolution ? ` · ${item.actualResolution}` : item.resolution ? ` · ${item.resolution}` : ''} · {item.date}</Text>
           <View style={styles.historyDurationRow}>
-            <DurationDisplay startedAt={item.startedAt} completedAt={item.completedAt} isFinal={isFinal} isActive={isActive} />
+            <DurationDisplay startedAt={item.startedAt} completedAt={item.completedAt} isFinal={isFinal} isActive={isActive} colors={colors} />
             <View style={[styles.statusBadge, { backgroundColor: statusBg }]}>
               {isActive ? <ActivityIndicator size="small" color={statusColor} style={styles.statusSpinner} /> : null}
               <Text style={[styles.statusText, { color: statusColor }]}>{statusLabel}</Text>
@@ -510,6 +483,8 @@ export function HistoryScreen() {
     );
   }, [selectedIds, batchMode, toggleSelect, handleDownload, stopPolling]);
 
+  const extraData = useMemo(() => ({ selectedIds, thumbVersion }), [selectedIds, thumbVersion]);
+
   const renderFooter = useCallback(() => {
     if (!hasMore) {
       if (filteredHistory.length > 0) return <View style={styles.footerEnd}><Text style={styles.footerEndText}>已加载全部 {filteredHistory.length} 条记录</Text></View>;
@@ -552,7 +527,7 @@ export function HistoryScreen() {
         onBatchDownload={handleBatchDownload}
       />
 
-      <FlatList ref={flatListRef} data={displayedItems} keyExtractor={(item) => item.id} renderItem={renderItem} extraData={{ selectedIds, thumbVersion }} ListEmptyComponent={renderEmpty} ListFooterComponent={renderFooter} onEndReached={loadMore} onEndReachedThreshold={0.3} contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false} />
+      <FlatList ref={flatListRef} data={displayedItems} keyExtractor={(item) => item.id} renderItem={renderItem} extraData={extraData} ListEmptyComponent={renderEmpty} ListFooterComponent={renderFooter} onEndReached={loadMore} onEndReachedThreshold={0.3} contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false} />
 
       <HistoryModals
         logModal={logModal}
@@ -599,20 +574,20 @@ export function HistoryScreen() {
 const createStyles = (colors) => ({
   container: { flex: 1, backgroundColor: colors.bg },
   listContent: { paddingHorizontal: Spacing.sm, paddingTop: Spacing.md, paddingBottom: Spacing.xxl },
-  historyCard: { flexDirection: 'row', backgroundColor: colors.card, borderRadius: Radius.xs, marginBottom: Spacing.sm, overflow: 'hidden' },
+  historyCard: { flexDirection: 'row', backgroundColor: colors.card, borderRadius: Radius.xs, borderCurve: 'continuous', marginBottom: Spacing.sm, overflow: 'hidden' },
   checkboxArea: { width: 44, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg },
-  checkbox: { width: 22, height: 22, borderRadius: Radius.full, borderWidth: 1.5, borderColor: colors.disabled, alignItems: 'center', justifyContent: 'center' },
+  checkbox: { width: 22, height: 22, borderRadius: Radius.full, borderCurve: 'continuous', borderWidth: 1.5, borderColor: colors.disabled, alignItems: 'center', justifyContent: 'center' },
   checkboxChecked: { backgroundColor: colors.primary, borderColor: colors.primary },
   checkboxMark: { color: colors.textInverse, fontSize: 14, fontWeight: '600' },
   historyCardInner: { flex: 1, flexDirection: 'row', alignItems: 'stretch' },
   historyThumbWrap: { marginLeft: 6, marginVertical: 6, width: 88 },
-  thumbContainer: { flex: 1, width: '100%', position: 'relative', borderRadius: Radius.xs, overflow: 'hidden' },
+  thumbContainer: { flex: 1, width: '100%', position: 'relative', borderRadius: Radius.xs, borderCurve: 'continuous', overflow: 'hidden' },
   thumbPlayOverlay: {
     ...StyleSheet.absoluteFillObject,
     alignItems: 'center', justifyContent: 'center',
-    backgroundColor: 'rgba(0,0,0,0.25)',
+    backgroundColor: colors.overlayLight,
   },
-  historyThumb: { width: '100%', flex: 1, resizeMode: 'cover', borderRadius: Radius.xs },
+  historyThumb: { width: '100%', flex: 1, resizeMode: 'cover', borderRadius: Radius.xs, borderCurve: 'continuous' },
   historyThumbPlaceholder: { flex: 1, width: '100%', backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
   historyThumbFailed: { backgroundColor: colors.errorBg },
   historyThumbVideo: { backgroundColor: colors.primaryBg },
@@ -624,6 +599,7 @@ const createStyles = (colors) => ({
     flexDirection: 'row',
     flexWrap: 'wrap',
     borderRadius: Radius.xs,
+    borderCurve: 'continuous',
     overflow: 'hidden',
     gap: 2,
     backgroundColor: colors.bg,
@@ -632,6 +608,7 @@ const createStyles = (colors) => ({
     width: '48%',
     height: '48%',
     borderRadius: 2,
+    borderCurve: 'continuous',
     resizeMode: 'cover',
   },
   thumbGridItem2: {
@@ -644,31 +621,32 @@ const createStyles = (colors) => ({
   },
   thumbGridOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: colors.overlayMedium,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: Radius.xs,
+    borderCurve: 'continuous',
   },
   thumbGridOverlayText: {
-    color: '#fff',
+    color: colors.textOnOverlay,
     fontSize: 18,
     fontWeight: '700',
   },
   historyInfo: { flex: 1, padding: Spacing.md, justifyContent: 'space-between', alignSelf: 'center' },
   historyInfoHeader: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: Spacing.sm },
-  stopButton: { flexDirection: 'row', alignItems: 'center', gap: 2, paddingHorizontal: Spacing.sm, paddingVertical: 3, borderRadius: Radius.full, backgroundColor: colors.errorBg },
+  stopButton: { flexDirection: 'row', alignItems: 'center', gap: 2, paddingHorizontal: Spacing.sm, paddingVertical: 3, borderRadius: Radius.full, borderCurve: 'continuous', backgroundColor: colors.errorBg },
   stopButtonText: { fontSize: 12, color: colors.error, fontWeight: '600' },
   historyPrompt: { fontSize: 14, color: colors.textPrimary, fontWeight: '500', lineHeight: 18, flex: 1 },
   historyMeta: { fontSize: 12, color: colors.textTertiary, marginTop: 3 },
   historyDurationRow: { flexDirection: 'row', alignItems: 'center', marginTop: 2, gap: Spacing.sm },
   historyDuration: { fontSize: 12, color: colors.success, fontWeight: '500' },
-  statusBadge: { flexDirection: 'row', alignItems: 'center', borderRadius: Radius.full, paddingHorizontal: Spacing.sm, paddingVertical: 2, gap: 3 },
+  statusBadge: { flexDirection: 'row', alignItems: 'center', borderRadius: Radius.full, borderCurve: 'continuous', paddingHorizontal: Spacing.sm, paddingVertical: 2, gap: 3 },
   statusSpinner: { marginRight: 0 },
   statusText: { fontSize: 11, fontWeight: '600' },
   historyBottomRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 },
   historyPrice: { fontSize: 13, color: colors.warning, fontWeight: '700', lineHeight: 18 },
   historyActions: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  iconButton: { width: 28, height: 28, borderRadius: Radius.xs, alignItems: 'center', justifyContent: 'center' },
+  iconButton: { width: 28, height: 28, borderRadius: Radius.xs, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center' },
   iconButtonSuccess: { backgroundColor: colors.successBg },
   iconButtonPurple: { backgroundColor: colors.purpleBg },
   iconButtonCopied: { backgroundColor: colors.successBg },

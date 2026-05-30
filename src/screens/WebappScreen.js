@@ -10,7 +10,7 @@ import { Pressable, Text,
   Alert, } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as DocumentPicker from 'expo-document-picker';
 import { useApiKeyContext } from '../context/ApiKeyContext';
@@ -22,9 +22,32 @@ import { ENV_API_KEY } from '../constants/models';
 import { Radius, Spacing } from '../constants/theme';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { ResizableTextInput } from '../components/ResizableTextInput';
+import { AppHeader } from '../components/AppHeader';
 import { ApiKeyDropdown } from '../components/ApiKeyDropdown';
 
 const WEBAPP_SAVED_LIST_KEY = '@webapp_saved_list';
+
+const WebappListItem = React.memo(function WebappListItem({ item, onEdit, onDelete, colors, styles }) {
+  return (
+    <View style={styles.listItem}>
+      <Pressable style={({ pressed }) => [styles.listItemContent, pressed && { opacity: 0.7 }]} onPress={() => onEdit(item)} >
+        <View style={styles.listItemHeader}>
+          <Text style={styles.listItemName} numberOfLines={1}>{item.name}</Text>
+        </View>
+        <View style={styles.listItemMeta}>
+          {item.appDetail?.base_model ? <Text style={styles.listItemModel}>基础模型: {item.appDetail.base_model}</Text> : null}
+          <Text style={styles.listItemId}>WebApp #{item.webAppId}</Text>
+        </View>
+        {item.appDetail?.intro ? <Text style={styles.listItemIntro} numberOfLines={1}>{item.appDetail.intro}</Text> : null}
+      </Pressable>
+      <View style={styles.listItemActions}>
+        <Pressable style={({ pressed }) => [styles.listItemDeleteBtn, pressed && { opacity: 0.7 }]} onPress={() => onDelete(item.id)} >
+          <Ionicons name="trash-outline" size={16} color={colors.error} />
+        </Pressable>
+      </View>
+    </View>
+  );
+});
 
 /** 判断字符串值是否为 bizyair 上传文件 URL */
 function isBizyairFileUrl(val) {
@@ -124,12 +147,12 @@ export function WebappScreen() {
   const {
     apiKey, setApiKey, saveApiKey, apiKeys, activeApiKeyId,
     addApiKey, removeApiKey, switchApiKey, renameApiKey,
-    userInfo, walletBalance, refreshUserInfo,
+    refreshUserInfo,
   } = useApiKeyContext();
   const {
     addToHistory, startWebappPolling, updateHistoryItem,
   } = useHistoryContext();
-  const { themeMode, toggleTheme, colors } = useTheme();
+  const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
 
   // 模式：'list' | 'edit'
@@ -369,66 +392,13 @@ export function WebappScreen() {
 
   // ============ 列表模式渲染 ============
   const renderListItem = useCallback(({ item }) => (
-    <View style={styles.listItem}>
-      <Pressable style={({ pressed }) => [styles.listItemContent, pressed && { opacity: 0.7 }]} onPress={() => enterEditMode(item)} >
-        <View style={styles.listItemHeader}>
-          <Text style={styles.listItemName} numberOfLines={1}>{item.name}</Text>
-        </View>
-        <View style={styles.listItemMeta}>
-          {item.appDetail?.base_model ? <Text style={styles.listItemModel}>基础模型: {item.appDetail.base_model}</Text> : null}
-          <Text style={styles.listItemId}>WebApp #{item.webAppId}</Text>
-        </View>
-        {item.appDetail?.intro ? <Text style={styles.listItemIntro} numberOfLines={1}>{item.appDetail.intro}</Text> : null}
-      </Pressable>
-      <View style={styles.listItemActions}>
-        <Pressable style={({ pressed }) => [styles.listItemDeleteBtn, pressed && { opacity: 0.7 }]} onPress={() => deleteApp(item.id)} >
-          <Ionicons name="trash-outline" size={16} color={colors.error} />
-        </Pressable>
-      </View>
-    </View>
+    <WebappListItem item={item} onEdit={enterEditMode} onDelete={deleteApp} colors={colors} styles={styles} />
   ), [colors, enterEditMode, deleteApp, styles]);
 
   if (mode === 'list') {
     return (
       <View style={styles.container}>
-        <View style={[styles.header, { paddingTop: insets.top }]}>
-          {userInfo && (apiKey || ENV_API_KEY) ? (
-            <View style={styles.headerInner}>
-              <Pressable style={({ pressed }) => [styles.headerLeft, pressed && { opacity: 0.7 }]} onPress={() => setShowApiKeyDropdown(true)} >
-                <Image source={{ uri: userInfo.avatar }} style={styles.headerAvatar} contentFit="cover" />
-                <View style={styles.headerUserInfo}>
-                  <View style={styles.headerNameRow}>
-                    <Text style={styles.headerUserName}>{userInfo.name}</Text>
-                    {userInfo.user_level_str ? <MaterialCommunityIcons name="crown" size={14} color={colors.warning} style={{ marginLeft: 4 }} /> : null}
-                  </View>
-                  <View style={styles.headerBalances}>
-                    <MaterialCommunityIcons name="gold" size={14} color={colors.warning} style={{ paddingRight: 2 }} />
-                    <Text style={[styles.headerBalanceText, { paddingLeft: 2, paddingTop: 2 }]}>{walletBalance?.charge_balance_amount ?? '--'}</Text>
-                    <MaterialCommunityIcons name="gold" size={14} color="#C0C0C0" style={{ marginLeft: 10, paddingRight: 2 }} />
-                    <Text style={[styles.headerBalanceText, { paddingLeft: 2, paddingTop: 2 }]}>{walletBalance?.gift_balance_amount ?? '--'}</Text>
-                  </View>
-                </View>
-              </Pressable>
-              <Pressable style={({ pressed }) => [styles.headerThemeButton, pressed && { opacity: 0.7 }]} onPress={toggleTheme} >
-                <Ionicons name={themeMode === 'dark' ? 'sunny-outline' : 'moon-outline'} size={20} color={colors.textPrimary} />
-              </Pressable>
-            </View>
-          ) : (
-            <View style={styles.headerInner}>
-              <View style={styles.headerLeft}>
-                <View style={[styles.headerAvatar, styles.headerAvatarPlaceholder]}>
-                  <Ionicons name="person-outline" size={20} color={colors.textTertiary} />
-                </View>
-                <TextInput style={styles.headerApiInput} placeholder="输入Bizyair API Key" value={apiKey} onChangeText={setApiKey} secureTextEntry placeholderTextColor={colors.textPlaceholder} />
-              </View>
-              {apiKey.trim() ? (
-                <Pressable style={({ pressed }) => [styles.headerSaveButton, pressed && { opacity: 0.7 }]} onPress={handleSaveApiKey} disabled={isSaving}>
-                  {isSaving ? <ActivityIndicator size="small" color={colors.textInverse} /> : <Text style={styles.headerSaveButtonText}>保存</Text>}
-                </Pressable>
-              ) : null}
-            </View>
-          )}
-        </View>
+        <AppHeader paddingTop={insets.top} />
 
         <View style={styles.listTitleBar}>
           <Text style={styles.listTitle}>AI 应用</Text>
@@ -452,13 +422,9 @@ export function WebappScreen() {
             contentContainerStyle={styles.listContent}
           />
         )}
-
-        <ApiKeyDropdown visible={showApiKeyDropdown} onClose={() => setShowApiKeyDropdown(false)} apiKeys={apiKeys} activeApiKeyId={activeApiKeyId} onSwitchKey={switchApiKey} onDeleteKey={removeApiKey} onAddKey={addApiKey} onRenameKey={renameApiKey} />
       </View>
     );
   }
-
-  // ============ 编辑模式渲染 ============
   return (
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top }]}>
@@ -713,28 +679,16 @@ const createStyles = (colors) => ({
   container: { flex: 1, backgroundColor: colors.bg },
   header: { backgroundColor: colors.card, paddingLeft: Spacing.md, paddingRight: Spacing.md, paddingVertical: Spacing.sm, borderBottomWidth: 0.5, borderBottomColor: colors.separator },
   headerInner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, flex: 1, borderRadius: Radius.sm },
-  headerAvatar: { width: 36, height: 36, borderRadius: 18 },
-  headerAvatarPlaceholder: { backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
-  headerUserInfo: { flexDirection: 'column' },
-  headerNameRow: { flexDirection: 'row', alignItems: 'center', paddingLeft: 2 },
-  headerUserName: { fontSize: 14, color: colors.textPrimary, fontWeight: '600' },
-  headerBalances: { flexDirection: 'row', alignItems: 'center', marginTop: 1 },
-  headerBalanceText: { fontSize: 13, color: colors.textPrimary, fontWeight: '600' },
-  headerApiInput: { flex: 1, fontSize: 14, color: colors.textPrimary, backgroundColor: colors.bg, borderRadius: Radius.sm, paddingHorizontal: Spacing.sm, paddingVertical: Spacing.xs },
-  headerSaveButton: { paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, borderRadius: Radius.sm, backgroundColor: colors.primary },
-  headerSaveButtonText: { color: colors.textInverse, fontSize: 13, fontWeight: '600' },
-  headerThemeButton: { padding: Spacing.sm, borderRadius: Radius.sm, backgroundColor: colors.bg },
   backButton: { padding: Spacing.xs },
   headerTitle: { fontSize: 17, fontWeight: '600', color: colors.textPrimary },
 
   // 列表模式
   listTitleBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md },
   listTitle: { fontSize: 20, fontWeight: '700', color: colors.textPrimary },
-  addBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.primary, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, borderRadius: Radius.lg },
+  addBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.primary, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, borderRadius: Radius.lg, borderCurve: 'continuous' },
   addBtnText: { color: colors.textInverse, fontSize: 14, fontWeight: '600' },
   listContent: { paddingHorizontal: Spacing.lg, paddingBottom: Spacing.xxl },
-  listItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.card, padding: Spacing.lg, borderRadius: Radius.md, marginBottom: Spacing.sm },
+  listItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.card, padding: Spacing.lg, borderRadius: Radius.md, borderCurve: 'continuous', marginBottom: Spacing.sm },
   listItemContent: { flex: 1 },
   listItemHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 2 },
   listItemName: { fontSize: 16, fontWeight: '700', color: colors.textPrimary, flex: 1 },
@@ -743,7 +697,7 @@ const createStyles = (colors) => ({
   listItemId: { fontSize: 12, color: colors.textTertiary, fontFamily: 'monospace' },
   listItemIntro: { fontSize: 12, color: colors.textTertiary, lineHeight: 18 },
   listItemActions: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, marginLeft: Spacing.sm },
-  listItemDeleteBtn: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  listItemDeleteBtn: { width: 32, height: 32, borderRadius: 16, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center' },
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 80 },
   emptyText: { fontSize: 16, color: colors.textTertiary, marginTop: Spacing.md },
   emptySubtext: { fontSize: 13, color: colors.textTertiary, marginTop: Spacing.xs },
@@ -751,22 +705,22 @@ const createStyles = (colors) => ({
   // 编辑模式
   scroll: { flex: 1 },
   scrollContent: { paddingTop: 8, paddingRight: Spacing.md, paddingBottom: Spacing.xxl, paddingLeft: Spacing.md },
-  card: { backgroundColor: colors.card, padding: Spacing.lg, borderRadius: Radius.md, marginBottom: Spacing.md },
+  card: { backgroundColor: colors.card, padding: Spacing.lg, borderRadius: Radius.md, borderCurve: 'continuous', marginBottom: Spacing.md },
   labelRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, marginBottom: Spacing.sm },
   label: { fontSize: 13, fontWeight: '600', color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 },
   clearButtonText: { fontSize: 14, color: colors.primary, fontWeight: '500' },
-  codeInput: { fontSize: 12, color: colors.textPrimary, backgroundColor: colors.bg, borderRadius: Radius.sm, padding: Spacing.md, fontFamily: 'monospace', minHeight: 60, textAlignVertical: 'top', marginBottom: Spacing.sm },
+  codeInput: { fontSize: 12, color: colors.textPrimary, backgroundColor: colors.bg, borderRadius: Radius.sm, borderCurve: 'continuous', padding: Spacing.md, fontFamily: 'monospace', minHeight: 60, textAlignVertical: 'top', marginBottom: Spacing.sm },
   parseButtonRow: { flexDirection: 'row', gap: Spacing.sm },
-  parseButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: colors.primary, paddingVertical: 10, borderRadius: Radius.sm },
+  parseButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: colors.primary, paddingVertical: 10, borderRadius: Radius.sm, borderCurve: 'continuous' },
   parseButtonDisabled: { backgroundColor: colors.primaryDisabled },
   parseButtonText: { color: colors.textInverse, fontSize: 14, fontWeight: '600' },
-  saveAppButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, paddingHorizontal: Spacing.lg, borderRadius: Radius.sm, borderWidth: 1, borderColor: colors.primary, backgroundColor: colors.bg },
+  saveAppButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, paddingHorizontal: Spacing.lg, borderRadius: Radius.sm, borderCurve: 'continuous', borderWidth: 1, borderColor: colors.primary, backgroundColor: colors.bg },
   saveAppButtonDisabled: { borderColor: colors.separator },
   saveAppButtonText: { fontSize: 14, color: colors.primary, fontWeight: '600' },
   parseErrorText: { color: colors.error, textAlign: 'center', marginBottom: Spacing.md, fontSize: 13 },
 
   // 应用信息卡片（可折叠）
-  appInfoCard: { backgroundColor: colors.card, padding: Spacing.lg, borderRadius: Radius.md, marginBottom: Spacing.md },
+  appInfoCard: { backgroundColor: colors.card, padding: Spacing.lg, borderRadius: Radius.md, borderCurve: 'continuous', marginBottom: Spacing.md },
   appInfoHeader: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
   appInfoName: { fontSize: 16, fontWeight: '700', color: colors.textPrimary, flex: 1 },
   appInfoExpanded: { marginTop: Spacing.sm },
@@ -774,61 +728,61 @@ const createStyles = (colors) => ({
   appInfoModel: { fontSize: 12, color: colors.textSecondary },
   appInfoId: { fontSize: 12, color: colors.textTertiary, fontFamily: 'monospace' },
   appInfoIntro: { fontSize: 12, color: colors.textTertiary, lineHeight: 18, marginTop: Spacing.xs },
-  webappIdCard: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, backgroundColor: colors.card, paddingVertical: Spacing.md, paddingHorizontal: Spacing.lg, borderRadius: Radius.md, marginBottom: Spacing.md },
+  webappIdCard: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, backgroundColor: colors.card, paddingVertical: Spacing.md, paddingHorizontal: Spacing.lg, borderRadius: Radius.md, borderCurve: 'continuous', marginBottom: Spacing.md },
   webappIdText: { fontSize: 15, fontWeight: '600', color: colors.textPrimary },
 
   // 参数卡片
-  paramCard: { backgroundColor: colors.card, padding: Spacing.lg, borderRadius: Radius.md, marginBottom: Spacing.sm },
+  paramCard: { backgroundColor: colors.card, padding: Spacing.lg, borderRadius: Radius.md, borderCurve: 'continuous', marginBottom: Spacing.sm },
   paramHeader: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 2 },
   paramLabel: { fontSize: 14, fontWeight: '600', color: colors.textPrimary, marginBottom: 2 },
   paramKey: { fontSize: 11, color: colors.textTertiary, fontFamily: 'monospace' },
-  paramInput: { fontSize: 14, color: colors.textPrimary, backgroundColor: colors.bg, borderRadius: Radius.sm, padding: Spacing.md },
+  paramInput: { fontSize: 14, color: colors.textPrimary, backgroundColor: colors.bg, borderRadius: Radius.sm, borderCurve: 'continuous', padding: Spacing.md },
   paramInputMultiline: { minHeight: 80, textAlignVertical: 'top' },
   rangeHint: { fontSize: 11, color: colors.textTertiary, marginTop: 4 },
 
   // 文件上传
   imageParamContainer: { gap: Spacing.sm },
-  imagePreview: { width: '100%', height: 160, borderRadius: Radius.sm, backgroundColor: colors.bg },
-  fileInfoRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, backgroundColor: colors.bg, padding: Spacing.md, borderRadius: Radius.sm },
+  imagePreview: { width: '100%', height: 160, borderRadius: Radius.sm, borderCurve: 'continuous', backgroundColor: colors.bg },
+  fileInfoRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, backgroundColor: colors.bg, padding: Spacing.md, borderRadius: Radius.sm, borderCurve: 'continuous' },
   fileInfoText: { fontSize: 12, color: colors.textSecondary, flex: 1, fontFamily: 'monospace' },
-  uploadButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, borderRadius: Radius.sm, borderWidth: 1, borderColor: colors.primary, backgroundColor: colors.bg },
+  uploadButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, borderRadius: Radius.sm, borderCurve: 'continuous', borderWidth: 1, borderColor: colors.primary, backgroundColor: colors.bg },
   uploadButtonText: { fontSize: 13, color: colors.primary, fontWeight: '500' },
 
   // Toggle
   toggleContainer: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
-  toggleTrack: { width: 44, height: 24, borderRadius: 12, backgroundColor: colors.separator, padding: 2 },
+  toggleTrack: { width: 44, height: 24, borderRadius: 12, borderCurve: 'continuous', backgroundColor: colors.separator, padding: 2 },
   toggleTrackActive: { backgroundColor: colors.primary },
-  toggleThumb: { width: 20, height: 20, borderRadius: 10, backgroundColor: colors.textInverse },
+  toggleThumb: { width: 20, height: 20, borderRadius: 10, borderCurve: 'continuous', backgroundColor: colors.textInverse },
   toggleThumbActive: {},
   toggleLabel: { fontSize: 14, color: colors.textSecondary },
 
   // Combo 就地下拉
-  comboButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: colors.bg, borderRadius: Radius.sm, padding: Spacing.md, borderWidth: 1, borderColor: colors.separator },
+  comboButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: colors.bg, borderRadius: Radius.sm, borderCurve: 'continuous', padding: Spacing.md, borderWidth: 1, borderColor: colors.separator },
   comboValue: { fontSize: 14, color: colors.textPrimary, flex: 1 },
   comboOverlay: { flex: 1 },
-  comboDropdown: { position: 'absolute', backgroundColor: colors.card, borderRadius: Radius.sm, borderWidth: 1, borderColor: colors.separator, maxHeight: 220, elevation: 5, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 4 },
+  comboDropdown: { position: 'absolute', backgroundColor: colors.card, borderRadius: Radius.sm, borderCurve: 'continuous', borderWidth: 1, borderColor: colors.separator, maxHeight: 220, boxShadow: '0 2px 4px rgba(0, 0, 0, 0.15)' },
   comboDropdownScroll: { maxHeight: 220 },
   comboItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.md, paddingVertical: 10, borderBottomWidth: 0.5, borderBottomColor: colors.separator },
-  comboItemActive: { backgroundColor: colors.primary + '15' },
+  comboItemActive: { backgroundColor: colors.primaryBg },
   comboItemText: { fontSize: 14, color: colors.textPrimary },
   comboItemTextActive: { fontSize: 14, color: colors.primary, fontWeight: '600' },
 
   // 保存名称弹窗
-  saveNameOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center' },
-  saveNameDialog: { backgroundColor: colors.card, borderRadius: Radius.lg, padding: Spacing.xl, width: '80%', maxWidth: 360 },
+  saveNameOverlay: { flex: 1, backgroundColor: colors.overlayMedium, alignItems: 'center', justifyContent: 'center' },
+  saveNameDialog: { backgroundColor: colors.card, borderRadius: Radius.lg, borderCurve: 'continuous', padding: Spacing.xl, width: '80%', maxWidth: 360 },
   saveNameTitle: { fontSize: 17, fontWeight: '600', color: colors.textPrimary, marginBottom: Spacing.md },
-  saveNameInput: { fontSize: 15, color: colors.textPrimary, borderWidth: 1, borderColor: colors.separator, borderRadius: Radius.sm, padding: Spacing.md, backgroundColor: colors.bg, marginBottom: Spacing.lg },
+  saveNameInput: { fontSize: 15, color: colors.textPrimary, borderWidth: 1, borderColor: colors.separator, borderRadius: Radius.sm, borderCurve: 'continuous', padding: Spacing.md, backgroundColor: colors.bg, marginBottom: Spacing.lg },
   saveNameActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: Spacing.md },
   saveNameCancel: { paddingVertical: Spacing.sm, paddingHorizontal: Spacing.lg },
   saveNameCancelText: { fontSize: 15, color: colors.textSecondary },
-  saveNameConfirm: { paddingVertical: Spacing.sm, paddingHorizontal: Spacing.lg, backgroundColor: colors.primary, borderRadius: Radius.sm },
+  saveNameConfirm: { paddingVertical: Spacing.sm, paddingHorizontal: Spacing.lg, backgroundColor: colors.primary, borderRadius: Radius.sm, borderCurve: 'continuous' },
   saveNameConfirmText: { fontSize: 15, color: colors.textInverse, fontWeight: '600' },
 
-  generateButton: { backgroundColor: colors.primary, paddingVertical: 16, borderRadius: Radius.md, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 10, marginBottom: Spacing.sm },
+  generateButton: { backgroundColor: colors.primary, paddingVertical: 16, borderRadius: Radius.md, borderCurve: 'continuous', alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 10, marginBottom: Spacing.sm },
   generateButtonDisabled: { backgroundColor: colors.primaryDisabled },
   generateButtonText: { color: colors.textInverse, fontSize: 17, fontWeight: '600', letterSpacing: -0.3 },
   errorText: { color: colors.error, textAlign: 'center', marginBottom: Spacing.md, fontSize: 14 },
-  apiKeyInput: { fontSize: 15, color: colors.textPrimary, borderWidth: 0, borderRadius: Radius.sm, padding: Spacing.md, fontFamily: 'monospace', backgroundColor: colors.bg },
-  saveKeyButton: { backgroundColor: colors.primary, paddingVertical: 10, borderRadius: Radius.sm, alignItems: 'center', marginTop: Spacing.sm },
+  apiKeyInput: { fontSize: 15, color: colors.textPrimary, borderWidth: 0, borderRadius: Radius.sm, borderCurve: 'continuous', padding: Spacing.md, fontFamily: 'monospace', backgroundColor: colors.bg },
+  saveKeyButton: { backgroundColor: colors.primary, paddingVertical: 10, borderRadius: Radius.sm, borderCurve: 'continuous', alignItems: 'center', marginTop: Spacing.sm },
   saveKeyButtonText: { color: colors.textInverse, fontSize: 15, fontWeight: '600' },
 });

@@ -19,6 +19,7 @@ const createStyles = (colors) => ({
     paddingLeft: 4,
     paddingRight: 4,
     borderRadius: Radius.sm,
+    borderCurve: 'continuous',
     gap: Spacing.xs,
     alignSelf: 'flex-start',
   },

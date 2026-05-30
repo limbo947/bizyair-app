@@ -57,7 +57,7 @@ function DefaultErrorFallback({ error, onRetry }) {
       </Text>
       <Pressable
         style={({ pressed }) => [defaultStyles.retryButton, { backgroundColor: colors.primary }, pressed && { opacity: 0.7 }]} onPress={onRetry} >
-        <Text style={defaultStyles.retryText}>重试</Text>
+        <Text style={[defaultStyles.retryText, { color: colors.textInverse }]}>重试</Text>
       </Pressable>
     </View>
   );
@@ -88,9 +88,9 @@ const defaultStyles = StyleSheet.create({
     paddingHorizontal: Spacing.xxl,
     paddingVertical: Spacing.md,
     borderRadius: Radius.md,
+    borderCurve: 'continuous',
   },
   retryText: {
-    color: '#fff',
     fontSize: 16,
     fontWeight: '600',
   },

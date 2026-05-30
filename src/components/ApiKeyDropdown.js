@@ -7,6 +7,7 @@ import {
   Pressable,
   TextInput,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Radius, Spacing } from '../constants/theme';
 import { useThemedStyles } from '../hooks/useThemedStyles';
@@ -24,6 +25,7 @@ export function ApiKeyDropdown({
 }) {
   const styles = useThemedStyles(createStyles);
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const [showAddInput, setShowAddInput] = useState(false);
   const [newKey, setNewKey] = useState('');
   const [newKeyName, setNewKeyName] = useState('');
@@ -60,7 +62,7 @@ export function ApiKeyDropdown({
       animationType="fade"
       onRequestClose={onClose}
     >
-      <Pressable style={({ pressed }) => [styles.overlay, pressed && { opacity: 0.7 }]} onPress={onClose}>
+      <Pressable style={({ pressed }) => [styles.overlay, { paddingTop: insets.top + 56 }, pressed && { opacity: 0.7 }]} onPress={onClose}>
         <View style={styles.dropdownContainer}>
           <Pressable>
             <View style={styles.dropdown}>
@@ -193,11 +195,11 @@ export function ApiKeyDropdown({
 const createStyles = (colors) => ({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.2)',
+    backgroundColor: colors.overlayLight,
     justifyContent: 'flex-start',
     alignItems: 'flex-start',
     paddingHorizontal: Spacing.md,
-    paddingTop: 65,
+    paddingTop: 0,
   },
   dropdownContainer: {
     width: '100%',
@@ -205,6 +207,7 @@ const createStyles = (colors) => ({
   dropdown: {
     backgroundColor: colors.card,
     borderRadius: Radius.md,
+    borderCurve: 'continuous',
     overflow: 'hidden',
   },
   dropdownHeader: {
@@ -323,6 +326,7 @@ const createStyles = (colors) => ({
     color: colors.textPrimary,
     backgroundColor: colors.bg,
     borderRadius: Radius.sm,
+    borderCurve: 'continuous',
     paddingHorizontal: Spacing.sm,
     paddingVertical: 14,
     marginTop: Spacing.sm,
@@ -337,6 +341,7 @@ const createStyles = (colors) => ({
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     borderRadius: Radius.sm,
+    borderCurve: 'continuous',
     backgroundColor: colors.bg,
   },
   cancelButtonText: {
@@ -350,6 +355,7 @@ const createStyles = (colors) => ({
     color: colors.textPrimary,
     backgroundColor: colors.bg,
     borderRadius: Radius.sm,
+    borderCurve: 'continuous',
     paddingHorizontal: Spacing.sm,
     paddingVertical: 14,
     fontFamily: 'monospace',
@@ -358,6 +364,7 @@ const createStyles = (colors) => ({
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     borderRadius: Radius.sm,
+    borderCurve: 'continuous',
     backgroundColor: colors.primary,
   },
   addConfirmButtonDisabled: {

@@ -35,6 +35,11 @@ export const LightColors = {
   textInverse: '#FFFFFF',
   separator: '#C6C6C8',
   groupedBg: '#FFFFFF',
+  star: '#FFD700',
+  textOnOverlay: '#FFFFFF',
+  overlayLight: 'rgba(0,0,0,0.2)',
+  overlayMedium: 'rgba(0,0,0,0.5)',
+  overlayHeavy: 'rgba(0,0,0,0.85)',
 };
 
 // ── Dark Color Palette (iOS dark mode conventions) ──
@@ -74,6 +79,11 @@ export const DarkColors = {
   textInverse: '#000000',
   separator: '#38383A',
   groupedBg: '#000000',
+  star: '#FFD700',
+  textOnOverlay: 'rgba(255,255,255,0.9)',
+  overlayLight: 'rgba(0,0,0,0.3)',
+  overlayMedium: 'rgba(0,0,0,0.6)',
+  overlayHeavy: 'rgba(0,0,0,0.9)',
 };
 
 // ── Theme Factory ──
@@ -105,17 +115,6 @@ export function createTheme(mode) {
   };
 }
 
-// ── Backward-compatible default exports (light mode) ──
-// Colors is mutable — ThemeProvider updates it when theme changes.
-// This allows all existing StyleSheet.create({ ... Colors.xxx }) and inline
-// Colors.xxx references to automatically reflect the current theme.
-export const Colors = { ...LightColors };
-
-export function updateColors(mode) {
-  const src = mode === 'dark' ? DarkColors : LightColors;
-  Object.keys(src).forEach((key) => { Colors[key] = src[key]; });
-}
-
 export const Radius = {
   xs: 6,
   sm: 8,
@@ -135,24 +134,7 @@ export const Spacing = {
   xxl: 28,
 };
 
-export const STATUS_COLORS = {
-  Pending: Colors.warning,
-  Queuing: Colors.warning,
-  Preparing: Colors.info,
-  Running: Colors.primary,
-  Saving: Colors.purple,
-  Success: Colors.success,
-  Failed: Colors.error,
-  Canceled: Colors.textTertiary,
-};
-
-export const STATUS_BG = {
-  Pending: Colors.warningBg,
-  Queuing: Colors.warningBg,
-  Preparing: Colors.infoBg,
-  Running: Colors.primaryBg,
-  Saving: Colors.purpleBg,
-  Success: Colors.successBg,
-  Failed: Colors.errorBg,
-  Canceled: Colors.bg,
-};
+export const withBorderRadius = (radius) => ({
+  borderRadius: radius,
+  borderCurve: 'continuous',
+});

@@ -1,4 +1,5 @@
 import jsSHA from 'jssha';
+import { Platform } from 'react-native';
 import {
   API_BASE,
   WEBAPP_API_BASE,
@@ -166,7 +167,67 @@ async function commitResource(apiKey, name, objectKey) {
  * @returns {Promise<string>} 上传后的文件 URL
  * @throws {Error} 获取凭证失败、OSS上传失败或确认失败时抛出
  */
-async function uploadImageFile(apiKey, file) {
+async function uploadViaProxy(apiKey, file) {
+  const fileName = file.name || 'upload.jpg';
+  let fileBase64;
+
+  if (file.base64) {
+    fileBase64 = file.base64;
+  } else if (file.rawFile instanceof Blob || file.rawFile instanceof File) {
+    const buf = await file.rawFile.arrayBuffer();
+    const bytes = new Uint8Array(buf);
+    let binary = '';
+    for (let i = 0; i < bytes.length; i += 8192) {
+      binary += String.fromCharCode.apply(null, bytes.subarray(i, i + 8192));
+    }
+    fileBase64 = btoa(binary);
+  } else if (file.uri) {
+    const resp = await fetch(file.uri);
+    if (!resp.ok) throw new Error(`读取文件失败: ${resp.status}`);
+    const buf = await resp.arrayBuffer();
+    const bytes = new Uint8Array(buf);
+    let binary = '';
+    for (let i = 0; i < bytes.length; i += 8192) {
+      binary += String.fromCharCode.apply(null, bytes.subarray(i, i + 8192));
+    }
+    fileBase64 = btoa(binary);
+  } else if (file instanceof Blob || file instanceof File) {
+    const buf = await file.arrayBuffer();
+    const bytes = new Uint8Array(buf);
+    let binary = '';
+    for (let i = 0; i < bytes.length; i += 8192) {
+      binary += String.fromCharCode.apply(null, bytes.subarray(i, i + 8192));
+    }
+    fileBase64 = btoa(binary);
+  } else {
+    throw new Error('上传失败: 无法读取文件内容');
+  }
+
+  if (!fileBase64) {
+    throw new Error('上传失败: 文件内容为空');
+  }
+
+  const proxyUrl = (typeof process !== 'undefined' && process.env && process.env.EXPO_PUBLIC_UPLOAD_PROXY_URL) || 'http://localhost:3001';
+  const resp = await fetch(`${proxyUrl}/api/upload`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ apiKey, fileName, fileData: fileBase64 }),
+  });
+
+  if (!resp.ok) {
+    const text = await resp.text().catch(() => '');
+    throw new Error(`上传代理请求失败: ${resp.status} - ${text.slice(0, 200)}`);
+  }
+  const ct = resp.headers.get('content-type') || '';
+  if (!ct.includes('application/json')) {
+    throw new Error('上传代理返回非JSON响应，请确保代理服务器已启动: node scripts/upload-proxy.mjs');
+  }
+  const result = await resp.json();
+  if (result.error) throw new Error(result.error);
+  return result.url;
+}
+
+async function uploadDirectToOSS(apiKey, file) {
   const fileName = file.name || 'upload.jpg';
   const uploadInfo = await getUploadToken(apiKey, fileName);
   const fileInfo = uploadInfo.file;
@@ -182,9 +243,7 @@ async function uploadImageFile(apiKey, file) {
   const contentType = file.type || 'application/octet-stream';
   const date = new Date().toUTCString();
 
-  // OSS V1 签名：使用 x-oss-date 时，Date 位置仍需填入 x-oss-date 的值
-  const stringToSign = `PUT\n\n${contentType}\n${date}\nx-oss-date:${date}\nx-oss-security-token:${securityToken}\n/${bucket}/${objectKey}`;
-
+  const stringToSign = `PUT\n\n${contentType}\n${date}\nx-oss-security-token:${securityToken}\n/${bucket}/${objectKey}`;
   const shaObj = new jsSHA('SHA-1', 'TEXT');
   shaObj.setHMACKey(accessKeySecret, 'TEXT');
   shaObj.update(stringToSign);
@@ -193,51 +252,39 @@ async function uploadImageFile(apiKey, file) {
 
   let body;
   if (file.uri) {
-    const fileFetchController = new AbortController();
-    const fileFetchTimeout = setTimeout(() => fileFetchController.abort(), REQUEST_TIMEOUT_MS);
-    try {
-      const fetchResponse = await fetch(file.uri, { signal: fileFetchController.signal });
-      body = await fetchResponse.arrayBuffer();
-    } finally {
-      clearTimeout(fileFetchTimeout);
-    }
+    const fetchResponse = await fetch(file.uri);
+    body = await fetchResponse.arrayBuffer();
   } else if (file instanceof ArrayBuffer || ArrayBuffer.isView(file)) {
     body = file;
   } else {
     body = file;
   }
 
-  const uploadController = new AbortController();
-  const uploadTimeout = setTimeout(() => uploadController.abort(), REQUEST_TIMEOUT_MS * 4);
-  try {
-    const response = await fetch(uploadUrl, {
-      method: 'PUT',
-      headers: {
-        'Authorization': authorization,
-        'x-oss-security-token': securityToken,
-        'x-oss-date': date,
-        'Content-Type': contentType,
-      },
-      body,
-      signal: uploadController.signal,
-    });
+  const response = await fetch(uploadUrl, {
+    method: 'PUT',
+    headers: {
+      Authorization: authorization,
+      'x-oss-security-token': securityToken,
+      'x-oss-date': date,
+      'Content-Type': contentType,
+    },
+    body,
+  });
 
-    clearTimeout(uploadTimeout);
-
-    if (!response.ok) {
-      const errText = await response.text().catch(() => '');
-      throw new Error(`OSS上传失败: ${response.status} - ${errText}`);
-    }
-  } catch (err) {
-    clearTimeout(uploadTimeout);
-    if (err.name === 'AbortError') {
-      throw new Error('OSS上传超时，请检查网络连接后重试');
-    }
-    throw err;
+  if (!response.ok) {
+    const errText = await response.text().catch(() => '');
+    throw new Error(`OSS上传失败: ${response.status} - ${errText}`);
   }
 
   await commitResource(apiKey, fileName, objectKey);
   return uploadUrl;
+}
+
+async function uploadImageFile(apiKey, file) {
+  if (Platform.OS === 'web') {
+    return uploadViaProxy(apiKey, file);
+  }
+  return uploadDirectToOSS(apiKey, file);
 }
 
 /**

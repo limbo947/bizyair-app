@@ -48,7 +48,8 @@
             "enablePngCrunchInReleaseBuilds": true
           }
         }
-      ]
+      ],
+      "expo-router"
     ],
     "extra": {
       "eas": {

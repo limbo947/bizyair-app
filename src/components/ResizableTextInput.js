@@ -70,6 +70,7 @@ const createStyles = (colors) => ({
   wrapper: {
     position: 'relative',
     borderRadius: Radius.sm,
+    borderCurve: 'continuous',
     backgroundColor: colors.bg,
   },
   input: {
@@ -78,6 +79,7 @@ const createStyles = (colors) => ({
     textAlignVertical: 'top',
     borderWidth: 0,
     borderRadius: Radius.sm,
+    borderCurve: 'continuous',
     padding: Spacing.sm,
     backgroundColor: colors.bg,
     ...(Platform.OS === 'android' ? { includeFontPadding: false, fontFamily: 'System' } : {}),

@@ -3,6 +3,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { ThemeProvider, useTheme } from '../src/context/ThemeContext';
 import { AppProvider } from '../src/context/AppContext';
+import { ErrorBoundary } from '../src/components/ErrorBoundary';
 
 function RootLayoutNav() {
   const { colors, themeMode } = useTheme();
@@ -22,7 +23,9 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <ThemeProvider>
         <AppProvider>
-          <RootLayoutNav />
+          <ErrorBoundary>
+            <RootLayoutNav />
+          </ErrorBoundary>
         </AppProvider>
       </ThemeProvider>
     </SafeAreaProvider>

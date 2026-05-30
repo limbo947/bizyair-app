@@ -9,78 +9,19 @@ import {
   PanResponder,
   Dimensions,
   StatusBar,
-  Platform,
-  Alert,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
-import { File, Paths } from 'expo-file-system';
-import * as MediaLibrary from 'expo-media-library';
 import { Spacing } from '../constants/theme';
+import { useThemedStyles } from '../hooks/useThemedStyles';
+import { useTheme } from '../context/ThemeContext';
+import { triggerDownload, triggerBatchDownload } from '../utils/download';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-async function triggerDownload(url, filename) {
-  if (Platform.OS === 'web') {
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = filename || 'bizyair_image.jpg';
-    anchor.target = '_blank';
-    document.body.appendChild(anchor);
-    anchor.click();
-    document.body.removeChild(anchor);
-    return;
-  }
-
-  try {
-    const { status } = await MediaLibrary.requestPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('权限不足', '需要存储权限才能保存图片');
-      return;
-    }
-    const dest = new File(Paths.cache, filename || 'bizyair_image.jpg');
-    const downloadedFile = await File.downloadFileAsync(url, dest);
-    await MediaLibrary.createAssetAsync(downloadedFile.uri);
-  } catch (err) {
-    Alert.alert('下载失败', err.message || '请检查网络连接');
-  }
-}
-
-async function triggerBatchDownload(urls) {
-  if (Platform.OS === 'web') {
-    for (let i = 0; i < urls.length; i++) {
-      const anchor = document.createElement('a');
-      anchor.href = urls[i];
-      anchor.download = `bizyair_image_${i + 1}.jpg`;
-      anchor.target = '_blank';
-      document.body.appendChild(anchor);
-      anchor.click();
-      document.body.removeChild(anchor);
-      if (i < urls.length - 1) await new Promise((r) => setTimeout(r, 300));
-    }
-    return;
-  }
-
-  try {
-    const { status } = await MediaLibrary.requestPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('权限不足', '需要存储权限才能保存图片');
-      return;
-    }
-    for (let i = 0; i < urls.length; i++) {
-      const filename = `bizyair_image_${i + 1}.jpg`;
-      const dest = new File(Paths.cache, filename);
-      const downloadedFile = await File.downloadFileAsync(urls[i], dest);
-      await MediaLibrary.createAssetAsync(downloadedFile.uri);
-      if (i < urls.length - 1) await new Promise((r) => setTimeout(r, 300));
-    }
-    Alert.alert('下载成功', `${urls.length} 张图片已保存到相册`);
-  } catch (err) {
-    Alert.alert('下载失败', err.message || '请检查网络连接');
-  }
-}
-
 export function ImageViewer({ visible, imageUrl, imageUrls, prompt, onClose }) {
+  const styles = useThemedStyles(createStyles);
+  const { colors } = useTheme();
   const urlsRef = useRef([]);
   urlsRef.current = imageUrls?.length > 0 ? imageUrls : (imageUrl ? [imageUrl] : []);
 
@@ -169,9 +110,6 @@ export function ImageViewer({ visible, imageUrl, imageUrls, prompt, onClose }) {
         await triggerBatchDownload(urls);
       } else if (urls[0]) {
         await triggerDownload(urls[0]);
-        if (Platform.OS !== 'web') {
-          Alert.alert('下载成功', '图片已保存到相册');
-        }
       }
     } finally {
       setIsDownloading(false);
@@ -278,7 +216,7 @@ export function ImageViewer({ visible, imageUrl, imageUrls, prompt, onClose }) {
       transparent={true}
       onRequestClose={onClose}
     >
-      <StatusBar barStyle="light-content" backgroundColor="rgba(0,0,0,0.85)" />
+      <StatusBar barStyle="light-content" backgroundColor={colors.overlayHeavy} />
       <View style={styles.overlay}>
         <View style={StyleSheet.absoluteFillObject} {...panResponder.panHandlers}>
           <Animated.View
@@ -312,7 +250,7 @@ export function ImageViewer({ visible, imageUrl, imageUrls, prompt, onClose }) {
                 style={({ pressed }) => [styles.iconBtn, pressed && { opacity: 0.7 }]}
                 onPress={onClose}
               >
-                <Ionicons name="close" size={24} color="#fff" />
+                <Ionicons name="chevron-down" size={24} color={colors.textOnOverlay} />
               </Pressable>
               {urlsRef.current.length > 1 ? (
                 <View style={styles.pageIndicator}>
@@ -326,7 +264,7 @@ export function ImageViewer({ visible, imageUrl, imageUrls, prompt, onClose }) {
                 onPress={handleDownload}
                 disabled={isDownloading}
               >
-                <Ionicons name={isDownloading ? 'hourglass-outline' : 'download-outline'} size={24} color="#fff" />
+                <Ionicons name={isDownloading ? 'hourglass-outline' : 'download-outline'} size={24} color={colors.textOnOverlay} />
               </Pressable>
             </View>
 
@@ -337,7 +275,7 @@ export function ImageViewer({ visible, imageUrl, imageUrls, prompt, onClose }) {
                     style={({ pressed }) => [styles.navBtn, pressed && { opacity: 0.7 }]}
                     onPress={() => goToIndex(currentIndex - 1)}
                   >
-                    <Ionicons name="chevron-back" size={28} color="#fff" />
+                    <Ionicons name="chevron-back" size={28} color={colors.textOnOverlay} />
                   </Pressable>
                 ) : <View style={styles.navBtnPlaceholder} />}
                 {currentIndex < urlsRef.current.length - 1 ? (
@@ -345,7 +283,7 @@ export function ImageViewer({ visible, imageUrl, imageUrls, prompt, onClose }) {
                     style={({ pressed }) => [styles.navBtn, pressed && { opacity: 0.7 }]}
                     onPress={() => goToIndex(currentIndex + 1)}
                   >
-                    <Ionicons name="chevron-forward" size={28} color="#fff" />
+                    <Ionicons name="chevron-forward" size={28} color={colors.textOnOverlay} />
                   </Pressable>
                 ) : <View style={styles.navBtnPlaceholder} />}
               </View>
@@ -389,10 +327,10 @@ export function ImageViewer({ visible, imageUrl, imageUrls, prompt, onClose }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) => ({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.85)',
+    backgroundColor: colors.overlayHeavy,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -421,18 +359,20 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderCurve: 'continuous',
+    backgroundColor: colors.overlayLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
   pageIndicator: {
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: colors.overlayMedium,
     borderRadius: 12,
+    borderCurve: 'continuous',
     paddingHorizontal: 12,
     paddingVertical: 4,
   },
   pageIndicatorText: {
-    color: '#fff',
+    color: colors.textOnOverlay,
     fontSize: 13,
     fontWeight: '600',
   },
@@ -451,6 +391,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
+    borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -469,7 +410,7 @@ const styles = StyleSheet.create({
   },
   promptText: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.85)',
+    color: colors.textOnOverlay,
     lineHeight: 20,
     textAlign: 'center',
   },
@@ -485,19 +426,21 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingHorizontal: Spacing.md,
     paddingVertical: 6,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: colors.overlayLight,
     borderRadius: 8,
+    borderCurve: 'continuous',
   },
   thumbnailItem: {
     width: 48,
     height: 48,
     borderRadius: 4,
+    borderCurve: 'continuous',
     overflow: 'hidden',
     borderWidth: 2,
     borderColor: 'transparent',
   },
   thumbnailItemActive: {
-    borderColor: '#fff',
+    borderColor: colors.textOnOverlay,
   },
   thumbnailImage: {
     width: '100%',

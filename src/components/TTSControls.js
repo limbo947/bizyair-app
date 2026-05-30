@@ -12,7 +12,7 @@ function ParamLabel({ label, required, style }) {
   const { colors } = useTheme();
   return (
     <Text style={[{ fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginBottom: Spacing.sm, textTransform: 'uppercase', letterSpacing: 0.5 }, style]}>
-      {label}{required ? <Text style={{ color: '#E74C3C' }}> *</Text> : <Text style={{ color: colors.textTertiary, fontWeight: '400', textTransform: 'none' }}> (可选)</Text>}
+      {label}{required ? <Text style={{ color: colors.error }}> *</Text> : <Text style={{ color: colors.textTertiary, fontWeight: '400', textTransform: 'none' }}> (可选)</Text>}
     </Text>
   );
 }
@@ -166,19 +166,19 @@ export function TTSControls({
 }
 
 const createStyles = (colors) => ({
-  card: { backgroundColor: colors.card, padding: Spacing.lg, borderRadius: Radius.md, marginBottom: Spacing.md },
+  card: { backgroundColor: colors.card, padding: Spacing.lg, borderRadius: Radius.md, borderCurve: 'continuous', marginBottom: Spacing.md },
   label: { fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginBottom: Spacing.sm, textTransform: 'uppercase', letterSpacing: 0.5 },
   labelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.sm },
   rangeHint: { fontSize: 12, color: colors.textTertiary },
   valueRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  valueInput: { fontSize: 14, color: colors.primary, fontWeight: '600', borderWidth: 1, borderColor: colors.border, borderRadius: Radius.sm, paddingHorizontal: 8, paddingVertical: 4, minWidth: 52, textAlign: 'center' },
-  stepBtn: { width: 28, height: 28, borderRadius: 14, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.separator },
+  valueInput: { fontSize: 14, color: colors.primary, fontWeight: '600', borderWidth: 1, borderColor: colors.border, borderRadius: Radius.sm, borderCurve: 'continuous', paddingHorizontal: 8, paddingVertical: 4, minWidth: 52, textAlign: 'center' },
+  stepBtn: { width: 28, height: 28, borderRadius: 14, borderCurve: 'continuous', backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.separator },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs },
-  chip: { paddingHorizontal: Spacing.md, paddingVertical: Spacing.xs, borderRadius: Radius.sm, backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.separator },
+  chip: { paddingHorizontal: Spacing.md, paddingVertical: Spacing.xs, borderRadius: Radius.sm, borderCurve: 'continuous', backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.separator },
   chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
   chipText: { fontSize: 13, color: colors.textSecondary, fontWeight: '500' },
   chipTextActive: { color: colors.textInverse, fontWeight: '600' },
-  promptInput: { fontSize: 14, color: colors.textPrimary, lineHeight: 20, minHeight: 60, textAlignVertical: 'top', borderWidth: 0, borderRadius: Radius.sm, paddingHorizontal: Spacing.sm, paddingVertical: Spacing.sm, backgroundColor: colors.bg },
+  promptInput: { fontSize: 14, color: colors.textPrimary, lineHeight: 20, minHeight: 60, textAlignVertical: 'top', borderWidth: 0, borderRadius: Radius.sm, borderCurve: 'continuous', paddingHorizontal: Spacing.sm, paddingVertical: Spacing.sm, backgroundColor: colors.bg },
   inputRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  inputSingle: { flex: 1, fontSize: 15, color: colors.textPrimary, textAlign: 'center', borderWidth: 0, borderRadius: Radius.sm, paddingHorizontal: Spacing.sm, paddingVertical: 10, backgroundColor: colors.bg },
+  inputSingle: { flex: 1, fontSize: 15, color: colors.textPrimary, textAlign: 'center', borderWidth: 0, borderRadius: Radius.sm, borderCurve: 'continuous', paddingHorizontal: Spacing.sm, paddingVertical: 10, backgroundColor: colors.bg },
 });

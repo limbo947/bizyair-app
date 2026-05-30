@@ -9,6 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Video, ResizeMode } from 'expo-av';
 import { Spacing } from '../constants/theme';
 import { useThemedStyles } from '../hooks/useThemedStyles';
+import { useTheme } from '../context/ThemeContext';
 
 const NATIVE = Platform.OS !== 'web';
 
@@ -17,6 +18,7 @@ const NATIVE = Platform.OS !== 'web';
  * ================================================================ */
 function WebVideoPlayer({ visible, videoUrl, onClose }) {
   const s = useThemedStyles(createStyles);
+  const { colors } = useTheme();
   const vidRef = useRef(null);
   const elRef = useRef(null);
   const rafRef = useRef(null);
@@ -95,7 +97,7 @@ function WebVideoPlayer({ visible, videoUrl, onClose }) {
       <View style={s.full}>
         {/* header */}
         <View style={s.header}>
-          <Pressable style={({ pressed }) => [s.btn, pressed && { opacity: 0.7 }]} onPress={onClose}><Ionicons name="chevron-down" size={28} color="#fff" /></Pressable>
+          <Pressable style={({ pressed }) => [s.btn, pressed && { opacity: 0.7 }]} onPress={onClose}><Ionicons name="chevron-down" size={28} color={colors.textOnOverlay} /></Pressable>
           <Text style={s.title}>视频预览</Text>
           <View style={s.btn} />
         </View>
@@ -104,9 +106,9 @@ function WebVideoPlayer({ visible, videoUrl, onClose }) {
         <View style={s.videoBox}>
           <div ref={elRef} style={{ width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }} />
 
-          {loading && !error ? <View style={s.loadingOverlay}><ActivityIndicator size="large" color="#fff" /><Text style={s.loadingText}>加载中...</Text></View> : null}
-          {!isPlaying && !loading && !error ? <Pressable style={({ pressed }) => [s.bigPlay, pressed && { opacity: 0.7 }]} onPress={togglePlay}><Ionicons name="play-circle" size={72} color="rgba(255,255,255,0.9)" /></Pressable> : null}
-          {error ? <View style={s.center}><Ionicons name="alert-circle-outline" size={48} color="#999" /><Text style={s.errText}>{error}</Text></View> : null}
+          {loading && !error ? <View style={s.loadingOverlay}><ActivityIndicator size="large" color={colors.textOnOverlay} /><Text style={s.loadingText}>加载中...</Text></View> : null}
+          {!isPlaying && !loading && !error ? <Pressable style={({ pressed }) => [s.bigPlay, pressed && { opacity: 0.7 }]} onPress={togglePlay}><Ionicons name="play-circle" size={72} color={colors.textOnOverlay} /></Pressable> : null}
+          {error ? <View style={s.center}><Ionicons name="alert-circle-outline" size={48} color={colors.textTertiary} /><Text style={s.errText}>{error}</Text></View> : null}
         </View>
 
         {/* controls */}
@@ -120,8 +122,8 @@ function WebVideoPlayer({ visible, videoUrl, onClose }) {
           </View>
 
           <View style={s.ctrlRow}>
-            <Pressable style={({ pressed }) => [s.ctrlBtn, pressed && { opacity: 0.7 }]} onPress={togglePlay}><Ionicons name={isPlaying ? 'pause' : 'play'} size={32} color="#fff" /></Pressable>
-            <Pressable style={({ pressed }) => [s.ctrlBtn, pressed && { opacity: 0.7 }]} onPress={toggleMute}><Ionicons name={isMuted || volume === 0 ? 'volume-mute' : volume < 0.5 ? 'volume-low' : 'volume-medium'} size={24} color="#fff" /></Pressable>
+            <Pressable style={({ pressed }) => [s.ctrlBtn, pressed && { opacity: 0.7 }]} onPress={togglePlay}><Ionicons name={isPlaying ? 'pause' : 'play'} size={32} color={colors.textOnOverlay} /></Pressable>
+            <Pressable style={({ pressed }) => [s.ctrlBtn, pressed && { opacity: 0.7 }]} onPress={toggleMute}><Ionicons name={isMuted || volume === 0 ? 'volume-mute' : volume < 0.5 ? 'volume-low' : 'volume-medium'} size={24} color={colors.textOnOverlay} /></Pressable>
             <View style={s.volArea} onClick={(e) => { if (!e.currentTarget) return; const r = e.currentTarget.getBoundingClientRect(); setVol(Math.max(0, Math.min(1, (e.clientX - r.left) / r.width))); }}>
               <View style={s.volBg}><View style={[s.volFill, { width: `${volPct}%` }]} /></View>
             </View>
@@ -137,6 +139,7 @@ function WebVideoPlayer({ visible, videoUrl, onClose }) {
  * ================================================================ */
 function NativeVideoPlayer({ visible, videoUrl, onClose }) {
   const s = useThemedStyles(createStyles);
+  const { colors } = useTheme();
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [duration, setDuration] = useState(0);
@@ -173,7 +176,7 @@ function NativeVideoPlayer({ visible, videoUrl, onClose }) {
     <Modal visible={visible} animationType="fade" transparent={false} onRequestClose={onClose}>
       <Pressable style={s.full} >
         <View style={s.header}>
-          <Pressable style={({ pressed }) => [s.btn, pressed && { opacity: 0.7 }]} onPress={onClose}><Ionicons name="chevron-down" size={28} color="#fff" /></Pressable>
+          <Pressable style={({ pressed }) => [s.btn, pressed && { opacity: 0.7 }]} onPress={onClose}><Ionicons name="chevron-down" size={28} color={colors.textOnOverlay} /></Pressable>
           <Text style={s.title}>视频预览</Text>
           <View style={s.btn} />
         </View>
@@ -181,8 +184,8 @@ function NativeVideoPlayer({ visible, videoUrl, onClose }) {
         <View style={s.videoBox}>
           {error ? <View style={s.center}><Ionicons name="alert-circle-outline" size={48} color="#999" /><Text style={s.errText}>{error}</Text></View>
           : <Video ref={videoRef} source={{ uri: videoUrl }} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} resizeMode={ResizeMode.CONTAIN} shouldPlay={false} isLooping={false} volume={isMuted ? 0 : volume} onPlaybackStatusUpdate={onPlayback} onError={() => { setError('视频加载失败'); setIsLoading(false); }} />}
-          {isLoading && !error ? <View style={s.loadingOverlay}><ActivityIndicator size="large" color="#fff" /><Text style={s.loadingText}>加载中...</Text></View> : null}
-          {!isPlaying && !isLoading && !error ? <Pressable style={({ pressed }) => [s.bigPlay, pressed && { opacity: 0.7 }]} onPress={togglePlay}><Ionicons name="play-circle" size={72} color="rgba(255,255,255,0.9)" /></Pressable> : null}
+          {isLoading && !error ? <View style={s.loadingOverlay}><ActivityIndicator size="large" color={colors.textOnOverlay} /><Text style={s.loadingText}>加载中...</Text></View> : null}
+          {!isPlaying && !isLoading && !error ? <Pressable style={({ pressed }) => [s.bigPlay, pressed && { opacity: 0.7 }]} onPress={togglePlay}><Ionicons name="play-circle" size={72} color={colors.textOnOverlay} /></Pressable> : null}
         </View>
 
         <View style={s.ctrlBar}>
@@ -195,8 +198,8 @@ function NativeVideoPlayer({ visible, videoUrl, onClose }) {
           </View>
 
           <View style={s.ctrlRow}>
-            <Pressable style={({ pressed }) => [s.ctrlBtn, pressed && { opacity: 0.7 }]} onPress={togglePlay}><Ionicons name={isPlaying ? 'pause' : 'play'} size={32} color="#fff" /></Pressable>
-            <Pressable style={({ pressed }) => [s.ctrlBtn, pressed && { opacity: 0.7 }]} onPress={toggleMute}><Ionicons name={isMuted || volume === 0 ? 'volume-mute' : volume < 0.5 ? 'volume-low' : 'volume-medium'} size={24} color="#fff" /></Pressable>
+            <Pressable style={({ pressed }) => [s.ctrlBtn, pressed && { opacity: 0.7 }]} onPress={togglePlay}><Ionicons name={isPlaying ? 'pause' : 'play'} size={32} color={colors.textOnOverlay} /></Pressable>
+            <Pressable style={({ pressed }) => [s.ctrlBtn, pressed && { opacity: 0.7 }]} onPress={toggleMute}><Ionicons name={isMuted || volume === 0 ? 'volume-mute' : volume < 0.5 ? 'volume-low' : 'volume-medium'} size={24} color={colors.textOnOverlay} /></Pressable>
             <Pressable style={({ pressed }) => [s.volArea, pressed && { opacity: 0.7 }]} onPress={(e) => { e.currentTarget.measure((_, __, w) => { const v = Math.max(0, Math.min(1, e.nativeEvent.locationX / w)); setVolume(v); if (v > 0 && isMuted) setIsMuted(false); }); }}>
               <View style={s.volBg}><View style={[s.volFill, { width: `${isMuted ? 0 : volume * 100}%` }]} /></View>
             </Pressable>
@@ -214,25 +217,25 @@ export function VideoPlayer(props) {
 
 /* ---- shared styles ------------------------------------------------------- */
 const createStyles = (colors) => ({
-  full: { flex: 1, backgroundColor: '#000' },
-  header: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 50, paddingHorizontal: Spacing.lg, paddingBottom: Spacing.md, backgroundColor: 'rgba(0,0,0,0.5)' },
+  full: { flex: 1, backgroundColor: colors.overlayHeavy },
+  header: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 50, paddingHorizontal: Spacing.lg, paddingBottom: Spacing.md, backgroundColor: colors.overlayMedium },
   btn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  title: { fontSize: 16, fontWeight: '600', color: '#fff' },
+  title: { fontSize: 16, fontWeight: '600', color: colors.textOnOverlay },
   videoBox: { flex: 1, width: '100%', overflow: 'hidden' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  errText: { fontSize: 14, color: '#fff', marginTop: Spacing.md, textAlign: 'center' },
-  loadingOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center' },
-  loadingText: { color: '#fff', fontSize: 14, marginTop: Spacing.md },
+  errText: { fontSize: 14, color: colors.textOnOverlay, marginTop: Spacing.md, textAlign: 'center' },
+  loadingOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: colors.overlayMedium, alignItems: 'center', justifyContent: 'center' },
+  loadingText: { color: colors.textOnOverlay, fontSize: 14, marginTop: Spacing.md },
   bigPlay: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' },
-  ctrlBar: { position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 10, backgroundColor: 'rgba(0,0,0,0.7)', paddingBottom: 34, paddingHorizontal: Spacing.lg, paddingTop: Spacing.md },
+  ctrlBar: { position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 10, backgroundColor: colors.overlayHeavy, paddingBottom: 34, paddingHorizontal: Spacing.lg, paddingTop: Spacing.md },
   progressRow: { flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.sm },
   progArea: { flex: 1, height: 32, justifyContent: 'center', marginHorizontal: 4 },
-  progBg: { height: 3, borderRadius: 1.5, backgroundColor: 'rgba(255,255,255,0.3)', overflow: 'hidden' },
-  progFill: { height: '100%', backgroundColor: colors.primary, borderRadius: 1.5 },
-  t: { fontSize: 12, color: '#fff', minWidth: 42, textAlign: 'center' },
+  progBg: { height: 3, borderRadius: 1.5, borderCurve: 'continuous', backgroundColor: 'rgba(255,255,255,0.3)', overflow: 'hidden' },
+  progFill: { height: '100%', backgroundColor: colors.primary, borderRadius: 1.5, borderCurve: 'continuous' },
+  t: { fontSize: 12, color: colors.textOnOverlay, minWidth: 42, textAlign: 'center' },
   ctrlRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, paddingVertical: Spacing.sm },
   ctrlBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   volArea: { flex: 1, height: 28, justifyContent: 'center', cursor: 'pointer' },
-  volBg: { height: 3, borderRadius: 1.5, backgroundColor: 'rgba(255,255,255,0.3)', overflow: 'hidden' },
-  volFill: { height: '100%', backgroundColor: '#fff', borderRadius: 1.5 },
+  volBg: { height: 3, borderRadius: 1.5, borderCurve: 'continuous', backgroundColor: 'rgba(255,255,255,0.3)', overflow: 'hidden' },
+  volFill: { height: '100%', backgroundColor: colors.textOnOverlay, borderRadius: 1.5, borderCurve: 'continuous' },
 });

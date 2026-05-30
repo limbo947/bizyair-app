@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { createTheme, updateColors } from '../constants/theme';
+import { createTheme } from '../constants/theme';
 
 const THEME_MODE_KEY = 'theme_mode';
 
@@ -16,7 +16,6 @@ export function ThemeProvider({ children }) {
         const stored = await AsyncStorage.getItem(THEME_MODE_KEY);
         if (stored === 'dark' || stored === 'light') {
           setThemeMode(stored);
-          updateColors(stored);
         }
       } catch (e) {
         console.error('加载主题模式失败:', e);
@@ -27,7 +26,6 @@ export function ThemeProvider({ children }) {
   const toggleTheme = useCallback(async () => {
     const next = themeMode === 'light' ? 'dark' : 'light';
     setThemeMode(next);
-    updateColors(next);
     setThemeKey((k) => k + 1);
     try {
       await AsyncStorage.setItem(THEME_MODE_KEY, next);

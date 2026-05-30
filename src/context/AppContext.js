@@ -8,7 +8,8 @@ import { FavoritesProvider } from './FavoritesContext';
 const AppContext = createContext(null);
 
 export function AppProvider({ children }) {
-  const [activeTab, setActiveTab] = useState(TAB_HOME);
+  const [_activeTab, setActiveTab] = useState(undefined);
+  const activeTab = _activeTab ?? TAB_HOME;
 
   const loadActiveTab = async () => {
     try {

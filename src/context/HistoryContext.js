@@ -77,7 +77,8 @@ function extractWebappResult(outputs) {
 export function HistoryProvider({ children }) {
   const { apiKey } = useApiKeyContext();
 
-  const [history, setHistory] = useState([]);
+  const [_history, setHistory] = useState(undefined);
+  const history = _history ?? [];
   const [homeState, setHomeState] = useState(DEFAULT_HOME_STATE);
   const [totalCoinsSpent, setTotalCoinsSpent] = useState(0);
   const pollingRef = useRef({});
@@ -116,7 +117,7 @@ export function HistoryProvider({ children }) {
 
   const addToHistory = useCallback(async (entry) => {
     setHistory((prev) => {
-      const updated = [entry, ...prev];
+      const updated = [entry, ...(prev ?? [])];
       persistHistory(updated);
       return updated;
     });
@@ -130,9 +131,10 @@ export function HistoryProvider({ children }) {
 
   const updateHistoryItem = useCallback((id, updates) => {
     setHistory((prev) => {
-      const idx = prev.findIndex((h) => h.id === id);
-      if (idx === -1) return prev;
-      const updated = [...prev];
+      const arr = prev ?? [];
+      const idx = arr.findIndex((h) => h.id === id);
+      if (idx === -1) return arr;
+      const updated = [...arr];
       updated[idx] = { ...updated[idx], ...updates };
       if (
         (updates.status === 'Success' || updates.status === 'Failed') &&
@@ -424,7 +426,16 @@ export function HistoryProvider({ children }) {
       if (stored) {
         const parsed = JSON.parse(stored);
         if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-          setHomeState({ ...DEFAULT_HOME_STATE, ...parsed });
+          const normalized = {
+            ...parsed,
+            imageUrls: Array.isArray(parsed.imageUrls) ? parsed.imageUrls : [],
+            videoUrls: Array.isArray(parsed.videoUrls) ? parsed.videoUrls : [],
+            firstFrameUrls: Array.isArray(parsed.firstFrameUrls) ? parsed.firstFrameUrls : [],
+            lastFrameUrls: Array.isArray(parsed.lastFrameUrls) ? parsed.lastFrameUrls : [],
+            firstClipUrls: Array.isArray(parsed.firstClipUrls) ? parsed.firstClipUrls : [],
+            refImages: Array.isArray(parsed.refImages) ? parsed.refImages : [],
+          };
+          setHomeState({ ...DEFAULT_HOME_STATE, ...normalized });
         } else {
           console.warn('主页状态数据异常，已重置');
         }

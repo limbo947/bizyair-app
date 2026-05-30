@@ -50,11 +50,14 @@
 │   │   ├── AppContext.js     # 组合 Provider（ApiKey → History → Favorites）+ activeTab
 │   │   └── ThemeContext.js   # 亮/暗主题
 │   ├── screens/              # 页面级组件
-│   │   ├── HomeScreen.js    # 主页（useReducer 68 action types + expo-image + Pressable）
+│   │   ├── HomeScreen.js    # 主页（useReducer + expo-image + Pressable）
+│   │   ├── home/            # 主页子模块
+│   │   │   ├── homeReducer.js  # reducer + initialState + MODE_LABELS
+│   │   │   └── useHomeSubmit.js # 提交逻辑自定义 Hook
 │   │   ├── HistoryScreen.js # 历史（HistoryCard memo + DurationDisplay 独立定时器 + FlatList）
-│   │   ├── ModelSelectScreen.js # 模型选择（FlatList 虚拟化 + Pressable）
+│   │   ├── ModelSelectScreen.js # 模型选择（FlatList 虚拟化 + ModelCard memo）
 │   │   └── WebappScreen.js  # AI 应用
-│   ├── components/           # UI 组件（21 个，按功能拆分）
+│   ├── components/           # UI 组件（20 个，按功能拆分）
 │   │   ├── HomeParamControls.js  # paramType 路由分发
 │   │   ├── VideoParamControls.js # 视频模型参数（10 种，Switch 用 Pressable 包裹）
 │   │   ├── ParamControls.js      # 图片模型参数（6 种）
@@ -65,7 +68,7 @@
 │   │   ├── ModelSelector.js      # 模型选择器
 │   │   ├── FavoriteModelsLayer.js # 收藏模型浮层
 │   │   ├── ApiKeyDropdown.js     # 密钥管理下拉
-│   │   ├── UserInfoCard.js       # 用户信息卡片
+│   │   ├── AppHeader.js          # 共享头部组件（用户信息/余额/主题切换/密钥）
 │   │   ├── HistoryFilters.js     # 历史筛选
 │   │   ├── HistoryModals.js      # 历史弹窗
 │   │   ├── VideoPlayer.js        # 视频播放
@@ -74,11 +77,10 @@
 │   │   ├── TextResultView.js     # 文本结果展示
 │   │   ├── ResizableTextInput.js # 自适应输入框
 │   │   ├── StatusBadge.js        # 状态徽章
-│   │   ├── ErrorBoundary.js      # 错误边界
-│   │   └── TabBar.js             # 已被 expo-router 替代，保留未删除
+│   │   └── ErrorBoundary.js      # 错误边界
 │   ├── constants/            # 常量定义（models / modelMeta / ratios / theme）
 │   ├── hooks/                # 自定义 Hooks（useFileUpload / useThemedStyles）
-│   ├── utils/                # 工具函数（modelHelpers / payloadBuilder / helpers）
+│   ├── utils/                # 工具函数（modelHelpers / payloadBuilder / helpers / download）
 │   └── services/             # API 服务层（apiClient）
 ├── assets/                   # 图标资源
 ├── reference/                # 参考文档

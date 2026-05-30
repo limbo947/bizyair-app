@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   Text,
   View,
@@ -6,6 +6,7 @@ import {
   Modal,
   Pressable,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { MODELS } from '../constants/models';
 import { MANUFACTURERS, FAVORITES_MAX_COUNT } from '../constants/modelMeta';
@@ -16,11 +17,11 @@ import { useTheme } from '../context/ThemeContext';
 const createStyles = (colors) => ({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.2)',
+    backgroundColor: colors.overlayLight,
     justifyContent: 'flex-start',
     alignItems: 'flex-start',
     paddingHorizontal: Spacing.md,
-    paddingTop: 110,
+    paddingTop: 0,
   },
   dropdownContainer: {
     width: 260,
@@ -28,6 +29,7 @@ const createStyles = (colors) => ({
   dropdown: {
     backgroundColor: colors.card,
     borderRadius: Radius.md,
+    borderCurve: 'continuous',
     overflow: 'hidden',
   },
   dropdownHeader: {
@@ -123,12 +125,13 @@ export function FavoriteModelsLayer({
 }) {
   const styles = useThemedStyles(createStyles);
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
 
-  const favoriteModels = favorites.map((modelId) => ({
+  const favoriteModels = useMemo(() => favorites.map((modelId) => ({
     id: modelId,
     ...MODELS[modelId],
     manufacturerInfo: MANUFACTURERS[MODELS[modelId]?.manufacturer],
-  })).filter(Boolean);
+  })).filter(Boolean), [favorites]);
 
   return (
     <Modal
@@ -137,7 +140,7 @@ export function FavoriteModelsLayer({
       animationType="fade"
       onRequestClose={onClose}
     >
-      <Pressable style={({ pressed }) => [styles.overlay, pressed && { opacity: 0.7 }]} onPress={onClose}>
+      <Pressable style={({ pressed }) => [styles.overlay, { paddingTop: insets.top + 56 }, pressed && { opacity: 0.7 }]} onPress={onClose}>
         <View style={styles.dropdownContainer}>
           <View style={styles.dropdown}>
             <View style={styles.dropdownHeader}>

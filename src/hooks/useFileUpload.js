@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { Platform } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import { uploadImageFile, uploadVideoFile } from '../services/apiClient';
 import { ENV_API_KEY } from '../constants/models';
@@ -24,21 +25,45 @@ async function pickAndUpload({ mimeType, uploadFn, apiKey, setShowApiKeyInput, s
   setIsUploading(true);
   setError('');
   try {
-    const result = await DocumentPicker.getDocumentAsync({
+    const pickerOpts = {
       type: mimeType,
       copyToCacheDirectory: true,
-    });
+    };
+    if (Platform.OS === 'web') {
+      pickerOpts.base64 = true;
+    }
+    const result = await DocumentPicker.getDocumentAsync(pickerOpts);
     if (result.canceled || !result.assets?.length) {
       setIsUploading(false);
       return;
     }
     const file = result.assets[0];
-    const uploadResult = await uploadFn(ek, {
+    const fileObj = {
       uri: file.uri,
       name: file.name,
       type: file.mimeType || (mimeType.startsWith('image') ? 'image/jpeg' : 'video/mp4'),
-    });
-    setUrls((prev) => [...prev, uploadResult]);
+    };
+    let localUrl = file.uri;
+    if (Platform.OS === 'web') {
+      if (file.base64) {
+        if (typeof file.base64 === 'string' && file.base64.startsWith('data:')) {
+          localUrl = file.base64;
+          const commaIndex = file.base64.indexOf(',');
+          /* Web 端 DocumentPicker 已返回完整 data URI，上传时去掉前缀保留原始 base64 */
+          fileObj.base64 = commaIndex !== -1 ? file.base64.substring(commaIndex + 1) : file.base64;
+        } else {
+          fileObj.base64 = file.base64;
+          const mime = file.mimeType || (mimeType.startsWith('image') ? 'image/jpeg' : 'video/mp4');
+          /* 仅有原始 base64，自行拼接 data URI 供缩略图展示 */
+          localUrl = `data:${mime};base64,${file.base64}`;
+        }
+      }
+      if (file.file) {
+        fileObj.rawFile = file.file;
+      }
+    }
+    const remoteUrl = await uploadFn(ek, fileObj);
+    setUrls((prev) => [...prev, { remoteUrl, localUrl }]);
   } catch (err) {
     setError(err.message || '上传失败');
   } finally {

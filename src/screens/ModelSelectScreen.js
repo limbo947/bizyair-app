@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Pressable, Text,
   View,
   ScrollView,
@@ -11,6 +11,44 @@ import { Radius, Spacing } from '../constants/theme';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { useTheme } from '../context/ThemeContext';
 import { useFavoritesContext } from '../context/FavoritesContext';
+
+const ModelCard = React.memo(function ModelCard({ model, isSelected, isEditMode, onPress, colors, styles }) {
+  return (
+    <Pressable
+      style={({ pressed }) => [
+        styles.modelCard,
+        isSelected && styles.modelCardActive,
+      , pressed && { opacity: 0.7 }]} onPress={onPress} >
+      <View style={styles.modelCardHeader}>
+        <Ionicons
+          name={model.icon.name}
+          size={24}
+          color={model.icon.color}
+          style={{ paddingLeft: 4, paddingRight: 4 }}
+        />
+        {isEditMode && (
+          <View style={[
+            styles.favoriteCheckbox,
+            isSelected && styles.favoriteCheckboxChecked,
+          ]}>
+            {isSelected && (
+              <Ionicons name="check" size={14} color={colors.textOnOverlay} />
+            )}
+          </View>
+        )}
+        {!isEditMode && model.isFavorite && (
+          <Ionicons name="star" size={16} color={colors.star} />
+        )}
+      </View>
+      <Text style={[styles.modelCardName, { paddingLeft: 6, paddingRight: 6 }]}>{model.name}</Text>
+      {model.manufacturerInfo && (
+        <Text style={styles.modelCardManufacturer}>
+          {model.manufacturerInfo.label}
+        </Text>
+      )}
+    </Pressable>
+  );
+});
 
 export function ModelSelectScreen({ currentModelId, onSelectModel, onBack }) {
   const insets = useSafeAreaInsets();
@@ -98,6 +136,21 @@ export function ModelSelectScreen({ currentModelId, onSelectModel, onBack }) {
     })),
   ];
 
+  const renderModelItem = useCallback(({ item: model }) => {
+    const isSelected = isEditMode ? selectedModels.includes(model.id) : currentModelId === model.id;
+    return (
+      <ModelCard
+        model={model}
+        isSelected={isSelected}
+        isEditMode={isEditMode}
+        onPress={() => handleModelPress(model.id, selectedCategory)}
+        colors={colors}
+        styles={styles}
+      />
+    );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditMode, selectedModels, currentModelId, selectedCategory, styles, colors, handleModelPress]);
+
   return (
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top }]}>
@@ -155,45 +208,7 @@ export function ModelSelectScreen({ currentModelId, onSelectModel, onBack }) {
           style={styles.modelList}
           data={filteredModels}
           keyExtractor={(item) => item.id}
-          renderItem={({ item: model }) => {
-            const isSelected = isEditMode ? selectedModels.includes(model.id) : currentModelId === model.id;
-            return (
-              <Pressable
-                key={model.id}
-                style={({ pressed }) => [
-                  styles.modelCard,
-                  isSelected && styles.modelCardActive,
-                , pressed && { opacity: 0.7 }]} onPress={() => handleModelPress(model.id, selectedCategory)} >
-                <View style={styles.modelCardHeader}>
-                  <Ionicons
-                    name={model.icon.name}
-                    size={24}
-                    color={model.icon.color}
-                    style={{ paddingLeft: 4, paddingRight: 4 }}
-                  />
-                  {isEditMode && (
-                    <View style={[
-                      styles.favoriteCheckbox,
-                      isSelected && styles.favoriteCheckboxChecked,
-                    ]}>
-                      {isSelected && (
-                        <Ionicons name="check" size={14} color="#fff" />
-                      )}
-                    </View>
-                  )}
-                  {!isEditMode && model.isFavorite && (
-                    <Ionicons name="star" size={16} color="#FFD700" />
-                  )}
-                </View>
-                <Text style={[styles.modelCardName, { paddingLeft: 6, paddingRight: 6 }]}>{model.name}</Text>
-                {model.manufacturerInfo && (
-                  <Text style={styles.modelCardManufacturer}>
-                    {model.manufacturerInfo.label}
-                  </Text>
-                )}
-              </Pressable>
-            );
-          }}
+          renderItem={renderModelItem}
           ListEmptyComponent={
             <View style={styles.emptyState}>
               <Text style={styles.emptyIcon}>📦</Text>
@@ -284,6 +299,7 @@ const createStyles = (colors) => ({
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 10,
+    borderCurve: 'continuous',
   },
   categoryCountActive: {
     color: colors.primary,
@@ -338,6 +354,7 @@ const createStyles = (colors) => ({
   modelCard: {
     backgroundColor: colors.bg,
     borderRadius: Radius.md,
+    borderCurve: 'continuous',
     paddingVertical: Spacing.md,
     paddingHorizontal: 8,
     flexDirection: 'row',
@@ -358,6 +375,7 @@ const createStyles = (colors) => ({
     width: 18,
     height: 18,
     borderRadius: 4,
+    borderCurve: 'continuous',
     borderWidth: 1.5,
     borderColor: colors.border,
     alignItems: 'center',

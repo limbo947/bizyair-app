@@ -9,7 +9,7 @@ function ParamLabel({ label, required, style }) {
   const { colors } = useTheme();
   return (
     <Text style={[{ fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginBottom: Spacing.sm, textTransform: 'uppercase', letterSpacing: 0.5 }, style]}>
-      {label}{required ? <Text style={{ color: '#E74C3C' }}> *</Text> : <Text style={{ color: colors.textTertiary, fontWeight: '400', textTransform: 'none' }}> (可选)</Text>}
+      {label}{required ? <Text style={{ color: colors.error }}> *</Text> : <Text style={{ color: colors.textTertiary, fontWeight: '400', textTransform: 'none' }}> (可选)</Text>}
     </Text>
   );
 }
@@ -821,20 +821,20 @@ export function DreamActorControls() {
 }
 
 const createStyles = (colors) => ({
-  card: { backgroundColor: colors.card, padding: Spacing.lg, borderRadius: Radius.md, marginBottom: Spacing.md },
+  card: { backgroundColor: colors.card, padding: Spacing.lg, borderRadius: Radius.md, borderCurve: 'continuous', marginBottom: Spacing.md },
   label: { fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginBottom: Spacing.sm, textTransform: 'uppercase', letterSpacing: 0.5 },
   selectorRow: { flexDirection: 'row', gap: Spacing.sm, flexWrap: 'wrap' },
-  selectorButton: { flex: 1, minWidth: 60, paddingVertical: 10, borderRadius: Radius.sm, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
-  selectorButtonSmall: { paddingVertical: 8, paddingHorizontal: 10, borderRadius: Radius.sm, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
+  selectorButton: { flex: 1, minWidth: 60, paddingVertical: 10, borderRadius: Radius.sm, borderCurve: 'continuous', backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
+  selectorButtonSmall: { paddingVertical: 8, paddingHorizontal: 10, borderRadius: Radius.sm, borderCurve: 'continuous', backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
   selectorButtonActive: { backgroundColor: colors.primary },
   selectorText: { fontSize: 13, color: colors.textSecondary, fontWeight: '500' },
   selectorTextActive: { color: colors.textInverse, fontWeight: '600' },
   priceHint: { fontSize: 12, color: colors.textTertiary, marginTop: Spacing.sm },
   ratioGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
-  ratioButton: { width: '22%', paddingVertical: 9, borderRadius: Radius.sm, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
+  ratioButton: { width: '22%', paddingVertical: 9, borderRadius: Radius.sm, borderCurve: 'continuous', backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
   ratioButtonActive: { backgroundColor: colors.primary },
   ratioText: { fontSize: 13, color: colors.textSecondary, fontWeight: '500' },
   ratioTextActive: { color: colors.textInverse, fontWeight: '600' },
   switchRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  dimInputFull: { fontSize: 15, color: colors.textPrimary, borderWidth: 0, borderRadius: Radius.sm, paddingHorizontal: Spacing.sm, paddingVertical: 10, backgroundColor: colors.bg },
+  dimInputFull: { fontSize: 15, color: colors.textPrimary, borderWidth: 0, borderRadius: Radius.sm, borderCurve: 'continuous', paddingHorizontal: Spacing.sm, paddingVertical: 10, backgroundColor: colors.bg },
 });
