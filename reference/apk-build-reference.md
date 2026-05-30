@@ -2,7 +2,7 @@
 
 > **项目**: BizyAir Assistant | **框架**: Expo SDK 54 + React Native 0.81.5  
 > **目标平台**: Android arm64-v8a | **包名**: com.bizyair.assistant  
-> **最后更新**: 2026-05-23 | **构建结果**: ✅ 成功 (v1.0.6, versionCode=6)
+> **最后更新**: 2026-05-31 | **构建结果**: ✅ 成功 (v1.0.28, versionCode=28)
 
 ---
 
@@ -68,6 +68,7 @@ app.json (expo-build-properties 插件)     ← 唯一真实来源
     ├── expo prebuild ──► android/ 目录生成
     │
     ├── build-android.ps1
+    │       ├── 检查 PowerShell 7+（PS 5.1 直接报错退出）
     │       ├── [1/8] 验证架构配置
     │       ├── [2/8] 自动递增版本号 + git 提交
     │       ├── [3/8] 备份签名密钥到 keystore-backup/
@@ -150,6 +151,8 @@ newArchEnabled=true
 ### 3.1 一键构建
 
 ```powershell
+# 要求 PowerShell 7+（pwsh），脚本内置版本检查，PS 5.1 会直接报错退出
+
 # 增量构建（自动递增版本号）
 .\build-android.ps1
 
@@ -365,9 +368,28 @@ Keystore file '...\app\bizyair-release.keystore' not found
 & "$env:ANDROID_HOME\cmdline-tools\latest\bin\sdkmanager.bat" --install "cmake;3.31.5"
 ```
 
----
+### 问题 7: PowerShell 5.1 解析脚本报错
 
-## 七、产物验证清单
+**现象**：
+```
+所在位置 ...\build-android.ps1:101 字符: 1
++ } else {
++ ~
+表达式或语句中包含意外的标记"}"。
+```
+
+**根因**：Windows PowerShell 5.1（`powershell.exe`）无法正确解析 `try`/`catch` 中的 `2>&1` 重定向语法。
+
+**解决方案**：使用 PowerShell 7+（`pwsh`），脚本已内置版本检查，用 `powershell.exe` 调用会立即报错并提示正确用法。
+
+```powershell
+# 正确
+pwsh -File .\build-android.ps1
+# 或直接在 pwsh 终端中运行
+.\build-android.ps1
+```
+
+---
 
 ### 7.1 APK 基本信息
 
@@ -434,9 +456,9 @@ adb shell pm list packages | Select-String bizyair
 
 | 构建类型 | 耗时 | 说明 |
 |---------|------|------|
-| 完整构建 (`-Clean`) | ~3 分钟 | prebuild + CMake + Metro + R8 |
-| 增量构建 | ~2 分钟 | 跳过 prebuild |
-| 仅 JS 变更 | ~30 秒 | 直接 `gradlew assembleRelease` |
+| 完整构建 (`-Clean`) | ~5 分钟 | prebuild + CMake + Metro + R8 |
+| 增量构建 | ~5 分钟 | 跳过 prebuild 但重新编译 |
+| 仅 JS 变更 | ~2 分钟 | 直接 `gradlew assembleRelease` |
 
 ### 8.3 安全
 
@@ -490,6 +512,7 @@ adb install -r <apk>                      # 覆盖安装
 | `keystore not found` | prebuild 删除文件 | 自动恢复（备份目录） |
 | `uncommitted file changes` | Git 不洁 | 自动 commit 版本变更 |
 | `Value is null` (versionCode) | Groovy .toInteger() | 改用 `Integer.parseInt()` |
+| `意外的标记"}"` (line 101) | PS 5.1 兼容性 | 使用 pwsh 运行 |
 
 ### 输出路径
 

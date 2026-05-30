@@ -8,6 +8,13 @@ param([switch]$Clean)
 $ErrorActionPreference = "Stop"
 $ScriptDir = $PSScriptRoot
 
+# 要求 PowerShell 7+（Core），Windows PowerShell 5.1 会解析报错
+if ($PSVersionTable.PSVersion.Major -lt 7) {
+    Write-Host "ERROR: This script requires PowerShell 7+ (pwsh). Current: $($PSVersionTable.PSVersion)" -ForegroundColor Red
+    Write-Host "Please run with: pwsh -File $PSCommandPath" -ForegroundColor Yellow
+    exit 1
+}
+
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host " BizyAir APK Build (arm64-v8a only)" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
