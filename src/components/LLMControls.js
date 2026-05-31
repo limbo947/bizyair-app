@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Pressable, Text, View, TextInput, Switch, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Radius, Spacing } from '../constants/theme';
+import { createSharedStyles } from '../constants/sharedStyles';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { useTheme } from '../context/ThemeContext';
 import { ResizableTextInput } from './ResizableTextInput';
 
-const STORAGE_KEY = 'llm_custom_presets';
+const LLM_PRESET_KEY = '@llm_custom_presets';
 
 const SYSTEM_PROMPT_PRESETS = [
   {
@@ -86,15 +88,15 @@ const SYSTEM_PROMPT_PRESETS = [
   },
 ];
 
-function loadCustomPresets() {
+async function loadCustomPresets() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = await AsyncStorage.getItem(LLM_PRESET_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch { return []; }
 }
 
-function saveCustomPresets(presets) {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(presets)); } catch {}
+async function saveCustomPresets(presets) {
+  try { await AsyncStorage.setItem(LLM_PRESET_KEY, JSON.stringify(presets)); } catch (e) { console.error('保存LLM预设失败:', e); }
 }
 
 
@@ -111,10 +113,14 @@ export function LLMChatControls({
   const styles = useThemedStyles(createStyles);
   const { colors } = useTheme();
 
-  const [customPresets, setCustomPresets] = useState(loadCustomPresets);
+  const [customPresets, setCustomPresets] = useState([]);
   const [showAddPreset, setShowAddPreset] = useState(false);
   const [newPresetName, setNewPresetName] = useState('');
   const [newPresetPrompt, setNewPresetPrompt] = useState('');
+
+  useEffect(() => {
+    loadCustomPresets().then(setCustomPresets);
+  }, []);
 
   useEffect(() => { saveCustomPresets(customPresets); }, [customPresets]);
 
@@ -143,14 +149,14 @@ export function LLMChatControls({
           {allPresets.map((p, i) => (
             <Pressable
               key={p.label + i}
-              style={({ pressed }) => [styles.presetChip, systemPrompt === p.prompt && styles.presetChipActive, pressed && { opacity: 0.7 }]} onPress={() => setSystemPrompt(systemPrompt === p.prompt ? '' : p.prompt)}
+              style={({ pressed }) => [styles.presetChip, systemPrompt === p.prompt && styles.presetChipActive, pressed && styles.pressedStyle]} onPress={() => setSystemPrompt(systemPrompt === p.prompt ? '' : p.prompt)}
               onLongPress={() => p.custom && handleDeletePreset(i - SYSTEM_PROMPT_PRESETS.length)}
             >
               <Text style={[styles.presetChipText, systemPrompt === p.prompt && styles.presetChipTextActive]}>{p.label}</Text>
             </Pressable>
           ))}
           <Pressable
-            style={({ pressed }) => [styles.presetChipAdd, pressed && { opacity: 0.7 }]} onPress={() => setShowAddPreset(!showAddPreset)}
+            style={({ pressed }) => [styles.presetChipAdd, pressed && styles.pressedStyle]} onPress={() => setShowAddPreset(!showAddPreset)}
           >
             <Text style={styles.presetChipAddText}>+ 新增</Text>
           </Pressable>
@@ -172,10 +178,10 @@ export function LLMChatControls({
               minHeight={60}
             />
             <View style={styles.addPresetActions}>
-              <Pressable style={({ pressed }) => pressed && { opacity: 0.7 }} onPress={() => setShowAddPreset(false)}>
+              <Pressable style={({ pressed }) => pressed && styles.pressedStyle} onPress={() => setShowAddPreset(false)}>
                 <Text style={styles.addPresetCancel}>取消</Text>
               </Pressable>
-              <Pressable style={({ pressed }) => [styles.addPresetConfirm, pressed && { opacity: 0.7 }]} onPress={handleAddPreset}>
+              <Pressable style={({ pressed }) => [styles.addPresetConfirm, pressed && styles.pressedStyle]} onPress={handleAddPreset}>
                 <Text style={styles.addPresetConfirmText}>保存</Text>
               </Pressable>
             </View>
@@ -191,7 +197,7 @@ export function LLMChatControls({
         <View style={styles.hintRow}>
           <Text style={styles.hint}>长按自定义预设可删除</Text>
           {systemPrompt ? (
-            <Pressable style={({ pressed }) => pressed && { opacity: 0.6 }} onPress={() => setSystemPrompt('')} >
+            <Pressable style={({ pressed }) => pressed && styles.pressedStyle} onPress={() => setSystemPrompt('')} >
               <Text style={styles.clearText}>清空</Text>
             </Pressable>
           ) : null}
@@ -200,7 +206,7 @@ export function LLMChatControls({
       <View style={styles.card}>
         <Text style={styles.label}>Temperature (0 ~ 2)<Text style={styles.required}> *</Text></Text>
         <TextInput
-          style={styles.inputSingle}
+          style={styles.dimInputFull}
           value={String(temperature)}
           onChangeText={(t) => {
             const val = parseFloat(t);
@@ -215,7 +221,7 @@ export function LLMChatControls({
       <View style={styles.card}>
         <Text style={styles.label}>最大 Tokens<Text style={styles.required}> *</Text></Text>
         <TextInput
-          style={styles.inputSingle}
+          style={styles.dimInputFull}
           value={String(maxTokens)}
           onChangeText={(t) => {
             const val = parseInt(t) || 0;
@@ -228,32 +234,33 @@ export function LLMChatControls({
         />
       </View>
       <View style={styles.card}>
-        <View style={styles.switchRow}>
+        <Pressable style={styles.switchRow} onPress={() => setEnableThinking(!enableThinking)}>
           <Text style={styles.label}>思考模式{enableThinkingRequired ? <Text style={styles.required}> *</Text> : <Text style={styles.optional}> (可选)</Text>}</Text>
           <Switch
             value={enableThinking}
             onValueChange={setEnableThinking}
             trackColor={{ false: colors.disabled, true: colors.primary }}
+            pointerEvents="none"
           />
-        </View>
+        </Pressable>
       </View>
       <View style={styles.card}>
-        <View style={styles.switchRow}>
+        <Pressable style={styles.switchRow} onPress={() => setEnableSearch(!enableSearch)}>
           <Text style={styles.label}>联网搜索{enableSearchRequired ? <Text style={styles.required}> *</Text> : <Text style={styles.optional}> (可选)</Text>}</Text>
           <Switch
             value={enableSearch}
             onValueChange={setEnableSearch}
             trackColor={{ false: colors.disabled, true: colors.primary }}
+            pointerEvents="none"
           />
-        </View>
+        </Pressable>
       </View>
     </>
   );
 }
 
 const createStyles = (colors) => ({
-  card: { backgroundColor: colors.card, padding: Spacing.lg, borderRadius: Radius.md, borderCurve: 'continuous', marginBottom: Spacing.md },
-  label: { fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginBottom: Spacing.sm, textTransform: 'uppercase', letterSpacing: 0.5 },
+  ...createSharedStyles(colors),
   required: { color: colors.error },
   optional: { color: colors.textTertiary, fontWeight: '400', textTransform: 'none' },
   presetRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm, marginBottom: Spacing.md },
@@ -272,6 +279,4 @@ const createStyles = (colors) => ({
   hint: { fontSize: 11, color: colors.textTertiary, marginTop: 4 },
   hintRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   clearText: { fontSize: 12, color: colors.primary, fontWeight: '500' },
-  switchRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  inputSingle: { fontSize: 15, color: colors.textPrimary, borderWidth: 0, borderRadius: Radius.sm, borderCurve: 'continuous', paddingHorizontal: Spacing.sm, paddingVertical: 10, backgroundColor: colors.bg },
 });

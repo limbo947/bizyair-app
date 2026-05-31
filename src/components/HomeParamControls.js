@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import {
   ResolutionRatioControls,
   WidthHeightQualityControls,
@@ -25,159 +25,37 @@ import { LLMChatControls } from './LLMControls';
 import { VisionGControls, JoyCaptionControls } from './VisionParamControls';
 import { TTSControls } from './TTSControls';
 
-/**
- * 根据当前模型的 paramType 渲染对应的参数控件。
- * 所有状态由 HomeScreen 通过 props 传入，本组件不持有状态。
- *
- * ⚠️ 同步风险：本组件的 switch(paramType) 与 HomeScreen.getPayloadParams 的
- * switch(paramType) 需要保持同步。新增 paramType 时必须同时修改两处。
- */
-export function HomeParamControls({
+function HomeParamControlsInner({
   paramType,
   currentModel,
   currentResolutions,
   currentRatios,
-  // 图片模型参数
-  resolution,
-  setResolution,
-  aspectRatio,
-  setAspectRatio,
-  quality,
-  setQuality,
-  sizePreset,
-  setSizePreset,
-  customWidth,
-  setCustomWidth,
-  customHeight,
-  setCustomHeight,
-  // 视频模型参数
-  duration,
-  setDuration,
-  generateAudio,
-  setGenerateAudio,
-  seed,
-  setSeed,
-  sound,
-  setSound,
-  multiShot,
-  setMultiShot,
-  shotType,
-  setShotType,
-  multiPrompt,
-  setMultiPrompt,
-  keepOriginalSound,
-  setKeepOriginalSound,
-  negativePrompt,
-  setNegativePrompt,
-  promptExtend,
-  setPromptExtend,
-  watermark,
-  setWatermark,
-  display,
-  setDisplay,
-  audio,
-  setAudio,
-  offPeak,
-  setOffPeak,
-  isRec,
-  setIsRec,
-  promptOptimizer,
-  setPromptOptimizer,
-  fastPretreatment,
-  setFastPretreatment,
-  aigcWatermark,
-  setAigcWatermark,
-  movementAmplitude,
-  setMovementAmplitude,
-  // LLM 参数
-  systemPrompt,
-  setSystemPrompt,
-  temperature,
-  setTemperature,
-  maxTokens,
-  setMaxTokens,
-  enableThinking,
-  setEnableThinking,
-  enableSearch,
-  setEnableSearch,
-  // Vision 参数
-  detail,
-  setDetail,
-  captionType,
-  setCaptionType,
-  captionLength,
-  setCaptionLength,
-  doSample,
-  setDoSample,
-  extraOptions,
-  setExtraOptions,
-  nameInput,
-  setNameInput,
-  customPrompt,
-  setCustomPrompt,
-  // TTS 参数
-  voice,
-  setVoice,
-  responseFormat,
-  setResponseFormat,
-  instructions,
-  setInstructions,
-  language,
-  setLanguage,
-  speed,
-  setSpeed,
-  // wan-size 新增参数
-  enableSequential,
-  setEnableSequential,
-  thinkingMode,
-  setThinkingMode,
-  colorPalette,
-  setColorPalette,
-  // vidu style
-  style,
-  setStyle,
-  // resolution-ratio / width-height 新增参数
-  batchSize,
-  setBatchSize,
-  webSearch,
-  setWebSearch,
-  returnLastFrame,
-  setReturnLastFrame,
-  topP,
-  setTopP,
-  // 阿里系新增参数
-  audioSetting,
-  setAudioSetting,
-  drivingAudio,
-  setDrivingAudio,
-  audioUrl,
-  setAudioUrl,
-  referenceVoice,
-  setReferenceVoice,
-  bboxList,
-  setBboxList,
+  state,
+  dispatch,
   mode,
 }) {
+  const s = useCallback((field) => (v) => dispatch({ type: 'SET_FIELD', field, value: v }), [dispatch]);
+
   switch (paramType) {
     case 'resolution-ratio':
       return (
         <ResolutionRatioControls
           currentResolutions={currentResolutions}
           currentRatios={currentRatios}
-          resolution={resolution}
-          aspectRatio={aspectRatio}
-          setResolution={setResolution}
-          setAspectRatio={setAspectRatio}
-          seed={seed}
-          setSeed={setSeed}
-          webSearch={webSearch}
-          setWebSearch={setWebSearch}
-          temperature={temperature}
-          setTemperature={setTemperature}
-          topP={topP}
-          setTopP={setTopP}
-          maxTokens={maxTokens}
-          setMaxTokens={setMaxTokens}
+          resolution={state.resolution}
+          aspectRatio={state.aspectRatio}
+          setResolution={s('resolution')}
+          setAspectRatio={s('aspectRatio')}
+          seed={state.seed}
+          setSeed={s('seed')}
+          webSearch={state.webSearch}
+          setWebSearch={s('webSearch')}
+          temperature={state.temperature}
+          setTemperature={s('temperature')}
+          topP={state.topP}
+          setTopP={s('topP')}
+          maxTokens={state.maxTokens}
+          setMaxTokens={s('maxTokens')}
           supportsSeed={currentModel.supportsSeed}
           supportsWebSearch={currentModel.supportsWebSearch}
           supportsTemperature={currentModel.supportsTemperature}
@@ -189,14 +67,14 @@ export function HomeParamControls({
     case 'width-height-quality':
       return (
         <WidthHeightQualityControls
-          sizePreset={sizePreset}
-          setSizePreset={setSizePreset}
-          customWidth={customWidth}
-          setCustomWidth={setCustomWidth}
-          customHeight={customHeight}
-          setCustomHeight={setCustomHeight}
-          quality={quality}
-          setQuality={setQuality}
+          sizePreset={state.sizePreset}
+          setSizePreset={s('sizePreset')}
+          customWidth={state.customWidth}
+          setCustomWidth={s('customWidth')}
+          customHeight={state.customHeight}
+          setCustomHeight={s('customHeight')}
+          quality={state.quality}
+          setQuality={s('quality')}
           modelQualities={currentModel.qualities}
         />
       );
@@ -204,64 +82,64 @@ export function HomeParamControls({
       return (
         <SizeOnlyControls
           currentResolutions={currentResolutions}
-          resolution={resolution}
-          setResolution={setResolution}
+          resolution={state.resolution}
+          setResolution={s('resolution')}
         />
       );
     case 'flux-kontext':
       return (
         <FluxKontextControls
           currentRatios={currentRatios}
-          aspectRatio={aspectRatio}
-          setAspectRatio={setAspectRatio}
+          aspectRatio={state.aspectRatio}
+          setAspectRatio={s('aspectRatio')}
         />
       );
     case 'wan-size':
       return (
         <WanSizeControls
           currentResolutions={currentResolutions}
-          resolution={resolution}
-          setResolution={setResolution}
-          customWidth={customWidth}
-          setCustomWidth={setCustomWidth}
-          customHeight={customHeight}
-          setCustomHeight={setCustomHeight}
-          seed={seed}
-          setSeed={setSeed}
-          watermark={watermark}
-          setWatermark={setWatermark}
-          enableSequential={enableSequential}
-          setEnableSequential={setEnableSequential}
-          thinkingMode={thinkingMode}
-          setThinkingMode={setThinkingMode}
-          colorPalette={colorPalette}
-          setColorPalette={setColorPalette}
+          resolution={state.resolution}
+          setResolution={s('resolution')}
+          customWidth={state.customWidth}
+          setCustomWidth={s('customWidth')}
+          customHeight={state.customHeight}
+          setCustomHeight={s('customHeight')}
+          seed={state.seed}
+          setSeed={s('seed')}
+          watermark={state.watermark}
+          setWatermark={s('watermark')}
+          enableSequential={state.enableSequential}
+          setEnableSequential={s('enableSequential')}
+          thinkingMode={state.thinkingMode}
+          setThinkingMode={s('thinkingMode')}
+          colorPalette={state.colorPalette}
+          setColorPalette={s('colorPalette')}
           supportsSeed={currentModel.supportsSeed}
           supportsWatermark={currentModel.supportsWatermark}
           supportsEnableSequential={currentModel.supportsEnableSequential}
           supportsThinkingMode={currentModel.supportsThinkingMode}
           supportsColorPalette={currentModel.supportsColorPalette}
           supportsBboxList={currentModel.supportsBboxList}
-          bboxList={bboxList}
-          setBboxList={setBboxList}
+          bboxList={state.bboxList}
+          setBboxList={s('bboxList')}
           mode={mode}
         />
       );
     case 'width-height':
       return (
         <WidthHeightControls
-          sizePreset={sizePreset}
-          setSizePreset={setSizePreset}
-          customWidth={customWidth}
-          setCustomWidth={setCustomWidth}
-          customHeight={customHeight}
-          setCustomHeight={setCustomHeight}
-          negativePrompt={negativePrompt}
-          setNegativePrompt={setNegativePrompt}
-          seed={seed}
-          setSeed={setSeed}
-          batchSize={batchSize}
-          setBatchSize={setBatchSize}
+          sizePreset={state.sizePreset}
+          setSizePreset={s('sizePreset')}
+          customWidth={state.customWidth}
+          setCustomWidth={s('customWidth')}
+          customHeight={state.customHeight}
+          setCustomHeight={s('customHeight')}
+          negativePrompt={state.negativePrompt}
+          setNegativePrompt={s('negativePrompt')}
+          seed={state.seed}
+          setSeed={s('seed')}
+          batchSize={state.batchSize}
+          setBatchSize={s('batchSize')}
           supportsNegativePrompt={currentModel.supportsNegativePrompt}
           supportsSeed={currentModel.supportsSeed}
           supportsBatchSize={currentModel.supportsBatchSize}
@@ -272,24 +150,24 @@ export function HomeParamControls({
         <SeedanceVideoControls
           resolutions={currentResolutions}
           videoRatios={currentRatios}
-          resolution={resolution}
-          setResolution={setResolution}
-          aspectRatio={aspectRatio}
-          setAspectRatio={setAspectRatio}
-          duration={duration}
-          setDuration={setDuration}
-          generateAudio={generateAudio}
-          setGenerateAudio={setGenerateAudio}
-          seed={seed}
-          setSeed={setSeed}
+          resolution={state.resolution}
+          setResolution={s('resolution')}
+          aspectRatio={state.aspectRatio}
+          setAspectRatio={s('aspectRatio')}
+          duration={state.duration}
+          setDuration={s('duration')}
+          generateAudio={state.generateAudio}
+          setGenerateAudio={s('generateAudio')}
+          seed={state.seed}
+          setSeed={s('seed')}
           supportsAudio={currentModel.supportsAudio}
           supportsSeed={currentModel.supportsSeed}
           supportsReturnLastFrame={currentModel.supportsReturnLastFrame}
           supportsWebSearch={currentModel.supportsWebSearch}
-          webSearch={webSearch}
-          setWebSearch={setWebSearch}
-          returnLastFrame={returnLastFrame}
-          setReturnLastFrame={setReturnLastFrame}
+          webSearch={state.webSearch}
+          setWebSearch={s('webSearch')}
+          returnLastFrame={state.returnLastFrame}
+          setReturnLastFrame={s('returnLastFrame')}
           minDuration={currentModel.minDuration}
           mode={mode}
         />
@@ -298,20 +176,20 @@ export function HomeParamControls({
       return (
         <KlingVideoControls
           videoRatios={currentRatios}
-          aspectRatio={aspectRatio}
-          setAspectRatio={setAspectRatio}
-          duration={duration}
-          setDuration={setDuration}
-          sound={sound}
-          setSound={setSound}
-          multiShot={multiShot}
-          setMultiShot={setMultiShot}
-          shotType={shotType}
-          setShotType={setShotType}
-          multiPrompt={multiPrompt}
-          setMultiPrompt={setMultiPrompt}
-          seed={seed}
-          setSeed={setSeed}
+          aspectRatio={state.aspectRatio}
+          setAspectRatio={s('aspectRatio')}
+          duration={state.duration}
+          setDuration={s('duration')}
+          sound={state.sound}
+          setSound={s('sound')}
+          multiShot={state.multiShot}
+          setMultiShot={s('multiShot')}
+          shotType={state.shotType}
+          setShotType={s('shotType')}
+          multiPrompt={state.multiPrompt}
+          setMultiPrompt={s('multiPrompt')}
+          seed={state.seed}
+          setSeed={s('seed')}
           maxDuration={currentModel.maxDuration}
           minDuration={currentModel.minDuration}
           supportsMultiShot={currentModel.supportsMultiShot}
@@ -324,20 +202,20 @@ export function HomeParamControls({
       return (
         <KlingO34KControls
           videoRatios={currentRatios}
-          aspectRatio={aspectRatio}
-          setAspectRatio={setAspectRatio}
-          duration={duration}
-          setDuration={setDuration}
-          sound={sound}
-          setSound={setSound}
-          keepOriginalSound={keepOriginalSound}
-          setKeepOriginalSound={setKeepOriginalSound}
-          multiShot={multiShot}
-          setMultiShot={setMultiShot}
-          shotType={shotType}
-          setShotType={setShotType}
-          multiPrompt={multiPrompt}
-          setMultiPrompt={setMultiPrompt}
+          aspectRatio={state.aspectRatio}
+          setAspectRatio={s('aspectRatio')}
+          duration={state.duration}
+          setDuration={s('duration')}
+          sound={state.sound}
+          setSound={s('sound')}
+          keepOriginalSound={state.keepOriginalSound}
+          setKeepOriginalSound={s('keepOriginalSound')}
+          multiShot={state.multiShot}
+          setMultiShot={s('multiShot')}
+          shotType={state.shotType}
+          setShotType={s('shotType')}
+          multiPrompt={state.multiPrompt}
+          setMultiPrompt={s('multiPrompt')}
           maxDuration={currentModel.maxDuration}
           minDuration={currentModel.minDuration}
           supportsMultiShot={currentModel.supportsMultiShot}
@@ -348,31 +226,31 @@ export function HomeParamControls({
         <ViduVideoControls
           resolutions={currentResolutions}
           videoRatios={currentRatios}
-          resolution={resolution}
-          setResolution={setResolution}
-          aspectRatio={aspectRatio}
-          setAspectRatio={setAspectRatio}
-          duration={duration}
-          setDuration={setDuration}
-          audio={audio}
-          setAudio={setAudio}
-          isRec={isRec}
-          setIsRec={setIsRec}
-          offPeak={offPeak}
-          setOffPeak={setOffPeak}
+          resolution={state.resolution}
+          setResolution={s('resolution')}
+          aspectRatio={state.aspectRatio}
+          setAspectRatio={s('aspectRatio')}
+          duration={state.duration}
+          setDuration={s('duration')}
+          audio={state.audio}
+          setAudio={s('audio')}
+          isRec={state.isRec}
+          setIsRec={s('isRec')}
+          offPeak={state.offPeak}
+          setOffPeak={s('offPeak')}
           maxDuration={currentModel.maxDuration}
           minDuration={currentModel.minDuration}
           supportsAudio={currentModel.supportsAudio}
           supportsOffPeak={currentModel.supportsOffPeak}
-          seed={seed}
-          setSeed={setSeed}
+          seed={state.seed}
+          setSeed={s('seed')}
           supportsSeed={currentModel.supportsSeed}
-          movementAmplitude={movementAmplitude}
-          setMovementAmplitude={setMovementAmplitude}
+          movementAmplitude={state.movementAmplitude}
+          setMovementAmplitude={s('movementAmplitude')}
           supportsMovementAmplitude={currentModel.supportsMovementAmplitude}
           supportsIsRec={currentModel.supportsIsRec}
-          style={style}
-          setStyle={setStyle}
+          style={state.style}
+          setStyle={s('style')}
           styleOptions={currentModel.styleOptions}
           mode={mode}
         />
@@ -382,33 +260,33 @@ export function HomeParamControls({
         <WanVideoControls
           resolutions={currentResolutions}
           videoRatios={currentRatios}
-          resolution={resolution}
-          setResolution={setResolution}
-          aspectRatio={aspectRatio}
-          setAspectRatio={setAspectRatio}
-          duration={duration}
-          setDuration={setDuration}
-          promptExtend={promptExtend}
-          setPromptExtend={setPromptExtend}
-          watermark={watermark}
-          setWatermark={setWatermark}
-          negativePrompt={negativePrompt}
-          setNegativePrompt={setNegativePrompt}
-          seed={seed}
-          setSeed={setSeed}
+          resolution={state.resolution}
+          setResolution={s('resolution')}
+          aspectRatio={state.aspectRatio}
+          setAspectRatio={s('aspectRatio')}
+          duration={state.duration}
+          setDuration={s('duration')}
+          promptExtend={state.promptExtend}
+          setPromptExtend={s('promptExtend')}
+          watermark={state.watermark}
+          setWatermark={s('watermark')}
+          negativePrompt={state.negativePrompt}
+          setNegativePrompt={s('negativePrompt')}
+          seed={state.seed}
+          setSeed={s('seed')}
           supportsPromptExtend={currentModel.supportsPromptExtend}
           supportsWatermark={currentModel.supportsWatermark}
           supportsNegativePrompt={currentModel.supportsNegativePrompt}
           maxDuration={currentModel.maxDuration}
           minDuration={currentModel.minDuration}
-          audioSetting={audioSetting}
-          setAudioSetting={setAudioSetting}
-          drivingAudio={drivingAudio}
-          setDrivingAudio={setDrivingAudio}
-          audioUrl={audioUrl}
-          setAudioUrl={setAudioUrl}
-          referenceVoice={referenceVoice}
-          setReferenceVoice={setReferenceVoice}
+          audioSetting={state.audioSetting}
+          setAudioSetting={s('audioSetting')}
+          drivingAudio={state.drivingAudio}
+          setDrivingAudio={s('drivingAudio')}
+          audioUrl={state.audioUrl}
+          setAudioUrl={s('audioUrl')}
+          referenceVoice={state.referenceVoice}
+          setReferenceVoice={s('referenceVoice')}
           supportsAudioSetting={currentModel.supportsAudioSetting}
           supportsDrivingAudio={currentModel.supportsDrivingAudio}
           supportsAudioUrl={currentModel.supportsAudioUrl}
@@ -422,16 +300,16 @@ export function HomeParamControls({
       return (
         <WanI2VControls
           resolutions={currentResolutions}
-          resolution={resolution}
-          setResolution={setResolution}
-          duration={duration}
-          setDuration={setDuration}
-          promptExtend={promptExtend}
-          setPromptExtend={setPromptExtend}
-          audio={audio}
-          setAudio={setAudio}
-          audioUrl={audioUrl}
-          setAudioUrl={setAudioUrl}
+          resolution={state.resolution}
+          setResolution={s('resolution')}
+          duration={state.duration}
+          setDuration={s('duration')}
+          promptExtend={state.promptExtend}
+          setPromptExtend={s('promptExtend')}
+          audio={state.audio}
+          setAudio={s('audio')}
+          audioUrl={state.audioUrl}
+          setAudioUrl={s('audioUrl')}
           supportsPromptExtend={currentModel.supportsPromptExtend}
           supportsAudio={currentModel.supportsAudio}
           supportsAudioUrl={currentModel.supportsAudioUrl}
@@ -445,16 +323,16 @@ export function HomeParamControls({
           resolutions={currentResolutions}
           durationOptions={currentModel.durationOptions || [6, 10]}
           resolutionDurationMap={currentModel.resolutionDurationMap}
-          resolution={resolution}
-          setResolution={setResolution}
-          duration={duration}
-          setDuration={setDuration}
-          promptOptimizer={promptOptimizer}
-          setPromptOptimizer={setPromptOptimizer}
-          fastPretreatment={fastPretreatment}
-          setFastPretreatment={setFastPretreatment}
-          aigcWatermark={aigcWatermark}
-          setAigcWatermark={setAigcWatermark}
+          resolution={state.resolution}
+          setResolution={s('resolution')}
+          duration={state.duration}
+          setDuration={s('duration')}
+          promptOptimizer={state.promptOptimizer}
+          setPromptOptimizer={s('promptOptimizer')}
+          fastPretreatment={state.fastPretreatment}
+          setFastPretreatment={s('fastPretreatment')}
+          aigcWatermark={state.aigcWatermark}
+          setAigcWatermark={s('aigcWatermark')}
           supportsPromptOptimizer={currentModel.supportsPromptOptimizer}
           supportsFastPretreatment={currentModel.supportsFastPretreatment}
           supportsWatermark={currentModel.supportsWatermark}
@@ -465,21 +343,21 @@ export function HomeParamControls({
         <HappyHorseVideoControls
           resolutions={currentResolutions}
           videoRatios={currentRatios}
-          resolution={resolution}
-          setResolution={setResolution}
-          aspectRatio={aspectRatio}
-          setAspectRatio={setAspectRatio}
-          duration={duration}
-          setDuration={setDuration}
-          watermark={watermark}
-          setWatermark={setWatermark}
+          resolution={state.resolution}
+          setResolution={s('resolution')}
+          aspectRatio={state.aspectRatio}
+          setAspectRatio={s('aspectRatio')}
+          duration={state.duration}
+          setDuration={s('duration')}
+          watermark={state.watermark}
+          setWatermark={s('watermark')}
           supportsWatermark={currentModel.supportsWatermark}
           maxDuration={currentModel.maxDuration}
           minDuration={currentModel.minDuration}
-          seed={seed}
-          setSeed={setSeed}
-          audioSetting={audioSetting}
-          setAudioSetting={setAudioSetting}
+          seed={state.seed}
+          setSeed={s('seed')}
+          audioSetting={state.audioSetting}
+          setAudioSetting={s('audioSetting')}
           supportsAudioSetting={currentModel.supportsAudioSetting}
           mode={mode}
         />
@@ -487,11 +365,11 @@ export function HomeParamControls({
     case 'ltx-video':
       return (
         <LtxVideoControls
-          display={display}
-          setDisplay={setDisplay}
+          display={state.display}
+          setDisplay={s('display')}
           displayOptions={currentModel.displayOptions || ['horizontal', 'vertical']}
-          seed={seed}
-          setSeed={setSeed}
+          seed={state.seed}
+          setSeed={s('seed')}
         />
       );
     case 'bza-video-x':
@@ -499,12 +377,12 @@ export function HomeParamControls({
         <BzaVideoXControls
           resolutions={currentResolutions}
           videoRatios={currentRatios}
-          resolution={resolution}
-          setResolution={setResolution}
-          aspectRatio={aspectRatio}
-          setAspectRatio={setAspectRatio}
-          duration={duration}
-          setDuration={setDuration}
+          resolution={state.resolution}
+          setResolution={s('resolution')}
+          aspectRatio={state.aspectRatio}
+          setAspectRatio={s('aspectRatio')}
+          duration={state.duration}
+          setDuration={s('duration')}
           durationOptions={currentModel.durationOptions}
           maxDuration={currentModel.maxDuration}
           minDuration={currentModel.minDuration}
@@ -516,10 +394,10 @@ export function HomeParamControls({
         <BzaVideoV3Controls
           resolutions={currentResolutions}
           videoRatios={currentRatios}
-          resolution={resolution}
-          setResolution={setResolution}
-          aspectRatio={aspectRatio}
-          setAspectRatio={setAspectRatio}
+          resolution={state.resolution}
+          setResolution={s('resolution')}
+          aspectRatio={state.aspectRatio}
+          setAspectRatio={s('aspectRatio')}
         />
       );
     case 'dreamactor':
@@ -527,16 +405,16 @@ export function HomeParamControls({
     case 'llm-chat':
       return (
         <LLMChatControls
-          systemPrompt={systemPrompt}
-          setSystemPrompt={setSystemPrompt}
-          temperature={temperature}
-          setTemperature={setTemperature}
-          maxTokens={maxTokens}
-          setMaxTokens={setMaxTokens}
-          enableThinking={enableThinking}
-          setEnableThinking={setEnableThinking}
-          enableSearch={enableSearch}
-          setEnableSearch={setEnableSearch}
+          systemPrompt={state.systemPrompt}
+          setSystemPrompt={s('systemPrompt')}
+          temperature={state.temperature}
+          setTemperature={s('temperature')}
+          maxTokens={state.maxTokens}
+          setMaxTokens={s('maxTokens')}
+          enableThinking={state.enableThinking}
+          setEnableThinking={s('enableThinking')}
+          enableSearch={state.enableSearch}
+          setEnableSearch={s('enableSearch')}
           enableThinkingRequired={currentModel.enableThinkingRequired}
           enableSearchRequired={currentModel.enableSearchRequired}
         />
@@ -544,16 +422,16 @@ export function HomeParamControls({
     case 'vision-g':
       return (
         <VisionGControls
-          systemPrompt={systemPrompt}
-          setSystemPrompt={setSystemPrompt}
-          temperature={temperature}
-          setTemperature={setTemperature}
-          maxTokens={maxTokens}
-          setMaxTokens={setMaxTokens}
-          detail={detail}
-          setDetail={setDetail}
-          enableThinking={enableThinking}
-          setEnableThinking={setEnableThinking}
+          systemPrompt={state.systemPrompt}
+          setSystemPrompt={s('systemPrompt')}
+          temperature={state.temperature}
+          setTemperature={s('temperature')}
+          maxTokens={state.maxTokens}
+          setMaxTokens={s('maxTokens')}
+          detail={state.detail}
+          setDetail={s('detail')}
+          enableThinking={state.enableThinking}
+          setEnableThinking={s('enableThinking')}
           detailOptions={currentModel.detailOptions}
           maxSystemPromptLength={currentModel.maxSystemPromptLength}
         />
@@ -561,22 +439,22 @@ export function HomeParamControls({
     case 'joycaption':
       return (
         <JoyCaptionControls
-          captionType={captionType}
-          setCaptionType={setCaptionType}
-          captionLength={captionLength}
-          setCaptionLength={setCaptionLength}
-          temperature={temperature}
-          setTemperature={setTemperature}
-          maxTokens={maxTokens}
-          setMaxTokens={setMaxTokens}
-          doSample={doSample}
-          setDoSample={setDoSample}
-          extraOptions={extraOptions}
-          setExtraOptions={setExtraOptions}
-          nameInput={nameInput}
-          setNameInput={setNameInput}
-          customPrompt={customPrompt}
-          setCustomPrompt={setCustomPrompt}
+          captionType={state.captionType}
+          setCaptionType={s('captionType')}
+          captionLength={state.captionLength}
+          setCaptionLength={s('captionLength')}
+          temperature={state.temperature}
+          setTemperature={s('temperature')}
+          maxTokens={state.maxTokens}
+          setMaxTokens={s('maxTokens')}
+          doSample={state.doSample}
+          setDoSample={s('doSample')}
+          extraOptions={state.extraOptions}
+          setExtraOptions={s('extraOptions')}
+          nameInput={state.nameInput}
+          setNameInput={s('nameInput')}
+          customPrompt={state.customPrompt}
+          setCustomPrompt={s('customPrompt')}
           captionTypes={currentModel.captionTypes}
           captionLengths={currentModel.captionLengths}
         />
@@ -584,18 +462,18 @@ export function HomeParamControls({
     case 'tts':
       return (
         <TTSControls
-          voice={voice}
-          setVoice={setVoice}
-          responseFormat={responseFormat}
-          setResponseFormat={setResponseFormat}
-          instructions={instructions}
-          setInstructions={setInstructions}
-          language={language}
-          setLanguage={setLanguage}
-          speed={speed}
-          setSpeed={setSpeed}
-          maxTokens={maxTokens}
-          setMaxTokens={setMaxTokens}
+          voice={state.voice}
+          setVoice={s('voice')}
+          responseFormat={state.responseFormat}
+          setResponseFormat={s('responseFormat')}
+          instructions={state.instructions}
+          setInstructions={s('instructions')}
+          language={state.language}
+          setLanguage={s('language')}
+          speed={state.speed}
+          setSpeed={s('speed')}
+          maxTokens={state.maxTokens}
+          setMaxTokens={s('maxTokens')}
           voices={currentModel.voices}
           formats={currentModel.formats}
           languages={currentModel.languages}
@@ -607,3 +485,5 @@ export function HomeParamControls({
       return null;
   }
 }
+
+export const HomeParamControls = React.memo(HomeParamControlsInner);

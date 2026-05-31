@@ -16,10 +16,11 @@ import * as DocumentPicker from 'expo-document-picker';
 import { useApiKeyContext } from '../context/ApiKeyContext';
 import { useHistoryContext } from '../context/HistoryContext';
 import { useTheme } from '../context/ThemeContext';
+import { useToastContext } from '../context/ToastContext';
 import { submitWebappTask, uploadImageFile, uploadVideoFile, fetchWebappDetail } from '../services/apiClient';
 import { generateId } from '../utils/helpers';
 import { ENV_API_KEY } from '../constants/models';
-import { Radius, Spacing } from '../constants/theme';
+import { Radius, Spacing, ButtonStyles } from '../constants/theme';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { ResizableTextInput } from '../components/ResizableTextInput';
 import { AppHeader } from '../components/AppHeader';
@@ -133,13 +134,13 @@ async function loadSavedApps() {
   try {
     const raw = await AsyncStorage.getItem(WEBAPP_SAVED_LIST_KEY);
     if (raw) { const list = JSON.parse(raw); return Array.isArray(list) ? list : []; }
-  } catch {}
+  } catch (e) { console.error('加载应用列表失败:', e); }
   return [];
 }
 
 /** 保存应用列表到 AsyncStorage */
 async function persistSavedApps(list) {
-  try { await AsyncStorage.setItem(WEBAPP_SAVED_LIST_KEY, JSON.stringify(list)); } catch {}
+  try { await AsyncStorage.setItem(WEBAPP_SAVED_LIST_KEY, JSON.stringify(list)); } catch (e) { console.error('保存应用列表失败:', e); }
 }
 
 export function WebappScreen() {
@@ -153,6 +154,7 @@ export function WebappScreen() {
     addToHistory, startWebappPolling, updateHistoryItem,
   } = useHistoryContext();
   const { colors } = useTheme();
+  const { showToast } = useToastContext();
   const styles = useThemedStyles(createStyles);
 
   // 模式：'list' | 'edit'
@@ -173,6 +175,10 @@ export function WebappScreen() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
   const [showApiKeyDropdown, setShowApiKeyDropdown] = useState(false);
+
+  useEffect(() => {
+    if (error) showToast(error, 'error');
+  }, [error, showToast]);
   const [uploadingKey, setUploadingKey] = useState(null);
   const [appDetail, setAppDetail] = useState(null);
   const [isLoadingApp, setIsLoadingApp] = useState(false);
@@ -629,7 +635,6 @@ export function WebappScreen() {
           {isSubmitting ? <ActivityIndicator color={colors.textInverse} /> : null}
           <Text style={styles.generateButtonText}>{isSubmitting ? '提交中...' : '提交任务'}</Text>
         </Pressable>
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
       </ScrollView>
 
       {/* Combo 就地下拉 Modal */}
@@ -778,10 +783,9 @@ const createStyles = (colors) => ({
   saveNameConfirm: { paddingVertical: Spacing.sm, paddingHorizontal: Spacing.lg, backgroundColor: colors.primary, borderRadius: Radius.sm, borderCurve: 'continuous' },
   saveNameConfirmText: { fontSize: 15, color: colors.textInverse, fontWeight: '600' },
 
-  generateButton: { backgroundColor: colors.primary, paddingVertical: 16, borderRadius: Radius.md, borderCurve: 'continuous', alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 10, marginBottom: Spacing.sm },
+  generateButton: { backgroundColor: colors.primary, paddingVertical: ButtonStyles.primary.paddingVertical, borderRadius: ButtonStyles.primary.borderRadius, borderCurve: 'continuous', alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 10, marginBottom: Spacing.sm },
   generateButtonDisabled: { backgroundColor: colors.primaryDisabled },
-  generateButtonText: { color: colors.textInverse, fontSize: 17, fontWeight: '600', letterSpacing: -0.3 },
-  errorText: { color: colors.error, textAlign: 'center', marginBottom: Spacing.md, fontSize: 14 },
+  generateButtonText: { color: colors.textInverse, fontSize: ButtonStyles.primary.fontSize, fontWeight: ButtonStyles.primary.fontWeight, letterSpacing: -0.3 },
   apiKeyInput: { fontSize: 15, color: colors.textPrimary, borderWidth: 0, borderRadius: Radius.sm, borderCurve: 'continuous', padding: Spacing.md, fontFamily: 'monospace', backgroundColor: colors.bg },
   saveKeyButton: { backgroundColor: colors.primary, paddingVertical: 10, borderRadius: Radius.sm, borderCurve: 'continuous', alignItems: 'center', marginTop: Spacing.sm },
   saveKeyButtonText: { color: colors.textInverse, fontSize: 15, fontWeight: '600' },

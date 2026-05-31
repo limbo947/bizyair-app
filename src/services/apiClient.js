@@ -265,7 +265,7 @@ async function uploadDirectToOSS(apiKey, file) {
     headers: {
       Authorization: authorization,
       'x-oss-security-token': securityToken,
-      'x-oss-date': date,
+      Date: date,
       'Content-Type': contentType,
     },
     body,

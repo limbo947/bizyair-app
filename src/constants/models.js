@@ -389,7 +389,7 @@ export const MODELS = {
     supportsWatermark: true, supportsEnableSequential: true, supportsThinkingMode: true, supportsColorPalette: true, supportsBboxList: true,
     defaultWatermark: false, defaultThinkingMode: true,
   },
-  'wan-2-7-image-pro-offcial': {
+  'wan-2-7-image-pro-official': {
     name: '万相2.7 Pro',
     icon: { name: 'image-outline', color: '#FF6A00' },
     manufacturer: 'alibaba',
@@ -682,7 +682,7 @@ export const MODELS = {
     supportsReferenceVoice: true,
     defaultWatermark: false, defaultPromptExtend: true, defaultAudioSetting: 'auto',
   },
-  'wan-2-7-offcial': {
+  'wan-2-7-extend-official': {
     name: '万相2.7 视频延长',
     icon: { name: 'time-outline', color: '#FF6A00' },
     manufacturer: 'alibaba',
@@ -1090,6 +1090,7 @@ export const API_KEYS_STORAGE_KEY = '@api_keys';
 export const ACTIVE_KEY_ID_KEY = '@active_key_id';
 export const ACTIVE_TAB_KEY = '@active_tab';
 export const HOME_STATE_KEY = '@home_state';
+export const MODEL_STATES_KEY = '@model_states';
 export const TOTAL_COINS_KEY = '@total_coins_spent';
 export const TAB_HOME = 'home';
 export const TAB_WEBAPP = 'webapp';

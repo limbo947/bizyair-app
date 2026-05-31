@@ -174,9 +174,6 @@ export function useHomeSubmit({
     };
     await addToHistory(entry);
 
-    await addCoinsSpent(price);
-    await refreshUserInfo().catch(() => {});
-
     try {
       const payload = buildPayload(modelId, mode, params);
       let submitResult;
@@ -198,6 +195,8 @@ export function useHomeSubmit({
         taskApiKey,
         lastResponse: { status: 'Pending', request_id: requestId },
       });
+      await addCoinsSpent(price);
+      await refreshUserInfo().catch(() => {});
       startPolling(id, requestId, taskApiKey);
     } catch (err) {
       updateHistoryItem(id, {

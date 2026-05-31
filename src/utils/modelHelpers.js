@@ -191,6 +191,84 @@ export function getResolutions(modelId, mode) {
  * @param {object} params - 请求参数
  * @returns {string} 分辨率描述，如 '2048×1024' 或 '720p'
  */
+const PARAM_TYPE_PLACEHOLDERS = {
+  'resolution-ratio': {
+    'text-to-image': '描述你想生成的图片...',
+    'image-to-image': '描述你想生成的图片...',
+  },
+  'width-height-quality': { 'text-to-image': '描述你想生成的图片...' },
+  'size-only': { 'text-to-image': '描述你想生成的图片...' },
+  'flux-kontext': { 'image-to-image': '描述你想生成的图片...' },
+  'wan-size': {
+    'text-to-image': '描述你想生成的图片...',
+    'image-to-image': '描述你想生成的图片...',
+  },
+  'width-height': { 'text-to-image': '描述你想生成的图片...' },
+  'seedance-video': {
+    'text-to-video': '描述视频内容...',
+    'image-to-video': '描述视频运动效果（可选）...',
+    'flf-to-video': '描述视频运动效果（可选）...',
+    'reference-to-video': '描述视频内容...',
+  },
+  'kling-video': {
+    'text-to-video': '描述你想生成的视频...',
+    'image-to-video': '描述你想生成的视频...',
+    'flf-to-video': '描述你想生成的视频...',
+  },
+  'kling-o3-4k': {
+    'text-to-video': '描述你想生成的视频...',
+    'image-to-video': '描述你想生成的视频...',
+  },
+  'vidu-video': {
+    'text-to-video': '描述你想生成的视频...',
+    'image-to-video': '描述你想生成的视频...',
+    'reference-to-video': '描述参考视频效果...',
+    'video-edit': '描述视频编辑效果...',
+  },
+  'wan-video': {
+    'text-to-video': '描述你想生成的视频...',
+    'image-to-video': '描述你想生成的视频...',
+    'flf-to-video': '描述你想生成的视频...',
+    'reference-to-video': '描述参考视频效果...',
+    'video-edit': '描述视频编辑效果...',
+    'video-extend': '描述视频延长效果（可选）...',
+  },
+  'wan-i2v': { 'image-to-video': '描述你想生成的视频...' },
+  'hailuo-video': {
+    'text-to-video': '描述你想生成的视频...',
+    'image-to-video': '描述你想生成的视频...',
+  },
+  'happyhorse-video': {
+    'text-to-video': '描述你想生成的视频...',
+    'image-to-video': '描述你想生成的视频...',
+    'video-edit': '描述视频编辑效果...',
+  },
+  'ltx-video': { 'text-to-video': '描述你想生成的视频...' },
+  'bza-video-x': {
+    'text-to-video': '描述你想生成的视频...',
+    'image-to-video': '描述你想生成的视频...',
+  },
+  'bza-video-v3': {
+    'text-to-video': '描述你想生成的视频...',
+    'image-to-video': '描述你想生成的视频...',
+  },
+  'dreamactor': { 'reference-to-video': '描述视频内容...' },
+  'llm-chat': { 'large-language-models': '输入你的问题...' },
+  'vision-g': { 'vision': '描述你想了解的图片内容...' },
+  'joycaption': { 'vision': '描述你想了解的图片内容...' },
+  'tts': { 'text-to-audio': '输入要合成的文本...' },
+};
+
+export function getModelPlaceholder(modelId, mode) {
+  const model = getModelInfo(modelId);
+  if (!model) return '输入提示词...';
+  if (model.placeholder && typeof model.placeholder === 'string') return model.placeholder;
+  if (model.placeholder && typeof model.placeholder === 'object' && model.placeholder[mode]) return model.placeholder[mode];
+  const paramPlaceholders = PARAM_TYPE_PLACEHOLDERS[model.paramType];
+  if (paramPlaceholders && paramPlaceholders[mode]) return paramPlaceholders[mode];
+  return '输入提示词...';
+}
+
 export function getActualResolution(modelId, mode, params) {
   const model = getModelInfo(modelId);
   const RES_BASE = { '0.5K': 512, '1K': 1024, '2K': 2048, '3K': 3072, '4K': 4096 };

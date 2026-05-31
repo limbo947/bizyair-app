@@ -7,6 +7,21 @@ const FavoritesContext = createContext(null);
 
 const DEFAULT_FAVORITES = ['bza-image-b2-base', 'bza-image-b-pro-official', 'bza-image-o2-official'];
 
+const MODEL_ID_MIGRATIONS = {
+  'wan-2-7-image-pro-offcial': 'wan-2-7-image-pro-official',
+  'wan-2-7-offcial': 'wan-2-7-extend-official',
+};
+
+function migrateModelIds(ids) {
+  let changed = false;
+  const migrated = ids.map((id) => {
+    const newId = MODEL_ID_MIGRATIONS[id];
+    if (newId) { changed = true; return newId; }
+    return id;
+  });
+  return changed ? migrated : ids;
+}
+
 export function FavoritesProvider({ children }) {
   const [favorites, setFavorites] = useState(DEFAULT_FAVORITES);
 
@@ -30,9 +45,13 @@ export function FavoritesProvider({ children }) {
           console.warn('常用模型数据异常（非数组），已重置');
           return;
         }
-        const validModels = parsed.filter((modelId) => typeof modelId === 'string' && MODELS[modelId]);
+        const migrated = migrateModelIds(parsed);
+        const validModels = migrated.filter((modelId) => typeof modelId === 'string' && MODELS[modelId]);
         if (validModels.length > 0) {
           setFavorites(validModels);
+          if (migrated !== parsed) {
+            await AsyncStorage.setItem(STORAGE_KEYS.favorites, JSON.stringify(validModels));
+          }
         }
       }
     } catch (e) {
@@ -42,29 +61,39 @@ export function FavoritesProvider({ children }) {
 
   useEffect(() => {
     loadFavorites();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [loadFavorites]);
 
   const addFavorite = useCallback((modelId) => {
     if (!MODELS[modelId]) return;
-    if (favorites.includes(modelId)) return;
-    const newFavorites = [...favorites, modelId].slice(0, FAVORITES_MAX_COUNT);
-    saveFavorites(newFavorites);
-  }, [favorites, saveFavorites]);
+    setFavorites((prev) => {
+      if (prev.includes(modelId)) return prev;
+      const newFavorites = [...prev, modelId].slice(0, FAVORITES_MAX_COUNT);
+      saveFavorites(newFavorites);
+      return newFavorites;
+    });
+  }, [saveFavorites]);
 
   const removeFavorite = useCallback((modelId) => {
-    const newFavorites = favorites.filter((id) => id !== modelId);
-    saveFavorites(newFavorites);
-  }, [favorites, saveFavorites]);
+    setFavorites((prev) => {
+      const newFavorites = prev.filter((id) => id !== modelId);
+      saveFavorites(newFavorites);
+      return newFavorites;
+    });
+  }, [saveFavorites]);
 
   const toggleFavorite = useCallback((modelId) => {
     if (!MODELS[modelId]) return;
-    if (favorites.includes(modelId)) {
-      removeFavorite(modelId);
-    } else {
-      addFavorite(modelId);
-    }
-  }, [favorites, addFavorite, removeFavorite]);
+    setFavorites((prev) => {
+      if (prev.includes(modelId)) {
+        const newFavorites = prev.filter((id) => id !== modelId);
+        saveFavorites(newFavorites);
+        return newFavorites;
+      }
+      const newFavorites = [...prev, modelId].slice(0, FAVORITES_MAX_COUNT);
+      saveFavorites(newFavorites);
+      return newFavorites;
+    });
+  }, [saveFavorites]);
 
   const isFavorite = useCallback((modelId) => {
     return favorites.includes(modelId);

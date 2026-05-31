@@ -4,18 +4,10 @@ import { Pressable, View,
   TextInput, } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Radius, Spacing } from '../constants/theme';
+import { createSharedStyles } from '../constants/sharedStyles';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { useTheme } from '../context/ThemeContext';
-
-/** 参数标签：必选参数显示红色 *，可选参数显示灰色 (可选) */
-function ParamLabel({ label, required, style }) {
-  const { colors } = useTheme();
-  return (
-    <Text style={[{ fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginBottom: Spacing.sm, textTransform: 'uppercase', letterSpacing: 0.5 }, style]}>
-      {label}{required ? <Text style={{ color: colors.error }}> *</Text> : <Text style={{ color: colors.textTertiary, fontWeight: '400', textTransform: 'none' }}> (可选)</Text>}
-    </Text>
-  );
-}
+import { ParamLabel } from './ParamLabel';
 
 export function TTSControls({
   voice, setVoice,
@@ -40,7 +32,7 @@ export function TTSControls({
           {(voices || []).map((v) => (
             <Pressable
               key={v}
-              style={({ pressed }) => [styles.chip, voice === v && styles.chipActive, pressed && { opacity: 0.7 }]} onPress={() => setVoice(v)}
+              style={({ pressed }) => [styles.chip, voice === v && styles.chipActive, pressed && styles.pressedStyle]} onPress={() => setVoice(v)}
             >
               <Text style={[styles.chipText, voice === v && styles.chipTextActive]}>{v}</Text>
             </Pressable>
@@ -54,7 +46,7 @@ export function TTSControls({
           {(formats || []).map((f) => (
             <Pressable
               key={f}
-              style={({ pressed }) => [styles.chip, responseFormat === f && styles.chipActive, pressed && { opacity: 0.7 }]} onPress={() => setResponseFormat(f)}
+              style={({ pressed }) => [styles.chip, responseFormat === f && styles.chipActive, pressed && styles.pressedStyle]} onPress={() => setResponseFormat(f)}
             >
               <Text style={[styles.chipText, responseFormat === f && styles.chipTextActive]}>{f}</Text>
             </Pressable>
@@ -68,7 +60,7 @@ export function TTSControls({
           {(languages || []).map((l) => (
             <Pressable
               key={l}
-              style={({ pressed }) => [styles.chip, language === l && styles.chipActive, pressed && { opacity: 0.7 }]} onPress={() => setLanguage(l)}
+              style={({ pressed }) => [styles.chip, language === l && styles.chipActive, pressed && styles.pressedStyle]} onPress={() => setLanguage(l)}
             >
               <Text style={[styles.chipText, language === l && styles.chipTextActive]}>{l}</Text>
             </Pressable>
@@ -81,7 +73,7 @@ export function TTSControls({
           <ParamLabel label="语速" required={false} style={{ marginBottom: 0 }} />
           <View style={styles.valueRow}>
             <Pressable
-              style={({ pressed }) => [styles.stepBtn, pressed && { opacity: 0.7 }]} onPress={() => {
+              style={({ pressed }) => [styles.stepBtn, pressed && styles.pressedStyle]} onPress={() => {
                 const v = Math.round((speed - 0.1) * 10) / 10;
                 if (v >= (speedRange?.[0] || 0.5)) setSpeed(v);
               }}
@@ -101,7 +93,7 @@ export function TTSControls({
               selectTextOnFocus
             />
             <Pressable
-              style={({ pressed }) => [styles.stepBtn, pressed && { opacity: 0.7 }]} onPress={() => {
+              style={({ pressed }) => [styles.stepBtn, pressed && styles.pressedStyle]} onPress={() => {
                 const v = Math.round((speed + 0.1) * 10) / 10;
                 if (v <= (speedRange?.[1] || 2)) setSpeed(v);
               }}
@@ -119,7 +111,7 @@ export function TTSControls({
         </View>
         <View style={styles.inputRow}>
           <Pressable
-            style={({ pressed }) => [styles.stepBtn, pressed && { opacity: 0.7 }]} onPress={() => {
+            style={({ pressed }) => [styles.stepBtn, pressed && styles.pressedStyle]} onPress={() => {
               const v = Math.max(1, maxTokens - 128);
               setMaxTokens(v);
             }}
@@ -139,7 +131,7 @@ export function TTSControls({
             placeholderTextColor={colors.textPlaceholder}
           />
           <Pressable
-            style={({ pressed }) => [styles.stepBtn, pressed && { opacity: 0.7 }]} onPress={() => {
+            style={({ pressed }) => [styles.stepBtn, pressed && styles.pressedStyle]} onPress={() => {
               const v = Math.min(maxTokensMax || 1024, maxTokens + 128);
               setMaxTokens(v);
             }}
@@ -166,8 +158,7 @@ export function TTSControls({
 }
 
 const createStyles = (colors) => ({
-  card: { backgroundColor: colors.card, padding: Spacing.lg, borderRadius: Radius.md, borderCurve: 'continuous', marginBottom: Spacing.md },
-  label: { fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginBottom: Spacing.sm, textTransform: 'uppercase', letterSpacing: 0.5 },
+  ...createSharedStyles(colors),
   labelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.sm },
   rangeHint: { fontSize: 12, color: colors.textTertiary },
   valueRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },

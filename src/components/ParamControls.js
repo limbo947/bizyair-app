@@ -2,18 +2,10 @@ import React from 'react';
 import { Pressable, Text, View, TextInput, Switch } from 'react-native';
 import { QUALITY_LABELS, SIZE_PRESETS } from '../constants/models';
 import { Radius, Spacing } from '../constants/theme';
+import { createSharedStyles } from '../constants/sharedStyles';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { useTheme } from '../context/ThemeContext';
-
-/** 参数标签：必选参数显示红色 *，可选参数显示灰色 (可选) */
-function ParamLabel({ label, required, style }) {
-  const { colors } = useTheme();
-  return (
-    <Text style={[{ fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginBottom: Spacing.sm, textTransform: 'uppercase', letterSpacing: 0.5 }, style]}>
-      {label}{required ? <Text style={{ color: colors.error }}> *</Text> : <Text style={{ color: colors.textTertiary, fontWeight: '400', textTransform: 'none' }}> (可选)</Text>}
-    </Text>
-  );
-}
+import { ParamLabel } from './ParamLabel';
 
 function useStyles() {
   const styles = useThemedStyles(createStyles);
@@ -29,7 +21,7 @@ export function ResolutionRatioControls({ currentResolutions, currentRatios, res
         <ParamLabel label="分辨率" required={resolutionRequired !== false} />
         <View style={styles.selectorRow}>
           {currentResolutions.map((r) => (
-            <Pressable key={r} style={({ pressed }) => [styles.selectorButton, resolution === r && styles.selectorButtonActive, pressed && { opacity: 0.7 }]} onPress={() => setResolution(r)}>
+            <Pressable key={r} style={({ pressed }) => [styles.selectorButton, resolution === r && styles.selectorButtonActive, pressed && styles.pressedStyle]} onPress={() => setResolution(r)}>
               <Text style={[styles.selectorText, resolution === r && styles.selectorTextActive]}>{r}</Text>
             </Pressable>
           ))}
@@ -40,7 +32,7 @@ export function ResolutionRatioControls({ currentResolutions, currentRatios, res
           <ParamLabel label="宽高比" required={false} />
           <View style={styles.aspectRatioGrid}>
             {currentRatios.map((r) => (
-              <Pressable key={r} style={({ pressed }) => [styles.ratioButton, aspectRatio === r && styles.ratioButtonActive, pressed && { opacity: 0.7 }]} onPress={() => setAspectRatio(r)}>
+              <Pressable key={r} style={({ pressed }) => [styles.ratioButton, aspectRatio === r && styles.ratioButtonActive, pressed && styles.pressedStyle]} onPress={() => setAspectRatio(r)}>
                 <Text style={[styles.ratioText, aspectRatio === r && styles.ratioTextActive]}>{r}</Text>
               </Pressable>
             ))}
@@ -51,7 +43,7 @@ export function ResolutionRatioControls({ currentResolutions, currentRatios, res
         <View style={styles.card}>
           <Pressable style={styles.switchRow} onPress={() => setWebSearch(!webSearch)}>
             <ParamLabel label="联网搜索" required={false} style={{ marginBottom: 0 }} />
-            <Switch value={webSearch} trackColor={{ false: colors.bg, true: colors.primary }} pointerEvents="none" />
+            <Switch value={webSearch} trackColor={{ false: colors.disabled, true: colors.primary }} pointerEvents="none" />
           </Pressable>
         </View>
       )}
@@ -98,7 +90,7 @@ export function WidthHeightQualityControls({ sizePreset, setSizePreset, customWi
         <ParamLabel label="尺寸预设" required={false} />
         <View style={styles.presetGrid}>
           {SIZE_PRESETS.map((p, i) => (
-            <Pressable key={i} style={({ pressed }) => [styles.presetButton, sizePreset === i && styles.presetButtonActive, pressed && { opacity: 0.7 }]} onPress={() => { setSizePreset(i); setCustomWidth(String(p.width)); setCustomHeight(String(p.height)); }}>
+            <Pressable key={i} style={({ pressed }) => [styles.presetButton, sizePreset === i && styles.presetButtonActive, pressed && styles.pressedStyle]} onPress={() => { setSizePreset(i); setCustomWidth(String(p.width)); setCustomHeight(String(p.height)); }}>
               <Text style={[styles.presetLabel, sizePreset === i && styles.presetLabelActive]}>{p.label}</Text>
               <Text style={[styles.presetDims, sizePreset === i && styles.presetDimsActive]}>{p.width}×{p.height}</Text>
             </Pressable>
@@ -131,7 +123,7 @@ export function WidthHeightQualityControls({ sizePreset, setSizePreset, customWi
         <ParamLabel label="质量" required />
         <View style={styles.selectorRow}>
           {(modelQualities || []).map((q) => (
-            <Pressable key={q} style={({ pressed }) => [styles.selectorButton, quality === q && styles.selectorButtonActive, pressed && { opacity: 0.7 }]} onPress={() => setQuality(q)}>
+            <Pressable key={q} style={({ pressed }) => [styles.selectorButton, quality === q && styles.selectorButtonActive, pressed && styles.pressedStyle]} onPress={() => setQuality(q)}>
               <Text style={[styles.selectorText, quality === q && styles.selectorTextActive]}>{QUALITY_LABELS[q] || q}</Text>
             </Pressable>
           ))}
@@ -148,7 +140,7 @@ export function SizeOnlyControls({ currentResolutions, resolution, setResolution
       <ParamLabel label="尺寸" required={false} />
       <View style={styles.selectorRow}>
         {currentResolutions.map((r) => (
-          <Pressable key={r} style={({ pressed }) => [styles.selectorButton, resolution === r && styles.selectorButtonActive, pressed && { opacity: 0.7 }]} onPress={() => setResolution(r)}>
+          <Pressable key={r} style={({ pressed }) => [styles.selectorButton, resolution === r && styles.selectorButtonActive, pressed && styles.pressedStyle]} onPress={() => setResolution(r)}>
             <Text style={[styles.selectorText, resolution === r && styles.selectorTextActive]}>{r}</Text>
           </Pressable>
         ))}
@@ -164,7 +156,7 @@ export function FluxKontextControls({ currentRatios, aspectRatio, setAspectRatio
       <ParamLabel label="宽高比" required={false} />
       <View style={styles.aspectRatioGrid}>
         {currentRatios.map((r) => (
-          <Pressable key={r} style={({ pressed }) => [styles.ratioButton, aspectRatio === r && styles.ratioButtonActive, pressed && { opacity: 0.7 }]} onPress={() => setAspectRatio(r)}>
+          <Pressable key={r} style={({ pressed }) => [styles.ratioButton, aspectRatio === r && styles.ratioButtonActive, pressed && styles.pressedStyle]} onPress={() => setAspectRatio(r)}>
             <Text style={[styles.ratioText, aspectRatio === r && styles.ratioTextActive]}>{r}</Text>
           </Pressable>
         ))}
@@ -181,7 +173,7 @@ export function WanSizeControls({ currentResolutions, resolution, setResolution,
         <ParamLabel label="尺寸" required />
         <View style={styles.selectorRow}>
           {currentResolutions.map((r) => (
-            <Pressable key={r} style={({ pressed }) => [styles.selectorButton, resolution === r && styles.selectorButtonActive, pressed && { opacity: 0.7 }]} onPress={() => setResolution(r)}>
+            <Pressable key={r} style={({ pressed }) => [styles.selectorButton, resolution === r && styles.selectorButtonActive, pressed && styles.pressedStyle]} onPress={() => setResolution(r)}>
               <Text style={[styles.selectorText, resolution === r && styles.selectorTextActive]}>{r === 'Custom' ? '自定义' : r}</Text>
             </Pressable>
           ))}
@@ -208,7 +200,7 @@ export function WanSizeControls({ currentResolutions, resolution, setResolution,
         <View style={styles.card}>
           <Pressable style={styles.switchRow} onPress={() => setEnableSequential(!enableSequential)}>
             <ParamLabel label="组图模式" required={false} style={{ marginBottom: 0 }} />
-            <Switch value={enableSequential} trackColor={{ false: colors.bg, true: colors.primary }} pointerEvents="none" />
+            <Switch value={enableSequential} trackColor={{ false: colors.disabled, true: colors.primary }} pointerEvents="none" />
           </Pressable>
         </View>
       )}
@@ -216,7 +208,7 @@ export function WanSizeControls({ currentResolutions, resolution, setResolution,
         <View style={styles.card}>
           <Pressable style={styles.switchRow} onPress={() => setThinkingMode(!thinkingMode)}>
             <ParamLabel label="增强推理" required={false} style={{ marginBottom: 0 }} />
-            <Switch value={thinkingMode} trackColor={{ false: colors.bg, true: colors.primary }} pointerEvents="none" />
+            <Switch value={thinkingMode} trackColor={{ false: colors.disabled, true: colors.primary }} pointerEvents="none" />
           </Pressable>
         </View>
       )}
@@ -224,7 +216,7 @@ export function WanSizeControls({ currentResolutions, resolution, setResolution,
         <View style={styles.card}>
           <Pressable style={styles.switchRow} onPress={() => setWatermark(!watermark)}>
             <ParamLabel label="AI 水印" required={false} style={{ marginBottom: 0 }} />
-            <Switch value={watermark} trackColor={{ false: colors.bg, true: colors.primary }} pointerEvents="none" />
+            <Switch value={watermark} trackColor={{ false: colors.disabled, true: colors.primary }} pointerEvents="none" />
           </Pressable>
         </View>
       )}
@@ -258,7 +250,7 @@ export function WidthHeightControls({ sizePreset, setSizePreset, customWidth, se
         <ParamLabel label="尺寸预设" required={false} />
         <View style={styles.presetGrid}>
           {SIZE_PRESETS.map((p, i) => (
-            <Pressable key={i} style={({ pressed }) => [styles.presetButton, sizePreset === i && styles.presetButtonActive, pressed && { opacity: 0.7 }]} onPress={() => { setSizePreset(i); setCustomWidth(String(p.width)); setCustomHeight(String(p.height)); }}>
+            <Pressable key={i} style={({ pressed }) => [styles.presetButton, sizePreset === i && styles.presetButtonActive, pressed && styles.pressedStyle]} onPress={() => { setSizePreset(i); setCustomWidth(String(p.width)); setCustomHeight(String(p.height)); }}>
               <Text style={[styles.presetLabel, sizePreset === i && styles.presetLabelActive]}>{p.label}</Text>
               <Text style={[styles.presetDims, sizePreset === i && styles.presetDimsActive]}>{p.width}×{p.height}</Text>
             </Pressable>
@@ -290,7 +282,7 @@ export function WidthHeightControls({ sizePreset, setSizePreset, customWidth, se
           <ParamLabel label="生成数量" required />
           <View style={styles.selectorRow}>
             {[1, 2, 3, 4].map((n) => (
-              <Pressable key={n} style={({ pressed }) => [styles.selectorButton, batchSize === n && styles.selectorButtonActive, pressed && { opacity: 0.7 }]} onPress={() => setBatchSize(n)}>
+              <Pressable key={n} style={({ pressed }) => [styles.selectorButton, batchSize === n && styles.selectorButtonActive, pressed && styles.pressedStyle]} onPress={() => setBatchSize(n)}>
                 <Text style={[styles.selectorText, batchSize === n && styles.selectorTextActive]}>{n}</Text>
               </Pressable>
             ))}
@@ -308,13 +300,7 @@ export function WidthHeightControls({ sizePreset, setSizePreset, customWidth, se
 }
 
 const createStyles = (colors) => ({
-  card: { backgroundColor: colors.card, padding: Spacing.lg, borderRadius: Radius.md, borderCurve: 'continuous', marginBottom: Spacing.md },
-  label: { fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginBottom: Spacing.sm, textTransform: 'uppercase', letterSpacing: 0.5 },
-  selectorRow: { flexDirection: 'row', gap: Spacing.sm },
-  selectorButton: { flex: 1, minWidth: 60, paddingVertical: 10, borderRadius: Radius.sm, borderCurve: 'continuous', backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
-  selectorButtonActive: { backgroundColor: colors.primary },
-  selectorText: { fontSize: 14, color: colors.textSecondary, fontWeight: '500' },
-  selectorTextActive: { color: colors.textInverse, fontWeight: '600' },
+  ...createSharedStyles(colors),
   priceHint: { fontSize: 12, color: colors.textTertiary, marginTop: Spacing.sm },
   errorHint: { fontSize: 12, color: colors.error, marginTop: Spacing.sm },
   aspectRatioGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
@@ -334,6 +320,4 @@ const createStyles = (colors) => ({
   dimLabel: { position: 'absolute', left: 8, top: 0, bottom: 0, textAlignVertical: 'center', fontSize: 13, color: colors.textTertiary, fontWeight: '500', zIndex: 1, lineHeight: 40 },
   dimInput: { fontSize: 15, color: colors.textPrimary, borderWidth: 0, borderRadius: Radius.sm, borderCurve: 'continuous', paddingLeft: 32, paddingRight: 10, paddingVertical: 10, textAlign: 'right', backgroundColor: colors.bg },
   dimX: { fontSize: 18, color: colors.textTertiary, fontWeight: '400', lineHeight: 40 },
-  switchRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  dimInputFull: { fontSize: 15, color: colors.textPrimary, borderWidth: 0, borderRadius: Radius.sm, borderCurve: 'continuous', paddingHorizontal: Spacing.sm, paddingVertical: 10, backgroundColor: colors.bg },
 });

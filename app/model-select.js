@@ -1,11 +1,11 @@
 import { useRouter } from 'expo-router';
 import { ModelSelectScreen } from '../src/screens/ModelSelectScreen';
-import { useHistoryContext } from '../src/context/HistoryContext';
+import { useHomeStateContext } from '../src/context/HistoryContext';
 import { getModelModes } from '../src/utils/modelHelpers';
 
 export default function ModelSelectRoute() {
   const router = useRouter();
-  const { saveHomeState, homeState } = useHistoryContext();
+  const { saveHomeState, homeState } = useHomeStateContext();
 
   return (
     <ModelSelectScreen
@@ -21,9 +21,19 @@ export default function ModelSelectRoute() {
           }
         }
         saveHomeState(updates);
-        router.back();
+        if (router.canGoBack()) {
+          router.back();
+        } else {
+          router.replace('/');
+        }
       }}
-      onBack={() => router.back()}
+      onBack={() => {
+        if (router.canGoBack()) {
+          router.back();
+        } else {
+          router.replace('/');
+        }
+      }}
     />
   );
 }

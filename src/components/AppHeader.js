@@ -3,6 +3,7 @@ import { Pressable, Text, View, TextInput, ActivityIndicator } from 'react-nativ
 import { Image } from 'expo-image';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useApiKeyContext } from '../context/ApiKeyContext';
+import { useToastContext } from '../context/ToastContext';
 import { useTheme } from '../context/ThemeContext';
 import { ENV_API_KEY } from '../constants/models';
 import { Radius, Spacing } from '../constants/theme';
@@ -35,6 +36,7 @@ export function AppHeader({ paddingTop, showAllModelsButton, onAllModelsPress })
     userInfo, walletBalance,
   } = useApiKeyContext();
   const { themeMode, toggleTheme, colors } = useTheme();
+  const { showToast } = useToastContext();
   const styles = useThemedStyles(createStyles);
 
   const [showApiKeyDropdown, setShowApiKeyDropdown] = useState(false);
@@ -45,7 +47,8 @@ export function AppHeader({ paddingTop, showAllModelsButton, onAllModelsPress })
     setIsSaving(true);
     try {
       await saveApiKey(apiKey);
-    } catch (e) {
+    } catch (_e) {
+      showToast('密钥保存失败', 'error');
     } finally {
       setIsSaving(false);
     }

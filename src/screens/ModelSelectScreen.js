@@ -2,7 +2,8 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { Pressable, Text,
   View,
   ScrollView,
-  FlatList, } from 'react-native';
+  FlatList,
+  useWindowDimensions, } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { MODELS } from '../constants/models';
@@ -52,6 +53,8 @@ const ModelCard = React.memo(function ModelCard({ model, isSelected, isEditMode,
 
 export function ModelSelectScreen({ currentModelId, onSelectModel, onBack }) {
   const insets = useSafeAreaInsets();
+  const { width: screenWidth } = useWindowDimensions();
+  const categoryWidth = screenWidth < 360 ? 100 : 130;
   const styles = useThemedStyles(createStyles);
   const { colors } = useTheme();
   const { favorites, saveFavorites, isFavorite } = useFavoritesContext();
@@ -172,7 +175,7 @@ export function ModelSelectScreen({ currentModelId, onSelectModel, onBack }) {
 
       <View style={styles.body}>
         <ScrollView
-          style={styles.categorySidebar}
+          style={[styles.categorySidebar, { width: categoryWidth }]}
           showsVerticalScrollIndicator={false}
         >
           {categoryList.map((category) => (
@@ -189,6 +192,7 @@ export function ModelSelectScreen({ currentModelId, onSelectModel, onBack }) {
                   styles.categoryLabel,
                   selectedCategory === category.key && styles.categoryLabelActive,
                 ]}
+                numberOfLines={1}
               >
                 {category.label}
               </Text>
@@ -266,16 +270,17 @@ const createStyles = (colors) => ({
     flexDirection: 'row',
   },
   categorySidebar: {
-    flex: 1,
     backgroundColor: colors.bg,
     paddingTop: 0,
+    flexShrink: 0,
+    flexGrow: 0,
   },
   categoryItem: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.md,
-    gap: Spacing.sm,
   },
   categoryItemActive: {
     backgroundColor: colors.card,
@@ -284,20 +289,21 @@ const createStyles = (colors) => ({
   },
   categoryLabel: {
     flex: 1,
-    fontSize: 13,
+    fontSize: 12,
     color: colors.textTertiary,
     fontWeight: '500',
+    textAlign: 'left',
   },
   categoryLabelActive: {
     color: colors.textPrimary,
     fontWeight: '600',
   },
   categoryCount: {
-    fontSize: 12,
+    fontSize: 11,
     color: colors.textTertiary,
     backgroundColor: colors.bg,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    paddingHorizontal: 5,
+    paddingVertical: 1,
     borderRadius: 10,
     borderCurve: 'continuous',
   },
@@ -306,9 +312,7 @@ const createStyles = (colors) => ({
     backgroundColor: colors.primaryBg,
   },
   modelList: {
-    width: 300,
-    flexGrow: 0,
-    flexShrink: 0,
+    flex: 1,
     backgroundColor: colors.card,
   },
   modelListHeader: {

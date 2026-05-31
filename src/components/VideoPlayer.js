@@ -151,8 +151,8 @@ function NativeVideoPlayer({ visible, videoUrl, onClose }) {
   const videoRef = useRef(null);
 
   // 可见性变化时重置播放状态
-  useEffect(() => { if (!visible) { try { videoRef.current?.stopAsync(); } catch {} setIsPlaying(false); setIsLoading(true); } else { setIsLoading(true); setError(''); setVolume(1); setIsMuted(false); setMutedVolume(1); } }, [visible]);
-  useEffect(() => () => { try { videoRef.current?.stopAsync(); } catch {} }, []);
+  useEffect(() => { if (!visible) { try { videoRef.current?.stopAsync(); } catch (_e) { /* expected: component may be unmounted */ } setIsPlaying(false); setIsLoading(true); } else { setIsLoading(true); setError(''); setVolume(1); setIsMuted(false); setMutedVolume(1); } }, [visible]);
+  useEffect(() => () => { try { videoRef.current?.stopAsync(); } catch (_e) { /* expected: component may be unmounted */ } }, []);
 
   const onPlayback = useCallback((s) => {
     if (!s.isLoaded) { if (s.error) setError('视频加载失败'); return; }
@@ -162,12 +162,12 @@ function NativeVideoPlayer({ visible, videoUrl, onClose }) {
 
   const togglePlay = useCallback(async () => {
     if (!videoRef.current) return;
-    try { if (isPlaying) { await videoRef.current.pauseAsync(); } else { const st = await videoRef.current.getStatusAsync(); if (st.isLoaded && st.didJustFinish) { await videoRef.current.replayAsync(); } else { await videoRef.current.playAsync(); } } } catch {}
+    try { if (isPlaying) { await videoRef.current.pauseAsync(); } else { const st = await videoRef.current.getStatusAsync(); if (st.isLoaded && st.didJustFinish) { await videoRef.current.replayAsync(); } else { await videoRef.current.playAsync(); } } } catch (_e) { /* expected: component may be unmounted */ }
   }, [isPlaying]);
 
   const toggleMute = () => { if (isMuted) { setVolume(mutedVolume); setIsMuted(false); } else { setMutedVolume(volume); setVolume(0); setIsMuted(true); } };
   const fmt = (ms) => { if (!ms || ms < 0) return '0:00'; const t = Math.floor(ms / 1000); return `${Math.floor(t / 60)}:${(t % 60).toString().padStart(2, '0')}`; };
-  const seek = async (f) => { if (!videoRef.current || !duration) return; const t = f * duration; try { await videoRef.current.setPositionAsync(t); setPosition(t); } catch {} };
+  const seek = async (f) => { if (!videoRef.current || !duration) return; const t = f * duration; try { await videoRef.current.setPositionAsync(t); setPosition(t); } catch (_e) { /* expected: component may be unmounted */ } };
   const pct = duration > 0 ? (position / duration) * 100 : 0;
 
   if (!visible) return null;

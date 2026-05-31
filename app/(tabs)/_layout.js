@@ -1,14 +1,14 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useHistoryContext } from '../../src/context/HistoryContext';
+import { useHistoryListContext } from '../../src/context/HistoryContext';
 import { useTheme } from '../../src/context/ThemeContext';
 
 const ACTIVE_STATUSES = ['Pending', 'Running', 'Saving'];
 
 export default function TabLayout() {
   const { colors } = useTheme();
-  const { history } = useHistoryContext();
+  const { history } = useHistoryListContext();
   const insets = useSafeAreaInsets();
 
   const activeCount = Array.isArray(history)

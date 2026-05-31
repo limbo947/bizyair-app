@@ -134,6 +134,28 @@ export const Spacing = {
   xxl: 28,
 };
 
+export const ButtonStyles = {
+  primary: {
+    paddingVertical: 16,
+    borderRadius: Radius.md,
+    fontSize: 17,
+    fontWeight: '700',
+  },
+  secondary: {
+    paddingVertical: 10,
+    borderRadius: Radius.sm,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  ghost: {
+    paddingVertical: 6,
+    paddingHorizontal: 16,
+    borderRadius: Radius.sm,
+    fontSize: 14,
+    fontWeight: '500',
+  },
+};
+
 export const withBorderRadius = (radius) => ({
   borderRadius: radius,
   borderCurve: 'continuous',

@@ -10,7 +10,9 @@ import {
 } from '../constants/models';
 import { useApiKeyContext } from './ApiKeyContext';
 
-const HistoryContext = createContext(null);
+const HistoryListContext = createContext(null);
+const HomeStateContext = createContext(null);
+const PollingContext = createContext(null);
 
 const DEFAULT_HOME_STATE = {
   modelId: 'bza-image-b2-base',
@@ -26,6 +28,13 @@ const DEFAULT_HOME_STATE = {
 };
 
 const MAX_POLL_FAILS = 5;
+
+function getPollingInterval(elapsedMs) {
+  if (elapsedMs < 30000) return 3000;
+  if (elapsedMs < 60000) return 5000;
+  if (elapsedMs < 120000) return 10000;
+  return 15000;
+}
 
 function extractTaskResult(result) {
   const outputs = result.outputs;
@@ -78,7 +87,7 @@ export function HistoryProvider({ children }) {
   const { apiKey } = useApiKeyContext();
 
   const [_history, setHistory] = useState(undefined);
-  const history = _history ?? [];
+  const history = useMemo(() => _history ?? [], [_history]);
   const [homeState, setHomeState] = useState(DEFAULT_HOME_STATE);
   const [totalCoinsSpent, setTotalCoinsSpent] = useState(0);
   const pollingRef = useRef({});
@@ -86,13 +95,13 @@ export function HistoryProvider({ children }) {
   const resumeTimerRef = useRef(null);
   const homeStateRef = useRef(homeState);
 
-  /* eslint-disable react-hooks/exhaustive-deps -- cleanup needs latest ref value at unmount time */
+  /* eslint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
     return () => {
       if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
       const intervals = pollingRef.current;
       Object.keys(intervals).forEach((id) => {
-        if (intervals[id]) clearInterval(intervals[id]);
+        if (intervals[id]) clearTimeout(intervals[id]);
         delete intervals[id];
       });
     };
@@ -151,15 +160,15 @@ export function HistoryProvider({ children }) {
     if (pollingRef.current[id]) return;
 
     let failCount = 0;
+    const startTime = Date.now();
 
-    const interval = setInterval(async () => {
+    const pollOnce = async () => {
       try {
         const result = await queryTaskResult(ak, requestId);
         failCount = 0;
         updateHistoryItem(id, { status: result.status, lastResponse: result });
 
         if (result.status === 'Success') {
-          clearInterval(interval);
           delete pollingRef.current[id];
           const taskResult = extractTaskResult(result);
           updateHistoryItem(id, {
@@ -168,8 +177,8 @@ export function HistoryProvider({ children }) {
             completedAt: Date.now(),
             lastResponse: result,
           });
+          return;
         } else if (result.status === 'Failed') {
-          clearInterval(interval);
           delete pollingRef.current[id];
           updateHistoryItem(id, {
             status: 'Failed',
@@ -177,11 +186,11 @@ export function HistoryProvider({ children }) {
             completedAt: Date.now(),
             lastResponse: result,
           });
+          return;
         }
       } catch (err) {
         failCount++;
         if (failCount >= MAX_POLL_FAILS) {
-          clearInterval(interval);
           delete pollingRef.current[id];
           updateHistoryItem(id, {
             status: 'Failed',
@@ -189,17 +198,22 @@ export function HistoryProvider({ children }) {
             completedAt: Date.now(),
             lastResponse: { status: 'Failed', error: err.message },
           });
+          return;
         }
       }
-    }, POLLING_INTERVAL_MS);
+      const elapsed = Date.now() - startTime;
+      const nextInterval = getPollingInterval(elapsed);
+      pollingRef.current[id] = setTimeout(pollOnce, nextInterval);
+    };
 
-    pollingRef.current[id] = interval;
+    pollingRef.current[id] = setTimeout(pollOnce, POLLING_INTERVAL_MS);
   }, [updateHistoryItem]);
 
   const startWebappPolling = useCallback((id, requestId, ak) => {
     if (pollingRef.current[id]) return;
 
     let failCount = 0;
+    const startTime = Date.now();
 
     const mapStatus = (s) => {
       if (s === 'Queuing' || s === 'Preparing') return 'Pending';
@@ -207,7 +221,7 @@ export function HistoryProvider({ children }) {
       return s;
     };
 
-    const interval = setInterval(async () => {
+    const pollOnce = async () => {
       try {
         const detail = await queryWebappTaskDetail(ak, requestId);
         failCount = 0;
@@ -216,7 +230,6 @@ export function HistoryProvider({ children }) {
         updateHistoryItem(id, { status: mappedStatus, lastResponse: detail });
 
         if (rawStatus === 'Success') {
-          clearInterval(interval);
           delete pollingRef.current[id];
           try {
             const outputData = await queryWebappTaskOutputs(ak, requestId);
@@ -234,8 +247,8 @@ export function HistoryProvider({ children }) {
               lastResponse: detail,
             });
           }
+          return;
         } else if (rawStatus === 'Failed' || rawStatus === 'Canceled') {
-          clearInterval(interval);
           delete pollingRef.current[id];
           const isCanceled = rawStatus === 'Canceled' || mappedStatus === 'Canceled';
           updateHistoryItem(id, {
@@ -244,11 +257,11 @@ export function HistoryProvider({ children }) {
             completedAt: Date.now(),
             lastResponse: detail,
           });
+          return;
         }
       } catch (err) {
         failCount++;
         if (failCount >= MAX_POLL_FAILS) {
-          clearInterval(interval);
           delete pollingRef.current[id];
           updateHistoryItem(id, {
             status: 'Failed',
@@ -256,11 +269,15 @@ export function HistoryProvider({ children }) {
             completedAt: Date.now(),
             lastResponse: { status: 'Failed', error: err.message },
           });
+          return;
         }
       }
-    }, POLLING_INTERVAL_MS);
+      const elapsed = Date.now() - startTime;
+      const nextInterval = getPollingInterval(elapsed);
+      pollingRef.current[id] = setTimeout(pollOnce, nextInterval);
+    };
 
-    pollingRef.current[id] = interval;
+    pollingRef.current[id] = setTimeout(pollOnce, POLLING_INTERVAL_MS);
   }, [updateHistoryItem]);
 
   const querySingleTask = useCallback(async (item, key) => {
@@ -301,17 +318,33 @@ export function HistoryProvider({ children }) {
     const running = items.filter(
       (h) => h && (h.status === 'Running' || h.status === 'Pending') && h.requestId
     );
-    running.forEach((item) => {
-      const ak = item.taskApiKey || apiKey || ENV_API_KEY;
-      if (ak) {
-        if (item.source === 'webapp') {
-          startWebappPolling(item.id, item.requestId, ak);
-        } else {
-          querySingleTask(item, ak);
-          startPolling(item.id, item.requestId, ak);
+
+    const BATCH_SIZE = 3;
+    let batchIndex = 0;
+
+    const processBatch = () => {
+      const batch = running.slice(batchIndex, batchIndex + BATCH_SIZE);
+      if (batch.length === 0) return;
+
+      batch.forEach((item) => {
+        const ak = item.taskApiKey || apiKey || ENV_API_KEY;
+        if (ak) {
+          if (item.source === 'webapp') {
+            startWebappPolling(item.id, item.requestId, ak);
+          } else {
+            querySingleTask(item, ak);
+            startPolling(item.id, item.requestId, ak);
+          }
         }
+      });
+
+      batchIndex += BATCH_SIZE;
+      if (batchIndex < running.length) {
+        setTimeout(processBatch, 1000);
       }
-    });
+    };
+
+    processBatch();
   }, [apiKey, querySingleTask, startPolling, startWebappPolling]);
 
   const refreshRunningTasks = useCallback(async () => {
@@ -337,7 +370,7 @@ export function HistoryProvider({ children }) {
 
     if (!requestId || !ak || item.source !== 'webapp') {
       if (pollingRef.current[id]) {
-        clearInterval(pollingRef.current[id]);
+        clearTimeout(pollingRef.current[id]);
         delete pollingRef.current[id];
       }
       updateHistoryItem(id, {
@@ -420,6 +453,49 @@ export function HistoryProvider({ children }) {
     }
   }, []);
 
+  const resubmitTask = useCallback((historyItem) => {
+    if (!historyItem) return;
+
+    const updates = {
+      modelId: historyItem.modelId,
+      mode: historyItem.mode || 'text-to-image',
+      prompt: historyItem.prompt || '',
+    };
+
+    if (historyItem.imageUrls && historyItem.imageUrls.length > 0) {
+      updates.imageUrls = historyItem.imageUrls;
+    }
+    if (historyItem.videoUrls && historyItem.videoUrls.length > 0) {
+      updates.videoUrls = historyItem.videoUrls;
+    }
+    if (historyItem.firstFrameUrls && historyItem.firstFrameUrls.length > 0) {
+      updates.firstFrameUrls = historyItem.firstFrameUrls;
+    }
+    if (historyItem.lastFrameUrls && historyItem.lastFrameUrls.length > 0) {
+      updates.lastFrameUrls = historyItem.lastFrameUrls;
+    }
+    if (historyItem.firstClipUrls && historyItem.firstClipUrls.length > 0) {
+      updates.firstClipUrls = historyItem.firstClipUrls;
+    }
+    if (historyItem.refImages && historyItem.refImages.length > 0) {
+      updates.refImages = historyItem.refImages;
+    }
+
+    if (historyItem.resolution) updates.resolution = historyItem.resolution;
+    if (historyItem.aspectRatio) updates.aspectRatio = historyItem.aspectRatio;
+    if (historyItem.quality) updates.quality = historyItem.quality;
+    if (historyItem.duration) updates.duration = historyItem.duration;
+    if (historyItem.seed) updates.seed = historyItem.seed;
+    if (historyItem.negativePrompt) updates.negativePrompt = historyItem.negativePrompt;
+    if (historyItem.systemPrompt) updates.systemPrompt = historyItem.systemPrompt;
+    if (historyItem.temperature != null) updates.temperature = historyItem.temperature;
+    if (historyItem.maxTokens) updates.maxTokens = historyItem.maxTokens;
+    if (historyItem.voice) updates.voice = historyItem.voice;
+    if (historyItem.style) updates.style = historyItem.style;
+
+    saveHomeState(updates);
+  }, [saveHomeState]);
+
   const loadHomeState = useCallback(async () => {
     try {
       const stored = await AsyncStorage.getItem(HOME_STATE_KEY);
@@ -473,30 +549,63 @@ export function HistoryProvider({ children }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const value = useMemo(() => ({
+  const historyListValue = useMemo(() => ({
     history,
     addToHistory,
     removeHistoryItems,
     persistHistory,
     updateHistoryItem,
+    totalCoinsSpent,
+    addCoinsSpent,
+  }), [history, addToHistory, removeHistoryItems, persistHistory, updateHistoryItem, totalCoinsSpent, addCoinsSpent]);
+
+  const homeStateValue = useMemo(() => ({
+    homeState,
+    saveHomeState,
+    resubmitTask,
+  }), [homeState, saveHomeState, resubmitTask]);
+
+  const pollingValue = useMemo(() => ({
     startPolling,
     startWebappPolling,
     stopPolling,
     refreshRunningTasks,
     resumeRunningPolling,
-    homeState,
-    saveHomeState,
-    totalCoinsSpent,
-    addCoinsSpent,
-  }), [history, addToHistory, removeHistoryItems, persistHistory, updateHistoryItem, startPolling, startWebappPolling, stopPolling, refreshRunningTasks, resumeRunningPolling, homeState, saveHomeState, totalCoinsSpent, addCoinsSpent]);
+  }), [startPolling, startWebappPolling, stopPolling, refreshRunningTasks, resumeRunningPolling]);
 
-  return <HistoryContext.Provider value={value}>{children}</HistoryContext.Provider>;
+  return (
+    <HistoryListContext.Provider value={historyListValue}>
+      <HomeStateContext.Provider value={homeStateValue}>
+        <PollingContext.Provider value={pollingValue}>
+          {children}
+        </PollingContext.Provider>
+      </HomeStateContext.Provider>
+    </HistoryListContext.Provider>
+  );
+}
+
+export function useHistoryListContext() {
+  const context = useContext(HistoryListContext);
+  if (!context) throw new Error('useHistoryListContext 必须在 HistoryProvider 内部使用');
+  return context;
+}
+
+export function useHomeStateContext() {
+  const context = useContext(HomeStateContext);
+  if (!context) throw new Error('useHomeStateContext 必须在 HistoryProvider 内部使用');
+  return context;
+}
+
+export function usePollingContext() {
+  const context = useContext(PollingContext);
+  if (!context) throw new Error('usePollingContext 必须在 HistoryProvider 内部使用');
+  return context;
 }
 
 export function useHistoryContext() {
-  const context = useContext(HistoryContext);
-  if (!context) {
-    throw new Error('useHistoryContext 必须在 HistoryProvider 内部使用');
-  }
-  return context;
+  const listCtx = useContext(HistoryListContext);
+  const homeCtx = useContext(HomeStateContext);
+  const pollCtx = useContext(PollingContext);
+  if (!listCtx || !homeCtx || !pollCtx) throw new Error('useHistoryContext 必须在 HistoryProvider 内部使用');
+  return { ...listCtx, ...homeCtx, ...pollCtx };
 }

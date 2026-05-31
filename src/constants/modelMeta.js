@@ -40,7 +40,6 @@ export const MODEL_MANUFACTURERS = {
   'flux-kontext-pro-base': 'blackforest',
   'flux-kontext-max-base': 'blackforest',
   'wan-2-7-image-official': 'alibaba',
-  'wan-2-7-image-pro-offcial': 'alibaba',
   'wan-2-7-image-pro-official': 'alibaba',
   'z-image-turbo': 'siliconflow',
   'bza-chat-g3-flash-official': 'google',
@@ -75,8 +74,7 @@ export const MODEL_MANUFACTURERS = {
   'ltx-2-3': 'siliconflow',
   'wan-2-5-official': 'alibaba',
   'wan-2-6-official': 'alibaba',
-  'wan-2-7-offcial': 'alibaba',
-  'wan-2-7-official': 'alibaba',
+  'wan-2-7-extend-official': 'alibaba',
 };
 
 export const FAVORITES_MAX_COUNT = 7;

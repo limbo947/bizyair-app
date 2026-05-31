@@ -48,6 +48,10 @@ export function ApiKeyProvider({ children }) {
         if (active) {
           setApiKey(active.key);
         }
+      } else {
+        await AsyncStorage.removeItem(ACTIVE_KEY_ID_KEY);
+        setActiveApiKeyId(null);
+        setApiKey('');
       }
     } catch (e) {
       console.error('保存 API Keys 失败:', e);

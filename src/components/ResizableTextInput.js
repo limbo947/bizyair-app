@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useCallback } from 'react';
 import { View, TextInput, PanResponder, Platform } from 'react-native';
 import { Radius, Spacing } from '../constants/theme';
 import { useThemedStyles } from '../hooks/useThemedStyles';
@@ -27,7 +27,16 @@ export function ResizableTextInput({
   const [height, setHeight] = React.useState(minHeight || MIN_HEIGHT);
   const heightRef = useRef(minHeight || MIN_HEIGHT);
 
+  const effectiveMaxHeight = maxHeight || MAX_HEIGHT;
+
   useEffect(() => { heightRef.current = height; }, [height]);
+
+  const handleContentSizeChange = useCallback((event) => {
+    const contentHeight = event.nativeEvent.contentSize.height;
+    if (contentHeight > height && contentHeight <= effectiveMaxHeight) {
+      setHeight(contentHeight + 20);
+    }
+  }, [height, effectiveMaxHeight]);
 
   const panResponder = useRef(
     PanResponder.create({
@@ -36,7 +45,7 @@ export function ResizableTextInput({
       onPanResponderMove: (_, gestureState) => {
         const newHeight = Math.max(
           minHeight || MIN_HEIGHT,
-          Math.min(maxHeight || MAX_HEIGHT, heightRef.current + gestureState.dy)
+          Math.min(effectiveMaxHeight, heightRef.current + gestureState.dy)
         );
         setHeight(newHeight);
       },
@@ -58,6 +67,10 @@ export function ResizableTextInput({
         placeholderTextColor={placeholderTextColor || colors.textPlaceholder}
         textAlignVertical="top"
         showsVerticalScrollIndicator={false}
+        onContentSizeChange={handleContentSizeChange}
+        scrollEnabled={height >= effectiveMaxHeight}
+        returnKeyType="done"
+        blurOnSubmit={true}
       />
       <View style={styles.resizeHandle} {...panResponder.panHandlers}>
         <MaterialCommunityIcons name="resize-bottom-right" size={14} color={colors.textTertiary} />

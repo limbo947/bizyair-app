@@ -6,6 +6,7 @@ import { Pressable, StyleSheet,
   FlatList,
   Platform,
   Alert, } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
@@ -14,7 +15,8 @@ import { File, Paths } from 'expo-file-system';
 import * as MediaLibrary from 'expo-media-library';
 import { getVideoThumbnailAsync } from 'expo-video-thumbnails';
 import { useAppContext } from '../context/AppContext';
-import { useHistoryContext } from '../context/HistoryContext';
+import { useHistoryContext, useHomeStateContext } from '../context/HistoryContext';
+import { useToastContext } from '../context/ToastContext';
 import { HistoryModals } from '../components/HistoryModals';
 import { HistoryFilters } from '../components/HistoryFilters';
 import { VideoPlayer } from '../components/VideoPlayer';
@@ -85,10 +87,12 @@ const HistoryCard = React.memo(function HistoryCard({
   setPreviewImage,
   setPreviewImageUrls,
   stopPolling,
+  resubmitTask,
   thumbUri,
 }) {
   const styles = useThemedStyles(createStyles);
   const { colors, theme } = useTheme();
+  const router = useRouter();
 
   const [copied, setCopied] = useState(false);
   const copiedTimer = useRef(null);
@@ -233,6 +237,11 @@ const HistoryCard = React.memo(function HistoryCard({
                   <Ionicons name={copied ? 'checkmark' : 'copy'} size={18} color={copied ? colors.success : colors.purple} />
                 </Pressable>
               ) : null}
+              {!batchMode ? (
+                <Pressable style={({ pressed }) => [styles.iconButton, styles.iconButtonWarning, pressed && { opacity: 0.7 }]} onPress={() => { resubmitTask(item); router.navigate('/'); }}>
+                  <Ionicons name="refresh-outline" size={18} color={colors.warning} />
+                </Pressable>
+              ) : null}
               <Pressable style={({ pressed }) => [styles.iconButton, styles.iconButtonPrimary, pressed && { opacity: 0.7 }]} onPress={() => setLogModal(item)}>
                 <Ionicons name="document-text" size={18} color={colors.primary} />
               </Pressable>
@@ -270,7 +279,9 @@ export function HistoryScreen() {
     totalCoinsSpent,
     stopPolling,
   } = useHistoryContext();
+  const { resubmitTask } = useHomeStateContext();
   const { activeTab } = useAppContext();
+  const { showToast } = useToastContext();
 
   const [searchText, setSearchText] = useState('');
   const [sortBy, setSortBy] = useState('newest');
@@ -408,10 +419,10 @@ export function HistoryScreen() {
               await MediaLibrary.createAssetAsync(downloadedFile.uri);
               if (i < urls.length - 1) await new Promise((r) => setTimeout(r, 300));
             }
-            Alert.alert('下载成功', `${urls.length} 张图片已保存到相册`);
+            showToast(`${urls.length} 张图片已保存到相册`, 'success');
           }
         } catch (err) {
-          Alert.alert('下载失败', err.message || '请检查网络连接');
+          showToast(err.message || '下载失败，请检查网络连接', 'error');
         } finally {
           setTimeout(() => downloadingRef.current.delete(item.id), 2000);
         }
@@ -419,32 +430,50 @@ export function HistoryScreen() {
     } else {
       const url = item.videoUrl || item.audioUrl || item.imageUrl;
       if (!url) { downloadingRef.current.delete(item.id); return; }
-      triggerDownload(url, `bizyair_${item.id}${ext}`);
-      setTimeout(() => downloadingRef.current.delete(item.id), 2000);
+      (async () => {
+        const result = await triggerDownload(url, `bizyair_${item.id}${ext}`);
+        if (result.errorType === 'permission') {
+          Alert.alert('权限不足', '需要存储权限才能保存文件');
+        } else if (result.success) {
+          showToast('文件已保存到相册', 'success');
+        } else {
+          showToast(result.message || '下载失败，请检查网络连接', 'error');
+        }
+        setTimeout(() => downloadingRef.current.delete(item.id), 2000);
+      })();
     }
-  }, [isDownloading]);
+  }, [isDownloading, showToast]);
 
   const handleBatchDownload = useCallback(async () => {
     if (!Array.isArray(history)) return;
     const items = history.filter((item) => selectedIds.has(item.id) && (item.imageUrl || item.videoUrl || item.audioUrl));
     if (items.length === 0) return;
     setIsDownloading(true);
+    let successCount = 0;
+    let failCount = 0;
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
       const ext = item.outputType === 'video' ? '.mp4' : item.outputType === 'audio' ? `.${item.responseFormat || 'mp3'}` : '.jpg';
       if (item.outputType === 'image' && item.imageUrls && item.imageUrls.length > 1) {
         for (let j = 0; j < item.imageUrls.length; j++) {
-          triggerDownload(item.imageUrls[j], `bizyair_${item.id}_${j + 1}${ext}`);
+          const result = await triggerDownload(item.imageUrls[j], `bizyair_${item.id}_${j + 1}${ext}`);
+          if (result.success) successCount++; else failCount++;
           await new Promise((resolve) => setTimeout(resolve, 300));
         }
       } else {
         const url = item.videoUrl || item.audioUrl || item.imageUrl;
-        triggerDownload(url, `bizyair_${item.id}${ext}`);
+        const result = await triggerDownload(url, `bizyair_${item.id}${ext}`);
+        if (result.success) successCount++; else failCount++;
       }
       if (i < items.length - 1) await new Promise((resolve) => setTimeout(resolve, 500));
     }
+    if (failCount > 0) {
+      showToast(`${successCount} 个下载成功，${failCount} 个失败`, 'error');
+    } else {
+      showToast(`${successCount} 个文件已保存到相册`, 'success');
+    }
     setIsDownloading(false); setBatchMode(false); setSelectedIds(new Set());
-  }, [history, selectedIds]);
+  }, [history, selectedIds, showToast]);
 
   const toggleSelect = useCallback((id) => {
     setSelectedIds((prev) => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; });
@@ -478,10 +507,11 @@ export function HistoryScreen() {
         setPreviewImage={setPreviewImage}
         setPreviewImageUrls={setPreviewImageUrls}
         stopPolling={stopPolling}
+        resubmitTask={resubmitTask}
         thumbUri={thumbUri}
       />
     );
-  }, [selectedIds, batchMode, toggleSelect, handleDownload, stopPolling]);
+  }, [selectedIds, batchMode, toggleSelect, handleDownload, stopPolling, resubmitTask]);
 
   const extraData = useMemo(() => ({ selectedIds, thumbVersion }), [selectedIds, thumbVersion]);
 

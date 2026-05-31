@@ -3,6 +3,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { ThemeProvider, useTheme } from '../src/context/ThemeContext';
 import { AppProvider } from '../src/context/AppContext';
+import { ToastProvider } from '../src/context/ToastContext';
 import { ErrorBoundary } from '../src/components/ErrorBoundary';
 
 function RootLayoutNav() {
@@ -23,9 +24,11 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <ThemeProvider>
         <AppProvider>
-          <ErrorBoundary>
-            <RootLayoutNav />
-          </ErrorBoundary>
+          <ToastProvider>
+            <ErrorBoundary>
+              <RootLayoutNav />
+            </ErrorBoundary>
+          </ToastProvider>
         </AppProvider>
       </ThemeProvider>
     </SafeAreaProvider>
