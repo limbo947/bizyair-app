@@ -26,7 +26,7 @@ import { TextResultView } from '../components/TextResultView';
 import { PAGE_SIZE, TAB_HISTORY } from '../constants/models';
 import { isTokenPricedModel } from '../utils/modelHelpers';
 import { triggerDownload } from '../utils/download';
-import { Radius, Spacing } from '../constants/theme';
+import { Radius, Spacing, Typography, pressedOpacity } from '../constants/theme';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { useTheme } from '../context/ThemeContext';
 
@@ -64,13 +64,13 @@ function DurationDisplay({ startedAt, completedAt, isFinal, isActive, colors }) 
   const ms = end - (startedAt || 0);
   if (ms < 0) return <Text>--</Text>;
   const seconds = Math.floor(ms / 1000);
-  if (seconds < 60) return <Text style={{ fontSize: 12, color: colors.success, fontWeight: '500' }}>{seconds}秒</Text>;
+  if (seconds < 60) return <Text style={{ fontSize: Typography.fontSize.caption1, color: colors.success, fontWeight: Typography.fontWeight.medium }}>{seconds}秒</Text>;
   const minutes = Math.floor(seconds / 60);
   const remainSeconds = seconds % 60;
-  if (minutes < 60) return <Text style={{ fontSize: 12, color: colors.success, fontWeight: '500' }}>{minutes}分{remainSeconds}秒</Text>;
+  if (minutes < 60) return <Text style={{ fontSize: Typography.fontSize.caption1, color: colors.success, fontWeight: Typography.fontWeight.medium }}>{minutes}分{remainSeconds}秒</Text>;
   const hours = Math.floor(minutes / 60);
   const remainMinutes = minutes % 60;
-  return <Text style={{ fontSize: 12, color: colors.success, fontWeight: '500' }}>{hours}时{remainMinutes}分</Text>;
+  return <Text style={{ fontSize: Typography.fontSize.caption1, color: colors.success, fontWeight: Typography.fontWeight.medium }}>{hours}时{remainMinutes}分</Text>;
 }
 
 const HistoryCard = React.memo(function HistoryCard({
@@ -118,7 +118,7 @@ const HistoryCard = React.memo(function HistoryCard({
   return (
     <View style={styles.historyCard}>
       {batchMode ? (
-        <Pressable style={({ pressed }) => [styles.checkboxArea, pressed && { opacity: 0.7 }]} onPress={() => toggleSelect(item.id)} >
+        <Pressable style={({ pressed }) => [styles.checkboxArea, pressed && pressedOpacity()]} onPress={() => toggleSelect(item.id)} >
           <View style={[styles.checkbox, isSelected && styles.checkboxChecked]}>
             {isSelected ? <Text style={styles.checkboxMark}>✓</Text> : null}
           </View>
@@ -208,7 +208,7 @@ const HistoryCard = React.memo(function HistoryCard({
           <View style={styles.historyInfoHeader}>
             <Text style={styles.historyPrompt} numberOfLines={2}>{item.prompt}</Text>
             {isWebapp && isActive && !batchMode ? (
-              <Pressable style={({ pressed }) => [styles.stopButton, pressed && { opacity: 0.7 }]} onPress={() => stopPolling(item.id)} >
+              <Pressable style={({ pressed }) => [styles.stopButton, pressed && pressedOpacity()]} onPress={() => stopPolling(item.id)} >
                 <Ionicons name="stop-circle" size={18} color={colors.error} />
                 <Text style={styles.stopButtonText}>终止</Text>
               </Pressable>
@@ -228,25 +228,25 @@ const HistoryCard = React.memo(function HistoryCard({
             ) : <View />}
             <View style={styles.historyActions}>
               {((item.imageUrl && !batchMode) || (item.outputType === 'video' && item.videoUrl && !batchMode) || (item.outputType === 'audio' && item.audioUrl && !batchMode)) ? (
-                <Pressable style={({ pressed }) => [styles.iconButton, styles.iconButtonSuccess, pressed && { opacity: 0.7 }]} onPress={() => handleDownload(item)}>
+                <Pressable style={({ pressed }) => [styles.iconButton, styles.iconButtonSuccess, pressed && pressedOpacity()]} onPress={() => handleDownload(item)}>
                   <Ionicons name="download" size={18} color={colors.success} />
                 </Pressable>
               ) : null}
               {!batchMode ? (
-                <Pressable style={({ pressed }) => [styles.iconButton, copied ? styles.iconButtonCopied : styles.iconButtonPurple, pressed && { opacity: 0.7 }]} onPress={handleCopy}>
+                <Pressable style={({ pressed }) => [styles.iconButton, copied ? styles.iconButtonCopied : styles.iconButtonPurple, pressed && pressedOpacity()]} onPress={handleCopy}>
                   <Ionicons name={copied ? 'checkmark' : 'copy'} size={18} color={copied ? colors.success : colors.purple} />
                 </Pressable>
               ) : null}
               {!batchMode ? (
-                <Pressable style={({ pressed }) => [styles.iconButton, styles.iconButtonWarning, pressed && { opacity: 0.7 }]} onPress={() => { resubmitTask(item); router.navigate('/'); }}>
+                <Pressable style={({ pressed }) => [styles.iconButton, styles.iconButtonWarning, pressed && pressedOpacity()]} onPress={() => { resubmitTask(item); router.navigate('/'); }}>
                   <Ionicons name="refresh-outline" size={18} color={colors.warning} />
                 </Pressable>
               ) : null}
-              <Pressable style={({ pressed }) => [styles.iconButton, styles.iconButtonPrimary, pressed && { opacity: 0.7 }]} onPress={() => setLogModal(item)}>
+              <Pressable style={({ pressed }) => [styles.iconButton, styles.iconButtonPrimary, pressed && pressedOpacity()]} onPress={() => setLogModal(item)}>
                 <Ionicons name="document-text" size={18} color={colors.primary} />
               </Pressable>
               {!batchMode ? (
-                <Pressable style={({ pressed }) => [styles.iconButton, styles.iconButtonError, pressed && { opacity: 0.7 }]} onPress={() => setDeleteConfirmId(item.id)}>
+                <Pressable style={({ pressed }) => [styles.iconButton, styles.iconButtonError, pressed && pressedOpacity()]} onPress={() => setDeleteConfirmId(item.id)}>
                   <Ionicons name="trash" size={18} color={colors.error} />
                 </Pressable>
               ) : null}
@@ -608,7 +608,7 @@ const createStyles = (colors) => ({
   checkboxArea: { width: 44, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg },
   checkbox: { width: 22, height: 22, borderRadius: Radius.full, borderCurve: 'continuous', borderWidth: 1.5, borderColor: colors.disabled, alignItems: 'center', justifyContent: 'center' },
   checkboxChecked: { backgroundColor: colors.primary, borderColor: colors.primary },
-  checkboxMark: { color: colors.textInverse, fontSize: 14, fontWeight: '600' },
+  checkboxMark: { color: colors.textInverse, fontSize: Typography.fontSize.footnote, fontWeight: Typography.fontWeight.semibold },
   historyCardInner: { flex: 1, flexDirection: 'row', alignItems: 'stretch' },
   historyThumbWrap: { marginLeft: 6, marginVertical: 6, width: 88 },
   thumbContainer: { flex: 1, width: '100%', position: 'relative', borderRadius: Radius.xs, borderCurve: 'continuous', overflow: 'hidden' },
@@ -660,21 +660,21 @@ const createStyles = (colors) => ({
   thumbGridOverlayText: {
     color: colors.textOnOverlay,
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: Typography.fontWeight.bold,
   },
   historyInfo: { flex: 1, padding: Spacing.md, justifyContent: 'space-between', alignSelf: 'center' },
   historyInfoHeader: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: Spacing.sm },
   stopButton: { flexDirection: 'row', alignItems: 'center', gap: 2, paddingHorizontal: Spacing.sm, paddingVertical: 3, borderRadius: Radius.full, borderCurve: 'continuous', backgroundColor: colors.errorBg },
-  stopButtonText: { fontSize: 12, color: colors.error, fontWeight: '600' },
-  historyPrompt: { fontSize: 14, color: colors.textPrimary, fontWeight: '500', lineHeight: 18, flex: 1 },
-  historyMeta: { fontSize: 12, color: colors.textTertiary, marginTop: 3 },
+  stopButtonText: { fontSize: Typography.fontSize.caption1, color: colors.error, fontWeight: Typography.fontWeight.semibold },
+  historyPrompt: { fontSize: Typography.fontSize.footnote, color: colors.textPrimary, fontWeight: Typography.fontWeight.medium, lineHeight: 18, flex: 1 },
+  historyMeta: { fontSize: Typography.fontSize.caption1, color: colors.textTertiary, marginTop: 3 },
   historyDurationRow: { flexDirection: 'row', alignItems: 'center', marginTop: 2, gap: Spacing.sm },
-  historyDuration: { fontSize: 12, color: colors.success, fontWeight: '500' },
+  historyDuration: { fontSize: Typography.fontSize.caption1, color: colors.success, fontWeight: Typography.fontWeight.medium },
   statusBadge: { flexDirection: 'row', alignItems: 'center', borderRadius: Radius.full, borderCurve: 'continuous', paddingHorizontal: Spacing.sm, paddingVertical: 2, gap: 3 },
   statusSpinner: { marginRight: 0 },
-  statusText: { fontSize: 11, fontWeight: '600' },
+  statusText: { fontSize: Typography.fontSize.caption2, fontWeight: Typography.fontWeight.semibold },
   historyBottomRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 },
-  historyPrice: { fontSize: 13, color: colors.warning, fontWeight: '700', lineHeight: 18 },
+  historyPrice: { fontSize: Typography.fontSize.footnote, color: colors.warning, fontWeight: Typography.fontWeight.bold, lineHeight: 18 },
   historyActions: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   iconButton: { width: 28, height: 28, borderRadius: Radius.xs, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center' },
   iconButtonSuccess: { backgroundColor: colors.successBg },
@@ -684,14 +684,14 @@ const createStyles = (colors) => ({
   iconButtonError: { backgroundColor: colors.errorBg },
   iconButtonWarning: { backgroundColor: colors.warningBg },
   iconButtonRunning: { backgroundColor: colors.primaryBg },
-  historyError: { fontSize: 11, color: colors.error, marginTop: 2 },
+  historyError: { fontSize: Typography.fontSize.caption2, color: colors.error, marginTop: 2 },
   historyErrorWarning: { color: colors.warning },
   emptyContainer: { alignItems: 'center', justifyContent: 'center', paddingTop: 60 },
   emptyIcon: { fontSize: 48, marginBottom: Spacing.md },
-  emptyTitle: { fontSize: 20, color: colors.textPrimary, fontWeight: '700', marginBottom: 6 },
-  emptySubtitle: { fontSize: 14, color: colors.textTertiary },
+  emptyTitle: { fontSize: Typography.fontSize.title3, color: colors.textPrimary, fontWeight: Typography.fontWeight.bold, marginBottom: 6 },
+  emptySubtitle: { fontSize: Typography.fontSize.footnote, color: colors.textTertiary },
   footerEnd: { alignItems: 'center', paddingVertical: Spacing.xl },
-  footerEndText: { fontSize: 13, color: colors.disabled },
+  footerEndText: { fontSize: Typography.fontSize.footnote, color: colors.disabled },
   footerLoading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: Spacing.xl, gap: Spacing.sm },
-  footerLoadingText: { fontSize: 13, color: colors.textTertiary },
+  footerLoadingText: { fontSize: Typography.fontSize.footnote, color: colors.textTertiary },
 });

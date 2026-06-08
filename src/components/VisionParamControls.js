@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Pressable, Text, View, TextInput, Switch, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Radius, Spacing } from '../constants/theme';
+import { Radius, Spacing, Typography } from '../constants/theme';
 import { createSharedStyles } from '../constants/sharedStyles';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { useTheme } from '../context/ThemeContext';
@@ -405,23 +405,23 @@ export function JoyCaptionControls({
 const createStyles = (colors) => ({
   ...createSharedStyles(colors),
   required: { color: colors.error },
-  optional: { color: colors.textTertiary, fontWeight: '400', textTransform: 'none' },
+  optional: { color: colors.textTertiary, fontWeight: Typography.fontWeight.regular, textTransform: 'none' },
   presetRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm, marginBottom: Spacing.md },
-  presetChip: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: Radius.md, borderCurve: 'continuous', backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border },
+  presetChip: { paddingVertical: Spacing.xs + 2, paddingHorizontal: Spacing.md, borderRadius: Radius.md, borderCurve: 'continuous', backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border },
   presetChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  presetChipText: { fontSize: 12, color: colors.textSecondary, fontWeight: '500' },
-  presetChipTextActive: { color: colors.textInverse, fontWeight: '600' },
-  presetChipAdd: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: Radius.md, borderCurve: 'continuous', backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.primary, borderStyle: 'dashed' },
-  presetChipAddText: { fontSize: 12, color: colors.primary, fontWeight: '500' },
+  presetChipText: { fontSize: Typography.fontSize.caption1, color: colors.textSecondary, fontWeight: Typography.fontWeight.medium },
+  presetChipTextActive: { color: colors.textInverse, fontWeight: Typography.fontWeight.semibold },
+  presetChipAdd: { paddingVertical: Spacing.xs + 2, paddingHorizontal: Spacing.md, borderRadius: Radius.md, borderCurve: 'continuous', backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.primary, borderStyle: 'dashed' },
+  presetChipAddText: { fontSize: Typography.fontSize.caption1, color: colors.primary, fontWeight: Typography.fontWeight.medium },
   addPresetBox: { backgroundColor: colors.bg, borderRadius: Radius.sm, borderCurve: 'continuous', padding: Spacing.sm, marginBottom: Spacing.md, gap: Spacing.sm },
-  addPresetName: { fontSize: 14, color: colors.textPrimary, borderWidth: 1, borderColor: colors.border, borderRadius: Radius.sm, borderCurve: 'continuous', paddingHorizontal: Spacing.sm, paddingVertical: 8, backgroundColor: colors.card },
+  addPresetName: { fontSize: Typography.fontSize.footnote, color: colors.textPrimary, borderWidth: 1, borderColor: colors.border, borderRadius: Radius.sm, borderCurve: 'continuous', paddingHorizontal: Spacing.sm, paddingVertical: Spacing.sm, backgroundColor: colors.card },
   addPresetActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: Spacing.md },
-  addPresetCancel: { fontSize: 14, color: colors.textTertiary, paddingVertical: 6, paddingHorizontal: 12 },
-  addPresetConfirm: { backgroundColor: colors.primary, paddingVertical: 6, paddingHorizontal: 16, borderRadius: Radius.sm, borderCurve: 'continuous' },
-  addPresetConfirmText: { color: colors.textInverse, fontSize: 14, fontWeight: '600' },
-  hint: { fontSize: 11, color: colors.textTertiary, marginTop: 4 },
+  addPresetCancel: { fontSize: Typography.fontSize.footnote, color: colors.textTertiary, paddingVertical: Spacing.xs + 2, paddingHorizontal: Spacing.md },
+  addPresetConfirm: { backgroundColor: colors.primary, paddingVertical: Spacing.xs + 2, paddingHorizontal: 16, borderRadius: Radius.sm, borderCurve: 'continuous' },
+  addPresetConfirmText: { color: colors.textInverse, fontSize: Typography.fontSize.footnote, fontWeight: Typography.fontWeight.semibold },
+  hint: { fontSize: Typography.fontSize.caption2, color: colors.textTertiary, marginTop: Spacing.xs },
   hintRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  clearText: { fontSize: 12, color: colors.primary, fontWeight: '500' },
-  promptInput: { fontSize: 14, color: colors.textPrimary, lineHeight: 20, minHeight: 80, textAlignVertical: 'top', borderWidth: 0, borderRadius: Radius.sm, borderCurve: 'continuous', paddingHorizontal: Spacing.sm, paddingVertical: Spacing.sm, backgroundColor: colors.bg },
-  selectorButtonSmall: { paddingVertical: 8, paddingHorizontal: 10, borderRadius: Radius.sm, borderCurve: 'continuous', backgroundColor: colors.bg, alignItems: 'center' },
+  clearText: { fontSize: Typography.fontSize.caption1, color: colors.primary, fontWeight: Typography.fontWeight.medium },
+  promptInput: { fontSize: Typography.fontSize.footnote, color: colors.textPrimary, lineHeight: Typography.lineHeight.normal, minHeight: 80, textAlignVertical: 'top', borderWidth: 0, borderRadius: Radius.sm, borderCurve: 'continuous', paddingHorizontal: Spacing.sm, paddingVertical: Spacing.sm, backgroundColor: colors.bg },
+  selectorButtonSmall: { paddingVertical: Spacing.sm, paddingHorizontal: Spacing.sm + 2, borderRadius: Radius.sm, borderCurve: 'continuous', backgroundColor: colors.bg, alignItems: 'center' },
 });

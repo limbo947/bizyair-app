@@ -2,7 +2,7 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Pressable, View, Text, Modal, ActivityIndicator, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Audio } from 'expo-av';
-import { Spacing } from '../constants/theme';
+import { Spacing, Typography, pressedOpacity } from '../constants/theme';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { useTheme } from '../context/ThemeContext';
 
@@ -87,7 +87,7 @@ function WebAudioPlayer({ visible, audioUrl, onClose }) {
     <Modal visible={visible} animationType="fade" transparent={false} onRequestClose={onClose}>
       <View style={st.container}>
         <View style={st.header}>
-          <Pressable style={({ pressed }) => [st.closeBtn, pressed && { opacity: 0.7 }]} onPress={onClose}><Ionicons name="close" size={28} color={colors.textPrimary} /></Pressable>
+          <Pressable style={({ pressed }) => [st.closeBtn, pressed && pressedOpacity()]} onPress={onClose}><Ionicons name="close" size={28} color={colors.textPrimary} /></Pressable>
           <Text style={st.title}>音频预览</Text>
           <View style={st.closeBtn} />
         </View>
@@ -105,13 +105,13 @@ function WebAudioPlayer({ visible, audioUrl, onClose }) {
           </View>
 
           <View style={st.controls}>
-            <Pressable style={({ pressed }) => [st.playBtn, pressed && { opacity: 0.7 }]} onPress={togglePlay} disabled={loading}>
+            <Pressable style={({ pressed }) => [st.playBtn, pressed && pressedOpacity()]} onPress={togglePlay} disabled={loading}>
               {loading ? <ActivityIndicator color="#fff" size="small" /> : <Ionicons name={isPlaying ? 'pause' : 'play'} size={36} color="#fff" />}
             </Pressable>
           </View>
 
           <View style={st.volRow}>
-            <Pressable style={({ pressed }) => [st.volIcon, pressed && { opacity: 0.7 }]} onPress={toggleMute}>
+            <Pressable style={({ pressed }) => [st.volIcon, pressed && pressedOpacity()]} onPress={toggleMute}>
               <Ionicons name={isMuted || volume === 0 ? 'volume-mute' : volume < 0.5 ? 'volume-low' : 'volume-medium'} size={20} color={colors.textSecondary} />
             </Pressable>
             <View ref={volBarRef} style={st.volArea} onClick={(e) => { if (!volBarRef.current) return; const r = volBarRef.current.getBoundingClientRect(); setVol(Math.max(0, Math.min(1, (e.clientX - r.left) / r.width))); }}>
@@ -178,7 +178,7 @@ function NativeAudioPlayer({ visible, audioUrl, onClose }) {
     <Modal visible={visible} animationType="fade" transparent={false} onRequestClose={onClose}>
       <View style={st.container}>
         <View style={st.header}>
-          <Pressable style={({ pressed }) => [st.closeBtn, pressed && { opacity: 0.7 }]} onPress={onClose}><Ionicons name="close" size={28} color={colors.textPrimary} /></Pressable>
+          <Pressable style={({ pressed }) => [st.closeBtn, pressed && pressedOpacity()]} onPress={onClose}><Ionicons name="close" size={28} color={colors.textPrimary} /></Pressable>
           <Text style={st.title}>音频预览</Text>
           <View style={st.closeBtn} />
         </View>
@@ -189,23 +189,23 @@ function NativeAudioPlayer({ visible, audioUrl, onClose }) {
 
           <View style={st.progressRow}>
             <Text style={st.t}>{fmt(position)}</Text>
-            <Pressable style={({ pressed }) => [st.progArea, pressed && { opacity: 0.7 }]} onPress={(e) => { e.currentTarget.measure((_, __, w) => seek(e.nativeEvent.locationX / w)); }}>
+            <Pressable style={({ pressed }) => [st.progArea, pressed && pressedOpacity()]} onPress={(e) => { e.currentTarget.measure((_, __, w) => seek(e.nativeEvent.locationX / w)); }}>
               <View style={st.progBg}><View style={[st.progFill, { width: `${pct}%` }]} /></View>
             </Pressable>
             <Text style={st.t}>{fmt(duration)}</Text>
           </View>
 
           <View style={st.controls}>
-            <Pressable style={({ pressed }) => [st.playBtn, pressed && { opacity: 0.7 }]} onPress={handlePlay} disabled={isLoading}>
+            <Pressable style={({ pressed }) => [st.playBtn, pressed && pressedOpacity()]} onPress={handlePlay} disabled={isLoading}>
               {isLoading ? <ActivityIndicator color="#fff" size="small" /> : <Ionicons name={isPlaying ? 'pause' : 'play'} size={36} color="#fff" />}
             </Pressable>
           </View>
 
           <View style={st.volRow}>
-            <Pressable style={({ pressed }) => [st.volIcon, pressed && { opacity: 0.7 }]} onPress={toggleMute}>
+            <Pressable style={({ pressed }) => [st.volIcon, pressed && pressedOpacity()]} onPress={toggleMute}>
               <Ionicons name={isMuted || volume === 0 ? 'volume-mute' : volume < 0.5 ? 'volume-low' : 'volume-medium'} size={20} color={colors.textSecondary} />
             </Pressable>
-            <Pressable style={({ pressed }) => [st.volArea, pressed && { opacity: 0.7 }]} onPress={(e) => { e.currentTarget.measure((_, __, w) => { const v = Math.max(0, Math.min(1, e.nativeEvent.locationX / w)); setVolume(v); if (v > 0 && isMuted) setIsMuted(false); soundRef.current?.setVolumeAsync(v); }); }}>
+            <Pressable style={({ pressed }) => [st.volArea, pressed && pressedOpacity()]} onPress={(e) => { e.currentTarget.measure((_, __, w) => { const v = Math.max(0, Math.min(1, e.nativeEvent.locationX / w)); setVolume(v); if (v > 0 && isMuted) setIsMuted(false); soundRef.current?.setVolumeAsync(v); }); }}>
               <View style={st.volBg}><View style={[st.volFill, { width: `${isMuted ? 0 : volume * 100}%` }]} /></View>
             </Pressable>
           </View>
@@ -225,12 +225,12 @@ const createStyles = (colors) => ({
   container: { flex: 1, backgroundColor: colors.bg },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 50, paddingHorizontal: Spacing.lg, paddingBottom: Spacing.md, backgroundColor: colors.card },
   closeBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  title: { fontSize: 16, fontWeight: '600', color: colors.textPrimary },
+  title: { fontSize: Typography.fontSize.callout, fontWeight: Typography.fontWeight.semibold, color: colors.textPrimary },
   body: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: Spacing.lg },
   iconCircle: { width: 140, height: 140, borderRadius: 70, borderCurve: 'continuous', backgroundColor: colors.primaryBg, alignItems: 'center', justifyContent: 'center', marginBottom: Spacing.xxl },
-  err: { fontSize: 13, color: colors.error, marginTop: Spacing.md, textAlign: 'center' },
+  err: { fontSize: Typography.fontSize.footnote, color: colors.error, marginTop: Spacing.md, textAlign: 'center' },
   progressRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, width: '100%', maxWidth: 340 },
-  t: { fontSize: 12, color: colors.textTertiary, minWidth: 36, textAlign: 'center' },
+  t: { fontSize: Typography.fontSize.caption1, color: colors.textTertiary, minWidth: 36, textAlign: 'center' },
   progArea: { flex: 1, height: 28, justifyContent: 'center' },
   progBg: { height: 4, borderRadius: 2, borderCurve: 'continuous', backgroundColor: colors.disabledBg, overflow: 'hidden' },
   progFill: { height: '100%', backgroundColor: colors.primary, borderRadius: 2, borderCurve: 'continuous' },

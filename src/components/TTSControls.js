@@ -3,7 +3,7 @@ import { Pressable, View,
   Text,
   TextInput, } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Radius, Spacing } from '../constants/theme';
+import { Radius, Spacing, Typography } from '../constants/theme';
 import { createSharedStyles } from '../constants/sharedStyles';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { useTheme } from '../context/ThemeContext';
@@ -160,16 +160,16 @@ export function TTSControls({
 const createStyles = (colors) => ({
   ...createSharedStyles(colors),
   labelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.sm },
-  rangeHint: { fontSize: 12, color: colors.textTertiary },
-  valueRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  valueInput: { fontSize: 14, color: colors.primary, fontWeight: '600', borderWidth: 1, borderColor: colors.border, borderRadius: Radius.sm, borderCurve: 'continuous', paddingHorizontal: 8, paddingVertical: 4, minWidth: 52, textAlign: 'center' },
+  rangeHint: { fontSize: Typography.fontSize.caption1, color: colors.textTertiary },
+  valueRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs + 2 },
+  valueInput: { fontSize: Typography.fontSize.footnote, color: colors.primary, fontWeight: Typography.fontWeight.semibold, borderWidth: 1, borderColor: colors.border, borderRadius: Radius.sm, borderCurve: 'continuous', paddingHorizontal: Spacing.sm, paddingVertical: Spacing.xs, minWidth: 52, textAlign: 'center' },
   stepBtn: { width: 28, height: 28, borderRadius: 14, borderCurve: 'continuous', backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.separator },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs },
   chip: { paddingHorizontal: Spacing.md, paddingVertical: Spacing.xs, borderRadius: Radius.sm, borderCurve: 'continuous', backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.separator },
   chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  chipText: { fontSize: 13, color: colors.textSecondary, fontWeight: '500' },
-  chipTextActive: { color: colors.textInverse, fontWeight: '600' },
-  promptInput: { fontSize: 14, color: colors.textPrimary, lineHeight: 20, minHeight: 60, textAlignVertical: 'top', borderWidth: 0, borderRadius: Radius.sm, borderCurve: 'continuous', paddingHorizontal: Spacing.sm, paddingVertical: Spacing.sm, backgroundColor: colors.bg },
-  inputRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  inputSingle: { flex: 1, fontSize: 15, color: colors.textPrimary, textAlign: 'center', borderWidth: 0, borderRadius: Radius.sm, borderCurve: 'continuous', paddingHorizontal: Spacing.sm, paddingVertical: 10, backgroundColor: colors.bg },
+  chipText: { fontSize: Typography.fontSize.footnote, color: colors.textSecondary, fontWeight: Typography.fontWeight.medium },
+  chipTextActive: { color: colors.textInverse, fontWeight: Typography.fontWeight.semibold },
+  promptInput: { fontSize: Typography.fontSize.footnote, color: colors.textPrimary, lineHeight: Typography.lineHeight.normal, minHeight: 60, textAlignVertical: 'top', borderWidth: 0, borderRadius: Radius.sm, borderCurve: 'continuous', paddingHorizontal: Spacing.sm, paddingVertical: Spacing.sm, backgroundColor: colors.bg },
+  inputRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs + 2 },
+  inputSingle: { flex: 1, fontSize: Typography.fontSize.subheadline, color: colors.textPrimary, textAlign: 'center', borderWidth: 0, borderRadius: Radius.sm, borderCurve: 'continuous', paddingHorizontal: Spacing.sm, paddingVertical: Spacing.sm + 2, backgroundColor: colors.bg },
 });

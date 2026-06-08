@@ -10,7 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { MODELS } from '../constants/models';
 import { MANUFACTURERS, FAVORITES_MAX_COUNT } from '../constants/modelMeta';
-import { Radius, Spacing } from '../constants/theme';
+import { Radius, Spacing, Typography, pressedOpacity } from '../constants/theme';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { useTheme } from '../context/ThemeContext';
 
@@ -42,12 +42,12 @@ const createStyles = (colors) => ({
     borderBottomColor: colors.separator,
   },
   dropdownTitle: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: Typography.fontSize.callout,
+    fontWeight: Typography.fontWeight.semibold,
     color: colors.textPrimary,
   },
   dropdownSubtitle: {
-    fontSize: 13,
+    fontSize: Typography.fontSize.footnote,
     color: colors.textTertiary,
   },
   dropdownList: {
@@ -75,9 +75,9 @@ const createStyles = (colors) => ({
     flex: 1,
   },
   itemName: {
-    fontSize: 15,
+    fontSize: Typography.fontSize.subheadline,
     color: colors.textPrimary,
-    fontWeight: '600',
+    fontWeight: Typography.fontWeight.semibold,
   },
   itemNameActive: {
     color: colors.primary,
@@ -85,14 +85,14 @@ const createStyles = (colors) => ({
   itemMeta: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 2,
+    marginTop: Spacing.xs,
   },
   itemManufacturer: {
-    fontSize: 12,
+    fontSize: Typography.fontSize.caption1,
     color: colors.textTertiary,
   },
   itemPrice: {
-    fontSize: 12,
+    fontSize: Typography.fontSize.caption1,
     color: colors.warning,
   },
   emptyState: {
@@ -105,13 +105,13 @@ const createStyles = (colors) => ({
     marginBottom: Spacing.sm,
   },
   emptyText: {
-    fontSize: 15,
+    fontSize: Typography.fontSize.subheadline,
     color: colors.textPrimary,
-    fontWeight: '600',
-    marginBottom: 4,
+    fontWeight: Typography.fontWeight.semibold,
+    marginBottom: Spacing.xs,
   },
   emptySubtext: {
-    fontSize: 13,
+    fontSize: Typography.fontSize.footnote,
     color: colors.textTertiary,
   },
 });
@@ -140,7 +140,7 @@ export function FavoriteModelsLayer({
       animationType="fade"
       onRequestClose={onClose}
     >
-      <Pressable style={({ pressed }) => [styles.overlay, { paddingTop: insets.top + 56 }, pressed && { opacity: 0.7 }]} onPress={onClose}>
+      <Pressable style={({ pressed }) => [styles.overlay, { paddingTop: insets.top + 56 }, pressed && pressedOpacity()]} onPress={onClose}>
         <View style={styles.dropdownContainer}>
           <View style={styles.dropdown}>
             <View style={styles.dropdownHeader}>
@@ -169,7 +169,7 @@ export function FavoriteModelsLayer({
                       currentModelId === model.id && styles.dropdownItemActive,
                       index < favoriteModels.length - 1 &&
                         styles.dropdownItemBorder,
-                    , pressed && { opacity: 0.7 }]} onPress={() => {
+                    , pressed && pressedOpacity()]} onPress={() => {
                       onSelectModel(model.id);
                       onClose();
                     }} >

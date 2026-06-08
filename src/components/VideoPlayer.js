@@ -7,7 +7,7 @@ import { Pressable, View,
   Platform, } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Video, ResizeMode } from 'expo-av';
-import { Spacing } from '../constants/theme';
+import { Spacing, Typography, pressedOpacity } from '../constants/theme';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { useTheme } from '../context/ThemeContext';
 
@@ -97,7 +97,7 @@ function WebVideoPlayer({ visible, videoUrl, onClose }) {
       <View style={s.full}>
         {/* header */}
         <View style={s.header}>
-          <Pressable style={({ pressed }) => [s.btn, pressed && { opacity: 0.7 }]} onPress={onClose}><Ionicons name="chevron-down" size={28} color={colors.textOnOverlay} /></Pressable>
+          <Pressable style={({ pressed }) => [s.btn, pressed && pressedOpacity()]} onPress={onClose}><Ionicons name="chevron-down" size={28} color={colors.textOnOverlay} /></Pressable>
           <Text style={s.title}>视频预览</Text>
           <View style={s.btn} />
         </View>
@@ -107,7 +107,7 @@ function WebVideoPlayer({ visible, videoUrl, onClose }) {
           <div ref={elRef} style={{ width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }} />
 
           {loading && !error ? <View style={s.loadingOverlay}><ActivityIndicator size="large" color={colors.textOnOverlay} /><Text style={s.loadingText}>加载中...</Text></View> : null}
-          {!isPlaying && !loading && !error ? <Pressable style={({ pressed }) => [s.bigPlay, pressed && { opacity: 0.7 }]} onPress={togglePlay}><Ionicons name="play-circle" size={72} color={colors.textOnOverlay} /></Pressable> : null}
+          {!isPlaying && !loading && !error ? <Pressable style={({ pressed }) => [s.bigPlay, pressed && pressedOpacity()]} onPress={togglePlay}><Ionicons name="play-circle" size={72} color={colors.textOnOverlay} /></Pressable> : null}
           {error ? <View style={s.center}><Ionicons name="alert-circle-outline" size={48} color={colors.textTertiary} /><Text style={s.errText}>{error}</Text></View> : null}
         </View>
 
@@ -122,8 +122,8 @@ function WebVideoPlayer({ visible, videoUrl, onClose }) {
           </View>
 
           <View style={s.ctrlRow}>
-            <Pressable style={({ pressed }) => [s.ctrlBtn, pressed && { opacity: 0.7 }]} onPress={togglePlay}><Ionicons name={isPlaying ? 'pause' : 'play'} size={32} color={colors.textOnOverlay} /></Pressable>
-            <Pressable style={({ pressed }) => [s.ctrlBtn, pressed && { opacity: 0.7 }]} onPress={toggleMute}><Ionicons name={isMuted || volume === 0 ? 'volume-mute' : volume < 0.5 ? 'volume-low' : 'volume-medium'} size={24} color={colors.textOnOverlay} /></Pressable>
+            <Pressable style={({ pressed }) => [s.ctrlBtn, pressed && pressedOpacity()]} onPress={togglePlay}><Ionicons name={isPlaying ? 'pause' : 'play'} size={32} color={colors.textOnOverlay} /></Pressable>
+            <Pressable style={({ pressed }) => [s.ctrlBtn, pressed && pressedOpacity()]} onPress={toggleMute}><Ionicons name={isMuted || volume === 0 ? 'volume-mute' : volume < 0.5 ? 'volume-low' : 'volume-medium'} size={24} color={colors.textOnOverlay} /></Pressable>
             <View style={s.volArea} onClick={(e) => { if (!e.currentTarget) return; const r = e.currentTarget.getBoundingClientRect(); setVol(Math.max(0, Math.min(1, (e.clientX - r.left) / r.width))); }}>
               <View style={s.volBg}><View style={[s.volFill, { width: `${volPct}%` }]} /></View>
             </View>
@@ -176,7 +176,7 @@ function NativeVideoPlayer({ visible, videoUrl, onClose }) {
     <Modal visible={visible} animationType="fade" transparent={false} onRequestClose={onClose}>
       <Pressable style={s.full} >
         <View style={s.header}>
-          <Pressable style={({ pressed }) => [s.btn, pressed && { opacity: 0.7 }]} onPress={onClose}><Ionicons name="chevron-down" size={28} color={colors.textOnOverlay} /></Pressable>
+          <Pressable style={({ pressed }) => [s.btn, pressed && pressedOpacity()]} onPress={onClose}><Ionicons name="chevron-down" size={28} color={colors.textOnOverlay} /></Pressable>
           <Text style={s.title}>视频预览</Text>
           <View style={s.btn} />
         </View>
@@ -185,22 +185,22 @@ function NativeVideoPlayer({ visible, videoUrl, onClose }) {
           {error ? <View style={s.center}><Ionicons name="alert-circle-outline" size={48} color="#999" /><Text style={s.errText}>{error}</Text></View>
           : <Video ref={videoRef} source={{ uri: videoUrl }} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} resizeMode={ResizeMode.CONTAIN} shouldPlay={false} isLooping={false} volume={isMuted ? 0 : volume} onPlaybackStatusUpdate={onPlayback} onError={() => { setError('视频加载失败'); setIsLoading(false); }} />}
           {isLoading && !error ? <View style={s.loadingOverlay}><ActivityIndicator size="large" color={colors.textOnOverlay} /><Text style={s.loadingText}>加载中...</Text></View> : null}
-          {!isPlaying && !isLoading && !error ? <Pressable style={({ pressed }) => [s.bigPlay, pressed && { opacity: 0.7 }]} onPress={togglePlay}><Ionicons name="play-circle" size={72} color={colors.textOnOverlay} /></Pressable> : null}
+          {!isPlaying && !isLoading && !error ? <Pressable style={({ pressed }) => [s.bigPlay, pressed && pressedOpacity()]} onPress={togglePlay}><Ionicons name="play-circle" size={72} color={colors.textOnOverlay} /></Pressable> : null}
         </View>
 
         <View style={s.ctrlBar}>
           <View style={s.progressRow}>
             <Text style={s.t}>{fmt(position)}</Text>
-            <Pressable style={({ pressed }) => [s.progArea, pressed && { opacity: 0.7 }]} onPress={(e) => { e.currentTarget.measure((_, __, w) => seek(e.nativeEvent.locationX / w)); }}>
+            <Pressable style={({ pressed }) => [s.progArea, pressed && pressedOpacity()]} onPress={(e) => { e.currentTarget.measure((_, __, w) => seek(e.nativeEvent.locationX / w)); }}>
               <View style={s.progBg}><View style={[s.progFill, { width: `${pct}%` }]} /></View>
             </Pressable>
             <Text style={s.t}>{fmt(duration)}</Text>
           </View>
 
           <View style={s.ctrlRow}>
-            <Pressable style={({ pressed }) => [s.ctrlBtn, pressed && { opacity: 0.7 }]} onPress={togglePlay}><Ionicons name={isPlaying ? 'pause' : 'play'} size={32} color={colors.textOnOverlay} /></Pressable>
-            <Pressable style={({ pressed }) => [s.ctrlBtn, pressed && { opacity: 0.7 }]} onPress={toggleMute}><Ionicons name={isMuted || volume === 0 ? 'volume-mute' : volume < 0.5 ? 'volume-low' : 'volume-medium'} size={24} color={colors.textOnOverlay} /></Pressable>
-            <Pressable style={({ pressed }) => [s.volArea, pressed && { opacity: 0.7 }]} onPress={(e) => { e.currentTarget.measure((_, __, w) => { const v = Math.max(0, Math.min(1, e.nativeEvent.locationX / w)); setVolume(v); if (v > 0 && isMuted) setIsMuted(false); }); }}>
+            <Pressable style={({ pressed }) => [s.ctrlBtn, pressed && pressedOpacity()]} onPress={togglePlay}><Ionicons name={isPlaying ? 'pause' : 'play'} size={32} color={colors.textOnOverlay} /></Pressable>
+            <Pressable style={({ pressed }) => [s.ctrlBtn, pressed && pressedOpacity()]} onPress={toggleMute}><Ionicons name={isMuted || volume === 0 ? 'volume-mute' : volume < 0.5 ? 'volume-low' : 'volume-medium'} size={24} color={colors.textOnOverlay} /></Pressable>
+            <Pressable style={({ pressed }) => [s.volArea, pressed && pressedOpacity()]} onPress={(e) => { e.currentTarget.measure((_, __, w) => { const v = Math.max(0, Math.min(1, e.nativeEvent.locationX / w)); setVolume(v); if (v > 0 && isMuted) setIsMuted(false); }); }}>
               <View style={s.volBg}><View style={[s.volFill, { width: `${isMuted ? 0 : volume * 100}%` }]} /></View>
             </Pressable>
           </View>
@@ -220,19 +220,19 @@ const createStyles = (colors) => ({
   full: { flex: 1, backgroundColor: colors.overlayHeavy },
   header: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 50, paddingHorizontal: Spacing.lg, paddingBottom: Spacing.md, backgroundColor: colors.overlayMedium },
   btn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  title: { fontSize: 16, fontWeight: '600', color: colors.textOnOverlay },
+  title: { fontSize: Typography.fontSize.callout, fontWeight: Typography.fontWeight.semibold, color: colors.textOnOverlay },
   videoBox: { flex: 1, width: '100%', overflow: 'hidden' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  errText: { fontSize: 14, color: colors.textOnOverlay, marginTop: Spacing.md, textAlign: 'center' },
+  errText: { fontSize: Typography.fontSize.footnote, color: colors.textOnOverlay, marginTop: Spacing.md, textAlign: 'center' },
   loadingOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: colors.overlayMedium, alignItems: 'center', justifyContent: 'center' },
-  loadingText: { color: colors.textOnOverlay, fontSize: 14, marginTop: Spacing.md },
+  loadingText: { color: colors.textOnOverlay, fontSize: Typography.fontSize.footnote, marginTop: Spacing.md },
   bigPlay: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' },
   ctrlBar: { position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 10, backgroundColor: colors.overlayHeavy, paddingBottom: 34, paddingHorizontal: Spacing.lg, paddingTop: Spacing.md },
   progressRow: { flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.sm },
   progArea: { flex: 1, height: 32, justifyContent: 'center', marginHorizontal: 4 },
   progBg: { height: 3, borderRadius: 1.5, borderCurve: 'continuous', backgroundColor: 'rgba(255,255,255,0.3)', overflow: 'hidden' },
   progFill: { height: '100%', backgroundColor: colors.primary, borderRadius: 1.5, borderCurve: 'continuous' },
-  t: { fontSize: 12, color: colors.textOnOverlay, minWidth: 42, textAlign: 'center' },
+  t: { fontSize: Typography.fontSize.caption1, color: colors.textOnOverlay, minWidth: 42, textAlign: 'center' },
   ctrlRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, paddingVertical: Spacing.sm },
   ctrlBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   volArea: { flex: 1, height: 28, justifyContent: 'center', cursor: 'pointer' },

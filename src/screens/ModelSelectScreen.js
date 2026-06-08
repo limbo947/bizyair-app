@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { MODELS } from '../constants/models';
 import { CATEGORIES, MANUFACTURERS, FAVORITES_MAX_COUNT } from '../constants/modelMeta';
-import { Radius, Spacing } from '../constants/theme';
+import { Radius, Spacing, Typography, pressedOpacity } from '../constants/theme';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { useTheme } from '../context/ThemeContext';
 import { useFavoritesContext } from '../context/FavoritesContext';
@@ -19,7 +19,7 @@ const ModelCard = React.memo(function ModelCard({ model, isSelected, isEditMode,
       style={({ pressed }) => [
         styles.modelCard,
         isSelected && styles.modelCardActive,
-      , pressed && { opacity: 0.7 }]} onPress={onPress} >
+      , pressed && pressedOpacity()]} onPress={onPress} >
       <View style={styles.modelCardHeader}>
         <Ionicons
           name={model.icon.name}
@@ -158,12 +158,12 @@ export function ModelSelectScreen({ currentModelId, onSelectModel, onBack }) {
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top }]}>
         <Pressable
-          style={({ pressed }) => [styles.backButton, pressed && { opacity: 0.7 }]} onPress={onBack} >
+          style={({ pressed }) => [styles.backButton, pressed && pressedOpacity()]} onPress={onBack} >
           <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
         </Pressable>
         <Text style={styles.headerTitle}>选择模型</Text>
         <Pressable
-          style={({ pressed }) => [styles.editButton, pressed && { opacity: 0.7 }]} onPress={toggleEditMode} >
+          style={({ pressed }) => [styles.editButton, pressed && pressedOpacity()]} onPress={toggleEditMode} >
           <Text style={[
             styles.editButtonText,
             isEditMode && styles.editButtonTextActive
@@ -184,7 +184,7 @@ export function ModelSelectScreen({ currentModelId, onSelectModel, onBack }) {
               style={({ pressed }) => [
                 styles.categoryItem,
                 selectedCategory === category.key && styles.categoryItemActive,
-              , pressed && { opacity: 0.7 }]} onPress={() => {
+              , pressed && pressedOpacity()]} onPress={() => {
                 setSelectedCategory(category.key);
               }} >
               <Text
@@ -249,8 +249,8 @@ const createStyles = (colors) => ({
     padding: Spacing.sm,
   },
   headerTitle: {
-    fontSize: 17,
-    fontWeight: '600',
+    fontSize: Typography.fontSize.headline,
+    fontWeight: Typography.fontWeight.semibold,
     color: colors.textPrimary,
   },
   editButton: {
@@ -258,9 +258,9 @@ const createStyles = (colors) => ({
     paddingVertical: Spacing.sm,
   },
   editButtonText: {
-    fontSize: 15,
+    fontSize: Typography.fontSize.subheadline,
     color: colors.textSecondary,
-    fontWeight: '600',
+    fontWeight: Typography.fontWeight.semibold,
   },
   editButtonTextActive: {
     color: colors.primary,
@@ -289,17 +289,17 @@ const createStyles = (colors) => ({
   },
   categoryLabel: {
     flex: 1,
-    fontSize: 12,
+    fontSize: Typography.fontSize.caption1,
     color: colors.textTertiary,
-    fontWeight: '500',
+    fontWeight: Typography.fontWeight.medium,
     textAlign: 'left',
   },
   categoryLabelActive: {
     color: colors.textPrimary,
-    fontWeight: '600',
+    fontWeight: Typography.fontWeight.semibold,
   },
   categoryCount: {
-    fontSize: 11,
+    fontSize: Typography.fontSize.caption2,
     color: colors.textTertiary,
     backgroundColor: colors.bg,
     paddingHorizontal: 5,
@@ -325,12 +325,12 @@ const createStyles = (colors) => ({
     borderBottomColor: colors.separator,
   },
   modelListTitle: {
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: Typography.fontSize.subheadline,
+    fontWeight: Typography.fontWeight.semibold,
     color: colors.textPrimary,
   },
   modelListSubtitle: {
-    fontSize: 13,
+    fontSize: Typography.fontSize.footnote,
     color: colors.textTertiary,
   },
   emptyState: {
@@ -342,13 +342,13 @@ const createStyles = (colors) => ({
     marginBottom: Spacing.md,
   },
   emptyText: {
-    fontSize: 16,
+    fontSize: Typography.fontSize.callout,
     color: colors.textPrimary,
-    fontWeight: '600',
+    fontWeight: Typography.fontWeight.semibold,
     marginBottom: Spacing.sm,
   },
   emptySubtext: {
-    fontSize: 14,
+    fontSize: Typography.fontSize.footnote,
     color: colors.textTertiary,
   },
   modelGrid: {
@@ -391,12 +391,12 @@ const createStyles = (colors) => ({
   },
   modelCardName: {
     flex: 1,
-    fontSize: 14,
+    fontSize: Typography.fontSize.footnote,
     color: colors.textPrimary,
-    fontWeight: '600',
+    fontWeight: Typography.fontWeight.semibold,
   },
   modelCardManufacturer: {
-    fontSize: 12,
+    fontSize: Typography.fontSize.caption1,
     color: colors.textTertiary,
     marginRight: Spacing.sm,
   },

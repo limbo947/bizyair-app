@@ -1,6 +1,6 @@
 import React from 'react';
 import { Pressable, Text, View, TextInput, Switch } from 'react-native';
-import { Radius, Spacing } from '../constants/theme';
+import { Radius, Spacing, Typography } from '../constants/theme';
 import { createSharedStyles } from '../constants/sharedStyles';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { useTheme } from '../context/ThemeContext';
@@ -814,11 +814,11 @@ export function DreamActorControls() {
 
 const createStyles = (colors) => ({
   ...createSharedStyles(colors),
-  selectorButtonSmall: { paddingVertical: 8, paddingHorizontal: 10, borderRadius: Radius.sm, borderCurve: 'continuous', backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
-  priceHint: { fontSize: 12, color: colors.textTertiary, marginTop: Spacing.sm },
+  selectorButtonSmall: { paddingVertical: Spacing.sm, paddingHorizontal: Spacing.sm + 2, borderRadius: Radius.sm, borderCurve: 'continuous', backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
+  priceHint: { fontSize: Typography.fontSize.caption1, color: colors.textTertiary, marginTop: Spacing.sm },
   ratioGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
-  ratioButton: { width: '22%', paddingVertical: 9, borderRadius: Radius.sm, borderCurve: 'continuous', backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
+  ratioButton: { width: '22%', paddingVertical: Spacing.sm + 1, borderRadius: Radius.sm, borderCurve: 'continuous', backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
   ratioButtonActive: { backgroundColor: colors.primary },
-  ratioText: { fontSize: 13, color: colors.textSecondary, fontWeight: '500' },
-  ratioTextActive: { color: colors.textInverse, fontWeight: '600' },
+  ratioText: { fontSize: Typography.fontSize.footnote, color: colors.textSecondary, fontWeight: Typography.fontWeight.medium },
+  ratioTextActive: { color: colors.textInverse, fontWeight: Typography.fontWeight.semibold },
 });

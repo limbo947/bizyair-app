@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
-import { Spacing } from '../constants/theme';
+import { Spacing, Typography, pressedOpacity } from '../constants/theme';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { useTheme } from '../context/ThemeContext';
 import { triggerDownload, triggerBatchDownload } from '../utils/download';
@@ -247,7 +247,7 @@ export function ImageViewer({ visible, imageUrl, imageUrls, prompt, onClose }) {
           <>
             <View style={styles.topBar} pointerEvents="box-none">
               <Pressable
-                style={({ pressed }) => [styles.iconBtn, pressed && { opacity: 0.7 }]}
+                style={({ pressed }) => [styles.iconBtn, pressed && pressedOpacity()]}
                 onPress={onClose}
               >
                 <Ionicons name="chevron-down" size={24} color={colors.textOnOverlay} />
@@ -260,7 +260,7 @@ export function ImageViewer({ visible, imageUrl, imageUrls, prompt, onClose }) {
                 </View>
               ) : null}
               <Pressable
-                style={({ pressed }) => [styles.iconBtn, pressed && { opacity: 0.7 }]}
+                style={({ pressed }) => [styles.iconBtn, pressed && pressedOpacity()]}
                 onPress={handleDownload}
                 disabled={isDownloading}
               >
@@ -272,7 +272,7 @@ export function ImageViewer({ visible, imageUrl, imageUrls, prompt, onClose }) {
               <View style={styles.navButtons} pointerEvents="box-none">
                 {currentIndex > 0 ? (
                   <Pressable
-                    style={({ pressed }) => [styles.navBtn, pressed && { opacity: 0.7 }]}
+                    style={({ pressed }) => [styles.navBtn, pressed && pressedOpacity()]}
                     onPress={() => goToIndex(currentIndex - 1)}
                   >
                     <Ionicons name="chevron-back" size={28} color={colors.textOnOverlay} />
@@ -280,7 +280,7 @@ export function ImageViewer({ visible, imageUrl, imageUrls, prompt, onClose }) {
                 ) : <View style={styles.navBtnPlaceholder} />}
                 {currentIndex < urlsRef.current.length - 1 ? (
                   <Pressable
-                    style={({ pressed }) => [styles.navBtn, pressed && { opacity: 0.7 }]}
+                    style={({ pressed }) => [styles.navBtn, pressed && pressedOpacity()]}
                     onPress={() => goToIndex(currentIndex + 1)}
                   >
                     <Ionicons name="chevron-forward" size={28} color={colors.textOnOverlay} />
@@ -304,7 +304,7 @@ export function ImageViewer({ visible, imageUrl, imageUrls, prompt, onClose }) {
                       style={({ pressed }) => [
                         styles.thumbnailItem,
                         idx === currentIndex && styles.thumbnailItemActive,
-                        pressed && { opacity: 0.7 },
+                        pressed && pressedOpacity(),
                       ]}
                       onPress={() => goToIndex(idx)}
                     >
@@ -373,8 +373,8 @@ const createStyles = (colors) => ({
   },
   pageIndicatorText: {
     color: colors.textOnOverlay,
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: Typography.fontSize.footnote,
+    fontWeight: Typography.fontWeight.semibold,
   },
   navButtons: {
     position: 'absolute',
@@ -409,7 +409,7 @@ const createStyles = (colors) => ({
     paddingTop: Spacing.sm,
   },
   promptText: {
-    fontSize: 14,
+    fontSize: Typography.fontSize.footnote,
     color: colors.textOnOverlay,
     lineHeight: 20,
     textAlign: 'center',
