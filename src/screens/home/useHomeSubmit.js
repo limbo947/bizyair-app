@@ -37,6 +37,7 @@ export function useHomeSubmit({
     extraOptions, nameInput, customPrompt, voice, responseFormat,
     instructions, language, speed, enableSequential, thinkingMode,
     colorPalette, batchSize, webSearch, returnLastFrame, topP, style,
+    steps, guidanceScale,
   } = state;
 
   const getPayloadParams = useCallback(() => {
@@ -82,7 +83,9 @@ export function useHomeSubmit({
       case 'bza-video-x':
         return { ...base, resolution, aspectRatio, duration, imageUrls: iu, videoUrls: vu };
       case 'bza-video-v3':
-        return { ...base, resolution, aspectRatio, imageUrls: iu, firstFrameUrls: ffu, lastFrameUrls: lfu };
+        return { ...base, resolution, aspectRatio, duration, generateAudio, seed: seed !== '' && seed !== undefined ? parseInt(seed) : undefined, negativePrompt, imageUrls: iu, firstFrameUrls: ffu, lastFrameUrls: lfu };
+      case 'bza-video-g':
+        return { ...base, resolution, aspectRatio, duration, imageUrls: iu };
       case 'dreamactor':
         return { imageUrls: iu, videoUrls: vu };
       case 'llm-chat':
@@ -91,12 +94,14 @@ export function useHomeSubmit({
         return { systemPrompt, userPrompt: prompt.trim(), imageUrls: iu, temperature, maxTokens, detail, enableThinking };
       case 'joycaption':
         return { imageUrls: iu, captionType, captionLength, temperature, maxTokens, doSample, extraOptions, nameInput, customPrompt };
+      case 'qwen-image':
+        return { ...base, width: parseInt(customWidth) || 1024, height: parseInt(customHeight) || 1024, steps, guidanceScale, negativePrompt, seed: seed !== '' && seed !== undefined ? parseInt(seed) : undefined };
       case 'tts':
         return { input: prompt.trim(), voice, responseFormat, instructions, language, speed, maxTokens };
       default:
         return { ...base, resolution, aspectRatio, imageUrls: iu };
     }
-  }, [paramType, prompt, resolution, aspectRatio, imageUrls, customWidth, customHeight, quality, duration, generateAudio, sound, multiShot, shotType, multiPrompt, negativePrompt, promptExtend, watermark, seed, display, keepOriginalSound, audio, offPeak, isRec, promptOptimizer, fastPretreatment, aigcWatermark, movementAmplitude, videoUrls, firstFrameUrls, lastFrameUrls, mediaUrls, refImages, audioSetting, drivingAudio, audioUrl, referenceVoice, bboxList, firstClipUrls, systemPrompt, temperature, maxTokens, enableThinking, enableSearch, detail, captionType, captionLength, doSample, extraOptions, nameInput, customPrompt, voice, responseFormat, instructions, language, speed, enableSequential, thinkingMode, colorPalette, batchSize, webSearch, returnLastFrame, topP, style, mode]);
+  }, [paramType, prompt, resolution, aspectRatio, imageUrls, customWidth, customHeight, quality, duration, generateAudio, sound, multiShot, shotType, multiPrompt, negativePrompt, promptExtend, watermark, seed, display, keepOriginalSound, audio, offPeak, isRec, promptOptimizer, fastPretreatment, aigcWatermark, movementAmplitude, videoUrls, firstFrameUrls, lastFrameUrls, mediaUrls, refImages, audioSetting, drivingAudio, audioUrl, referenceVoice, bboxList, firstClipUrls, systemPrompt, temperature, maxTokens, enableThinking, enableSearch, detail, captionType, captionLength, doSample, extraOptions, nameInput, customPrompt, voice, responseFormat, instructions, language, speed, enableSequential, thinkingMode, colorPalette, batchSize, webSearch, returnLastFrame, topP, style, steps, guidanceScale, mode]);
 
   const livePrice = useMemo(() => calculatePrice(modelId, getPayloadParams()), [modelId, getPayloadParams]);
 

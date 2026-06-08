@@ -279,13 +279,41 @@ export function buildPayload(modelId, mode, params) {
       payload.prompt = params.prompt;
       payload.resolution = params.resolution || '720p';
       payload.aspect_ratio = params.aspectRatio || '16:9';
+      if (model.durationOptions) {
+        payload.duration = parseInt(params.duration) || model.durationOptions[0];
+      }
+      if (model.supportsAudio) payload.generate_audio = params.generateAudio || false;
+      if (model.supportsSeed && params.seed !== undefined && params.seed !== '') payload.seed = parseInt(params.seed);
+      if (model.supportsNegativePrompt && params.negativePrompt) payload.negative_prompt = params.negativePrompt;
       if (mode === 'image-to-video' && params.imageUrls?.length) {
         payload.image_urls = params.imageUrls;
       }
       if (mode === 'flf-to-video') {
-        if (params.firstFrameUrls?.length) payload.first_frame_image = params.firstFrameUrls;
-        if (params.lastFrameUrls?.length) payload.last_frame_image = params.lastFrameUrls;
+        const firstField = model.usesFlfUrlFields ? 'first_frame_url' : 'first_frame_image';
+        const lastField = model.usesFlfUrlFields ? 'last_frame_url' : 'last_frame_image';
+        if (params.firstFrameUrls?.length) payload[firstField] = params.firstFrameUrls;
+        if (params.lastFrameUrls?.length) payload[lastField] = params.lastFrameUrls;
       }
+      break;
+
+    case 'bza-video-g':
+      payload.prompt = params.prompt;
+      payload.resolution = params.resolution || '720p';
+      payload.duration = String(params.duration || 4);
+      if (params.aspectRatio) payload.aspect_ratio = params.aspectRatio;
+      if (mode === 'image-to-video' && params.imageUrls?.length) {
+        payload.image_urls = params.imageUrls;
+      }
+      break;
+
+    case 'qwen-image':
+      payload.prompt = params.prompt;
+      payload.width = parseInt(params.width) || 1024;
+      payload.height = parseInt(params.height) || 1024;
+      if (params.negativePrompt) payload.negative_prompt = params.negativePrompt;
+      if (params.seed !== undefined && params.seed !== '') payload.seed = parseInt(params.seed);
+      if (params.steps !== undefined) payload.steps = parseInt(params.steps);
+      if (params.guidanceScale !== undefined) payload.guidance_scale = parseFloat(params.guidanceScale);
       break;
 
     case 'dreamactor':

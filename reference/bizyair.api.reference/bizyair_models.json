@@ -1,20 +1,19 @@
 [
   {
-    "id": 1083,
-    "display_name": "HappyHorse-1.0-图生视频-官方版-基于首帧",
+    "id": 1190,
+    "display_name": "通用视频V.3.1.Lite-首尾帧生视频-官方版",
     "category": "Image to Video",
-    "model_name": "happyhorse-1-0-official",
-    "endpoint": "happyhorse-1-0-official/image-to-video",
-    "function": "image-to-video",
+    "model_name": "bza-video-v3-1-lite-official",
+    "endpoint": "bza-video-v3-1-lite-official/flf-to-video",
+    "function": "flf-to-video",
     "tags": [
-      "Happy Horse",
-      "最近上新"
+      "通用视频V"
     ],
     "status": "normal",
-    "manufacturer": "阿里",
-    "description": "HappyHorse 1.0 官方版能将静态图像转化为带有原生音频的动态短片，支持多画幅自适应与 1080P 超分输出，在角色一致性与动作自然度上表现稳定。官方版为广告行业、电商产品视频及影视预演等专业场景提供经过验证的视频创作工具。",
-    "price": "720P: 900 金币/1秒 | 1080P: 1600 金币/1秒",
-    "price_url": "https://bizyair.cn/modelzoo/happyhorse-1-0-official/image-to-video?tab=price",
+    "manufacturer": "谷歌",
+    "description": "通用视频V.3.1.Lite-首尾帧生视频-官方版",
+    "price": "720p, 4, false: 720 金币/1次 | 720p, 6, false: 1080 金币/1次 | 720p, 8, false: 1440 金币/1次 | 720p, 4, true: 1200 金币/1次 | 720p, 6, true: 1800 金币/1次 | 720p, 8, true: 2400 金币/1次 | 1080p, 4, false: 1200 金币/1次 | 1080p, 6, false: 1800 金币/1次 | 1080p, 8, false: 2400 金币/1次 | 1080p, 4, true: 2000 金币/1次 | 1080p, 6, true: 3000 金币/1次 | 1080p, 8, true: 4000 金币/1次",
+    "price_url": "https://bizyair.cn/modelzoo/bza-video-v3-1-lite-official/flf-to-video?tab=price",
     "benefit": {
       "rpd": 200,
       "rph": 60,
@@ -22,21 +21,167 @@
     }
   },
   {
-    "id": 1111,
-    "display_name": "HappyHorse-1.0-视频编辑-官方版",
-    "category": "Video Edit",
-    "model_name": "happyhorse-1-0-official",
-    "endpoint": "happyhorse-1-0-official/video-edit",
-    "function": "video-edit",
+    "id": 1189,
+    "display_name": "通用视频V.3.1.Lite-文生视频-官方版",
+    "category": "Text to Video",
+    "model_name": "bza-video-v3-1-lite-official",
+    "endpoint": "bza-video-v3-1-lite-official/text-to-video",
+    "function": "text-to-video",
     "tags": [
-      "Happy Horse",
-      "最近上新"
+      "通用视频V"
     ],
     "status": "normal",
-    "manufacturer": "阿里",
-    "description": "HappyHorse 1.0 官方版的视频编辑能力在指令遵循度与效果一致性上表现优异。\n\n模型支持以自然语言对视频进行对象增删替换、风格迁移与音频联动修改，编辑结果在画面质感、光影层次与镜头流畅度方面保持较高水准。\n官方版为对编辑精度有较严格要求的创意团队与内容运营提供可靠支持。",
-    "price": "720P: 900 金币/1秒 | 1080P: 1600 金币/1秒",
-    "price_url": "https://bizyair.cn/modelzoo/happyhorse-1-0-official/video-edit?tab=price",
+    "manufacturer": "谷歌",
+    "description": "通用视频V.3.1.Lite-文生视频-官方版",
+    "price": "720p, 4, false: 720 金币/1次 | 720p, 6, false: 1080 金币/1次 | 720p, 8, false: 1440 金币/1次 | 720p, 4, true: 1200 金币/1次 | 720p, 6, true: 1800 金币/1次 | 720p, 8, true: 2400 金币/1次 | 1080p, 4, false: 1200 金币/1次 | 1080p, 6, false: 1800 金币/1次 | 1080p, 8, false: 2400 金币/1次 | 1080p, 4, true: 2000 金币/1次 | 1080p, 6, true: 3000 金币/1次 | 1080p, 8, true: 4000 金币/1次",
+    "price_url": "https://bizyair.cn/modelzoo/bza-video-v3-1-lite-official/text-to-video?tab=price",
+    "benefit": {
+      "rpd": 200,
+      "rph": 60,
+      "rpm": -1
+    }
+  },
+  {
+    "id": 1188,
+    "display_name": "通用视频V.3.1-首尾帧生视频-官方版",
+    "category": "Image to Video",
+    "model_name": "bza-video-v3-1-official",
+    "endpoint": "bza-video-v3-1-official/flf-to-video",
+    "function": "flf-to-video",
+    "tags": [
+      "通用视频V"
+    ],
+    "status": "normal",
+    "manufacturer": "谷歌",
+    "description": "通用视频V.3.1-首尾帧生视频-官方版",
+    "price": "720p, 4, false: 4800 金币/1次 | 720p, 6, false: 7200 金币/1次 | 720p, 8, false: 9600 金币/1次 | 1080p, 4, false: 4800 金币/1次 | 1080p, 6, false: 7200 金币/1次 | 1080p, 8, false: 9600 金币/1次 | 4k, 4, false: 9600 金币/1次 | 4k, 6, false: 14400 金币/1次 | 4k, 8, false: 19200 金币/1次 | 720p, 4, true: 9600 金币/1次 | 720p, 6, true: 14400 金币/1次 | 720p, 8, true: 19200 金币/1次 | 1080p, 4, true: 9600 金币/1次 | 1080p, 6, true: 14400 金币/1次 | 1080p, 8, true: 19200 金币/1次 | 4k, 4, true: 13000 金币/1次 | 4k, 6, true: 19500 金币/1次 | 4k, 8, true: 26000 金币/1次",
+    "price_url": "https://bizyair.cn/modelzoo/bza-video-v3-1-official/flf-to-video?tab=price",
+    "benefit": {
+      "rpd": 200,
+      "rph": 60,
+      "rpm": -1
+    }
+  },
+  {
+    "id": 1187,
+    "display_name": "通用视频V.3.1-文生视频-官方版",
+    "category": "Text to Video",
+    "model_name": "bza-video-v3-1-official",
+    "endpoint": "bza-video-v3-1-official/text-to-video",
+    "function": "text-to-video",
+    "tags": [
+      "通用视频V"
+    ],
+    "status": "normal",
+    "manufacturer": "谷歌",
+    "description": "通用视频V.3.1-文生视频-官方版",
+    "price": "720p, 4, false: 4800 金币/1次 | 720p, 6, false: 7200 金币/1次 | 720p, 8, false: 9600 金币/1次 | 1080p, 4, false: 4800 金币/1次 | 1080p, 6, false: 7200 金币/1次 | 1080p, 8, false: 9600 金币/1次 | 4k, 4, false: 9600 金币/1次 | 4k, 6, false: 14400 金币/1次 | 4k, 8, false: 19200 金币/1次 | 720p, 4, true: 9600 金币/1次 | 720p, 6, true: 14400 金币/1次 | 720p, 8, true: 19200 金币/1次 | 1080p, 4, true: 9600 金币/1次 | 1080p, 6, true: 14400 金币/1次 | 1080p, 8, true: 19200 金币/1次 | 4k, 4, true: 13000 金币/1次 | 4k, 6, true: 19500 金币/1次 | 4k, 8, true: 26000 金币/1次",
+    "price_url": "https://bizyair.cn/modelzoo/bza-video-v3-1-official/text-to-video?tab=price",
+    "benefit": {
+      "rpd": 200,
+      "rph": 60,
+      "rpm": -1
+    }
+  },
+  {
+    "id": 1186,
+    "display_name": "通用视频V.3.1.Fast-首尾帧生视频-官方版",
+    "category": "Image to Video",
+    "model_name": "bza-video-v3-1-fast-official",
+    "endpoint": "bza-video-v3-1-fast-official/flf-to-video",
+    "function": "flf-to-video",
+    "tags": [
+      "通用视频V"
+    ],
+    "status": "normal",
+    "manufacturer": "谷歌",
+    "description": "通用视频V.3.1.Fast-首尾帧生视频-官方版",
+    "price": "720p, 4, false: 2000 金币/1次 | 720p, 6, false: 3000 金币/1次 | 720p, 8, false: 4000 金币/1次 | 1080p, 4, false: 2400 金币/1次 | 1080p, 6, false: 3600 金币/1次 | 1080p, 8, false: 4800 金币/1次 | 4k, 4, false: 6000 金币/1次 | 4k, 6, false: 9000 金币/1次 | 4k, 8, false: 12000 金币/1次 | 720p, 4, true: 2400 金币/1次 | 720p, 6, true: 3600 金币/1次 | 720p, 8, true: 4800 金币/1次 | 1080p, 4, true: 3000 金币/1次 | 1080p, 6, true: 4500 金币/1次 | 1080p, 8, true: 6000 金币/1次 | 4k, 4, true: 6800 金币/1次 | 4k, 6, true: 10200 金币/1次 | 4k, 8, true: 13600 金币/1次",
+    "price_url": "https://bizyair.cn/modelzoo/bza-video-v3-1-fast-official/flf-to-video?tab=price",
+    "benefit": {
+      "rpd": 200,
+      "rph": 60,
+      "rpm": -1
+    }
+  },
+  {
+    "id": 1185,
+    "display_name": "通用视频V.3.1.Fast-文生视频-官方版",
+    "category": "Text to Video",
+    "model_name": "bza-video-v3-1-fast-official",
+    "endpoint": "bza-video-v3-1-fast-official/text-to-video",
+    "function": "text-to-video",
+    "tags": [
+      "通用视频V"
+    ],
+    "status": "normal",
+    "manufacturer": "谷歌",
+    "description": "通用视频V.3.1.Fast-文生视频-官方版",
+    "price": "720p, 4, false: 2000 金币/1次 | 720p, 6, false: 3000 金币/1次 | 720p, 8, false: 4000 金币/1次 | 1080p, 4, false: 2400 金币/1次 | 1080p, 6, false: 3600 金币/1次 | 1080p, 8, false: 4800 金币/1次 | 4k, 4, false: 6000 金币/1次 | 4k, 6, false: 9000 金币/1次 | 4k, 8, false: 12000 金币/1次 | 720p, 4, true: 2400 金币/1次 | 720p, 6, true: 3600 金币/1次 | 720p, 8, true: 4800 金币/1次 | 1080p, 4, true: 3000 金币/1次 | 1080p, 6, true: 4500 金币/1次 | 1080p, 8, true: 6000 金币/1次 | 4k, 4, true: 6800 金币/1次 | 4k, 6, true: 10200 金币/1次 | 4k, 8, true: 13600 金币/1次",
+    "price_url": "https://bizyair.cn/modelzoo/bza-video-v3-1-fast-official/text-to-video?tab=price",
+    "benefit": {
+      "rpd": 200,
+      "rph": 60,
+      "rpm": -1
+    }
+  },
+  {
+    "id": 1183,
+    "display_name": "通用视频G.Omni Flash-图生视频-渠道版",
+    "category": "Image to Video",
+    "model_name": "bza-video-g-omni-flash-base",
+    "endpoint": "bza-video-g-omni-flash-base/image-to-video",
+    "function": "image-to-video",
+    "tags": [
+      "通用视频G"
+    ],
+    "status": "normal",
+    "manufacturer": "谷歌",
+    "description": "通用视频G.Omni Flash-图生视频-渠道版，主打图片动态化创作。能让静态画面生成自然流畅的短视频，自动匹配对应音效，支持多图输入与反复调整，上手简单，部分平台免费开放，适合日常创意剪辑与内容制作。",
+    "price": "10, 4k: 600 金币/1次 | 8, 4k: 540 金币/1次 | 6, 4k: 510 金币/1次 | 4, 4k: 450 金币/1次 | 10, 720p/1080p: 300 金币/1次 | 4/6/8, 720p/1080p: 280 金币/1次",
+    "price_url": "https://bizyair.cn/modelzoo/bza-video-g-omni-flash-base/image-to-video?tab=price",
+    "benefit": {
+      "rpd": 200,
+      "rph": 60,
+      "rpm": -1
+    }
+  },
+  {
+    "id": 1182,
+    "display_name": "通用视频G.Omni Flash-文生视频-渠道版",
+    "category": "Text to Video",
+    "model_name": "bza-video-g-omni-flash-base",
+    "endpoint": "bza-video-g-omni-flash-base/text-to-video",
+    "function": "text-to-video",
+    "tags": [
+      "通用视频G"
+    ],
+    "status": "normal",
+    "manufacturer": "谷歌",
+    "description": "通用视频G.Omni Flash-文生视频-渠道版，融合大模型与媒体生成技术，属于全模态创作工具。支持文本直接生成音画一体的短视频，画面清晰度高、画幅灵活，还能持续迭代调整内容，兼顾性能与实用性。",
+    "price": "10, 4k: 600 金币/1次 | 8, 4k: 540 金币/1次 | 6, 4k: 510 金币/1次 | 4, 4k: 450 金币/1次 | 10, 1080p/720p: 300 金币/1次 | 4/6/8, 1080p/720p: 280 金币/1次",
+    "price_url": "https://bizyair.cn/modelzoo/bza-video-g-omni-flash-base/text-to-video?tab=price",
+    "benefit": {
+      "rpd": 200,
+      "rph": 60,
+      "rpm": -1
+    }
+  },
+  {
+    "id": 1158,
+    "display_name": "通义Qwen-Image-文生图",
+    "category": "Text to Image",
+    "model_name": "qwen-image",
+    "endpoint": "qwen-image/text-to-image",
+    "function": "text-to-image",
+    "tags": [
+      "自部署开源模型"
+    ],
+    "status": "normal",
+    "manufacturer": "硅基流动",
+    "description": "Qwen-Image 是由阿里巴巴通义千问团队发布的图像生成基础模型，拥有 200 亿参数。该模型在复杂的文本渲染和精确的图像编辑方面取得了显著进展，尤其擅长生成包含高保真度中英文文字的图像。Qwen-Image 不仅能够处理多行布局和段落级文本，还能在生成图像时保持排版的连贯性和上下文的和谐。除了卓越的文本渲染能力，该模型还支持广泛的艺术风格，从写实照片到动漫美学，能够灵活适应各种创作需求。同时，它也具备强大的图像编辑和理解能力，支持风格迁移、物体增删、细节增强、文本编辑乃至人体姿态操控等高级操作，旨在成为一个集语言、布局和图像于一体的综合性智能视觉创作与处理基础模型",
+    "price": "100 金币/1次",
+    "price_url": "https://bizyair.cn/modelzoo/qwen-image/text-to-image?tab=price",
     "benefit": {
       "rpd": 200,
       "rph": 60,
@@ -81,6 +226,50 @@
     "description": "HappyHorse 1.0 官方版采用 150 亿参数单流 Transformer 架构，搭载 DMD-2 蒸馏技术将去噪步骤压缩至 8 步。支持 15 秒多镜头叙事，擅长电影级大光圈、浅景深的中近景镜头表达，适用于广告片、短剧片段等对画面质感有较高要求的创作场景。",
     "price": "720P: 900 金币/1秒 | 1080P: 1600 金币/1秒",
     "price_url": "https://bizyair.cn/modelzoo/happyhorse-1-0-official/text-to-video?tab=price",
+    "benefit": {
+      "rpd": 200,
+      "rph": 60,
+      "rpm": -1
+    }
+  },
+  {
+    "id": 1111,
+    "display_name": "HappyHorse-1.0-视频编辑-官方版",
+    "category": "Video Edit",
+    "model_name": "happyhorse-1-0-official",
+    "endpoint": "happyhorse-1-0-official/video-edit",
+    "function": "video-edit",
+    "tags": [
+      "Happy Horse",
+      "最近上新"
+    ],
+    "status": "normal",
+    "manufacturer": "阿里",
+    "description": "HappyHorse 1.0 官方版的视频编辑能力在指令遵循度与效果一致性上表现优异。\n\n模型支持以自然语言对视频进行对象增删替换、风格迁移与音频联动修改，编辑结果在画面质感、光影层次与镜头流畅度方面保持较高水准。\n官方版为对编辑精度有较严格要求的创意团队与内容运营提供可靠支持。",
+    "price": "720P: 900 金币/1秒 | 1080P: 1600 金币/1秒",
+    "price_url": "https://bizyair.cn/modelzoo/happyhorse-1-0-official/video-edit?tab=price",
+    "benefit": {
+      "rpd": 200,
+      "rph": 60,
+      "rpm": -1
+    }
+  },
+  {
+    "id": 1083,
+    "display_name": "HappyHorse-1.0-图生视频-官方版-基于首帧",
+    "category": "Image to Video",
+    "model_name": "happyhorse-1-0-official",
+    "endpoint": "happyhorse-1-0-official/image-to-video",
+    "function": "image-to-video",
+    "tags": [
+      "Happy Horse",
+      "最近上新"
+    ],
+    "status": "normal",
+    "manufacturer": "阿里",
+    "description": "HappyHorse 1.0 官方版能将静态图像转化为带有原生音频的动态短片，支持多画幅自适应与 1080P 超分输出，在角色一致性与动作自然度上表现稳定。官方版为广告行业、电商产品视频及影视预演等专业场景提供经过验证的视频创作工具。",
+    "price": "720P: 900 金币/1秒 | 1080P: 1600 金币/1秒",
+    "price_url": "https://bizyair.cn/modelzoo/happyhorse-1-0-official/image-to-video?tab=price",
     "benefit": {
       "rpd": 200,
       "rph": 60,
@@ -145,7 +334,7 @@
     "status": "normal",
     "manufacturer": "OpenAI",
     "description": "通用图片O.2 官方版面向对画质与可靠性有更高要求的工业级场景。模型支持推理校验模式，单次提示可输出最多 8 张风格连贯的图像，并在多张图像之间保持角色、物体及风格的一致性。文字渲染的准确性达到行业领先水平，原生支持多语言精确排版，适用于品牌广告、信息海报及 UI 界面等对文字呈现有标准要求的视觉内容创作。",
-    "price": ">2560*1440, high: 3486 金币/1次 | <=2560*1440 且 >1920*1080 , high: 2149 金币/1次 | <=1920*1080, high: 1120 金币/1次 | >2560*1440, medium: 966 金币/1次 | >1920*1080 且 <=2560*1440, medium: 630 金币/1次 | <=1920*1080, medium: 378 金币/1次 | >2560*1440 , low: 224 金币/1次 | >1920*1080 且 <=2560*1440, low: 182 金币/1次 | <=1920*1080, low: 161 金币/1次",
+    "price": ", high, >2560*1440, : 3486 金币/1次 | , high, <=2560*1440 且 >1920*1080 , : 2149 金币/1次 | , high, <=1920*1080, : 1120 金币/1次 | , medium, >2560*1440, : 966 金币/1次 | , medium, >1920*1080 且 <=2560*1440, : 630 金币/1次 | , medium, <=1920*1080, : 378 金币/1次 | , low, >2560*1440 , : 224 金币/1次 | , low, >1920*1080 且 <=2560*1440, : 182 金币/1次 | , low, <=1920*1080, : 161 金币/1次",
     "price_url": "https://bizyair.cn/modelzoo/bza-image-o2-official/text-to-image?tab=price",
     "benefit": {
       "rpd": 200,
@@ -167,7 +356,7 @@
     "status": "normal",
     "manufacturer": "OpenAI",
     "description": "通用图片O.2 官方版的图生图功能在编辑表现与整体品质上达到该系列的较高水准。模型支持以文本指令对现有图像进行局部或全局修改，并能跨参考图像进行风格迁移与场景合成。官方版为有高标准要求的设计团队与品牌运营提供稳定的工具支持。",
-    "price": ">2560*1440, high: 3486 金币/1次 | <=2560*1440 且 >1920*1080 , high: 2149 金币/1次 | <=1920*1080, high: 1120 金币/1次 | >2560*1440, medium: 966 金币/1次 | >1920*1080 且 <=2560*1440, medium: 630 金币/1次 | <=1920*1080, medium: 378 金币/1次 | >2560*1440 , low: 224 金币/1次 | >1920*1080 且 <=2560*1440, low: 182 金币/1次 | <=1920*1080, low: 161 金币/1次",
+    "price": ", high, >2560*1440, : 3486 金币/1次 | , high, <=2560*1440 且 >1920*1080 , : 2149 金币/1次 | , high, <=1920*1080, : 1120 金币/1次 | , medium, >2560*1440, : 966 金币/1次 | , medium, >1920*1080 且 <=2560*1440, : 630 金币/1次 | , medium, <=1920*1080, : 378 金币/1次 | , low, >2560*1440 , : 224 金币/1次 | , low, >1920*1080 且 <=2560*1440, : 182 金币/1次 | , low, <=1920*1080, : 161 金币/1次",
     "price_url": "https://bizyair.cn/modelzoo/bza-image-o2-official/image-to-image?tab=price",
     "benefit": {
       "rpd": 200,
@@ -429,7 +618,7 @@
   },
   {
     "id": 1131,
-    "display_name": "LTX2.3-文生视频-官方版",
+    "display_name": "LTX2.3-文生视频",
     "category": "Text to Video",
     "model_name": "ltx-2-3",
     "endpoint": "ltx-2-3/text-to-video",
@@ -1206,7 +1395,7 @@
   },
   {
     "id": 1082,
-    "display_name": "LTX2.3-图生视频-官方版",
+    "display_name": "LTX2.3-图生视频",
     "category": "Image to Video",
     "model_name": "ltx-2-3",
     "endpoint": "ltx-2-3/image-to-video",
@@ -1794,7 +1983,7 @@
   },
   {
     "id": 1017,
-    "display_name": "通义Z-Image.Turbo-文生图-官方版",
+    "display_name": "通义Z-Image.Turbo-文生图",
     "category": "Text to Image",
     "model_name": "z-image-turbo",
     "endpoint": "z-image-turbo/text-to-image",
@@ -1815,7 +2004,7 @@
   },
   {
     "id": 1015,
-    "display_name": "通义Qwen3-TTS-文生语音-官方版",
+    "display_name": "通义Qwen3-TTS-文生语音",
     "category": "Text to Speech",
     "model_name": "qwen3tts-custom-voice",
     "endpoint": "qwen3tts-custom-voice/text-to-audio",
@@ -1836,7 +2025,7 @@
   },
   {
     "id": 1014,
-    "display_name": "JoyCaption3-图像描述-官方版",
+    "display_name": "JoyCaption3-图像描述",
     "category": "Vision",
     "model_name": "joycaption3",
     "endpoint": "joycaption3/vision",
@@ -1880,8 +2069,8 @@
     "id": 1153,
     "display_name": "通用图片F.K.Pro-图生图-渠道版",
     "category": "Image to Image",
-    "model_name": "flux-kontext-pro-base",
-    "endpoint": "flux-kontext-pro-base/image-to-image",
+    "model_name": "bza-image-f-k-pro-base",
+    "endpoint": "bza-image-f-k-pro-base/image-to-image",
     "function": "image-to-image",
     "tags": [
       "通用图片F"
@@ -1890,7 +2079,7 @@
     "manufacturer": "黑森林",
     "description": "通用图片 F.K.Pro 的图生图功能允许上传参考图像并通过自然语言指令进行修改，支持局部元素的精准替换与全局风格转换。模型在多轮编辑中能够维持角色外观、物体特征与视觉风格的一致，减少重复调整的步骤。该版本定价较官方版更低，适用于产品图优化、角色变装、背景替换等需要保留主体特征的编辑任务。",
     "price": "70 金币/1次",
-    "price_url": "https://bizyair.cn/modelzoo/flux-kontext-pro-base/image-to-image?tab=price",
+    "price_url": "https://bizyair.cn/modelzoo/bza-image-f-k-pro-base/image-to-image?tab=price",
     "benefit": {
       "rpd": 200,
       "rph": 60,
@@ -1901,8 +2090,8 @@
     "id": 1154,
     "display_name": "通用图片F.K.Max-文生图-渠道版",
     "category": "Text to Image",
-    "model_name": "flux-kontext-max-base",
-    "endpoint": "flux-kontext-max-base/text-to-image",
+    "model_name": "bza-image-f-k-max-base",
+    "endpoint": "bza-image-f-k-max-base/text-to-image",
     "function": "text-to-image",
     "tags": [
       "通用图片F"
@@ -1911,7 +2100,7 @@
     "manufacturer": "黑森林",
     "description": "通用图片 F.K.Max 是上下文感知图像生成模型，在 Pro 版本基础上提升了提示词遵循度与文字排版质量。该版本在保持角色一致性的同时不牺牲推理速度，定价相较官方版更为经济，面向对画面精细度与文字呈现有较高要求的文本生成图像场景。",
     "price": "140 金币/1次",
-    "price_url": "https://bizyair.cn/modelzoo/flux-kontext-max-base/text-to-image?tab=price",
+    "price_url": "https://bizyair.cn/modelzoo/bza-image-f-k-max-base/text-to-image?tab=price",
     "benefit": {
       "rpd": 200,
       "rph": 60,
@@ -1922,8 +2111,8 @@
     "id": 1155,
     "display_name": "通用图片F.K.Max-图生图-渠道版",
     "category": "Image to Image",
-    "model_name": "flux-kontext-max-base",
-    "endpoint": "flux-kontext-max-base/image-to-image",
+    "model_name": "bza-image-f-k-max-base",
+    "endpoint": "bza-image-f-k-max-base/image-to-image",
     "function": "image-to-image",
     "tags": [
       "通用图片F"
@@ -1932,7 +2121,7 @@
     "manufacturer": "黑森林",
     "description": "通用图片 F.K.Max 的图生图功能在编辑精度与文本渲染质量上进行了增强。模型能够在图像编辑任务中保持清晰的文字呈现，同时确保修改后的画面元素与原图在光影、透视与风格上协调统一，价格低于官方版，适用于在图像中嵌入可读文本或对文字信息进行修改的设计任务。",
     "price": "140 金币/1次",
-    "price_url": "https://bizyair.cn/modelzoo/flux-kontext-max-base/image-to-image?tab=price",
+    "price_url": "https://bizyair.cn/modelzoo/bza-image-f-k-max-base/image-to-image?tab=price",
     "benefit": {
       "rpd": 200,
       "rph": 60,

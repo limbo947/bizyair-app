@@ -1,6 +1,6 @@
 # BizyAir 模型 JavaScript 文档地址汇总
 
-> 共 97 个文档地址
+> 共 106 个文档地址
 
 
 ## FLF to Video (14 个)
@@ -35,17 +35,17 @@
 | 通用图片B.2-图生图-渠道版 | 图生图 | 1K: 200 金币/1次 | 2K: 200 金币/1次 | 4K: 250 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/bza-image-b2-base/image-to-image?lang=javascript) |
 | 通用图片B.Pro-图生图-官方版 | 图生图 | 1K: 700 金币/1次 | 2K: 1000 金币/1次 | 4K: 1300 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/bza-image-b-pro-official/image-to-image?lang=javascript) |
 | 通用图片B.Pro-图生图-渠道版 | 图生图 | 1K: 400 金币/1次 | 2K: 400 金币/1次 | 4K: 500 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/bza-image-b-pro-base/image-to-image?lang=javascript) |
-| 通用图片F.K.Max-图生图-渠道版 | 图生图 | 140 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/flux-kontext-max-base/image-to-image?lang=javascript) |
-| 通用图片F.K.Pro-图生图-渠道版 | 图生图 | 70 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/flux-kontext-pro-base/image-to-image?lang=javascript) |
-| 通用图片O.2-图生图-官方版 | 图生图 | >2560*1440, high: 3486 金币/1次 | <=2560*1440 且 >1920*1080 , high: 2149 金币/1次 | <=1920*1080, high: 1120 金币/1次 | >2560*1440, medium: 966 金币/1次 | >1920*1080 且 <=2560*1440, medium: 630 金币/1次 | <=1920*1080, medium: 378 金币/1次 | >2560*1440 , low: 224 金币/1次 | >1920*1080 且 <=2560*1440, low: 182 金币/1次 | <=1920*1080, low: 161 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/bza-image-o2-official/image-to-image?lang=javascript) |
+| 通用图片F.K.Max-图生图-渠道版 | 图生图 | 140 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/bza-image-f-k-max-base/image-to-image?lang=javascript) |
+| 通用图片F.K.Pro-图生图-渠道版 | 图生图 | 70 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/bza-image-f-k-pro-base/image-to-image?lang=javascript) |
+| 通用图片O.2-图生图-官方版 | 图生图 | , high, >2560*1440, : 3486 金币/1次 | , high, <=2560*1440 且 >1920*1080 , : 2149 金币/1次 | , high, <=1920*1080, : 1120 金币/1次 | , medium, >2560*1440, : 966 金币/1次 | , medium, >1920*1080 且 <=2560*1440, : 630 金币/1次 | , medium, <=1920*1080, : 378 金币/1次 | , low, >2560*1440 , : 224 金币/1次 | , low, >1920*1080 且 <=2560*1440, : 182 金币/1次 | , low, <=1920*1080, : 161 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/bza-image-o2-official/image-to-image?lang=javascript) |
 | 通用图片O.2-图生图-渠道版 | 图生图 | 1K: 100 金币/1次 | 2K: 100 金币/1次 | 4K: 100 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/bza-image-o2-base/image-to-image?lang=javascript) |
 
-## Image to Video (15 个)
+## Image to Video (19 个)
 
 | 模型名称 | 功能 | 价格 | 文档地址 |
 |---------|------|------|---------|
 | HappyHorse-1.0-图生视频-官方版-基于首帧 | 图生视频 | 720P: 900 金币/1秒 | 1080P: 1600 金币/1秒 | [打开](https://bizyair.cn/llms/modelzoo/happyhorse-1-0-official/image-to-video?lang=javascript) |
-| LTX2.3-图生视频-官方版 | 图生视频 | 300 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/ltx-2-3/image-to-video?lang=javascript) |
+| LTX2.3-图生视频 | 图生视频 | 300 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/ltx-2-3/image-to-video?lang=javascript) |
 | Vidu Q3.Pro-图生视频-官方版 | 图生视频 | 启用推荐提示词时，额外收取一次320金币费用 | [打开](https://bizyair.cn/llms/modelzoo/vidu-q3-pro-official/image-to-video?lang=javascript) |
 | Vidu Q3.Pro-图生视频-渠道版 | 图生视频 | 540P: 350 金币/1秒 | 720P: 700 金币/1秒 | 1080P: 750 金币/1秒 | [打开](https://bizyair.cn/llms/modelzoo/vidu-q3-pro-base/image-to-video?lang=javascript) |
 | Vidu Q3.Turbo-图生视频-官方版 | 图生视频 | 启用推荐提示词时，额外收取一次320金币费用 | [打开](https://bizyair.cn/llms/modelzoo/vidu-q3-turbo-official/image-to-video?lang=javascript) |
@@ -55,7 +55,11 @@
 | 万相2.7-图生视频-官方版 | 图生视频 | 720P: 600 金币/1秒 | 1080P: 1000 金币/1秒 | 480p: 300 金币/1秒 | [打开](https://bizyair.cn/llms/modelzoo/wan-2-7-official/image-to-video?lang=javascript) |
 | 海螺2.3-图生视频-渠道版 | 图生视频 | 768P, 6s: 1600 金币/1次 | 768P, 10s: 3200 金币/1次 | 1080P, 6s: 2800 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/hailuo-2-3-base/image-to-video?lang=javascript) |
 | 海螺2.3.Fast-图生视频-渠道版 | 图生视频 | 768P, 6s: 1080 金币/1次 | 768P, 10s: 1800 金币/1次 | 1080P, 6s: 1850 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/hailuo-2-3-fast-base/image-to-video?lang=javascript) |
+| 通用视频G.Omni Flash-图生视频-渠道版 | 图生视频 | 10, 4k: 600 金币/1次 | 8, 4k: 540 金币/1次 | 6, 4k: 510 金币/1次 | 4, 4k: 450 金币/1次 | 10, 720p/1080p: 300 金币/1次 | 4/6/8, 720p/1080p: 280 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/bza-video-g-omni-flash-base/image-to-video?lang=javascript) |
+| 通用视频V.3.1-首尾帧生视频-官方版 | 首尾帧生视频 | 720p, 4, false: 4800 金币/1次 | 720p, 6, false: 7200 金币/1次 | 720p, 8, false: 9600 金币/1次 | 1080p, 4, false: 4800 金币/1次 | 1080p, 6, false: 7200 金币/1次 | 1080p, 8, false: 9600 金币/1次 | 4k, 4, false: 9600 金币/1次 | 4k, 6, false: 14400 金币/1次 | 4k, 8, false: 19200 金币/1次 | 720p, 4, true: 9600 金币/1次 | 720p, 6, true: 14400 金币/1次 | 720p, 8, true: 19200 金币/1次 | 1080p, 4, true: 9600 金币/1次 | 1080p, 6, true: 14400 金币/1次 | 1080p, 8, true: 19200 金币/1次 | 4k, 4, true: 13000 金币/1次 | 4k, 6, true: 19500 金币/1次 | 4k, 8, true: 26000 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/bza-video-v3-1-official/flf-to-video?lang=javascript) |
 | 通用视频V.3.1.Fast-图生视频-渠道版 | 图生视频 | 720p: 200 金币/1次 | 1080p: 250 金币/1次 | 4k: 500 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/bza-video-v3-1-fast-base/image-to-video?lang=javascript) |
+| 通用视频V.3.1.Fast-首尾帧生视频-官方版 | 首尾帧生视频 | 720p, 4, false: 2000 金币/1次 | 720p, 6, false: 3000 金币/1次 | 720p, 8, false: 4000 金币/1次 | 1080p, 4, false: 2400 金币/1次 | 1080p, 6, false: 3600 金币/1次 | 1080p, 8, false: 4800 金币/1次 | 4k, 4, false: 6000 金币/1次 | 4k, 6, false: 9000 金币/1次 | 4k, 8, false: 12000 金币/1次 | 720p, 4, true: 2400 金币/1次 | 720p, 6, true: 3600 金币/1次 | 720p, 8, true: 4800 金币/1次 | 1080p, 4, true: 3000 金币/1次 | 1080p, 6, true: 4500 金币/1次 | 1080p, 8, true: 6000 金币/1次 | 4k, 4, true: 6800 金币/1次 | 4k, 6, true: 10200 金币/1次 | 4k, 8, true: 13600 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/bza-video-v3-1-fast-official/flf-to-video?lang=javascript) |
+| 通用视频V.3.1.Lite-首尾帧生视频-官方版 | 首尾帧生视频 | 720p, 4, false: 720 金币/1次 | 720p, 6, false: 1080 金币/1次 | 720p, 8, false: 1440 金币/1次 | 720p, 4, true: 1200 金币/1次 | 720p, 6, true: 1800 金币/1次 | 720p, 8, true: 2400 金币/1次 | 1080p, 4, false: 1200 金币/1次 | 1080p, 6, false: 1800 金币/1次 | 1080p, 8, false: 2400 金币/1次 | 1080p, 4, true: 2000 金币/1次 | 1080p, 6, true: 3000 金币/1次 | 1080p, 8, true: 4000 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/bza-video-v3-1-lite-official/flf-to-video?lang=javascript) |
 | 通用视频V.3.1.Pro-图生视频-渠道版 | 图生视频 | 720p: 800 金币/1次 | 1080p: 1000 金币/1次 | 4k: 1400 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/bza-video-v3-1-pro-base/image-to-video?lang=javascript) |
 | 通用视频X-图生视频-官方版 | 图生视频 | 6: 1900 金币/1次 | 10: 3150 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/bza-video-x-official/image-to-video?lang=javascript) |
 | 通用视频X-图生视频-渠道版 | 图生视频 | 50金币/秒 | [打开](https://bizyair.cn/llms/modelzoo/bza-video-x-base/image-to-video?lang=javascript) |
@@ -90,7 +94,7 @@
 | 万相2.7-参考生视频-官方版 | 参考生视频 | 720P: 600 金币/1秒 | 1080P: 1000 金币/1秒 | 480p: 300 金币/1秒 | [打开](https://bizyair.cn/llms/modelzoo/wan-2-7-official/reference-to-video?lang=javascript) |
 | 可灵O3.4K-参考生视频-渠道版 | 参考生视频 | true: 700 金币/1秒 | false: 550 金币/1秒 | [打开](https://bizyair.cn/llms/modelzoo/kling-o3-4k-base/reference-to-video?lang=javascript) |
 
-## Text to Image (14 个)
+## Text to Image (15 个)
 
 | 模型名称 | 功能 | 价格 | 文档地址 |
 |---------|------|------|---------|
@@ -99,28 +103,29 @@
 | Seedream 5.0-文生图-官方版 | 文生图 | 220 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/seedream-5-0-official/text-to-image?lang=javascript) |
 | 万相2.7-文生图-官方版 | 文生图 | 200 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/wan-2-7-image-official/text-to-image?lang=javascript) |
 | 万相2.7.Pro-文生图-官方版 | 文生图 | 500 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/wan-2-7-image-pro-offcial/text-to-image?lang=javascript) |
-| 通义Z-Image.Turbo-文生图-官方版 | 文生图 | 总像素数<=1024x1024，5金币/张；总像素数>1024x1024，10金币/张； | [打开](https://bizyair.cn/llms/modelzoo/z-image-turbo/text-to-image?lang=javascript) |
+| 通义Qwen-Image-文生图 | 文生图 | 100 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/qwen-image/text-to-image?lang=javascript) |
+| 通义Z-Image.Turbo-文生图 | 文生图 | 总像素数<=1024x1024，5金币/张；总像素数>1024x1024，10金币/张； | [打开](https://bizyair.cn/llms/modelzoo/z-image-turbo/text-to-image?lang=javascript) |
 | 通用图片B.2-文生图-官方版 | 文生图 | 0.5K: 550 金币/1次 | 1K: 550 金币/1次 | 2K: 850 金币/1次 | 4K: 1100 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/bza-image-b2-official/text-to-image?lang=javascript) |
 | 通用图片B.2-文生图-渠道版 | 文生图 | 1K: 200 金币/1次 | 2K: 200 金币/1次 | 4K: 250 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/bza-image-b2-base/text-to-image?lang=javascript) |
 | 通用图片B.Pro-文生图-官方版 | 文生图 | 1K: 700 金币/1次 | 2K: 1000 金币/1次 | 4K: 1300 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/bza-image-b-pro-official/text-to-image?lang=javascript) |
 | 通用图片B.Pro-文生图-渠道版 | 文生图 | 1K: 400 金币/1次 | 2K: 400 金币/1次 | 4K: 500 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/bza-image-b-pro-base/text-to-image?lang=javascript) |
-| 通用图片F.K.Max-文生图-渠道版 | 文生图 | 140 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/flux-kontext-max-base/text-to-image?lang=javascript) |
+| 通用图片F.K.Max-文生图-渠道版 | 文生图 | 140 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/bza-image-f-k-max-base/text-to-image?lang=javascript) |
 | 通用图片F.K.Pro-文生图-渠道版 | 文生图 | 70 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/flux-kontext-pro-base/text-to-image?lang=javascript) |
-| 通用图片O.2-文生图-官方版 | 文生图 | >2560*1440, high: 3486 金币/1次 | <=2560*1440 且 >1920*1080 , high: 2149 金币/1次 | <=1920*1080, high: 1120 金币/1次 | >2560*1440, medium: 966 金币/1次 | >1920*1080 且 <=2560*1440, medium: 630 金币/1次 | <=1920*1080, medium: 378 金币/1次 | >2560*1440 , low: 224 金币/1次 | >1920*1080 且 <=2560*1440, low: 182 金币/1次 | <=1920*1080, low: 161 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/bza-image-o2-official/text-to-image?lang=javascript) |
+| 通用图片O.2-文生图-官方版 | 文生图 | , high, >2560*1440, : 3486 金币/1次 | , high, <=2560*1440 且 >1920*1080 , : 2149 金币/1次 | , high, <=1920*1080, : 1120 金币/1次 | , medium, >2560*1440, : 966 金币/1次 | , medium, >1920*1080 且 <=2560*1440, : 630 金币/1次 | , medium, <=1920*1080, : 378 金币/1次 | , low, >2560*1440 , : 224 金币/1次 | , low, >1920*1080 且 <=2560*1440, : 182 金币/1次 | , low, <=1920*1080, : 161 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/bza-image-o2-official/text-to-image?lang=javascript) |
 | 通用图片O.2-文生图-渠道版 | 文生图 | 1K: 100 金币/1次 | 2K: 100 金币/1次 | 4K: 100 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/bza-image-o2-base/text-to-image?lang=javascript) |
 
 ## Text to Speech (1 个)
 
 | 模型名称 | 功能 | 价格 | 文档地址 |
 |---------|------|------|---------|
-| 通义Qwen3-TTS-文生语音-官方版 | 文生语音 | 100金币/次 | [打开](https://bizyair.cn/llms/modelzoo/qwen3tts-custom-voice/text-to-audio?lang=javascript) |
+| 通义Qwen3-TTS-文生语音 | 文生语音 | 100金币/次 | [打开](https://bizyair.cn/llms/modelzoo/qwen3tts-custom-voice/text-to-audio?lang=javascript) |
 
-## Text to Video (21 个)
+## Text to Video (25 个)
 
 | 模型名称 | 功能 | 价格 | 文档地址 |
 |---------|------|------|---------|
 | HappyHorse-1.0-文生视频-官方版 | 文生视频 | 720P: 900 金币/1秒 | 1080P: 1600 金币/1秒 | [打开](https://bizyair.cn/llms/modelzoo/happyhorse-1-0-official/text-to-video?lang=javascript) |
-| LTX2.3-文生视频-官方版 | 文生视频 | 300 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/ltx-2-3/text-to-video?lang=javascript) |
+| LTX2.3-文生视频 | 文生视频 | 300 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/ltx-2-3/text-to-video?lang=javascript) |
 | Seedance-2.0-文生视频-官方版 | 文生视频 | 98金币/M Tokens | [打开](https://bizyair.cn/llms/modelzoo/seedance-2-0-official/text-to-video?lang=javascript) |
 | Seedance-2.0-文生视频-渠道版 | 文生视频 | 480p: 600 金币/1秒 | 720p: 1200 金币/1秒 | native1080p: 3000 金币/1秒 | 1080p: 1480 金币/1秒 | 2k: 1620 金币/1秒 | 4k: 1830 金币/1秒 | [打开](https://bizyair.cn/llms/modelzoo/seedance-2-0-base/text-to-video?lang=javascript) |
 | Seedance-2.0.Fast-文生视频-官方版 | 文生视频 | 80金币/M Tokens | [打开](https://bizyair.cn/llms/modelzoo/seedance-2-0-fast-official/text-to-video?lang=javascript) |
@@ -136,7 +141,11 @@
 | 可灵O3.Std-文生视频-渠道版 | 文生视频 | true: 800 金币/1秒 | false: 550 金币/1秒 | [打开](https://bizyair.cn/llms/modelzoo/kling-o3-std-base/text-to-video?lang=javascript) |
 | 海螺2.3-文生视频-渠道版 | 文生视频 | 768P, 6s: 1600 金币/1次 | 768P, 10s: 3200 金币/1次 | 1080P, 6s: 2800 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/hailuo-2-3-base/text-to-video?lang=javascript) |
 | 海螺2.3.Fast-文生视频-渠道版 | 文生视频 | 768P, 6s: 1080 金币/1次 | 768P, 10s: 1800 金币/1次 | 1080P, 6s: 1850 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/hailuo-2-3-fast-base/text-to-video?lang=javascript) |
+| 通用视频G.Omni Flash-文生视频-渠道版 | 文生视频 | 10, 4k: 600 金币/1次 | 8, 4k: 540 金币/1次 | 6, 4k: 510 金币/1次 | 4, 4k: 450 金币/1次 | 10, 1080p/720p: 300 金币/1次 | 4/6/8, 1080p/720p: 280 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/bza-video-g-omni-flash-base/text-to-video?lang=javascript) |
+| 通用视频V.3.1-文生视频-官方版 | 文生视频 | 720p, 4, false: 4800 金币/1次 | 720p, 6, false: 7200 金币/1次 | 720p, 8, false: 9600 金币/1次 | 1080p, 4, false: 4800 金币/1次 | 1080p, 6, false: 7200 金币/1次 | 1080p, 8, false: 9600 金币/1次 | 4k, 4, false: 9600 金币/1次 | 4k, 6, false: 14400 金币/1次 | 4k, 8, false: 19200 金币/1次 | 720p, 4, true: 9600 金币/1次 | 720p, 6, true: 14400 金币/1次 | 720p, 8, true: 19200 金币/1次 | 1080p, 4, true: 9600 金币/1次 | 1080p, 6, true: 14400 金币/1次 | 1080p, 8, true: 19200 金币/1次 | 4k, 4, true: 13000 金币/1次 | 4k, 6, true: 19500 金币/1次 | 4k, 8, true: 26000 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/bza-video-v3-1-official/text-to-video?lang=javascript) |
+| 通用视频V.3.1.Fast-文生视频-官方版 | 文生视频 | 720p, 4, false: 2000 金币/1次 | 720p, 6, false: 3000 金币/1次 | 720p, 8, false: 4000 金币/1次 | 1080p, 4, false: 2400 金币/1次 | 1080p, 6, false: 3600 金币/1次 | 1080p, 8, false: 4800 金币/1次 | 4k, 4, false: 6000 金币/1次 | 4k, 6, false: 9000 金币/1次 | 4k, 8, false: 12000 金币/1次 | 720p, 4, true: 2400 金币/1次 | 720p, 6, true: 3600 金币/1次 | 720p, 8, true: 4800 金币/1次 | 1080p, 4, true: 3000 金币/1次 | 1080p, 6, true: 4500 金币/1次 | 1080p, 8, true: 6000 金币/1次 | 4k, 4, true: 6800 金币/1次 | 4k, 6, true: 10200 金币/1次 | 4k, 8, true: 13600 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/bza-video-v3-1-fast-official/text-to-video?lang=javascript) |
 | 通用视频V.3.1.Fast-文生视频-渠道版 | 文生视频 | 720p: 200 金币/1次 | 1080p: 250 金币/1次 | 4k: 500 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/bza-video-v3-1-fast-base/text-to-video?lang=javascript) |
+| 通用视频V.3.1.Lite-文生视频-官方版 | 文生视频 | 720p, 4, false: 720 金币/1次 | 720p, 6, false: 1080 金币/1次 | 720p, 8, false: 1440 金币/1次 | 720p, 4, true: 1200 金币/1次 | 720p, 6, true: 1800 金币/1次 | 720p, 8, true: 2400 金币/1次 | 1080p, 4, false: 1200 金币/1次 | 1080p, 6, false: 1800 金币/1次 | 1080p, 8, false: 2400 金币/1次 | 1080p, 4, true: 2000 金币/1次 | 1080p, 6, true: 3000 金币/1次 | 1080p, 8, true: 4000 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/bza-video-v3-1-lite-official/text-to-video?lang=javascript) |
 | 通用视频V.3.1.Pro-文生视频-渠道版 | 文生视频 | 720p: 800 金币/1次 | 1080p: 1000 金币/1次 | 4k: 1400 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/bza-video-v3-1-pro-base/text-to-video?lang=javascript) |
 | 通用视频X-文生视频-官方版 | 文生视频 | 6: 1900 金币/1次 | 10: 3150 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/bza-video-x-official/text-to-video?lang=javascript) |
 | 通用视频X-文生视频-渠道版 | 文生视频 | 50金币/秒 | [打开](https://bizyair.cn/llms/modelzoo/bza-video-x-base/text-to-video?lang=javascript) |
@@ -159,12 +168,12 @@
 
 | 模型名称 | 功能 | 价格 | 文档地址 |
 |---------|------|------|---------|
-| JoyCaption3-图像描述-官方版 | 视觉 | 6金币/次 | [打开](https://bizyair.cn/llms/modelzoo/joycaption3/vision?lang=javascript) |
+| JoyCaption3-图像描述 | 视觉 | 6金币/次 | [打开](https://bizyair.cn/llms/modelzoo/joycaption3/vision?lang=javascript) |
 | 通用视觉G.3.1.Flash-Lite-视觉-官方版 | 视觉 | 金币：1.75 / 1000 * prompt_tokens + 10.5 / 1000 * completion_tokens | [打开](https://bizyair.cn/llms/modelzoo/bza-vision-g3-1-flash-lite-official/vision?lang=javascript) |
 | 通用视觉G.3.1.Pro-视觉-官方版 | 视觉 | 金币：14 / 1000 * prompt_tokens + 84 / 1000 * completion_tokens | [打开](https://bizyair.cn/llms/modelzoo/bza-vision-g3-1-pro-official/vision?lang=javascript) |
 | 通用视觉G.3.Flash-视觉-官方版 | 视觉 | 金币：3.5 / 1000 * prompt_tokens + 21 / 1000 * completion_tokens | [打开](https://bizyair.cn/llms/modelzoo/bza-vision-g3-flash-official/vision?lang=javascript) |
 
-## 多功能模型汇总 (33 个)
+## 多功能模型汇总 (36 个)
 
 | 模型标识 | 支持功能数 |
 |---------|-----------|
@@ -172,14 +181,17 @@
 | `bza-image-b-pro-official` | 2 |
 | `bza-image-b2-base` | 2 |
 | `bza-image-b2-official` | 2 |
+| `bza-image-f-k-max-base` | 2 |
 | `bza-image-o2-base` | 2 |
 | `bza-image-o2-official` | 2 |
+| `bza-video-g-omni-flash-base` | 2 |
 | `bza-video-v3-1-fast-base` | 3 |
+| `bza-video-v3-1-fast-official` | 2 |
+| `bza-video-v3-1-lite-official` | 2 |
+| `bza-video-v3-1-official` | 2 |
 | `bza-video-v3-1-pro-base` | 3 |
 | `bza-video-x-base` | 2 |
 | `bza-video-x-official` | 3 |
-| `flux-kontext-max-base` | 2 |
-| `flux-kontext-pro-base` | 2 |
 | `hailuo-2-3-base` | 2 |
 | `hailuo-2-3-fast-base` | 2 |
 | `happyhorse-1-0-official` | 4 |

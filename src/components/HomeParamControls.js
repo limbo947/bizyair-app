@@ -6,6 +6,7 @@ import {
   FluxKontextControls,
   WanSizeControls,
   WidthHeightControls,
+  QwenImageControls,
 } from './ParamControls';
 import {
   SeedanceVideoControls,
@@ -19,6 +20,7 @@ import {
   LtxVideoControls,
   BzaVideoXControls,
   BzaVideoV3Controls,
+  BzaVideoGControls,
   DreamActorControls,
 } from './VideoParamControls';
 import { LLMChatControls } from './LLMControls';
@@ -398,6 +400,51 @@ function HomeParamControlsInner({
           setResolution={s('resolution')}
           aspectRatio={state.aspectRatio}
           setAspectRatio={s('aspectRatio')}
+          duration={state.duration}
+          setDuration={s('duration')}
+          durationOptions={currentModel.durationOptions}
+          generateAudio={state.generateAudio}
+          setGenerateAudio={s('generateAudio')}
+          seed={state.seed}
+          setSeed={s('seed')}
+          negativePrompt={state.negativePrompt}
+          setNegativePrompt={s('negativePrompt')}
+          supportsAudio={currentModel.supportsAudio}
+          supportsSeed={currentModel.supportsSeed}
+          supportsNegativePrompt={currentModel.supportsNegativePrompt}
+          mode={mode}
+        />
+      );
+    case 'bza-video-g':
+      return (
+        <BzaVideoGControls
+          resolutions={currentResolutions}
+          videoRatios={currentRatios}
+          resolution={state.resolution}
+          setResolution={s('resolution')}
+          aspectRatio={state.aspectRatio}
+          setAspectRatio={s('aspectRatio')}
+          duration={state.duration}
+          setDuration={s('duration')}
+          durationOptions={currentModel.durationOptions}
+          mode={mode}
+        />
+      );
+    case 'qwen-image':
+      return (
+        <QwenImageControls
+          customWidth={state.customWidth}
+          setCustomWidth={s('customWidth')}
+          customHeight={state.customHeight}
+          setCustomHeight={s('customHeight')}
+          steps={state.steps}
+          setSteps={s('steps')}
+          guidanceScale={state.guidanceScale}
+          setGuidanceScale={s('guidanceScale')}
+          negativePrompt={state.negativePrompt}
+          setNegativePrompt={s('negativePrompt')}
+          seed={state.seed}
+          setSeed={s('seed')}
         />
       );
     case 'dreamactor':

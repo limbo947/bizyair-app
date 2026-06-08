@@ -242,6 +242,45 @@ export function WanSizeControls({ currentResolutions, resolution, setResolution,
   );
 }
 
+export function QwenImageControls({ customWidth, setCustomWidth, customHeight, setCustomHeight, steps, setSteps, guidanceScale, setGuidanceScale, negativePrompt, setNegativePrompt, seed, setSeed }) {
+  const { styles, colors } = useStyles();
+  return (
+    <>
+      <View style={styles.card}>
+        <ParamLabel label="图片尺寸" required={false} />
+        <View style={styles.dimsRow}>
+          <View style={styles.dimWrap}>
+            <Text style={styles.dimLabel}>宽</Text>
+            <TextInput style={styles.dimInput} value={customWidth} onChangeText={setCustomWidth} keyboardType="numeric" placeholder="1024" placeholderTextColor={colors.textTertiary} />
+          </View>
+          <Text style={styles.dimX}>×</Text>
+          <View style={styles.dimWrap}>
+            <Text style={styles.dimLabel}>高</Text>
+            <TextInput style={styles.dimInput} value={customHeight} onChangeText={setCustomHeight} keyboardType="numeric" placeholder="1024" placeholderTextColor={colors.textTertiary} />
+          </View>
+        </View>
+        <Text style={styles.priceHint}>宽高范围: 256~2048</Text>
+      </View>
+      <View style={styles.card}>
+        <ParamLabel label="步数" required={false} />
+        <TextInput style={styles.dimInputFull} value={steps !== undefined ? String(steps) : ''} onChangeText={(text) => setSteps(text ? parseInt(text) : undefined)} keyboardType="numeric" placeholder="6 ~ 50" placeholderTextColor={colors.textTertiary} />
+      </View>
+      <View style={styles.card}>
+        <ParamLabel label="引导系数" required={false} />
+        <TextInput style={styles.dimInputFull} value={guidanceScale !== undefined ? String(guidanceScale) : ''} onChangeText={(text) => setGuidanceScale(text ? parseFloat(text) : undefined)} keyboardType="decimal-pad" placeholder="0.1 ~ 10" placeholderTextColor={colors.textTertiary} />
+      </View>
+      <View style={styles.card}>
+        <ParamLabel label="反向提示词" required={false} />
+        <TextInput style={[styles.dimInputFull, { minHeight: 60 }]} value={negativePrompt || ''} onChangeText={setNegativePrompt} placeholder="描述不想要的元素" placeholderTextColor={colors.textTertiary} multiline numberOfLines={2} />
+      </View>
+      <View style={styles.card}>
+        <ParamLabel label="种子" required={false} />
+        <TextInput style={styles.dimInputFull} value={seed || ''} onChangeText={(text) => setSeed(text.replace(/[^0-9]/g, ''))} keyboardType="numeric" placeholder="留空随机" placeholderTextColor={colors.textTertiary} />
+      </View>
+    </>
+  );
+}
+
 export function WidthHeightControls({ sizePreset, setSizePreset, customWidth, setCustomWidth, customHeight, setCustomHeight, negativePrompt, setNegativePrompt, seed, setSeed, batchSize, setBatchSize, supportsNegativePrompt, supportsSeed, supportsBatchSize }) {
   const { styles, colors } = useStyles();
   return (

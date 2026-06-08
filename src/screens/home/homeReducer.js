@@ -78,6 +78,8 @@ const initialState = {
   returnLastFrame: false,
   topP: 0.95,
   style: 'general',
+  steps: undefined,
+  guidanceScale: undefined,
 };
 
 const ARRAY_FIELDS = new Set([

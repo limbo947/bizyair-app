@@ -774,8 +774,14 @@ export function BzaVideoXControls({
 export function BzaVideoV3Controls({
   resolutions, videoRatios, resolution, setResolution,
   aspectRatio, setAspectRatio,
+  duration, setDuration, durationOptions,
+  generateAudio, setGenerateAudio,
+  seed, setSeed,
+  negativePrompt, setNegativePrompt,
+  supportsAudio, supportsSeed, supportsNegativePrompt,
+  mode,
 }) {
-  const { styles } = useStyles();
+  const { styles, colors } = useStyles();
   return (
     <>
       <View style={styles.card}>
@@ -794,6 +800,81 @@ export function BzaVideoV3Controls({
           {videoRatios.map((r) => (
             <Pressable key={r} style={({ pressed }) => [styles.selectorButton, aspectRatio === r && styles.selectorButtonActive, pressed && styles.pressedStyle]} onPress={() => setAspectRatio(r)}>
               <Text style={[styles.selectorText, aspectRatio === r && styles.selectorTextActive]}>{r}</Text>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+      {durationOptions && (
+        <View style={styles.card}>
+          <ParamLabel label="时长" required />
+          <View style={styles.ratioGrid}>
+            {durationOptions.map((d) => (
+              <Pressable key={d} style={({ pressed }) => [styles.ratioButton, String(duration) === String(d) && styles.ratioButtonActive, pressed && styles.pressedStyle]} onPress={() => setDuration(d)}>
+                <Text style={[styles.ratioText, String(duration) === String(d) && styles.ratioTextActive]}>{d}s</Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+      )}
+      {supportsAudio && (
+        <View style={styles.card}>
+          <View style={styles.switchRow}>
+            <Text style={styles.switchLabel}>生成音频</Text>
+            <Switch value={generateAudio || false} onValueChange={setGenerateAudio} trackColor={{ false: colors.border, true: colors.primary }} thumbColor={generateAudio ? colors.textInverse : colors.bg} />
+          </View>
+        </View>
+      )}
+      {supportsSeed && (
+        <View style={styles.card}>
+          <ParamLabel label="种子" required={false} />
+          <TextInput style={styles.textInput} value={seed ?? ''} onChangeText={setSeed} placeholder="留空则随机" placeholderTextColor={colors.textTertiary} keyboardType="numeric" />
+        </View>
+      )}
+      {supportsNegativePrompt && (
+        <View style={styles.card}>
+          <ParamLabel label="反向提示词" required={false} />
+          <TextInput style={[styles.textInput, styles.textInputMultiline]} value={negativePrompt ?? ''} onChangeText={setNegativePrompt} placeholder="不希望出现的内容" placeholderTextColor={colors.textTertiary} multiline numberOfLines={2} />
+        </View>
+      )}
+    </>
+  );
+}
+
+export function BzaVideoGControls({
+  resolutions, videoRatios, resolution, setResolution,
+  aspectRatio, setAspectRatio,
+  duration, setDuration, durationOptions,
+  mode,
+}) {
+  const { styles } = useStyles();
+  return (
+    <>
+      <View style={styles.card}>
+        <ParamLabel label="分辨率" required />
+        <View style={styles.ratioGrid}>
+          {resolutions.map((r) => (
+            <Pressable key={r} style={({ pressed }) => [styles.ratioButton, resolution === r && styles.ratioButtonActive, pressed && styles.pressedStyle]} onPress={() => setResolution(r)}>
+              <Text style={[styles.ratioText, resolution === r && styles.ratioTextActive]}>{r}</Text>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+      <View style={styles.card}>
+        <ParamLabel label="宽高比" required={false} />
+        <View style={styles.selectorRow}>
+          {videoRatios.map((r) => (
+            <Pressable key={r} style={({ pressed }) => [styles.selectorButton, aspectRatio === r && styles.selectorButtonActive, pressed && styles.pressedStyle]} onPress={() => setAspectRatio(r)}>
+              <Text style={[styles.selectorText, aspectRatio === r && styles.selectorTextActive]}>{r}</Text>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+      <View style={styles.card}>
+        <ParamLabel label="时长" required />
+        <View style={styles.ratioGrid}>
+          {durationOptions.map((d) => (
+            <Pressable key={d} style={({ pressed }) => [styles.ratioButton, String(duration) === String(d) && styles.ratioButtonActive, pressed && styles.pressedStyle]} onPress={() => setDuration(d)}>
+              <Text style={[styles.ratioText, String(duration) === String(d) && styles.ratioTextActive]}>{d}s</Text>
             </Pressable>
           ))}
         </View>
@@ -821,4 +902,6 @@ const createStyles = (colors) => ({
   ratioButtonActive: { backgroundColor: colors.primary },
   ratioText: { fontSize: Typography.fontSize.footnote, color: colors.textSecondary, fontWeight: Typography.fontWeight.medium },
   ratioTextActive: { color: colors.textInverse, fontWeight: Typography.fontWeight.semibold },
+  textInput: { backgroundColor: colors.bg, borderRadius: Radius.sm, borderCurve: 'continuous', paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, fontSize: Typography.fontSize.footnote, color: colors.textPrimary },
+  textInputMultiline: { minHeight: 60, textAlignVertical: 'top' },
 });

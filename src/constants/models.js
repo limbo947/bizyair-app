@@ -65,6 +65,31 @@ const BZA_V3_PRO_PRICES = { '720p': 800, '1080p': 1000, '4k': 1400 };
 /** Video V3.1 Fast 按分辨率计费 */
 const BZA_V3_FAST_PRICES = { '720p': 200, '1080p': 250, '4k': 500 };
 
+/** Video V3.1 Lite 官方版 按分辨率×时长×音频计费 */
+const BZA_V3_LITE_OFFICIAL_PRICES = {
+  '720p': { 4: { false: 720, true: 1200 }, 6: { false: 1080, true: 1800 }, 8: { false: 1440, true: 2400 } },
+  '1080p': { 4: { false: 1200, true: 2000 }, 6: { false: 1800, true: 3000 }, 8: { false: 2400, true: 4000 } },
+};
+/** Video V3.1 官方版 按分辨率×时长×音频计费 */
+const BZA_V3_OFFICIAL_PRICES = {
+  '720p': { 4: { false: 4800, true: 9600 }, 6: { false: 7200, true: 14400 }, 8: { false: 9600, true: 19200 } },
+  '1080p': { 4: { false: 4800, true: 9600 }, 6: { false: 7200, true: 14400 }, 8: { false: 9600, true: 19200 } },
+  '4k': { 4: { false: 9600, true: 13000 }, 6: { false: 14400, true: 19500 }, 8: { false: 19200, true: 26000 } },
+};
+/** Video V3.1 Fast 官方版 按分辨率×时长×音频计费 */
+const BZA_V3_FAST_OFFICIAL_PRICES = {
+  '720p': { 4: { false: 2000, true: 2400 }, 6: { false: 3000, true: 3600 }, 8: { false: 4000, true: 4800 } },
+  '1080p': { 4: { false: 2400, true: 3000 }, 6: { false: 3600, true: 4500 }, 8: { false: 4800, true: 6000 } },
+  '4k': { 4: { false: 6000, true: 6800 }, 6: { false: 9000, true: 10200 }, 8: { false: 12000, true: 13600 } },
+};
+
+/** Video G.Omni Flash 按分辨率×时长计费 */
+const BZA_VIDEO_G_PRICES = {
+  '720p': { 4: 280, 6: 280, 8: 280, 10: 300 },
+  '1080p': { 4: 280, 6: 280, 8: 280, 10: 300 },
+  '4k': { 4: 450, 6: 510, 8: 540, 10: 600 },
+};
+
 /** Z-Image Turbo 按像素面积计费阈值 */
 const Z_IMAGE_PRICES = { small: 5, large: 10 };
 const Z_IMAGE_PIXEL_THRESHOLD = 1024 * 1024;
@@ -197,6 +222,26 @@ function calcViduQ3TurboOfficialPrice(params) {
 function calcFixedPrice(price) {
   return () => price;
 }
+
+/** Video V3.1 官方版 按分辨率×时长×音频计费 */
+function calcV3OfficialPrice(priceTable) {
+  return (params) => {
+    const res = params.resolution || '720p';
+    const dur = parseInt(params.duration) || 4;
+    const audio = !!params.generateAudio;
+    return priceTable[res]?.[dur]?.[audio] || priceTable[res]?.[4]?.[false] || 720;
+  };
+}
+
+/** Video G.Omni Flash 按分辨率×时长计费 */
+function calcVideoGPrice(params) {
+  const res = params.resolution || '720p';
+  const dur = parseInt(params.duration) || 4;
+  return BZA_VIDEO_G_PRICES[res]?.[dur] || 280;
+}
+
+/** Qwen-Image 固定价格 */
+const QWEN_IMAGE_PRICE = 100;
 
 export const MODELS = {
   'bza-image-b2-base': {
@@ -370,6 +415,36 @@ export const MODELS = {
     maxImages: 14,
     supportsImageToImage: true,
   },
+  'bza-image-f-k-pro-base': {
+    name: 'F.K.Pro 新版',
+    icon: { name: 'image-outline', color: '#FF6B6B' },
+    manufacturer: 'blackforest',
+    category: 'text-to-image',
+    modes: ['text-to-image', 'image-to-image'],
+    paramType: 'flux-kontext',
+    prices: { default: 70 },
+    textToImageRatios: ['21:9', '16:9', '4:3', '1:1', '3:4', '9:16'],
+    imageToImageRatios: ['21:9', '16:9', '4:3', '1:1', '3:4', '9:16'],
+    maxPromptLength: 2500,
+    imageField: 'image_urls',
+    maxImages: 14,
+    supportsImageToImage: true,
+  },
+  'bza-image-f-k-max-base': {
+    name: 'F.K.Max 新版',
+    icon: { name: 'image-outline', color: '#FF6B6B' },
+    manufacturer: 'blackforest',
+    category: 'text-to-image',
+    modes: ['text-to-image', 'image-to-image'],
+    paramType: 'flux-kontext',
+    prices: { default: 140 },
+    textToImageRatios: ['21:9', '16:9', '4:3', '1:1', '3:4', '9:16'],
+    imageToImageRatios: ['21:9', '16:9', '4:3', '1:1', '3:4', '9:16'],
+    maxPromptLength: 2500,
+    imageField: 'image_urls',
+    maxImages: 14,
+    supportsImageToImage: true,
+  },
   'wan-2-7-image-official': {
     name: '万相2.7',
     icon: { name: 'image-outline', color: '#FF6A00' },
@@ -419,6 +494,21 @@ export const MODELS = {
     maxPromptLength: 2500,
     supportsImageToImage: false,
     supportsNegativePrompt: true, supportsSeed: true, supportsBatchSize: true,
+  },
+  'qwen-image': {
+    name: 'Qwen-Image',
+    icon: { name: 'image-outline', color: '#6C5CE7' },
+    manufacturer: 'siliconflow',
+    category: 'text-to-image',
+    modes: ['text-to-image'],
+    paramType: 'qwen-image',
+    priceCalculator: calcFixedPrice(QWEN_IMAGE_PRICE),
+    maxPromptLength: 2500,
+    supportsImageToImage: false,
+    supportsNegativePrompt: true, supportsSeed: true,
+    stepsRange: [6, 50], defaultSteps: 15,
+    sizeRange: [256, 2048],
+    guidanceScaleRange: [0.1, 10], defaultGuidanceScale: 4,
   },
   'seedance-2-0-official': {
     name: 'Seedance 2.0',
@@ -866,6 +956,71 @@ export const MODELS = {
     videoRatios: ['16:9', '9:16'],
     maxPromptLength: 8000,
   },
+  'bza-video-v3-1-official': {
+    name: 'Video V3.1 官方版',
+    icon: { name: 'videocam-outline', color: '#4285F4' },
+    manufacturer: 'google',
+    category: 'text-to-video',
+    paramType: 'bza-video-v3',
+    modes: ['text-to-video', 'flf-to-video'],
+    priceCalculator: calcV3OfficialPrice(BZA_V3_OFFICIAL_PRICES),
+    resolutions: ['720p', '1080p', '4k'],
+    videoRatios: ['16:9', '9:16'],
+    maxPromptLength: 8000,
+    durationOptions: [4, 6, 8],
+    supportsAudio: true,
+    supportsSeed: true,
+    supportsNegativePrompt: true,
+    usesFlfUrlFields: true,
+  },
+  'bza-video-v3-1-fast-official': {
+    name: 'Video V3.1 Fast 官方版',
+    icon: { name: 'videocam-outline', color: '#4285F4' },
+    manufacturer: 'google',
+    category: 'text-to-video',
+    paramType: 'bza-video-v3',
+    modes: ['text-to-video', 'flf-to-video'],
+    priceCalculator: calcV3OfficialPrice(BZA_V3_FAST_OFFICIAL_PRICES),
+    resolutions: ['720p', '1080p', '4k'],
+    videoRatios: ['16:9', '9:16'],
+    maxPromptLength: 8000,
+    durationOptions: [4, 6, 8],
+    supportsAudio: true,
+    supportsSeed: true,
+    supportsNegativePrompt: true,
+    usesFlfUrlFields: true,
+  },
+  'bza-video-v3-1-lite-official': {
+    name: 'Video V3.1 Lite 官方版',
+    icon: { name: 'videocam-outline', color: '#4285F4' },
+    manufacturer: 'google',
+    category: 'text-to-video',
+    paramType: 'bza-video-v3',
+    modes: ['text-to-video', 'flf-to-video'],
+    priceCalculator: calcV3OfficialPrice(BZA_V3_LITE_OFFICIAL_PRICES),
+    resolutions: ['720p', '1080p'],
+    videoRatios: ['16:9', '9:16'],
+    maxPromptLength: 8000,
+    durationOptions: [4, 6, 8],
+    supportsAudio: true,
+    supportsSeed: true,
+    supportsNegativePrompt: true,
+    usesFlfUrlFields: true,
+  },
+  'bza-video-g-omni-flash-base': {
+    name: 'Video G.Omni Flash',
+    icon: { name: 'videocam-outline', color: '#4285F4' },
+    manufacturer: 'google',
+    category: 'text-to-video',
+    paramType: 'bza-video-g',
+    modes: ['text-to-video', 'image-to-video'],
+    priceCalculator: calcVideoGPrice,
+    resolutions: ['720p', '1080p', '4k'],
+    videoRatios: ['16:9', '9:16'],
+    durationOptions: [4, 6, 8, 10],
+    maxPromptLength: 2048,
+    maxImages: 3,
+  },
 
   'dreamactor-2-0-base': {
     name: 'DreamActor 2.0',
@@ -1039,6 +1194,7 @@ export const VIDEO_RESOLUTIONS = {
   HAPPYHORSE: ['720P', '1080P'],
   BZA_X: ['480p', '720p'],
   BZA_V3: ['720p', '1080p', '4k'],
+  BZA_G: ['720p', '1080p', '4k'],
   DREAMACTOR: [],
 };
 
@@ -1049,6 +1205,7 @@ export const VIDEO_RATIOS = {
   HAPPYHORSE: ['16:9', '9:16', '1:1', '4:3', '3:4', '4:5', '5:4'],
   BZA_X: ['16:9', '2:3', '1:1', '3:2', '9:16'],
   BZA_V3: ['16:9', '9:16'],
+  BZA_G: ['16:9', '9:16'],
   VIDU: ['16:9', '9:16', '4:3', '3:4', '1:1'],
   KLING: ['16:9', '9:16', '1:1'],
   WAN: ['16:9', '9:16', '1:1', '4:3', '3:4'],
