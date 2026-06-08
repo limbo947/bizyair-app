@@ -380,7 +380,7 @@ export function HomeScreen({ onOpenModelSelect }) {
         <View style={styles.card}>
           <View style={styles.promptLabelRow}>
             <Text style={[styles.label, { marginBottom: 0 }]}>
-              提示词{paramType === 'dreamactor' ? <Text style={{ color: colors.textTertiary, fontWeight: '400' }}> (可选)</Text> : <Text style={{ color: colors.error }}> *</Text>}
+              提示词{paramType === 'dreamactor' ? <Text style={{ color: colors.textTertiary, fontWeight: Typography.fontWeight.regular }}> (可选)</Text> : <Text style={{ color: colors.error }}> *</Text>}
             </Text>
             {prompt ? (
               <Pressable style={({ pressed }) => pressed && pressedOpacity(0.6)} onPress={() => stateDispatch({ type: 'SET_FIELD', field: 'prompt', value: '' })} >
