@@ -20,7 +20,7 @@ import { useToastContext } from '../context/ToastContext';
 import { submitWebappTask, uploadImageFile, uploadVideoFile, fetchWebappDetail } from '../services/apiClient';
 import { generateId } from '../utils/helpers';
 import { ENV_API_KEY } from '../constants/models';
-import { Radius, Spacing, ButtonStyles } from '../constants/theme';
+import { Radius, Spacing, Typography, ButtonVariants, pressedOpacity } from '../constants/theme';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { ResizableTextInput } from '../components/ResizableTextInput';
 import { AppHeader } from '../components/AppHeader';
@@ -31,7 +31,7 @@ const WEBAPP_SAVED_LIST_KEY = '@webapp_saved_list';
 const WebappListItem = React.memo(function WebappListItem({ item, onEdit, onDelete, colors, styles }) {
   return (
     <View style={styles.listItem}>
-      <Pressable style={({ pressed }) => [styles.listItemContent, pressed && { opacity: 0.7 }]} onPress={() => onEdit(item)} >
+      <Pressable style={({ pressed }) => [styles.listItemContent, pressed && pressedOpacity()]} onPress={() => onEdit(item)} >
         <View style={styles.listItemHeader}>
           <Text style={styles.listItemName} numberOfLines={1}>{item.name}</Text>
         </View>
@@ -42,7 +42,7 @@ const WebappListItem = React.memo(function WebappListItem({ item, onEdit, onDele
         {item.appDetail?.intro ? <Text style={styles.listItemIntro} numberOfLines={1}>{item.appDetail.intro}</Text> : null}
       </Pressable>
       <View style={styles.listItemActions}>
-        <Pressable style={({ pressed }) => [styles.listItemDeleteBtn, pressed && { opacity: 0.7 }]} onPress={() => onDelete(item.id)} >
+        <Pressable style={({ pressed }) => [styles.listItemDeleteBtn, pressed && pressedOpacity()]} onPress={() => onDelete(item.id)} >
           <Ionicons name="trash-outline" size={16} color={colors.error} />
         </Pressable>
       </View>
@@ -408,7 +408,7 @@ export function WebappScreen() {
 
         <View style={styles.listTitleBar}>
           <Text style={styles.listTitle}>AI 应用</Text>
-          <Pressable style={({ pressed }) => [styles.addBtn, pressed && { opacity: 0.7 }]} onPress={() => enterEditMode()} >
+          <Pressable style={({ pressed }) => [styles.addBtn, pressed && pressedOpacity()]} onPress={() => enterEditMode()} >
             <Ionicons name="add" size={20} color={colors.textInverse} />
             <Text style={styles.addBtnText}>新增</Text>
           </Pressable>
@@ -435,7 +435,7 @@ export function WebappScreen() {
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top }]}>
         <View style={styles.headerInner}>
-          <Pressable style={({ pressed }) => [styles.backButton, pressed && { opacity: 0.7 }]} onPress={() => setMode('list')} >
+          <Pressable style={({ pressed }) => [styles.backButton, pressed && pressedOpacity()]} onPress={() => setMode('list')} >
             <Ionicons name="arrow-back" size={22} color={colors.textPrimary} />
           </Pressable>
           <Text style={styles.headerTitle}>{editingAppId ? '编辑应用' : '新增应用'}</Text>
@@ -452,7 +452,7 @@ export function WebappScreen() {
             </View>
             <TextInput style={styles.apiKeyInput} placeholder="输入你的Bizyair API Key" value={apiKey} onChangeText={setApiKey} secureTextEntry maxLength={100} placeholderTextColor={colors.textPlaceholder} />
             {apiKey.trim() ? (
-              <Pressable style={({ pressed }) => [styles.saveKeyButton, pressed && { opacity: 0.7 }]} onPress={handleSaveApiKey} disabled={isSaving}>
+              <Pressable style={({ pressed }) => [styles.saveKeyButton, pressed && pressedOpacity()]} onPress={handleSaveApiKey} disabled={isSaving}>
                 {isSaving ? <ActivityIndicator size="small" color={colors.textInverse} /> : <Text style={styles.saveKeyButtonText}>保存密钥</Text>}
               </Pressable>
             ) : null}
@@ -467,7 +467,7 @@ export function WebappScreen() {
             <Text style={styles.label}>应用网址/示例API</Text>
             <View style={{ flex: 1 }} />
             {apiCodeText.length > 0 ? (
-              <Pressable style={({ pressed }) => pressed && { opacity: 0.7 }} onPress={() => setApiCodeText('')}>
+              <Pressable style={({ pressed }) => pressed && pressedOpacity()} onPress={() => setApiCodeText('')}>
                 <Text style={styles.clearButtonText}>清空</Text>
               </Pressable>
             ) : null}
@@ -484,11 +484,11 @@ export function WebappScreen() {
             spellCheck={false}
           />
           <View style={styles.parseButtonRow}>
-            <Pressable style={({ pressed }) => [styles.parseButton, isLoadingApp && styles.parseButtonDisabled, { flex: 1 }, pressed && { opacity: 0.7 }]} onPress={handleParse} disabled={isLoadingApp}>
+            <Pressable style={({ pressed }) => [styles.parseButton, isLoadingApp && styles.parseButtonDisabled, { flex: 1 }, pressed && pressedOpacity()]} onPress={handleParse} disabled={isLoadingApp}>
               {isLoadingApp ? <ActivityIndicator size="small" color={colors.textInverse} /> : <Ionicons name="search-outline" size={16} color={colors.textInverse} />}
               <Text style={styles.parseButtonText}>{isLoadingApp ? '获取中...' : '获取参数'}</Text>
             </Pressable>
-            <Pressable style={({ pressed }) => [styles.saveAppButton, !hasParsed && styles.saveAppButtonDisabled, pressed && { opacity: 0.7 }]} onPress={handleSaveApp} disabled={!hasParsed}>
+            <Pressable style={({ pressed }) => [styles.saveAppButton, !hasParsed && styles.saveAppButtonDisabled, pressed && pressedOpacity()]} onPress={handleSaveApp} disabled={!hasParsed}>
               <Ionicons name="save-outline" size={16} color={hasParsed ? colors.primary : colors.textTertiary} />
               <Text style={[styles.saveAppButtonText, !hasParsed && { color: colors.textTertiary }]}>保存</Text>
             </Pressable>
@@ -501,7 +501,7 @@ export function WebappScreen() {
         {/* 应用信息卡片（可折叠） */}
         {hasParsed && appDetail ? (
           <View style={styles.appInfoCard}>
-            <Pressable style={({ pressed }) => [styles.appInfoHeader, pressed && { opacity: 0.7 }]} onPress={() => setAppInfoExpanded(!appInfoExpanded)} >
+            <Pressable style={({ pressed }) => [styles.appInfoHeader, pressed && pressedOpacity()]} onPress={() => setAppInfoExpanded(!appInfoExpanded)} >
               <Ionicons name="apps-outline" size={18} color={colors.primary} />
               <Text style={styles.appInfoName} numberOfLines={1}>{appDetail.name}</Text>
               <Ionicons name={appInfoExpanded ? 'chevron-up-outline' : 'chevron-down-outline'} size={16} color={colors.textTertiary} />
@@ -547,7 +547,7 @@ export function WebappScreen() {
                   <Text style={styles.paramKey}>{key}</Text>
                 </View>
                 {(fieldType === 'customtext' || fieldType === 'string' || ((fieldType === 'number' || fieldType === 'slider') && String(inputValues[key]).length > 0)) ? (
-                  <Pressable style={({ pressed }) => pressed && { opacity: 0.7 }} onPress={() => handleParamChange(key, fieldType === 'number' || fieldType === 'slider' ? '' : '')}>
+                  <Pressable style={({ pressed }) => pressed && pressedOpacity()} onPress={() => handleParamChange(key, fieldType === 'number' || fieldType === 'slider' ? '' : '')}>
                     <Text style={styles.clearButtonText}>清空</Text>
                   </Pressable>
                 ) : null}
@@ -563,7 +563,7 @@ export function WebappScreen() {
                       <Text style={styles.fileInfoText} numberOfLines={1}>{value.split('/').pop().split('?')[0]}</Text>
                     </View>
                   ) : null}
-                  <Pressable style={({ pressed }) => [styles.uploadButton, pressed && { opacity: 0.7 }]} onPress={() => handleFileUpload(key, mediaType)} disabled={uploadingKey === key} >
+                  <Pressable style={({ pressed }) => [styles.uploadButton, pressed && pressedOpacity()]} onPress={() => handleFileUpload(key, mediaType)} disabled={uploadingKey === key} >
                     {uploadingKey === key ? <ActivityIndicator size="small" color={colors.primary} /> : <Ionicons name={uploadIcon} size={18} color={colors.primary} />}
                     <Text style={styles.uploadButtonText}>{uploadLabel}</Text>
                   </Pressable>
@@ -571,7 +571,7 @@ export function WebappScreen() {
               ) : fieldType === 'combo' ? (
                 <Pressable
                   ref={ref => { if (ref) comboRefs.current[key] = ref; }}
-                  style={({ pressed }) => [styles.comboButton, pressed && { opacity: 0.7 }]} onPress={() => {
+                  style={({ pressed }) => [styles.comboButton, pressed && pressedOpacity()]} onPress={() => {
                     const ref = comboRefs.current[key];
                     if (ref) {
                       ref.measure((x, y, width, height, pageX, pageY) => {
@@ -611,7 +611,7 @@ export function WebappScreen() {
                   placeholderTextColor={colors.textPlaceholder}
                 />
               ) : fieldType === 'toggle' ? (
-                <Pressable style={({ pressed }) => [styles.toggleContainer, pressed && { opacity: 0.7 }]} onPress={() => handleParamChange(key, !inputValues[key])} >
+                <Pressable style={({ pressed }) => [styles.toggleContainer, pressed && pressedOpacity()]} onPress={() => handleParamChange(key, !inputValues[key])} >
                   <View style={[styles.toggleTrack, inputValues[key] && styles.toggleTrackActive]}>
                     <View style={[styles.toggleThumb, inputValues[key] && { marginLeft: 20 }]} />
                   </View>
@@ -631,7 +631,7 @@ export function WebappScreen() {
           );
         })}
 
-        <Pressable style={({ pressed }) => [styles.generateButton, isSubmitting && styles.generateButtonDisabled, pressed && { opacity: 0.7 }]} onPress={handleSubmit} disabled={isSubmitting}>
+        <Pressable style={({ pressed }) => [styles.generateButton, isSubmitting && styles.generateButtonDisabled, pressed && pressedOpacity()]} onPress={handleSubmit} disabled={isSubmitting}>
           {isSubmitting ? <ActivityIndicator color={colors.textInverse} /> : null}
           <Text style={styles.generateButtonText}>{isSubmitting ? '提交中...' : '提交任务'}</Text>
         </Pressable>
@@ -645,7 +645,7 @@ export function WebappScreen() {
               {comboOptions.map(item => (
                 <Pressable
                   key={String(item)}
-                  style={({ pressed }) => [styles.comboItem, item === inputValues[comboExpanded] && styles.comboItemActive, pressed && { opacity: 0.7 }]}
+                  style={({ pressed }) => [styles.comboItem, item === inputValues[comboExpanded] && styles.comboItemActive, pressed && pressedOpacity()]}
                   onPress={() => { handleParamChange(comboExpanded, item); setComboExpanded(null); }}
                 >
                   <Text style={item === inputValues[comboExpanded] ? styles.comboItemTextActive : styles.comboItemText}>{item}</Text>
@@ -664,10 +664,10 @@ export function WebappScreen() {
             <Text style={styles.saveNameTitle}>保存应用</Text>
             <TextInput style={styles.saveNameInput} value={saveNameText} onChangeText={setSaveNameText} placeholder="输入应用名称" placeholderTextColor={colors.textPlaceholder} autoFocus />
             <View style={styles.saveNameActions}>
-              <Pressable style={({ pressed }) => [styles.saveNameCancel, pressed && { opacity: 0.7 }]} onPress={() => setSaveNameVisible(false)}>
+              <Pressable style={({ pressed }) => [styles.saveNameCancel, pressed && pressedOpacity()]} onPress={() => setSaveNameVisible(false)}>
                 <Text style={styles.saveNameCancelText}>取消</Text>
               </Pressable>
-              <Pressable style={({ pressed }) => [styles.saveNameConfirm, pressed && { opacity: 0.7 }]} onPress={confirmSaveApp}>
+              <Pressable style={({ pressed }) => [styles.saveNameConfirm, pressed && pressedOpacity()]} onPress={confirmSaveApp}>
                 <Text style={styles.saveNameConfirmText}>确定</Text>
               </Pressable>
             </View>
@@ -685,73 +685,73 @@ const createStyles = (colors) => ({
   header: { backgroundColor: colors.card, paddingLeft: Spacing.md, paddingRight: Spacing.md, paddingVertical: Spacing.sm, borderBottomWidth: 0.5, borderBottomColor: colors.separator },
   headerInner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   backButton: { padding: Spacing.xs },
-  headerTitle: { fontSize: 17, fontWeight: '600', color: colors.textPrimary },
+  headerTitle: { fontSize: Typography.fontSize.body, fontWeight: Typography.fontWeight.semibold, color: colors.textPrimary },
 
   // 列表模式
   listTitleBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md },
-  listTitle: { fontSize: 20, fontWeight: '700', color: colors.textPrimary },
-  addBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.primary, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, borderRadius: Radius.lg, borderCurve: 'continuous' },
-  addBtnText: { color: colors.textInverse, fontSize: 14, fontWeight: '600' },
+  listTitle: { fontSize: Typography.fontSize.title3, fontWeight: Typography.fontWeight.bold, color: colors.textPrimary },
+  addBtn: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, backgroundColor: colors.primary, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, borderRadius: Radius.lg, borderCurve: 'continuous' },
+  addBtnText: { color: colors.textInverse, fontSize: Typography.fontSize.footnote, fontWeight: Typography.fontWeight.semibold },
   listContent: { paddingHorizontal: Spacing.lg, paddingBottom: Spacing.xxl },
   listItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.card, padding: Spacing.lg, borderRadius: Radius.md, borderCurve: 'continuous', marginBottom: Spacing.sm },
   listItemContent: { flex: 1 },
   listItemHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 2 },
-  listItemName: { fontSize: 16, fontWeight: '700', color: colors.textPrimary, flex: 1 },
+  listItemName: { fontSize: Typography.fontSize.callout, fontWeight: Typography.fontWeight.bold, color: colors.textPrimary, flex: 1 },
   listItemMeta: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md, marginBottom: 2 },
-  listItemModel: { fontSize: 12, color: colors.textSecondary },
-  listItemId: { fontSize: 12, color: colors.textTertiary, fontFamily: 'monospace' },
-  listItemIntro: { fontSize: 12, color: colors.textTertiary, lineHeight: 18 },
+  listItemModel: { fontSize: Typography.fontSize.caption1, color: colors.textSecondary },
+  listItemId: { fontSize: Typography.fontSize.caption1, color: colors.textTertiary, fontFamily: 'monospace' },
+  listItemIntro: { fontSize: Typography.fontSize.caption1, color: colors.textTertiary, lineHeight: Typography.lineHeight.tight },
   listItemActions: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, marginLeft: Spacing.sm },
   listItemDeleteBtn: { width: 32, height: 32, borderRadius: 16, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center' },
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 80 },
-  emptyText: { fontSize: 16, color: colors.textTertiary, marginTop: Spacing.md },
-  emptySubtext: { fontSize: 13, color: colors.textTertiary, marginTop: Spacing.xs },
+  emptyText: { fontSize: Typography.fontSize.callout, color: colors.textTertiary, marginTop: Spacing.md },
+  emptySubtext: { fontSize: Typography.fontSize.footnote, color: colors.textTertiary, marginTop: Spacing.xs },
 
   // 编辑模式
   scroll: { flex: 1 },
-  scrollContent: { paddingTop: 8, paddingRight: Spacing.md, paddingBottom: Spacing.xxl, paddingLeft: Spacing.md },
+  scrollContent: { paddingTop: Spacing.sm, paddingRight: Spacing.md, paddingBottom: Spacing.xxl, paddingLeft: Spacing.md },
   card: { backgroundColor: colors.card, padding: Spacing.lg, borderRadius: Radius.md, borderCurve: 'continuous', marginBottom: Spacing.md },
   labelRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, marginBottom: Spacing.sm },
-  label: { fontSize: 13, fontWeight: '600', color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 },
-  clearButtonText: { fontSize: 14, color: colors.primary, fontWeight: '500' },
-  codeInput: { fontSize: 12, color: colors.textPrimary, backgroundColor: colors.bg, borderRadius: Radius.sm, borderCurve: 'continuous', padding: Spacing.md, fontFamily: 'monospace', minHeight: 60, textAlignVertical: 'top', marginBottom: Spacing.sm },
+  label: { fontSize: Typography.fontSize.footnote, fontWeight: Typography.fontWeight.semibold, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: Typography.letterSpacing.wide },
+  clearButtonText: { fontSize: Typography.fontSize.footnote, color: colors.primary, fontWeight: Typography.fontWeight.medium },
+  codeInput: { fontSize: Typography.fontSize.caption1, color: colors.textPrimary, backgroundColor: colors.bg, borderRadius: Radius.sm, borderCurve: 'continuous', padding: Spacing.md, fontFamily: 'monospace', minHeight: 60, textAlignVertical: 'top', marginBottom: Spacing.sm },
   parseButtonRow: { flexDirection: 'row', gap: Spacing.sm },
-  parseButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: colors.primary, paddingVertical: 10, borderRadius: Radius.sm, borderCurve: 'continuous' },
+  parseButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: Spacing.xs, backgroundColor: colors.primary, paddingVertical: Spacing.sm + 2, borderRadius: Radius.sm, borderCurve: 'continuous' },
   parseButtonDisabled: { backgroundColor: colors.primaryDisabled },
-  parseButtonText: { color: colors.textInverse, fontSize: 14, fontWeight: '600' },
-  saveAppButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, paddingHorizontal: Spacing.lg, borderRadius: Radius.sm, borderCurve: 'continuous', borderWidth: 1, borderColor: colors.primary, backgroundColor: colors.bg },
+  parseButtonText: { color: colors.textInverse, fontSize: Typography.fontSize.footnote, fontWeight: Typography.fontWeight.semibold },
+  saveAppButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: Spacing.xs, paddingVertical: Spacing.sm + 2, paddingHorizontal: Spacing.lg, borderRadius: Radius.sm, borderCurve: 'continuous', borderWidth: 1, borderColor: colors.primary, backgroundColor: colors.bg },
   saveAppButtonDisabled: { borderColor: colors.separator },
-  saveAppButtonText: { fontSize: 14, color: colors.primary, fontWeight: '600' },
-  parseErrorText: { color: colors.error, textAlign: 'center', marginBottom: Spacing.md, fontSize: 13 },
+  saveAppButtonText: { fontSize: Typography.fontSize.footnote, color: colors.primary, fontWeight: Typography.fontWeight.semibold },
+  parseErrorText: { color: colors.error, textAlign: 'center', marginBottom: Spacing.md, fontSize: Typography.fontSize.footnote },
 
   // 应用信息卡片（可折叠）
   appInfoCard: { backgroundColor: colors.card, padding: Spacing.lg, borderRadius: Radius.md, borderCurve: 'continuous', marginBottom: Spacing.md },
   appInfoHeader: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
-  appInfoName: { fontSize: 16, fontWeight: '700', color: colors.textPrimary, flex: 1 },
+  appInfoName: { fontSize: Typography.fontSize.callout, fontWeight: Typography.fontWeight.bold, color: colors.textPrimary, flex: 1 },
   appInfoExpanded: { marginTop: Spacing.sm },
   appInfoMeta: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md, marginBottom: Spacing.xs },
-  appInfoModel: { fontSize: 12, color: colors.textSecondary },
-  appInfoId: { fontSize: 12, color: colors.textTertiary, fontFamily: 'monospace' },
-  appInfoIntro: { fontSize: 12, color: colors.textTertiary, lineHeight: 18, marginTop: Spacing.xs },
+  appInfoModel: { fontSize: Typography.fontSize.caption1, color: colors.textSecondary },
+  appInfoId: { fontSize: Typography.fontSize.caption1, color: colors.textTertiary, fontFamily: 'monospace' },
+  appInfoIntro: { fontSize: Typography.fontSize.caption1, color: colors.textTertiary, lineHeight: Typography.lineHeight.tight, marginTop: Spacing.xs },
   webappIdCard: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, backgroundColor: colors.card, paddingVertical: Spacing.md, paddingHorizontal: Spacing.lg, borderRadius: Radius.md, borderCurve: 'continuous', marginBottom: Spacing.md },
-  webappIdText: { fontSize: 15, fontWeight: '600', color: colors.textPrimary },
+  webappIdText: { fontSize: Typography.fontSize.subheadline, fontWeight: Typography.fontWeight.semibold, color: colors.textPrimary },
 
   // 参数卡片
   paramCard: { backgroundColor: colors.card, padding: Spacing.lg, borderRadius: Radius.md, borderCurve: 'continuous', marginBottom: Spacing.sm },
   paramHeader: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 2 },
-  paramLabel: { fontSize: 14, fontWeight: '600', color: colors.textPrimary, marginBottom: 2 },
-  paramKey: { fontSize: 11, color: colors.textTertiary, fontFamily: 'monospace' },
-  paramInput: { fontSize: 14, color: colors.textPrimary, backgroundColor: colors.bg, borderRadius: Radius.sm, borderCurve: 'continuous', padding: Spacing.md },
+  paramLabel: { fontSize: Typography.fontSize.footnote, fontWeight: Typography.fontWeight.semibold, color: colors.textPrimary, marginBottom: 2 },
+  paramKey: { fontSize: Typography.fontSize.caption2, color: colors.textTertiary, fontFamily: 'monospace' },
+  paramInput: { fontSize: Typography.fontSize.footnote, color: colors.textPrimary, backgroundColor: colors.bg, borderRadius: Radius.sm, borderCurve: 'continuous', padding: Spacing.md },
   paramInputMultiline: { minHeight: 80, textAlignVertical: 'top' },
-  rangeHint: { fontSize: 11, color: colors.textTertiary, marginTop: 4 },
+  rangeHint: { fontSize: Typography.fontSize.caption2, color: colors.textTertiary, marginTop: Spacing.xs },
 
   // 文件上传
   imageParamContainer: { gap: Spacing.sm },
   imagePreview: { width: '100%', height: 160, borderRadius: Radius.sm, borderCurve: 'continuous', backgroundColor: colors.bg },
   fileInfoRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, backgroundColor: colors.bg, padding: Spacing.md, borderRadius: Radius.sm, borderCurve: 'continuous' },
-  fileInfoText: { fontSize: 12, color: colors.textSecondary, flex: 1, fontFamily: 'monospace' },
-  uploadButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, borderRadius: Radius.sm, borderCurve: 'continuous', borderWidth: 1, borderColor: colors.primary, backgroundColor: colors.bg },
-  uploadButtonText: { fontSize: 13, color: colors.primary, fontWeight: '500' },
+  fileInfoText: { fontSize: Typography.fontSize.caption1, color: colors.textSecondary, flex: 1, fontFamily: 'monospace' },
+  uploadButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: Spacing.xs, paddingVertical: Spacing.sm + 2, borderRadius: Radius.sm, borderCurve: 'continuous', borderWidth: 1, borderColor: colors.primary, backgroundColor: colors.bg },
+  uploadButtonText: { fontSize: Typography.fontSize.footnote, color: colors.primary, fontWeight: Typography.fontWeight.medium },
 
   // Toggle
   toggleContainer: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
@@ -759,34 +759,34 @@ const createStyles = (colors) => ({
   toggleTrackActive: { backgroundColor: colors.primary },
   toggleThumb: { width: 20, height: 20, borderRadius: 10, borderCurve: 'continuous', backgroundColor: colors.textInverse },
   toggleThumbActive: {},
-  toggleLabel: { fontSize: 14, color: colors.textSecondary },
+  toggleLabel: { fontSize: Typography.fontSize.footnote, color: colors.textSecondary },
 
   // Combo 就地下拉
   comboButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: colors.bg, borderRadius: Radius.sm, borderCurve: 'continuous', padding: Spacing.md, borderWidth: 1, borderColor: colors.separator },
-  comboValue: { fontSize: 14, color: colors.textPrimary, flex: 1 },
+  comboValue: { fontSize: Typography.fontSize.footnote, color: colors.textPrimary, flex: 1 },
   comboOverlay: { flex: 1 },
   comboDropdown: { position: 'absolute', backgroundColor: colors.card, borderRadius: Radius.sm, borderCurve: 'continuous', borderWidth: 1, borderColor: colors.separator, maxHeight: 220, boxShadow: '0 2px 4px rgba(0, 0, 0, 0.15)' },
   comboDropdownScroll: { maxHeight: 220 },
-  comboItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.md, paddingVertical: 10, borderBottomWidth: 0.5, borderBottomColor: colors.separator },
+  comboItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm + 2, borderBottomWidth: 0.5, borderBottomColor: colors.separator },
   comboItemActive: { backgroundColor: colors.primaryBg },
-  comboItemText: { fontSize: 14, color: colors.textPrimary },
-  comboItemTextActive: { fontSize: 14, color: colors.primary, fontWeight: '600' },
+  comboItemText: { fontSize: Typography.fontSize.footnote, color: colors.textPrimary },
+  comboItemTextActive: { fontSize: Typography.fontSize.footnote, color: colors.primary, fontWeight: Typography.fontWeight.semibold },
 
   // 保存名称弹窗
   saveNameOverlay: { flex: 1, backgroundColor: colors.overlayMedium, alignItems: 'center', justifyContent: 'center' },
   saveNameDialog: { backgroundColor: colors.card, borderRadius: Radius.lg, borderCurve: 'continuous', padding: Spacing.xl, width: '80%', maxWidth: 360 },
-  saveNameTitle: { fontSize: 17, fontWeight: '600', color: colors.textPrimary, marginBottom: Spacing.md },
-  saveNameInput: { fontSize: 15, color: colors.textPrimary, borderWidth: 1, borderColor: colors.separator, borderRadius: Radius.sm, borderCurve: 'continuous', padding: Spacing.md, backgroundColor: colors.bg, marginBottom: Spacing.lg },
+  saveNameTitle: { fontSize: Typography.fontSize.body, fontWeight: Typography.fontWeight.semibold, color: colors.textPrimary, marginBottom: Spacing.md },
+  saveNameInput: { fontSize: Typography.fontSize.subheadline, color: colors.textPrimary, borderWidth: 1, borderColor: colors.separator, borderRadius: Radius.sm, borderCurve: 'continuous', padding: Spacing.md, backgroundColor: colors.bg, marginBottom: Spacing.lg },
   saveNameActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: Spacing.md },
   saveNameCancel: { paddingVertical: Spacing.sm, paddingHorizontal: Spacing.lg },
-  saveNameCancelText: { fontSize: 15, color: colors.textSecondary },
+  saveNameCancelText: { fontSize: Typography.fontSize.subheadline, color: colors.textSecondary },
   saveNameConfirm: { paddingVertical: Spacing.sm, paddingHorizontal: Spacing.lg, backgroundColor: colors.primary, borderRadius: Radius.sm, borderCurve: 'continuous' },
-  saveNameConfirmText: { fontSize: 15, color: colors.textInverse, fontWeight: '600' },
+  saveNameConfirmText: { fontSize: Typography.fontSize.subheadline, color: colors.textInverse, fontWeight: Typography.fontWeight.semibold },
 
-  generateButton: { backgroundColor: colors.primary, paddingVertical: ButtonStyles.primary.paddingVertical, borderRadius: ButtonStyles.primary.borderRadius, borderCurve: 'continuous', alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 10, marginBottom: Spacing.sm },
+  generateButton: { backgroundColor: colors.primary, paddingVertical: ButtonVariants.primary.paddingVertical, borderRadius: ButtonVariants.primary.borderRadius, borderCurve: 'continuous', alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: Spacing.md, marginBottom: Spacing.sm },
   generateButtonDisabled: { backgroundColor: colors.primaryDisabled },
-  generateButtonText: { color: colors.textInverse, fontSize: ButtonStyles.primary.fontSize, fontWeight: ButtonStyles.primary.fontWeight, letterSpacing: -0.3 },
-  apiKeyInput: { fontSize: 15, color: colors.textPrimary, borderWidth: 0, borderRadius: Radius.sm, borderCurve: 'continuous', padding: Spacing.md, fontFamily: 'monospace', backgroundColor: colors.bg },
-  saveKeyButton: { backgroundColor: colors.primary, paddingVertical: 10, borderRadius: Radius.sm, borderCurve: 'continuous', alignItems: 'center', marginTop: Spacing.sm },
-  saveKeyButtonText: { color: colors.textInverse, fontSize: 15, fontWeight: '600' },
+  generateButtonText: { color: colors.textInverse, fontSize: ButtonVariants.primary.fontSize, fontWeight: ButtonVariants.primary.fontWeight, letterSpacing: Typography.letterSpacing.tight },
+  apiKeyInput: { fontSize: Typography.fontSize.subheadline, color: colors.textPrimary, borderWidth: 0, borderRadius: Radius.sm, borderCurve: 'continuous', padding: Spacing.md, fontFamily: 'monospace', backgroundColor: colors.bg },
+  saveKeyButton: { backgroundColor: colors.primary, paddingVertical: Spacing.sm + 2, borderRadius: Radius.sm, borderCurve: 'continuous', alignItems: 'center', marginTop: Spacing.sm },
+  saveKeyButtonText: { color: colors.textInverse, fontSize: Typography.fontSize.subheadline, fontWeight: Typography.fontWeight.semibold },
 });
