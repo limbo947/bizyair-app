@@ -1,6 +1,10 @@
 import { Platform } from 'react-native';
 import { File, Paths } from 'expo-file-system';
-import * as MediaLibrary from 'expo-media-library';
+
+function getMediaLibrary() {
+  if (Platform.OS === 'web') return null;
+  return require('expo-media-library');
+}
 
 export async function triggerDownload(url, filename) {
   if (Platform.OS === 'web') {
@@ -14,6 +18,7 @@ export async function triggerDownload(url, filename) {
     return { success: true };
   }
 
+  const MediaLibrary = getMediaLibrary();
   const { status } = await MediaLibrary.requestPermissionsAsync();
   if (status !== 'granted') {
     return { success: false, errorType: 'permission' };
@@ -43,6 +48,7 @@ export async function triggerBatchDownload(urls) {
     return { success: true };
   }
 
+  const MediaLibrary = getMediaLibrary();
   const { status } = await MediaLibrary.requestPermissionsAsync();
   if (status !== 'granted') {
     return { success: false, errorType: 'permission' };

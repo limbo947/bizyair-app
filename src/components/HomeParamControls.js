@@ -6,6 +6,7 @@ import {
   FluxKontextControls,
   WanSizeControls,
   WidthHeightControls,
+  QwenImageControls,
 } from './ParamControls';
 import {
   SeedanceVideoControls,
@@ -19,11 +20,17 @@ import {
   LtxVideoControls,
   BzaVideoXControls,
   BzaVideoV3Controls,
+  BzaVideoGControls,
   DreamActorControls,
 } from './VideoParamControls';
 import { LLMChatControls } from './LLMControls';
 import { VisionGControls, JoyCaptionControls } from './VisionParamControls';
 import { TTSControls } from './TTSControls';
+import { BirefnetControls } from './BirefnetControls';
+import { AceStepControls } from './AceStepControls';
+import { Seedvr2Controls } from './Seedvr2Controls';
+import { FluxKleinControls } from './FluxKleinControls';
+import { KontextLoraControls } from './KontextLoraControls';
 
 function HomeParamControlsInner({
   paramType,
@@ -143,6 +150,14 @@ function HomeParamControlsInner({
           supportsNegativePrompt={currentModel.supportsNegativePrompt}
           supportsSeed={currentModel.supportsSeed}
           supportsBatchSize={currentModel.supportsBatchSize}
+          steps={state.steps}
+          setSteps={s('steps')}
+          guidanceScale={state.guidanceScale}
+          setGuidanceScale={s('guidanceScale')}
+          stepsRange={currentModel.stepsRange}
+          defaultSteps={currentModel.defaultSteps}
+          guidanceScaleRange={currentModel.guidanceScaleRange}
+          defaultGuidanceScale={currentModel.defaultGuidanceScale}
         />
       );
     case 'seedance-video':
@@ -398,6 +413,51 @@ function HomeParamControlsInner({
           setResolution={s('resolution')}
           aspectRatio={state.aspectRatio}
           setAspectRatio={s('aspectRatio')}
+          duration={state.duration}
+          setDuration={s('duration')}
+          durationOptions={currentModel.durationOptions}
+          generateAudio={state.generateAudio}
+          setGenerateAudio={s('generateAudio')}
+          seed={state.seed}
+          setSeed={s('seed')}
+          negativePrompt={state.negativePrompt}
+          setNegativePrompt={s('negativePrompt')}
+          supportsAudio={currentModel.supportsAudio}
+          supportsSeed={currentModel.supportsSeed}
+          supportsNegativePrompt={currentModel.supportsNegativePrompt}
+          mode={mode}
+        />
+      );
+    case 'bza-video-g':
+      return (
+        <BzaVideoGControls
+          resolutions={currentResolutions}
+          videoRatios={currentRatios}
+          resolution={state.resolution}
+          setResolution={s('resolution')}
+          aspectRatio={state.aspectRatio}
+          setAspectRatio={s('aspectRatio')}
+          duration={state.duration}
+          setDuration={s('duration')}
+          durationOptions={currentModel.durationOptions}
+          mode={mode}
+        />
+      );
+    case 'qwen-image':
+      return (
+        <QwenImageControls
+          customWidth={state.customWidth}
+          setCustomWidth={s('customWidth')}
+          customHeight={state.customHeight}
+          setCustomHeight={s('customHeight')}
+          steps={state.steps}
+          setSteps={s('steps')}
+          guidanceScale={state.guidanceScale}
+          setGuidanceScale={s('guidanceScale')}
+          negativePrompt={state.negativePrompt}
+          setNegativePrompt={s('negativePrompt')}
+          seed={state.seed}
+          setSeed={s('seed')}
         />
       );
     case 'dreamactor':
@@ -479,6 +539,45 @@ function HomeParamControlsInner({
           languages={currentModel.languages}
           speedRange={currentModel.speedRange}
           maxTokensMax={currentModel.maxTokens}
+        />
+      );
+    case 'birefnet':
+      return (
+        <BirefnetControls
+          outputmask={state.outputmask}
+          setOutputmask={s('outputmask')}
+        />
+      );
+    case 'ace-step':
+      return (
+        <AceStepControls
+          lyrics={state.lyrics}
+          setLyrics={s('lyrics')}
+          tags={state.tags}
+          setTags={s('tags')}
+          duration={state.duration}
+          setDuration={s('duration')}
+          seed={state.seed}
+          setSeed={s('seed')}
+          durationRange={currentModel.durationRange}
+          defaultDuration={currentModel.defaultDuration}
+        />
+      );
+    case 'seedvr2':
+      return (
+        <Seedvr2Controls
+          resolution={state.resolution}
+          setResolution={s('resolution')}
+          resolutions={currentModel.resolutions}
+        />
+      );
+    case 'flux-klein':
+      return <FluxKleinControls />;
+    case 'kontext-lora':
+      return (
+        <KontextLoraControls
+          seed={state.seed}
+          setSeed={s('seed')}
         />
       );
     default:

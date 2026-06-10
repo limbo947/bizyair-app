@@ -1,11 +1,25 @@
 import React from 'react';
-import { ActivityIndicator, Text, View, StyleSheet } from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
 import { STATUS_LABELS } from '../constants/models';
 import { useTheme } from '../context/ThemeContext';
-import { Radius, Spacing } from '../constants/theme';
+import { Typography } from '../constants/theme';
+import { badgeBase } from '../constants/sharedStyles';
+import { useThemedStyles } from '../hooks/useThemedStyles';
+
+const createStyles = (colors, theme) => ({
+  badge: {
+    ...badgeBase,
+  },
+  spinner: { marginRight: 0 },
+  badgeText: {
+    fontSize: Typography.fontSize.caption2,
+    fontWeight: Typography.fontWeight.semibold,
+  },
+});
 
 export function StatusBadge({ status }) {
   const { theme, colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
   const label = STATUS_LABELS[status] || status;
   const color = theme.STATUS_COLORS[status] || colors.textTertiary;
   const bg = theme.STATUS_BG[status] || colors.card;
@@ -17,9 +31,3 @@ export function StatusBadge({ status }) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  badge: { flexDirection: 'row', alignItems: 'center', borderRadius: Radius.full, borderCurve: 'continuous', paddingHorizontal: Spacing.sm, paddingVertical: 3, gap: 4 },
-  spinner: { marginRight: 0 },
-  badgeText: { fontSize: 11, fontWeight: '600' },
-});

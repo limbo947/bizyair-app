@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Radius, Spacing } from '../constants/theme';
+import { Radius, Spacing, Typography, pressedOpacity } from '../constants/theme';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { useTheme } from '../context/ThemeContext';
 
@@ -62,7 +62,7 @@ export function ApiKeyDropdown({
       animationType="fade"
       onRequestClose={onClose}
     >
-      <Pressable style={({ pressed }) => [styles.overlay, { paddingTop: insets.top + 56 }, pressed && { opacity: 0.7 }]} onPress={onClose}>
+      <Pressable style={({ pressed }) => [styles.overlay, { paddingTop: insets.top + 56 }, pressed && pressedOpacity()]} onPress={onClose}>
         <View style={styles.dropdownContainer}>
           <Pressable>
             <View style={styles.dropdown}>
@@ -91,7 +91,7 @@ export function ApiKeyDropdown({
                       styles.dropdownItem,
                       activeApiKeyId === keyItem.id && styles.dropdownItemActive,
                       index < apiKeys.length - 1 && styles.dropdownItemBorder,
-                    , pressed && { opacity: 0.7 }]} onPress={() => {
+                    , pressed && pressedOpacity()]} onPress={() => {
                       onSwitchKey(keyItem.id);
                     }} >
                     <View style={styles.itemContent}>
@@ -122,14 +122,14 @@ export function ApiKeyDropdown({
                       )}
                     </View>
                     <Pressable
-                      style={({ pressed }) => [styles.editKeyNameButton, pressed && { opacity: 0.7 }]} onPress={(e) => {
+                      style={({ pressed }) => [styles.editKeyNameButton, pressed && pressedOpacity()]} onPress={(e) => {
                         e.stopPropagation();
                         startRename(keyItem);
                       }} >
                       <Ionicons name="pencil-outline" size={14} color={colors.textTertiary} />
                     </Pressable>
                     <Pressable
-                      style={({ pressed }) => [styles.deleteButton, pressed && { opacity: 0.7 }]} onPress={(e) => {
+                      style={({ pressed }) => [styles.deleteButton, pressed && pressedOpacity()]} onPress={(e) => {
                         e.stopPropagation();
                         onDeleteKey(keyItem.id);
                       }} >
@@ -161,7 +161,7 @@ export function ApiKeyDropdown({
                 />
                 <View style={styles.addInputRow}>
                   <Pressable
-                    style={({ pressed }) => [styles.cancelButton, pressed && { opacity: 0.7 }]} onPress={() => {
+                    style={({ pressed }) => [styles.cancelButton, pressed && pressedOpacity()]} onPress={() => {
                       setShowAddInput(false);
                       setNewKey('');
                       setNewKeyName('');
@@ -169,7 +169,7 @@ export function ApiKeyDropdown({
                     <Text style={styles.cancelButtonText}>取消</Text>
                   </Pressable>
                   <Pressable
-                    style={({ pressed }) => [styles.addConfirmButton, !newKey.trim() && styles.addConfirmButtonDisabled, pressed && { opacity: 0.7 }]} onPress={handleAdd}
+                    style={({ pressed }) => [styles.addConfirmButton, !newKey.trim() && styles.addConfirmButtonDisabled, pressed && pressedOpacity()]} onPress={handleAdd}
                     disabled={!newKey.trim()} >
                     <Text style={styles.addConfirmButtonText}>添加</Text>
                   </Pressable>
@@ -178,7 +178,7 @@ export function ApiKeyDropdown({
             ) : (
               <View style={styles.dropdownFooter}>
                 <Pressable
-                  style={({ pressed }) => [styles.addButton, pressed && { opacity: 0.7 }]} onPress={() => setShowAddInput(true)} >
+                  style={({ pressed }) => [styles.addButton, pressed && pressedOpacity()]} onPress={() => setShowAddInput(true)} >
                   <Ionicons name="add-circle-outline" size={18} color={colors.primary} />
                   <Text style={styles.addButtonText}>新增密钥</Text>
                 </Pressable>
@@ -220,12 +220,12 @@ const createStyles = (colors) => ({
     borderBottomColor: colors.separator,
   },
   dropdownTitle: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: Typography.fontSize.callout,
+    fontWeight: Typography.fontWeight.semibold,
     color: colors.textPrimary,
   },
   dropdownSubtitle: {
-    fontSize: 13,
+    fontSize: Typography.fontSize.footnote,
     color: colors.textTertiary,
   },
   dropdownList: {
@@ -249,33 +249,33 @@ const createStyles = (colors) => ({
     flex: 1,
   },
   itemKeyText: {
-    fontSize: 14,
+    fontSize: Typography.fontSize.footnote,
     color: colors.textPrimary,
-    fontWeight: '600',
+    fontWeight: Typography.fontWeight.semibold,
     lineHeight: 30,
   },
   itemKeyTextActive: {
     color: colors.primary,
   },
   itemKeySubtext: {
-    fontSize: 12,
+    fontSize: Typography.fontSize.caption1,
     color: colors.textTertiary,
     fontFamily: 'monospace',
-    marginLeft: 12,
+    marginLeft: Spacing.md,
   },
   renameInput: {
-    fontSize: 14,
+    fontSize: Typography.fontSize.footnote,
     color: colors.textPrimary,
-    fontWeight: '600',
+    fontWeight: Typography.fontWeight.semibold,
     borderBottomWidth: 1,
     borderBottomColor: colors.primary,
     paddingVertical: 0,
   },
   editKeyNameButton: {
-    padding: 4,
+    padding: Spacing.xs,
   },
   deleteButton: {
-    padding: 6,
+    padding: Spacing.xs + 2,
   },
   emptyState: {
     alignItems: 'center',
@@ -287,13 +287,13 @@ const createStyles = (colors) => ({
     marginBottom: Spacing.sm,
   },
   emptyText: {
-    fontSize: 15,
+    fontSize: Typography.fontSize.subheadline,
     color: colors.textPrimary,
-    fontWeight: '600',
-    marginBottom: 4,
+    fontWeight: Typography.fontWeight.semibold,
+    marginBottom: Spacing.xs,
   },
   emptySubtext: {
-    fontSize: 13,
+    fontSize: Typography.fontSize.footnote,
     color: colors.textTertiary,
   },
   dropdownFooter: {
@@ -307,28 +307,28 @@ const createStyles = (colors) => ({
     alignItems: 'center',
     justifyContent: 'center',
     gap: Spacing.sm,
-    paddingVertical: 4,
+    paddingVertical: Spacing.xs,
   },
   addButtonText: {
-    fontSize: 14,
+    fontSize: Typography.fontSize.footnote,
     color: colors.primary,
-    fontWeight: '600',
+    fontWeight: Typography.fontWeight.semibold,
   },
   addInputSection: {
     borderTopWidth: 0.5,
     borderTopColor: colors.separator,
     paddingHorizontal: Spacing.lg,
-    paddingTop: 16,
+    paddingTop: Spacing.lg,
     paddingBottom: Spacing.sm,
   },
   addNameInput: {
-    fontSize: 14,
+    fontSize: Typography.fontSize.footnote,
     color: colors.textPrimary,
     backgroundColor: colors.bg,
     borderRadius: Radius.sm,
     borderCurve: 'continuous',
     paddingHorizontal: Spacing.sm,
-    paddingVertical: 14,
+    paddingVertical: Spacing.md + 2,
     marginTop: Spacing.sm,
   },
   addInputRow: {
@@ -345,19 +345,19 @@ const createStyles = (colors) => ({
     backgroundColor: colors.bg,
   },
   cancelButtonText: {
-    fontSize: 13,
+    fontSize: Typography.fontSize.footnote,
     color: colors.textSecondary,
-    fontWeight: '600',
+    fontWeight: Typography.fontWeight.semibold,
   },
   addInput: {
     flex: 1,
-    fontSize: 14,
+    fontSize: Typography.fontSize.footnote,
     color: colors.textPrimary,
     backgroundColor: colors.bg,
     borderRadius: Radius.sm,
     borderCurve: 'continuous',
     paddingHorizontal: Spacing.sm,
-    paddingVertical: 14,
+    paddingVertical: Spacing.md + 2,
     fontFamily: 'monospace',
   },
   addConfirmButton: {
@@ -371,8 +371,8 @@ const createStyles = (colors) => ({
     backgroundColor: colors.disabled,
   },
   addConfirmButtonText: {
-    fontSize: 13,
+    fontSize: Typography.fontSize.footnote,
     color: colors.textInverse,
-    fontWeight: '600',
+    fontWeight: Typography.fontWeight.semibold,
   },
 });

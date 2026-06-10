@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Pressable, View, Text, TextInput, ScrollView, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Radius, Spacing } from '../constants/theme';
+import { Radius, Spacing, Typography, pressedOpacity } from '../constants/theme';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { useTheme } from '../context/ThemeContext';
 
@@ -22,47 +22,47 @@ const SOURCE_OPTIONS = [
 const createStyles = (colors) => ({
   searchBar: { backgroundColor: colors.card, paddingHorizontal: Spacing.lg, paddingTop: Spacing.md, paddingBottom: Spacing.sm, borderBottomWidth: 0.5, borderBottomColor: colors.separator },
   searchInputWrap: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.bg, borderRadius: Radius.sm, borderCurve: 'continuous', paddingHorizontal: Spacing.md, height: 40, gap: Spacing.sm },
-  searchInput: { flex: 1, fontSize: 15, color: colors.textPrimary, paddingVertical: 0 },
-  clearSearch: { fontSize: 16, color: colors.textTertiary, paddingHorizontal: 4 },
+  searchInput: { flex: 1, fontSize: Typography.fontSize.subheadline, color: colors.textPrimary, paddingVertical: 0 },
+  clearSearch: { fontSize: Typography.fontSize.callout, color: colors.textTertiary, paddingHorizontal: 4 },
   filterBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.card, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, borderBottomWidth: 0.5, borderBottomColor: colors.separator },
   filterScrollContent: { gap: Spacing.sm, paddingRight: Spacing.sm },
-  filterChip: { paddingHorizontal: Spacing.md, paddingVertical: 5, borderRadius: Radius.full, borderCurve: 'continuous', backgroundColor: colors.bg },
+  filterChip: { paddingHorizontal: Spacing.md, paddingVertical: Spacing.xs + 1, borderRadius: Radius.full, borderCurve: 'continuous', backgroundColor: colors.bg },
   filterChipActive: { backgroundColor: colors.primary },
-  filterChipText: { fontSize: 13, color: colors.textSecondary, fontWeight: '500' },
-  filterChipTextActive: { color: colors.textInverse, fontWeight: '600' },
-  allChip: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.md, paddingVertical: 5, borderRadius: Radius.full, borderCurve: 'continuous', backgroundColor: colors.bg, gap: 4 },
+  filterChipText: { fontSize: Typography.fontSize.footnote, color: colors.textSecondary, fontWeight: Typography.fontWeight.medium },
+  filterChipTextActive: { color: colors.textInverse, fontWeight: Typography.fontWeight.semibold },
+  allChip: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.md, paddingVertical: Spacing.xs + 1, borderRadius: Radius.full, borderCurve: 'continuous', backgroundColor: colors.bg, gap: Spacing.xs },
   allChipActive: { backgroundColor: colors.primary },
-  allChipText: { fontSize: 13, color: colors.textSecondary, fontWeight: '500' },
-  allChipTextActive: { color: colors.textInverse, fontWeight: '600' },
-  allChipBadge: { fontSize: 10, color: colors.textTertiary, fontWeight: '500' },
-  allChipBadgeActive: { color: colors.textOnOverlay, fontWeight: '600' },
+  allChipText: { fontSize: Typography.fontSize.footnote, color: colors.textSecondary, fontWeight: Typography.fontWeight.medium },
+  allChipTextActive: { color: colors.textInverse, fontWeight: Typography.fontWeight.semibold },
+  allChipBadge: { fontSize: 10, color: colors.textTertiary, fontWeight: Typography.fontWeight.medium },
+  allChipBadgeActive: { color: colors.textOnOverlay, fontWeight: Typography.fontWeight.semibold },
   allChipCaret: { marginTop: 1 },
-  sortButton: { paddingHorizontal: Spacing.sm, paddingVertical: Spacing.xs, marginLeft: 4 },
+  sortButton: { paddingHorizontal: Spacing.sm, paddingVertical: Spacing.xs, marginLeft: Spacing.xs },
   sourcePickerOverlay: { flex: 1, backgroundColor: colors.overlayLight, justifyContent: 'center', alignItems: 'center' },
   sourcePickerContent: { width: '70%', backgroundColor: colors.card, borderRadius: Radius.lg, borderCurve: 'continuous', padding: Spacing.xl },
-  sourcePickerTitle: { fontSize: 17, fontWeight: '600', color: colors.textPrimary, marginBottom: Spacing.lg, textAlign: 'center' },
-  sourcePickerOption: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12, paddingHorizontal: Spacing.lg, borderRadius: Radius.sm, borderCurve: 'continuous', marginBottom: 2 },
+  sourcePickerTitle: { fontSize: Typography.fontSize.body, fontWeight: Typography.fontWeight.semibold, color: colors.textPrimary, marginBottom: Spacing.lg, textAlign: 'center' },
+  sourcePickerOption: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: Spacing.md, paddingHorizontal: Spacing.lg, borderRadius: Radius.sm, borderCurve: 'continuous', marginBottom: 2 },
   sourcePickerOptionActive: { backgroundColor: colors.primaryBg },
-  sourcePickerOptionText: { fontSize: 16, color: colors.textSecondary },
-  sourcePickerOptionTextActive: { color: colors.primary, fontWeight: '600' },
-  sourcePickerCheck: { fontSize: 18, color: colors.primary, fontWeight: '600' },
+  sourcePickerOptionText: { fontSize: Typography.fontSize.callout, color: colors.textSecondary },
+  sourcePickerOptionTextActive: { color: colors.primary, fontWeight: Typography.fontWeight.semibold },
+  sourcePickerCheck: { fontSize: Typography.fontSize.title2, color: colors.primary, fontWeight: Typography.fontWeight.semibold },
   batchBar: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', backgroundColor: colors.card, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, borderBottomWidth: 0.5, borderBottomColor: colors.separator, gap: Spacing.sm },
-  batchToggleButton: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: Radius.full, borderCurve: 'continuous', backgroundColor: colors.primaryBg },
+  batchToggleButton: { paddingHorizontal: Spacing.md + 2, paddingVertical: Spacing.xs + 2, borderRadius: Radius.full, borderCurve: 'continuous', backgroundColor: colors.primaryBg },
   batchToggleButtonActive: { backgroundColor: colors.primary },
-  batchToggleText: { fontSize: 13, color: colors.primary, fontWeight: '600' },
-  batchToggleTextActive: { color: colors.textInverse, fontWeight: '600' },
+  batchToggleText: { fontSize: Typography.fontSize.footnote, color: colors.primary, fontWeight: Typography.fontWeight.semibold },
+  batchToggleTextActive: { color: colors.textInverse, fontWeight: Typography.fontWeight.semibold },
   batchActions: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, flexWrap: 'wrap' },
-  batchActionButton: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: Radius.full, borderCurve: 'continuous', backgroundColor: colors.bg, justifyContent: 'center', alignItems: 'center' },
-  batchActionText: { fontSize: 12, color: colors.textSecondary, fontWeight: '500' },
-  batchCount: { fontSize: 12, color: colors.textPrimary, fontWeight: '600', marginHorizontal: 4 },
+  batchActionButton: { paddingHorizontal: Spacing.sm + 2, paddingVertical: Spacing.xs + 1, borderRadius: Radius.full, borderCurve: 'continuous', backgroundColor: colors.bg, justifyContent: 'center', alignItems: 'center' },
+  batchActionText: { fontSize: Typography.fontSize.caption1, color: colors.textSecondary, fontWeight: Typography.fontWeight.medium },
+  batchCount: { fontSize: Typography.fontSize.caption1, color: colors.textPrimary, fontWeight: Typography.fontWeight.semibold, marginHorizontal: Spacing.xs },
   batchDeleteButton: { backgroundColor: colors.errorBg },
   batchDeleteText: { color: colors.error },
   batchDownloadBtn: { backgroundColor: colors.successBg },
   batchDownloadText: { color: colors.success },
   statsBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.card, paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md, borderBottomWidth: 0.5, borderBottomColor: colors.separator },
   statItem: { alignItems: 'center', flex: 1 },
-  statValue: { fontSize: 17, fontWeight: '700', color: colors.primary },
-  statLabel: { fontSize: 10, color: colors.textTertiary, marginTop: 2 },
+  statValue: { fontSize: Typography.fontSize.body, fontWeight: Typography.fontWeight.bold, color: colors.primary },
+  statLabel: { fontSize: 10, color: colors.textTertiary, marginTop: Spacing.xs },
   statDivider: { width: 0.5, height: 24, backgroundColor: colors.separator },
 });
 
@@ -104,7 +104,7 @@ export function HistoryFilters({
           <Ionicons name="search" size={18} color={colors.textTertiary} />
           <TextInput style={styles.searchInput} placeholder="搜索提示词、模型名..." value={searchText} onChangeText={onSearchChange} placeholderTextColor={colors.textPlaceholder} />
           {searchText.length > 0 ? (
-            <Pressable style={({ pressed }) => pressed && { opacity: 0.7 }} onPress={() => onSearchChange('')}><Text style={styles.clearSearch}>✕</Text></Pressable>
+            <Pressable style={({ pressed }) => pressed && pressedOpacity()} onPress={() => onSearchChange('')}><Text style={styles.clearSearch}>✕</Text></Pressable>
           ) : null}
         </View>
       </View>
@@ -115,7 +115,7 @@ export function HistoryFilters({
             style={({ pressed }) => [
               styles.allChip,
               isAllActive && styles.allChipActive,
-              pressed && { opacity: 0.7 },
+              pressed && pressedOpacity(),
             ]}
             onPress={() => {
               if (isAllActive) {
@@ -136,12 +136,12 @@ export function HistoryFilters({
             />
           </Pressable>
           {FILTER_OPTIONS.filter(o => o.key !== 'all').map((opt) => (
-            <Pressable key={opt.key} style={({ pressed }) => [styles.filterChip, filterBy === opt.key && styles.filterChipActive, pressed && { opacity: 0.7 }]} onPress={() => onFilterChange(opt.key)}>
+            <Pressable key={opt.key} style={({ pressed }) => [styles.filterChip, filterBy === opt.key && styles.filterChipActive, pressed && pressedOpacity()]} onPress={() => onFilterChange(opt.key)}>
               <Text style={[styles.filterChipText, filterBy === opt.key && styles.filterChipTextActive]}>{opt.label}</Text>
             </Pressable>
           ))}
         </ScrollView>
-        <Pressable style={({ pressed }) => [styles.sortButton, pressed && { opacity: 0.7 }]} onPress={onSortPress}>
+        <Pressable style={({ pressed }) => [styles.sortButton, pressed && pressedOpacity()]} onPress={onSortPress}>
           <Ionicons name="funnel-outline" size={18} color={colors.textSecondary} />
         </Pressable>
       </View>
@@ -151,7 +151,7 @@ export function HistoryFilters({
           <View style={styles.sourcePickerContent}>
             <Text style={styles.sourcePickerTitle}>来源筛选</Text>
             {SOURCE_OPTIONS.map((opt) => (
-              <Pressable key={opt.key} style={({ pressed }) => [styles.sourcePickerOption, sourceFilter === opt.key && styles.sourcePickerOptionActive, pressed && { opacity: 0.7 }]} onPress={() => { onSourceFilterChange(opt.key); setShowSourcePicker(false); }}>
+              <Pressable key={opt.key} style={({ pressed }) => [styles.sourcePickerOption, sourceFilter === opt.key && styles.sourcePickerOptionActive, pressed && pressedOpacity()]} onPress={() => { onSourceFilterChange(opt.key); setShowSourcePicker(false); }}>
                 <Text style={[styles.sourcePickerOptionText, sourceFilter === opt.key && styles.sourcePickerOptionTextActive]}>{opt.label}</Text>
                 {sourceFilter === opt.key ? <Text style={styles.sourcePickerCheck}>✓</Text> : null}
               </Pressable>
@@ -162,18 +162,18 @@ export function HistoryFilters({
 
       {history.length > 0 ? (
         <View style={styles.batchBar}>
-          <Pressable style={({ pressed }) => [styles.batchToggleButton, batchMode && styles.batchToggleButtonActive, pressed && { opacity: 0.7 }]} onPress={onToggleBatchMode}>
+          <Pressable style={({ pressed }) => [styles.batchToggleButton, batchMode && styles.batchToggleButtonActive, pressed && pressedOpacity()]} onPress={onToggleBatchMode}>
             <Text style={[styles.batchToggleText, batchMode && styles.batchToggleTextActive]}>{batchMode ? '取消批量' : '批量操作'}</Text>
           </Pressable>
           {batchMode ? (
             <View style={styles.batchActions}>
-              <Pressable style={({ pressed }) => [styles.batchActionButton, pressed && { opacity: 0.7 }]} onPress={onSelectAll}><Text style={styles.batchActionText}>全选</Text></Pressable>
-              <Pressable style={({ pressed }) => [styles.batchActionButton, pressed && { opacity: 0.7 }]} onPress={onDeselectAll}><Text style={styles.batchActionText}>取消</Text></Pressable>
+              <Pressable style={({ pressed }) => [styles.batchActionButton, pressed && pressedOpacity()]} onPress={onSelectAll}><Text style={styles.batchActionText}>全选</Text></Pressable>
+              <Pressable style={({ pressed }) => [styles.batchActionButton, pressed && pressedOpacity()]} onPress={onDeselectAll}><Text style={styles.batchActionText}>取消</Text></Pressable>
               <Text style={styles.batchCount}>已选 {selectedIds.size}/{history.length}</Text>
-              <Pressable style={({ pressed }) => [styles.batchActionButton, styles.batchDeleteButton, pressed && { opacity: 0.7 }]} onPress={onBatchDeletePress} disabled={selectedIds.size === 0}>
+              <Pressable style={({ pressed }) => [styles.batchActionButton, styles.batchDeleteButton, pressed && pressedOpacity()]} onPress={onBatchDeletePress} disabled={selectedIds.size === 0}>
                 <Text style={[styles.batchActionText, styles.batchDeleteText]}>删除({selectedIds.size})</Text>
               </Pressable>
-              <Pressable style={({ pressed }) => [styles.batchActionButton, styles.batchDownloadBtn, pressed && { opacity: 0.7 }]} onPress={onBatchDownload} disabled={selectedIds.size === 0 || isDownloading}>
+              <Pressable style={({ pressed }) => [styles.batchActionButton, styles.batchDownloadBtn, pressed && pressedOpacity()]} onPress={onBatchDownload} disabled={selectedIds.size === 0 || isDownloading}>
                 <Text style={[styles.batchActionText, styles.batchDownloadText]}>{isDownloading ? '下载中...' : `下载(${selectedIds.size})`}</Text>
               </Pressable>
             </View>

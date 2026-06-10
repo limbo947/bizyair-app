@@ -16,7 +16,7 @@ import { useFavoritesContext } from '../context/FavoritesContext';
 import { useTheme } from '../context/ThemeContext';
 import { useToastContext } from '../context/ToastContext';
 import { getRatios, getResolutions, getModelInfo, getModelModes, getModelPlaceholder } from '../utils/modelHelpers';
-import { Radius, Spacing, ButtonStyles } from '../constants/theme';
+import { Radius, Spacing, Typography, ButtonVariants, pressedOpacity } from '../constants/theme';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { ModelSelector } from '../components/ModelSelector';
 import { FavoriteModelsLayer } from '../components/FavoriteModelsLayer';
@@ -343,7 +343,7 @@ export function HomeScreen({ onOpenModelSelect }) {
             />
             {apiKey.trim() ? (
               <Pressable
-                style={({ pressed }) => [styles.saveKeyButton, pressed && { opacity: 0.7 }]} onPress={handleSaveApiKey}
+                style={({ pressed }) => [styles.saveKeyButton, pressed && pressedOpacity()]} onPress={handleSaveApiKey}
                 disabled={isSaving}
               >
                 {isSaving ? (
@@ -367,7 +367,7 @@ export function HomeScreen({ onOpenModelSelect }) {
             {currentModes.map((m) => (
               <Pressable
                 key={m}
-                style={({ pressed }) => [styles.modeButton, mode === m && styles.modeButtonActive, pressed && { opacity: 0.7 }]} onPress={() => stateDispatch({ type: 'SET_FIELD', field: 'mode', value: m })}
+                style={({ pressed }) => [styles.modeButton, mode === m && styles.modeButtonActive, pressed && pressedOpacity()]} onPress={() => stateDispatch({ type: 'SET_FIELD', field: 'mode', value: m })}
               >
                 <Text style={[styles.modeButtonText, mode === m && styles.modeButtonTextActive]}>
                   {MODE_LABELS[m] || m}
@@ -380,10 +380,10 @@ export function HomeScreen({ onOpenModelSelect }) {
         <View style={styles.card}>
           <View style={styles.promptLabelRow}>
             <Text style={[styles.label, { marginBottom: 0 }]}>
-              提示词{paramType === 'dreamactor' ? <Text style={{ color: colors.textTertiary, fontWeight: '400' }}> (可选)</Text> : <Text style={{ color: colors.error }}> *</Text>}
+              提示词{paramType === 'dreamactor' ? <Text style={{ color: colors.textTertiary, fontWeight: Typography.fontWeight.regular }}> (可选)</Text> : <Text style={{ color: colors.error }}> *</Text>}
             </Text>
             {prompt ? (
-              <Pressable style={({ pressed }) => pressed && { opacity: 0.6 }} onPress={() => stateDispatch({ type: 'SET_FIELD', field: 'prompt', value: '' })} >
+              <Pressable style={({ pressed }) => pressed && pressedOpacity(0.6)} onPress={() => stateDispatch({ type: 'SET_FIELD', field: 'prompt', value: '' })} >
                 <Text style={styles.promptClearText}>清空</Text>
               </Pressable>
             ) : null}
@@ -481,7 +481,7 @@ export function HomeScreen({ onOpenModelSelect }) {
         {paramControls}
 
         <Pressable
-          style={({ pressed }) => [styles.generateButton, isSubmitting && styles.generateButtonDisabled, pressed && { opacity: 0.7 }]} onPress={() => { Keyboard.dismiss(); handleGenerate(); }}
+          style={({ pressed }) => [styles.generateButton, isSubmitting && styles.generateButtonDisabled, pressed && pressedOpacity()]} onPress={() => { Keyboard.dismiss(); handleGenerate(); }}
           disabled={isSubmitting}
         >
           {isSubmitting ? (
@@ -522,26 +522,26 @@ export function HomeScreen({ onOpenModelSelect }) {
 
 const createStyles = (colors) => ({
   container: { flex: 1, backgroundColor: colors.bg },
-  modelAndModeRow: { marginBottom: 6 },
-  modeToggle: { flexDirection: 'row', borderRadius: 8, borderCurve: 'continuous', backgroundColor: colors.bg, padding: 1, gap: 4, marginTop: 6, borderWidth: 1, borderColor: colors.divider, height: 45 },
+  modelAndModeRow: { marginBottom: Spacing.sm },
+  modeToggle: { flexDirection: 'row', borderRadius: Radius.sm, borderCurve: 'continuous', backgroundColor: colors.bg, padding: 1, gap: Spacing.xs, marginTop: Spacing.sm, borderWidth: 1, borderColor: colors.divider, height: 45 },
   modeButton: { flex: 1, paddingVertical: Spacing.sm, borderRadius: Radius.xs, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center' },
   modeButtonActive: { backgroundColor: colors.card },
-  modeButtonText: { fontSize: 13, color: colors.textTertiary, fontWeight: '500' },
-  modeButtonTextActive: { color: colors.primary, fontWeight: '600' },
+  modeButtonText: { fontSize: Typography.fontSize.footnote, color: colors.textTertiary, fontWeight: Typography.fontWeight.medium },
+  modeButtonTextActive: { color: colors.primary, fontWeight: Typography.fontWeight.semibold },
   scroll: { flex: 1 },
-  scrollContent: { paddingTop: 8, paddingRight: Spacing.md, paddingBottom: Spacing.xxl, paddingLeft: Spacing.md },
+  scrollContent: { paddingTop: Spacing.sm, paddingRight: Spacing.md, paddingBottom: Spacing.xxl, paddingLeft: Spacing.md },
   card: { backgroundColor: colors.card, padding: Spacing.lg, borderRadius: Radius.md, borderCurve: 'continuous', marginBottom: Spacing.md },
   labelRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, marginBottom: Spacing.sm },
-  label: { fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginBottom: Spacing.sm, textTransform: 'uppercase', letterSpacing: 0.5 },
+  label: { fontSize: Typography.fontSize.footnote, fontWeight: Typography.fontWeight.semibold, color: colors.textSecondary, marginBottom: Spacing.sm, textTransform: 'uppercase', letterSpacing: Typography.letterSpacing.wide },
   promptLabelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.sm },
-  promptClearText: { fontSize: 12, color: colors.primary, fontWeight: '500' },
-  charCount: { fontSize: 12, color: colors.textTertiary, textAlign: 'right', marginTop: Spacing.xs },
-  generateButton: { backgroundColor: colors.primary, paddingVertical: ButtonStyles.primary.paddingVertical, borderRadius: ButtonStyles.primary.borderRadius, borderCurve: 'continuous', alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 10, marginBottom: Spacing.sm },
+  promptClearText: { fontSize: Typography.fontSize.caption1, color: colors.primary, fontWeight: Typography.fontWeight.medium },
+  charCount: { fontSize: Typography.fontSize.caption1, color: colors.textTertiary, textAlign: 'right', marginTop: Spacing.xs },
+  generateButton: { backgroundColor: colors.primary, paddingVertical: ButtonVariants.primary.paddingVertical, borderRadius: ButtonVariants.primary.borderRadius, borderCurve: 'continuous', alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: Spacing.md, marginBottom: Spacing.sm },
   generateButtonDisabled: { backgroundColor: colors.primaryDisabled },
-  generateButtonText: { color: colors.textInverse, fontSize: ButtonStyles.primary.fontSize, fontWeight: ButtonStyles.primary.fontWeight, letterSpacing: -0.3 },
-  priceFormulaText: { fontSize: 12, color: colors.textTertiary, textAlign: 'center', marginBottom: Spacing.md, lineHeight: 18 },
+  generateButtonText: { color: colors.textInverse, fontSize: ButtonVariants.primary.fontSize, fontWeight: ButtonVariants.primary.fontWeight, letterSpacing: Typography.letterSpacing.tight },
+  priceFormulaText: { fontSize: Typography.fontSize.caption1, color: colors.textTertiary, textAlign: 'center', marginBottom: Spacing.md, lineHeight: Typography.lineHeight.tight },
   textResultBox: { maxHeight: 300, backgroundColor: colors.bg, borderRadius: Radius.sm, borderCurve: 'continuous', padding: Spacing.md },
-  apiKeyInput: { fontSize: 15, color: colors.textPrimary, borderWidth: 0, borderRadius: Radius.sm, borderCurve: 'continuous', padding: Spacing.md, fontFamily: 'monospace', backgroundColor: colors.bg },
-  saveKeyButton: { backgroundColor: colors.primary, paddingVertical: 10, borderRadius: Radius.sm, borderCurve: 'continuous', alignItems: 'center', marginTop: Spacing.sm },
-  saveKeyButtonText: { color: colors.textInverse, fontSize: 15, fontWeight: '600' },
+  apiKeyInput: { fontSize: Typography.fontSize.subheadline, color: colors.textPrimary, borderWidth: 0, borderRadius: Radius.sm, borderCurve: 'continuous', padding: Spacing.md, fontFamily: 'monospace', backgroundColor: colors.bg },
+  saveKeyButton: { backgroundColor: colors.primary, paddingVertical: Spacing.sm + 2, borderRadius: Radius.sm, borderCurve: 'continuous', alignItems: 'center', marginTop: Spacing.sm },
+  saveKeyButtonText: { color: colors.textInverse, fontSize: Typography.fontSize.subheadline, fontWeight: Typography.fontWeight.semibold },
 });

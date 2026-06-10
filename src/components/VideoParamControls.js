@@ -1,6 +1,6 @@
 import React from 'react';
 import { Pressable, Text, View, TextInput, Switch } from 'react-native';
-import { Radius, Spacing } from '../constants/theme';
+import { Radius, Spacing, Typography } from '../constants/theme';
 import { createSharedStyles } from '../constants/sharedStyles';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { useTheme } from '../context/ThemeContext';
@@ -774,8 +774,14 @@ export function BzaVideoXControls({
 export function BzaVideoV3Controls({
   resolutions, videoRatios, resolution, setResolution,
   aspectRatio, setAspectRatio,
+  duration, setDuration, durationOptions,
+  generateAudio, setGenerateAudio,
+  seed, setSeed,
+  negativePrompt, setNegativePrompt,
+  supportsAudio, supportsSeed, supportsNegativePrompt,
+  mode,
 }) {
-  const { styles } = useStyles();
+  const { styles, colors } = useStyles();
   return (
     <>
       <View style={styles.card}>
@@ -798,6 +804,81 @@ export function BzaVideoV3Controls({
           ))}
         </View>
       </View>
+      {durationOptions && (
+        <View style={styles.card}>
+          <ParamLabel label="时长" required />
+          <View style={styles.ratioGrid}>
+            {durationOptions.map((d) => (
+              <Pressable key={d} style={({ pressed }) => [styles.ratioButton, String(duration) === String(d) && styles.ratioButtonActive, pressed && styles.pressedStyle]} onPress={() => setDuration(d)}>
+                <Text style={[styles.ratioText, String(duration) === String(d) && styles.ratioTextActive]}>{d}s</Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+      )}
+      {supportsAudio && (
+        <View style={styles.card}>
+          <Pressable style={styles.switchRow} onPress={() => setGenerateAudio(!generateAudio)}>
+            <ParamLabel label="生成音频" required={false} style={{ marginBottom: 0 }} />
+            <Switch value={generateAudio || false} trackColor={{ false: colors.disabled, true: colors.primary }} pointerEvents="none" />
+          </Pressable>
+        </View>
+      )}
+      {supportsSeed && (
+        <View style={styles.card}>
+          <ParamLabel label="种子" required={false} />
+          <TextInput style={styles.textInput} value={seed ?? ''} onChangeText={(text) => setSeed(text.replace(/[^0-9]/g, ''))} placeholder="留空则随机" placeholderTextColor={colors.textTertiary} keyboardType="numeric" />
+        </View>
+      )}
+      {supportsNegativePrompt && (
+        <View style={styles.card}>
+          <ParamLabel label="反向提示词" required={false} />
+          <TextInput style={[styles.textInput, styles.textInputMultiline]} value={negativePrompt ?? ''} onChangeText={setNegativePrompt} placeholder="不希望出现的内容" placeholderTextColor={colors.textTertiary} multiline numberOfLines={2} />
+        </View>
+      )}
+    </>
+  );
+}
+
+export function BzaVideoGControls({
+  resolutions, videoRatios, resolution, setResolution,
+  aspectRatio, setAspectRatio,
+  duration, setDuration, durationOptions,
+  mode,
+}) {
+  const { styles } = useStyles();
+  return (
+    <>
+      <View style={styles.card}>
+        <ParamLabel label="分辨率" required />
+        <View style={styles.ratioGrid}>
+          {resolutions.map((r) => (
+            <Pressable key={r} style={({ pressed }) => [styles.ratioButton, resolution === r && styles.ratioButtonActive, pressed && styles.pressedStyle]} onPress={() => setResolution(r)}>
+              <Text style={[styles.ratioText, resolution === r && styles.ratioTextActive]}>{r}</Text>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+      <View style={styles.card}>
+        <ParamLabel label="宽高比" required={false} />
+        <View style={styles.selectorRow}>
+          {videoRatios.map((r) => (
+            <Pressable key={r} style={({ pressed }) => [styles.selectorButton, aspectRatio === r && styles.selectorButtonActive, pressed && styles.pressedStyle]} onPress={() => setAspectRatio(r)}>
+              <Text style={[styles.selectorText, aspectRatio === r && styles.selectorTextActive]}>{r}</Text>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+      <View style={styles.card}>
+        <ParamLabel label="时长" required />
+        <View style={styles.ratioGrid}>
+          {durationOptions.map((d) => (
+            <Pressable key={d} style={({ pressed }) => [styles.ratioButton, String(duration) === String(d) && styles.ratioButtonActive, pressed && styles.pressedStyle]} onPress={() => setDuration(d)}>
+              <Text style={[styles.ratioText, String(duration) === String(d) && styles.ratioTextActive]}>{d}s</Text>
+            </Pressable>
+          ))}
+        </View>
+      </View>
     </>
   );
 }
@@ -814,11 +895,13 @@ export function DreamActorControls() {
 
 const createStyles = (colors) => ({
   ...createSharedStyles(colors),
-  selectorButtonSmall: { paddingVertical: 8, paddingHorizontal: 10, borderRadius: Radius.sm, borderCurve: 'continuous', backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
-  priceHint: { fontSize: 12, color: colors.textTertiary, marginTop: Spacing.sm },
+  selectorButtonSmall: { paddingVertical: Spacing.sm, paddingHorizontal: Spacing.sm + 2, borderRadius: Radius.sm, borderCurve: 'continuous', backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
+  priceHint: { fontSize: Typography.fontSize.caption1, color: colors.textTertiary, marginTop: Spacing.sm },
   ratioGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
-  ratioButton: { width: '22%', paddingVertical: 9, borderRadius: Radius.sm, borderCurve: 'continuous', backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
+  ratioButton: { width: '22%', paddingVertical: Spacing.sm + 1, borderRadius: Radius.sm, borderCurve: 'continuous', backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
   ratioButtonActive: { backgroundColor: colors.primary },
-  ratioText: { fontSize: 13, color: colors.textSecondary, fontWeight: '500' },
-  ratioTextActive: { color: colors.textInverse, fontWeight: '600' },
+  ratioText: { fontSize: Typography.fontSize.footnote, color: colors.textSecondary, fontWeight: Typography.fontWeight.medium },
+  ratioTextActive: { color: colors.textInverse, fontWeight: Typography.fontWeight.semibold },
+  textInput: { backgroundColor: colors.bg, borderRadius: Radius.sm, borderCurve: 'continuous', paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, fontSize: Typography.fontSize.footnote, color: colors.textPrimary },
+  textInputMultiline: { minHeight: 60, textAlignVertical: 'top' },
 });

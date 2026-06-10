@@ -5,7 +5,7 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Radius, Spacing } from '../constants/theme';
+import { Radius, Spacing, Typography, pressedOpacity } from '../constants/theme';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { useTheme } from '../context/ThemeContext';
 
@@ -16,19 +16,19 @@ const createStyles = (colors) => ({
     alignItems: 'center',
     backgroundColor: colors.card,
     paddingVertical: Spacing.sm,
-    paddingLeft: 4,
-    paddingRight: 4,
+    paddingLeft: Spacing.xs,
+    paddingRight: Spacing.xs,
     borderRadius: Radius.sm,
     borderCurve: 'continuous',
     gap: Spacing.xs,
     alignSelf: 'flex-start',
   },
   currentModelName: {
-    fontSize: 14,
+    fontSize: Typography.fontSize.footnote,
     color: colors.textPrimary,
-    fontWeight: '600',
-    paddingLeft: 2,
-    paddingRight: 2,
+    fontWeight: Typography.fontWeight.semibold,
+    paddingLeft: Spacing.xs,
+    paddingRight: Spacing.xs,
   },
 });
 
@@ -44,15 +44,15 @@ export function ModelSelector({
   return (
     <View style={styles.container}>
       <Pressable
-        style={({ pressed }) => [styles.currentModelButton, pressed && { opacity: 0.7 }]} onPress={onOpenFavorites} >
+        style={({ pressed }) => [styles.currentModelButton, pressed && pressedOpacity()]} onPress={onOpenFavorites} >
         <Ionicons
           name={currentModel.icon.name}
           size={18}
           color={currentModel.icon.color}
-          style={{ paddingLeft: 2 }}
+          style={{ paddingLeft: Spacing.xs }}
         />
         <Text style={styles.currentModelName}>{currentModel.name}</Text>
-        <Ionicons name="ellipsis-horizontal" size={18} color={colors.textTertiary} style={{ paddingLeft: 4, paddingRight: 4 }} />
+        <Ionicons name="ellipsis-horizontal" size={18} color={colors.textTertiary} style={{ paddingLeft: Spacing.xs, paddingRight: Spacing.xs }} />
       </Pressable>
     </View>
   );

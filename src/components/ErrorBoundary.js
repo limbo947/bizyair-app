@@ -2,7 +2,7 @@ import React from 'react';
 import { Pressable, View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
-import { Spacing, Radius } from '../constants/theme';
+import { Spacing, Radius, Typography, pressedOpacity } from '../constants/theme';
 
 export class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -56,7 +56,7 @@ function DefaultErrorFallback({ error, onRetry }) {
         {error?.message || '未知错误，请重试'}
       </Text>
       <Pressable
-        style={({ pressed }) => [defaultStyles.retryButton, { backgroundColor: colors.primary }, pressed && { opacity: 0.7 }]} onPress={onRetry} >
+        style={({ pressed }) => [defaultStyles.retryButton, { backgroundColor: colors.primary }, pressed && pressedOpacity()]} onPress={onRetry} >
         <Text style={[defaultStyles.retryText, { color: colors.textInverse }]}>重试</Text>
       </Pressable>
     </View>
@@ -74,12 +74,12 @@ const defaultStyles = StyleSheet.create({
     marginBottom: Spacing.xl,
   },
   title: {
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: Typography.fontSize.title3,
+    fontWeight: Typography.fontWeight.bold,
     marginBottom: Spacing.sm,
   },
   message: {
-    fontSize: 14,
+    fontSize: Typography.fontSize.footnote,
     textAlign: 'center',
     lineHeight: 20,
     marginBottom: Spacing.xl,
@@ -91,7 +91,7 @@ const defaultStyles = StyleSheet.create({
     borderCurve: 'continuous',
   },
   retryText: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: Typography.fontSize.callout,
+    fontWeight: Typography.fontWeight.semibold,
   },
 });

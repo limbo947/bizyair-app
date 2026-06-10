@@ -13,13 +13,13 @@
 - **Lint 检查**: `npx eslint .`
 
 ## 技术栈与版本
-- Expo SDK 54，参考文档：https://docs.expo.dev/versions/v54.0.0/
-- React Native 0.81.5 + React 19，Hermes 引擎 + 新架构（New Arch）默认启用
+- Expo SDK 56，参考文档：https://docs.expo.dev/versions/v56.0.0/
+- React Native 0.85.3 + React 19.2，Hermes v1 引擎 + 新架构（New Arch）默认启用
 - 目标架构：Android arm64-v8a / Web
 - expo-router 文件路由（原生 Tab 导航 + Modal 路由）
 - expo-image（替代 RN Image，内存/磁盘双缓存）
 - expo-file-system OOP API（File/Paths，替代 legacy downloadAsync）
-- AsyncStorage 本地存储，expo-av 音频播放，react-native-markdown-display Markdown 渲染
+- AsyncStorage 本地存储，expo-audio 音频播放，expo-video 视频播放，react-native-markdown-display Markdown 渲染
 - jssha（阿里云 OSS HMAC-SHA1 签名）
 
 ## 项目结构
@@ -71,8 +71,8 @@
 │   │   ├── AppHeader.js          # 共享头部组件（用户信息/余额/主题切换/密钥）
 │   │   ├── HistoryFilters.js     # 历史筛选
 │   │   ├── HistoryModals.js      # 历史弹窗
-│   │   ├── VideoPlayer.js        # 视频播放
-│   │   ├── AudioPlayer.js        # 音频播放
+│   │   ├── VideoPlayer.js        # 视频播放（expo-video）
+│   │   ├── AudioPlayer.js        # 音频播放（expo-audio）
 │   │   ├── MarkdownRenderer.js   # Markdown 渲染
 │   │   ├── TextResultView.js     # 文本结果展示
 │   │   ├── ResizableTextInput.js # 自适应输入框

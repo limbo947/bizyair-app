@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, Text, View, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Radius } from '../constants/theme';
+import { Radius, Spacing, Typography, Shadow } from '../constants/theme';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 
 const ICON_MAP = {
@@ -10,13 +10,13 @@ const ICON_MAP = {
   info: 'information-circle',
 };
 
-const TYPE_STYLES = {
-  success: { backgroundColor: '#10B981' },
-  error: { backgroundColor: '#EF4444' },
-  info: { backgroundColor: '#3B82F6' },
+const TYPE_STYLE_KEYS = {
+  success: 'typeSuccess',
+  error: 'typeError',
+  info: 'typeInfo',
 };
 
-const createStyles = () => ({
+const createStyles = (colors, theme) => ({
   container: {
     position: 'absolute',
     top: 60,
@@ -27,24 +27,23 @@ const createStyles = () => ({
     elevation: 9999,
   },
   wrapper: {
-    paddingVertical: 12,
-    paddingHorizontal: 20,
+    paddingVertical: Spacing.lg,
+    paddingHorizontal: Spacing.xl,
     borderRadius: Radius.md,
     borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
-    gap: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 5,
+    gap: Spacing.sm,
+    ...theme.shadow.md,
   },
+  typeSuccess: { backgroundColor: colors.success },
+  typeError: { backgroundColor: colors.error },
+  typeInfo: { backgroundColor: colors.primary },
   text: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
+    color: colors.textInverse,
+    fontSize: Typography.fontSize.footnote,
+    fontWeight: Typography.fontWeight.semibold,
     textAlign: 'center',
   },
 });
@@ -70,9 +69,11 @@ export function Toast({ message, type = 'info' }) {
     };
   }, [opacity]);
 
+  const typeStyleKey = TYPE_STYLE_KEYS[type] || 'typeInfo';
+
   return (
     <Animated.View style={[styles.container, { opacity }]}>
-      <View style={[styles.wrapper, TYPE_STYLES[type]]}>
+      <View style={[styles.wrapper, styles[typeStyleKey]]}>
         <Ionicons name={ICON_MAP[type]} size={16} color="#FFFFFF" />
         <Text style={styles.text}>{message}</Text>
       </View>
