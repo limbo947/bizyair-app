@@ -171,17 +171,19 @@ Write-Host "`n[7/8] Syncing versionCode..." -ForegroundColor Yellow
 
 $gradlePropsPath = Join-Path $ScriptDir "android\gradle.properties"
 $propsContent = Get-Content $gradlePropsPath -Raw
-$newVersionCode = $versionParts[2]
 
 if ($propsContent -match 'android\.versionCode=(\d+)') {
-    $oldCode = $Matches[1]
+    $oldCode = [int]$Matches[1]
+    $newVersionCode = $oldCode + 1
     $propsContent = $propsContent -replace "android\.versionCode=\d+", "android.versionCode=$newVersionCode"
     [System.IO.File]::WriteAllText($gradlePropsPath, $propsContent)
     Write-Host "  versionCode: $oldCode -> $newVersionCode" -ForegroundColor Green
 } else {
+    # 首次：从版本号计算初始值 major*10000 + minor*100 + patch
+    $newVersionCode = [int]$versionParts[0] * 10000 + [int]$versionParts[1] * 100 + [int]$versionParts[2]
     $propsContent += "`nandroid.versionCode=$newVersionCode"
     [System.IO.File]::WriteAllText($gradlePropsPath, $propsContent)
-    Write-Host "  versionCode: $newVersionCode (new)" -ForegroundColor Green
+    Write-Host "  versionCode: $newVersionCode (new, computed from version)" -ForegroundColor Green
 }
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
