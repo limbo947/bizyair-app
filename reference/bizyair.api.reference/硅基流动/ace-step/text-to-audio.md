@@ -14,13 +14,12 @@
 
 ```javascript
 async function submitTask() {
-  const url = 'https://api.bizyair.cn/x/v1/modelzoo/tasks/openapi/bza-image-f-k-max-base/image-to-image';
+  const url = 'https://api.bizyair.cn/x/v1/modelzoo/tasks/openapi/ace-step/text-to-audio';
   const payload = {
-    "prompt": "A breathtaking, high-speed wildlife documentary photograph capturing a primal moment in nature. A massive Siberian tiger, with fierce amber eyes and tensed muscles, has just caught a white pigeon on the snowy ground. Flurries of pure white feathers are exploding and scattering violently into the cold air, blending with flying snow and dirt. The tiger's powerful paws and jaws are locked in a dramatic action pose. Set in a dense, misty winter forest at dawn. Shutter speed at 1/8000s freezing the explosive motion of the flying feathers and dust motes. Sharp focus on the tiger's intense expression, soft natural bokeh, shot on a 400mm lens, photorealistic.",
-    "image_urls": [
-      "https://bizyair-prod.oss-cn-shanghai.aliyuncs.com/inputs/20260519/mT5dU4cLXiJbDnJLbZS6qk1ioCPdwlzo.jpg"
-    ],
-    "aspect_ratio": "1:1"
+    "lyrics": "[Intro - Guitar Riff & Drums]\nmm…\nyeah…\nlet it breathe…\n\n[Verse 1]\nLate night glow on your skin\nWindow cracked, city hums again\nCoffee rings on the table top\nTime don’t rush, it just drops\n\nLoose kick drum, heart runs slow\nSnare talks back, says \"take it low\"\nEvery step just slightly late\nStill we land right on the faith\n\n[Verse]\nYour laugh swings behind the beat\nBarefoot dancing on the street\nNothing polished, nothing tight\nFeels more real that way tonight\n\nBrush those hats, let them slide\nLeave some space where truth can hide\nIf it falls, let it fall\nThat’s the soul inside it all\n\n[Pre-Chorus]\nNo count-in for this kind of love\nWe don’t line it up\nWe just lean and trust\n\n[Chorus]\nStay right there, don’t pull it straight\nI love how we arrive late\nOff the grid but locked in time\nThat lazy swing feels like mine\n\nYeah we bend, we drift, we sway\nLet tomorrow wait its turn today\nIf love lives just off the line\nSoft kick drum, your hand in mine\n\n[Verse]\nVinyl spins, the room exhales\nEvery scar tells its tale\nYour voice cracks, but I don’t care\nThat’s the truth living in there\n\nHeartbeat talks through wood and wire\nLow-end warmth, a quiet fire\nNothing perfect, nothing clean\nStill the best thing I’ve ever seen\n\n[Bridge]\nBrush it light, let it breathe\nLeave a little space for me\nEvery miss is part of it\nThat’s how soul was always meant\n\nBehind the beat, but dead-on true\nEvery swing just sounds like you\nIf the night don’t find a end\nI’ll stay right here, count me in\n\n[Chorus]\nStay right there, don’t pull it straight\nI love how we arrive late\nOff the grid but locked in time\nThat lazy swing feels like mine\n\nYeah we bend, we drift, we sway\nLet tomorrow wait its turn today\nIf love lives just off the line\nSoft kick drum, your hand in mine\n\n[Outro - Guitar Riff & Final Chord]\nno rush…\nno rush…\njust groove…",
+    "tags": "lofi, hiphop, drum and bass, trap, chill",
+    "duration": 30,
+    "seed": 4
   };
 
   try {
@@ -47,13 +46,12 @@ submitTask();
 
 ```javascript
 async function submitTask() {
-  const url = 'https://api.bizyair.cn/x/v1/modelzoo/tasks/openapi/bza-image-f-k-max-base/image-to-image';
+  const url = 'https://api.bizyair.cn/x/v1/modelzoo/tasks/openapi/ace-step/text-to-audio';
   const payload = {
-    "prompt": "A breathtaking, high-speed wildlife documentary photograph capturing a primal moment in nature. A massive Siberian tiger, with fierce amber eyes and tensed muscles, has just caught a white pigeon on the snowy ground. Flurries of pure white feathers are exploding and scattering violently into the cold air, blending with flying snow and dirt. The tiger's powerful paws and jaws are locked in a dramatic action pose. Set in a dense, misty winter forest at dawn. Shutter speed at 1/8000s freezing the explosive motion of the flying feathers and dust motes. Sharp focus on the tiger's intense expression, soft natural bokeh, shot on a 400mm lens, photorealistic.",
-    "image_urls": [
-      "https://bizyair-prod.oss-cn-shanghai.aliyuncs.com/inputs/20260519/mT5dU4cLXiJbDnJLbZS6qk1ioCPdwlzo.jpg"
-    ],
-    "aspect_ratio": "1:1"
+    "lyrics": "[Intro - Guitar Riff & Drums]\nmm…\nyeah…\nlet it breathe…\n\n[Verse 1]\nLate night glow on your skin\nWindow cracked, city hums again\nCoffee rings on the table top\nTime don’t rush, it just drops\n\nLoose kick drum, heart runs slow\nSnare talks back, says \"take it low\"\nEvery step just slightly late\nStill we land right on the faith\n\n[Verse]\nYour laugh swings behind the beat\nBarefoot dancing on the street\nNothing polished, nothing tight\nFeels more real that way tonight\n\nBrush those hats, let them slide\nLeave some space where truth can hide\nIf it falls, let it fall\nThat’s the soul inside it all\n\n[Pre-Chorus]\nNo count-in for this kind of love\nWe don’t line it up\nWe just lean and trust\n\n[Chorus]\nStay right there, don’t pull it straight\nI love how we arrive late\nOff the grid but locked in time\nThat lazy swing feels like mine\n\nYeah we bend, we drift, we sway\nLet tomorrow wait its turn today\nIf love lives just off the line\nSoft kick drum, your hand in mine\n\n[Verse]\nVinyl spins, the room exhales\nEvery scar tells its tale\nYour voice cracks, but I don’t care\nThat’s the truth living in there\n\nHeartbeat talks through wood and wire\nLow-end warmth, a quiet fire\nNothing perfect, nothing clean\nStill the best thing I’ve ever seen\n\n[Bridge]\nBrush it light, let it breathe\nLeave a little space for me\nEvery miss is part of it\nThat’s how soul was always meant\n\nBehind the beat, but dead-on true\nEvery swing just sounds like you\nIf the night don’t find a end\nI’ll stay right here, count me in\n\n[Chorus]\nStay right there, don’t pull it straight\nI love how we arrive late\nOff the grid but locked in time\nThat lazy swing feels like mine\n\nYeah we bend, we drift, we sway\nLet tomorrow wait its turn today\nIf love lives just off the line\nSoft kick drum, your hand in mine\n\n[Outro - Guitar Riff & Final Chord]\nno rush…\nno rush…\njust groove…",
+    "tags": "lofi, hiphop, drum and bass, trap, chill",
+    "duration": 30,
+    "seed": 4
   };
 
   try {
@@ -93,9 +91,10 @@ submitTask();
 
 | 参数名 | 类型 | 必填 | 说明 |
 | :--- | :--- | :--- | :--- |
-| prompt | string | 是 | 提示词 |
-| image_urls | array | 是 | 支持格式：jpeg、jpg、png、webp、bmp、tiff、gif、heic、heif<br/>最多上传数量：14<br/>输入图片 |
-| aspect_ratio | string | 否 | ⟨bz_enum_json⟩["21:9","16:9","4:3","1:1","3:4","9:16"]⟨/bz_enum_json⟩<br/>比例 |
+| lyrics | string | 是 | 歌词 |
+| tags | string | 否 | 风格标签 |
+| duration | number | 否 | 取值范围：10 ~ 300<br/>音乐时长(秒) |
+| seed | number | 否 | 取值范围：1 ~ 2147483647<br/>种子 |
 
 > 为保护您的业务敏感信息（如 prompt 设计等），我们支持对 API 调用记录中的指定字段进行脱敏处理。脱敏后的字段在查询调用记录时将显示为 `[调用方要求隐藏]`，但不影响实际请求的执行和计费准确性。
 >
@@ -178,11 +177,7 @@ queryTaskStatus('${REQUEST_ID}');
   "message": null,
   "executed_at": "2026-04-15 13:32:32",
   "ended_at": "2026-04-15 13:42:32",
-  "outputs": {
-    "images": [
-      "https://storage.bizyair.cn/outputs_examples/fluxkontext_55c48793b824453081ce78b59f90e9f1_1780311265_ps2z2xg3.jpg"
-    ]
-  }
+  "outputs": {}
 }
 ```
 
@@ -198,7 +193,6 @@ queryTaskStatus('${REQUEST_ID}');
 | executed_at | string | 任务开始运行的时间。 |
 | ended_at | string | 当任务成功或失败时，任务结束的时间。 |
 | outputs | array | 生成结果（非“完成”状态时，为null或[]）。 |
-| outputs.images | array | 图片类输出结果，URL 实际上是文件的下载链接（CDN 地址）。 |
 
 ### 4. Webhook 回调说明
 
@@ -213,11 +207,7 @@ queryTaskStatus('${REQUEST_ID}');
   "created_at": "2026-05-22 17:14:07",
   "executed_at": "2026-05-22 17:14:07",
   "ended_at": "2026-05-22 17:14:44",
-  "outputs": {
-    "images": [
-      "https://storage.bizyair.cn/outputs_examples/fluxkontext_55c48793b824453081ce78b59f90e9f1_1780311265_ps2z2xg3.jpg"
-    ]
-  },
+  "outputs": {},
   "cost_times": {
     "total_cost_time": 36815,
     "inference_duration": 36090

@@ -1,6 +1,6 @@
 # Bizyair Assistant
 
-基于 Expo SDK 54 的多模态 AI 助手，接入 BizyAir 平台 48 个模型，覆盖文生图、图生图、文生视频、图生视频、首尾帧、参考视频、视频编辑、视频延长、大语言模型、视觉理解、语音合成等 11 种功能模式。
+基于 Expo SDK 56 的多模态 AI 助手，接入 BizyAir 平台 48 个模型，覆盖文生图、图生图、文生视频、图生视频、首尾帧、参考视频、视频编辑、视频延长、大语言模型、视觉理解、语音合成等 11 种功能模式。
 
 ## APK安装包
 - https://github.com/limbo947/bizyair-app/releases
@@ -72,15 +72,15 @@ npx eas build --platform android --profile preview --local
 
 ## 技术栈
 
-- React Native 0.81.5 (Expo SDK 54) + React 19
-- Hermes 引擎 + 新架构（New Arch）
+- React Native 0.85.3 (Expo SDK 56) + React 19.2
+- Hermes v1 引擎 + 新架构（New Arch，默认启用）
 - expo-router 文件路由（原生 Tab 导航 + Modal 路由）
 - AsyncStorage 本地存储（带数据校验防护）
 - BizyAir OpenAPI（异步任务模式）
 - 阿里云 OSS 直传（HMAC-SHA1 签名）
 - expo-image（图片缓存 + 内存/磁盘双缓存）
 - expo-file-system OOP API（File/Paths）
-- expo-av（音频播放）
+- expo-audio（音频播放）+ expo-video（视频播放）
 - react-native-markdown-display（Markdown 渲染）
 - 目标平台：Android arm64-v8a / Web
 

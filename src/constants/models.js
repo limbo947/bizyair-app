@@ -111,6 +111,17 @@ const JOYCAPTION_PRICE = 6;
 /** Qwen3 TTS 固定价格 */
 const TTS_PRICE = 10;
 
+/** BiRefNet 固定价格 */
+const BIREFNET_PRICE = 2;
+/** ACE Step 固定价格 */
+const ACE_STEP_PRICE = 1;
+/** SeedVR2 按分辨率计费 */
+const SEEDVR2_PRICES = { 720: 1, 1080: 2, 1440: 3, 2160: 4 };
+/** Flux Klein 固定价格 */
+const FLUX_KLEIN_PRICE = 60;
+/** Kontext-dev-LoRA 固定价格 */
+const KONTEXT_LORA_PRICE = 50;
+
 // ─── 通用价格计算函数 ─────────────────────────────────────────────────────────
 
 /** 按秒计费：duration × 单价 */
@@ -656,13 +667,14 @@ export const MODELS = {
     supportsSeed: true,
     flfUsesImageUrls: true,
   },
-  'kling-o3-4k-base': {
+  'kling-o3-4k': {
     name: '可灵 O3 4K',
     icon: { name: 'git-compare-outline', color: '#FF6B6B' },
     manufacturer: 'kuaishou',
     category: 'reference-to-video',
     paramType: 'kling-o3-4k',
     modes: ['reference-to-video'],
+    endpoint: 'kling-o3-4k-base/reference-to-video',
     priceCalculator: calcKlingO3_4KPrice,
     videoRatios: ['16:9', '9:16', '1:1'],
     maxPromptLength: 2500,
@@ -1180,6 +1192,97 @@ export const MODELS = {
     defaultFormat: 'mp3',
     defaultLanguage: 'Auto',
     maxTokens: 1024,
+  },
+  'birefnet-background-remover': {
+    name: 'BiRefNet',
+    icon: { name: 'crop-outline', color: '#6C5CE7' },
+    manufacturer: 'siliconflow',
+    category: 'image-to-image',
+    paramType: 'birefnet',
+    modes: ['image-to-image'],
+    outputType: 'image',
+    priceCalculator: calcFixedPrice(BIREFNET_PRICE),
+    imageField: 'image',
+    maxImages: 1,
+    supportsImageToImage: true,
+    noPromptRequired: true,
+  },
+  'ace-step': {
+    name: 'ACE Step',
+    icon: { name: 'musical-notes-outline', color: '#6C5CE7' },
+    manufacturer: 'siliconflow',
+    category: 'text-to-audio',
+    paramType: 'ace-step',
+    modes: ['text-to-audio'],
+    outputType: 'audio',
+    priceCalculator: calcFixedPrice(ACE_STEP_PRICE),
+    maxLyricsLength: 5000,
+    maxTagsLength: 500,
+    durationRange: [10, 300],
+    defaultDuration: 30,
+    supportsSeed: true,
+    noPromptRequired: true,
+  },
+  'seedvr2-upscale-image': {
+    name: 'SeedVR2',
+    icon: { name: 'expand-outline', color: '#6C5CE7' },
+    manufacturer: 'siliconflow',
+    category: 'image-to-image',
+    paramType: 'seedvr2',
+    modes: ['image-to-image'],
+    outputType: 'image',
+    priceCalculator: calcByResolution(SEEDVR2_PRICES, 2),
+    resolutions: [720, 1080, 1440, 2160],
+    defaultResolution: 1080,
+    imageField: 'image',
+    maxImages: 1,
+    supportsImageToImage: true,
+    noPromptRequired: true,
+    endpoint: 'seedvr2/upscale/image',
+  },
+  'z-image-base': {
+    name: 'Z-Image Base',
+    icon: { name: 'image-outline', color: '#6C5CE7' },
+    manufacturer: 'siliconflow',
+    category: 'text-to-image',
+    modes: ['text-to-image'],
+    paramType: 'width-height',
+    priceCalculator: calcFixedPrice(0),
+    maxPromptLength: 2500,
+    supportsImageToImage: false,
+    supportsNegativePrompt: true, supportsSeed: true, supportsBatchSize: false,
+    stepsRange: [4, 50], defaultSteps: 28,
+    sizeRange: [256, 2048],
+    guidanceScaleRange: [0.1, 8], defaultGuidanceScale: 4,
+  },
+  'flux-klein-watermarker-remover': {
+    name: 'Flux Klein',
+    icon: { name: 'brush-outline', color: '#FF6B6B' },
+    manufacturer: 'blackforest',
+    category: 'image-to-image',
+    paramType: 'flux-klein',
+    modes: ['image-to-image'],
+    outputType: 'image',
+    priceCalculator: calcFixedPrice(FLUX_KLEIN_PRICE),
+    imageField: 'image',
+    maxImages: 1,
+    supportsImageToImage: true,
+    noPromptRequired: true,
+    endpoint: 'flux-klein/watermarker-remover/image-to-image',
+  },
+  'kontext-dev-lora': {
+    name: 'Kontext LoRA',
+    icon: { name: 'layers-outline', color: '#FF6B6B' },
+    manufacturer: 'blackforest',
+    category: 'image-to-image',
+    paramType: 'kontext-lora',
+    modes: ['image-to-image'],
+    outputType: 'image',
+    priceCalculator: calcFixedPrice(KONTEXT_LORA_PRICE),
+    imageField: 'images',
+    maxImages: 1,
+    supportsImageToImage: true,
+    supportsSeed: true,
   },
 };
 

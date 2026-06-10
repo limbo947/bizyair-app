@@ -3,7 +3,7 @@
     "id": 1195,
     "display_name": "BiRefNet-精细抠图",
     "category": "Image to Image",
-    "model_name": "birefnet-background-remover",
+    "model_name": "birefnet",
     "function": "image-to-image",
     "endpoint": "birefnet-background-remover/image-to-image",
     "manufacturer": "硅基流动",
@@ -25,7 +25,7 @@
     "endpoint": "ace-step/text-to-audio",
     "manufacturer": "硅基流动",
     "url": "https://bizyair.cn/llms/modelzoo/ace-step/text-to-audio?lang=javascript",
-    "price": "音乐时长: 1 金币/5秒",
+    "price": "音乐时长: 1 金币/1次",
     "price_url": "https://bizyair.cn/modelzoo/ace-step/text-to-audio?tab=price",
     "benefit": {
       "rpd": 200,
@@ -37,8 +37,8 @@
     "id": 1193,
     "display_name": "SeedVR2-图像放大",
     "category": "Image to Image",
-    "model_name": "seedvr2",
-    "function": "upscale/image",
+    "model_name": "seedvr2-upscale-image",
+    "function": "image",
     "endpoint": "seedvr2/upscale/image",
     "manufacturer": "硅基流动",
     "url": "https://bizyair.cn/llms/modelzoo/seedvr2/upscale/image?lang=javascript",
@@ -71,8 +71,8 @@
     "id": 1191,
     "display_name": "Flux Klein 去除水印",
     "category": "Image to Image",
-    "model_name": "flux-klein",
-    "function": "watermarker-remover/image-to-image",
+    "model_name": "flux-klein-watermarker-remover",
+    "function": "image-to-image",
     "endpoint": "flux-klein/watermarker-remover/image-to-image",
     "manufacturer": "硅基流动",
     "url": "https://bizyair.cn/llms/modelzoo/flux-klein/watermarker-remover/image-to-image?lang=javascript",
@@ -263,7 +263,7 @@
     "endpoint": "happyhorse-1-0-official/image-to-video",
     "manufacturer": "阿里",
     "url": "https://bizyair.cn/llms/modelzoo/happyhorse-1-0-official/image-to-video?lang=javascript",
-    "price": "720P: 900 金币/1秒 | 1080P: 1600 金币/1秒",
+    "price": "720P: 900 金币/1次 | 1080P: 1600 金币/1次",
     "price_url": "https://bizyair.cn/modelzoo/happyhorse-1-0-official/image-to-video?tab=price",
     "benefit": {
       "rpd": 200,
@@ -280,7 +280,7 @@
     "endpoint": "happyhorse-1-0-official/video-edit",
     "manufacturer": "阿里",
     "url": "https://bizyair.cn/llms/modelzoo/happyhorse-1-0-official/video-edit?lang=javascript",
-    "price": "720P: 900 金币/1秒 | 1080P: 1600 金币/1秒",
+    "price": "720P: 900 金币/1次 | 1080P: 1600 金币/1次",
     "price_url": "https://bizyair.cn/modelzoo/happyhorse-1-0-official/video-edit?tab=price",
     "benefit": {
       "rpd": 200,
@@ -297,7 +297,7 @@
     "endpoint": "happyhorse-1-0-official/reference-to-video",
     "manufacturer": "阿里",
     "url": "https://bizyair.cn/llms/modelzoo/happyhorse-1-0-official/reference-to-video?lang=javascript",
-    "price": "720P: 900 金币/1秒 | 1080P: 1600 金币/1秒",
+    "price": "720P: 900 金币/1次 | 1080P: 1600 金币/1次",
     "price_url": "https://bizyair.cn/modelzoo/happyhorse-1-0-official/reference-to-video?tab=price",
     "benefit": {
       "rpd": 200,
@@ -314,7 +314,7 @@
     "endpoint": "happyhorse-1-0-official/text-to-video",
     "manufacturer": "阿里",
     "url": "https://bizyair.cn/llms/modelzoo/happyhorse-1-0-official/text-to-video?lang=javascript",
-    "price": "720P: 900 金币/1秒 | 1080P: 1600 金币/1秒",
+    "price": "720P: 900 金币/1次 | 1080P: 1600 金币/1次",
     "price_url": "https://bizyair.cn/modelzoo/happyhorse-1-0-official/text-to-video?tab=price",
     "benefit": {
       "rpd": 200,
@@ -331,7 +331,7 @@
     "endpoint": "bza-image-o2-official/image-to-image",
     "manufacturer": "OpenAI",
     "url": "https://bizyair.cn/llms/modelzoo/bza-image-o2-official/image-to-image?lang=javascript",
-    "price": ", high, >2560*1440, : 3486 金币/1次 | , high, <=2560*1440 且 >1920*1080 , : 2149 金币/1次 | , high, <=1920*1080, : 1120 金币/1次 | , medium, >2560*1440, : 966 金币/1次 | , medium, >1920*1080 且 <=2560*1440, : 630 金币/1次 | , medium, <=1920*1080, : 378 金币/1次 | , low, >2560*1440 , : 224 金币/1次 | , low, >1920*1080 且 <=2560*1440, : 182 金币/1次 | , low, <=1920*1080, : 161 金币/1次",
+    "price": "high: 3486 金币/1次 | high: 2149 金币/1次 | high: 1120 金币/1次 | medium: 966 金币/1次 | medium: 630 金币/1次 | medium: 378 金币/1次 | low: 224 金币/1次 | low: 182 金币/1次 | low: 161 金币/1次",
     "price_url": "https://bizyair.cn/modelzoo/bza-image-o2-official/image-to-image?tab=price",
     "benefit": {
       "rpd": 200,
@@ -382,7 +382,7 @@
     "endpoint": "bza-image-o2-official/text-to-image",
     "manufacturer": "OpenAI",
     "url": "https://bizyair.cn/llms/modelzoo/bza-image-o2-official/text-to-image?lang=javascript",
-    "price": ", high, >2560*1440, : 3486 金币/1次 | , high, <=2560*1440 且 >1920*1080 , : 2149 金币/1次 | , high, <=1920*1080, : 1120 金币/1次 | , medium, >2560*1440, : 966 金币/1次 | , medium, >1920*1080 且 <=2560*1440, : 630 金币/1次 | , medium, <=1920*1080, : 378 金币/1次 | , low, >2560*1440 , : 224 金币/1次 | , low, >1920*1080 且 <=2560*1440, : 182 金币/1次 | , low, <=1920*1080, : 161 金币/1次",
+    "price": "high: 3486 金币/1次 | high: 2149 金币/1次 | high: 1120 金币/1次 | medium: 966 金币/1次 | medium: 630 金币/1次 | medium: 378 金币/1次 | low: 224 金币/1次 | low: 182 金币/1次 | low: 161 金币/1次",
     "price_url": "https://bizyair.cn/modelzoo/bza-image-o2-official/text-to-image?tab=price",
     "benefit": {
       "rpd": 200,
@@ -501,7 +501,7 @@
     "endpoint": "kling-o3-pro-base/flf-to-video",
     "manufacturer": "快手",
     "url": "https://bizyair.cn/llms/modelzoo/kling-o3-pro-base/flf-to-video?lang=javascript",
-    "price": "true: 900 金币/1秒 | false: 700 金币/1秒",
+    "price": "true: 900 金币/1次 | false: 700 金币/1次",
     "price_url": "https://bizyair.cn/modelzoo/kling-o3-pro-base/flf-to-video?tab=price",
     "benefit": {
       "rpd": 200,
@@ -518,7 +518,7 @@
     "endpoint": "kling-o3-pro-base/text-to-video",
     "manufacturer": "快手",
     "url": "https://bizyair.cn/llms/modelzoo/kling-o3-pro-base/text-to-video?lang=javascript",
-    "price": "true: 900 金币/1秒 | false: 700 金币/1秒",
+    "price": "true: 900 金币/1次 | false: 700 金币/1次",
     "price_url": "https://bizyair.cn/modelzoo/kling-o3-pro-base/text-to-video?tab=price",
     "benefit": {
       "rpd": 200,
@@ -535,7 +535,7 @@
     "endpoint": "bza-vision-g3-1-pro-official/vision",
     "manufacturer": "谷歌",
     "url": "https://bizyair.cn/llms/modelzoo/bza-vision-g3-1-pro-official/vision?lang=javascript",
-    "price": "未知",
+    "price": "",
     "price_url": "https://bizyair.cn/modelzoo/bza-vision-g3-1-pro-official/vision?tab=price",
     "benefit": {
       "rpd": 200,
@@ -552,7 +552,7 @@
     "endpoint": "bza-vision-g3-flash-official/vision",
     "manufacturer": "谷歌",
     "url": "https://bizyair.cn/llms/modelzoo/bza-vision-g3-flash-official/vision?lang=javascript",
-    "price": "未知",
+    "price": "",
     "price_url": "https://bizyair.cn/modelzoo/bza-vision-g3-flash-official/vision?tab=price",
     "benefit": {
       "rpd": 200,
@@ -569,7 +569,7 @@
     "endpoint": "bza-chat-g3-1-pro-official/large-language-models",
     "manufacturer": "谷歌",
     "url": "https://bizyair.cn/llms/modelzoo/bza-chat-g3-1-pro-official/large-language-models?lang=javascript",
-    "price": "未知",
+    "price": "",
     "price_url": "https://bizyair.cn/modelzoo/bza-chat-g3-1-pro-official/large-language-models?tab=price",
     "benefit": {
       "rpd": 200,
@@ -586,7 +586,7 @@
     "endpoint": "bza-chat-g3-1-flash-lite-official/large-language-models",
     "manufacturer": "谷歌",
     "url": "https://bizyair.cn/llms/modelzoo/bza-chat-g3-1-flash-lite-official/large-language-models?lang=javascript",
-    "price": "未知",
+    "price": "",
     "price_url": "https://bizyair.cn/modelzoo/bza-chat-g3-1-flash-lite-official/large-language-models?tab=price",
     "benefit": {
       "rpd": 200,
@@ -620,7 +620,7 @@
     "endpoint": "kling-3-0-pro-base/flf-to-video",
     "manufacturer": "快手",
     "url": "https://bizyair.cn/llms/modelzoo/kling-3-0-pro-base/flf-to-video?lang=javascript",
-    "price": "true: 1050 金币/1秒 | false: 700 金币/1秒",
+    "price": "true: 1050 金币/1次 | false: 700 金币/1次",
     "price_url": "https://bizyair.cn/modelzoo/kling-3-0-pro-base/flf-to-video?tab=price",
     "benefit": {
       "rpd": 200,
@@ -637,7 +637,7 @@
     "endpoint": "kling-3-0-pro-base/text-to-video",
     "manufacturer": "快手",
     "url": "https://bizyair.cn/llms/modelzoo/kling-3-0-pro-base/text-to-video?lang=javascript",
-    "price": "true: 1050 金币/1秒 | false: 700 金币/1秒",
+    "price": "true: 1050 金币/1次 | false: 700 金币/1次",
     "price_url": "https://bizyair.cn/modelzoo/kling-3-0-pro-base/text-to-video?tab=price",
     "benefit": {
       "rpd": 200,
@@ -654,7 +654,7 @@
     "endpoint": "bza-video-x-official/video-edit",
     "manufacturer": "grok",
     "url": "https://bizyair.cn/llms/modelzoo/bza-video-x-official/video-edit?lang=javascript",
-    "price": "450 金币/1秒",
+    "price": "450 金币/1次",
     "price_url": "https://bizyair.cn/modelzoo/bza-video-x-official/video-edit?tab=price",
     "benefit": {
       "rpd": 200,
@@ -705,7 +705,7 @@
     "endpoint": "bza-video-x-base/image-to-video",
     "manufacturer": "grok",
     "url": "https://bizyair.cn/llms/modelzoo/bza-video-x-base/image-to-video?lang=javascript",
-    "price": "未知",
+    "price": "",
     "price_url": "https://bizyair.cn/modelzoo/bza-video-x-base/image-to-video?tab=price",
     "benefit": {
       "rpd": 200,
@@ -722,7 +722,7 @@
     "endpoint": "bza-video-x-base/text-to-video",
     "manufacturer": "grok",
     "url": "https://bizyair.cn/llms/modelzoo/bza-video-x-base/text-to-video?lang=javascript",
-    "price": "未知",
+    "price": "",
     "price_url": "https://bizyair.cn/modelzoo/bza-video-x-base/text-to-video?tab=price",
     "benefit": {
       "rpd": 200,
@@ -739,7 +739,7 @@
     "endpoint": "kling-3-0-std-base/flf-to-video",
     "manufacturer": "快手",
     "url": "https://bizyair.cn/llms/modelzoo/kling-3-0-std-base/flf-to-video?lang=javascript",
-    "price": "true: 1050 金币/1秒 | false: 700 金币/1秒",
+    "price": "true: 1050 金币/1次 | false: 700 金币/1次",
     "price_url": "https://bizyair.cn/modelzoo/kling-3-0-std-base/flf-to-video?tab=price",
     "benefit": {
       "rpd": 200,
@@ -756,7 +756,7 @@
     "endpoint": "kling-3-0-std-base/text-to-video",
     "manufacturer": "快手",
     "url": "https://bizyair.cn/llms/modelzoo/kling-3-0-std-base/text-to-video?lang=javascript",
-    "price": "true: 800 金币/1秒 | false: 550 金币/1秒",
+    "price": "true: 800 金币/1次 | false: 550 金币/1次",
     "price_url": "https://bizyair.cn/modelzoo/kling-3-0-std-base/text-to-video?tab=price",
     "benefit": {
       "rpd": 200,
@@ -943,7 +943,7 @@
     "endpoint": "dreamactor-2-0-base/reference-to-video",
     "manufacturer": "字节",
     "url": "https://bizyair.cn/llms/modelzoo/dreamactor-2-0-base/reference-to-video?lang=javascript",
-    "price": "350 金币/1秒",
+    "price": "350 金币/1次",
     "price_url": "https://bizyair.cn/modelzoo/dreamactor-2-0-base/reference-to-video?tab=price",
     "benefit": {
       "rpd": 200,
@@ -960,7 +960,7 @@
     "endpoint": "seedance-2-0-fast-official/reference-to-video",
     "manufacturer": "字节",
     "url": "https://bizyair.cn/llms/modelzoo/seedance-2-0-fast-official/reference-to-video?lang=javascript",
-    "price": "480p, 无输入视频: 340 金币/1秒 | 720p, 无输入视频: 750 金币/1秒 | 480p, 有输入视频: 670 金币/1秒 | 720p, 有输入视频: 1510 金币/1秒",
+    "price": "480p, 无输入视频: 340 金币/1次 | 720p, 无输入视频: 750 金币/1次 | 480p, 有输入视频: 670 金币/1次 | 720p, 有输入视频: 1510 金币/1次",
     "price_url": "https://bizyair.cn/modelzoo/seedance-2-0-fast-official/reference-to-video?tab=price",
     "benefit": {
       "rpd": 200,
@@ -1011,7 +1011,7 @@
     "endpoint": "seedance-2-0-official/reference-to-video",
     "manufacturer": "字节",
     "url": "https://bizyair.cn/llms/modelzoo/seedance-2-0-official/reference-to-video?lang=javascript",
-    "price": "480p, 无输入视频: 420 金币/1秒 | 720p, 无输入视频: 940 金币/1秒 | 1080p, 无输入视频: 2120 金币/1秒 | 480p, 有输入视频: 840 金币/1秒 | 720p, 有输入视频: 1890 金币/1秒 | 1080p, 有输入视频: 4250 金币/1秒",
+    "price": "480p, 无输入视频: 420 金币/1次 | 720p, 无输入视频: 940 金币/1次 | 1080p, 无输入视频: 2120 金币/1次 | 480p, 有输入视频: 840 金币/1次 | 720p, 有输入视频: 1890 金币/1次 | 1080p, 有输入视频: 4250 金币/1次",
     "price_url": "https://bizyair.cn/modelzoo/seedance-2-0-official/reference-to-video?tab=price",
     "benefit": {
       "rpd": 200,
@@ -1062,7 +1062,7 @@
     "endpoint": "seedance-2-0-fast-base/reference-to-video",
     "manufacturer": "字节",
     "url": "https://bizyair.cn/llms/modelzoo/seedance-2-0-fast-base/reference-to-video?lang=javascript",
-    "price": "480p / 无参考视频, 模型原生直出的分辨率。: 500 金币/1秒 | 720p / 无参考视频, 模型原生直出的分辨率。: 1000 金币/1秒 | 1080p / 无参考视频, 基于 720p 原生生成后进行画质放大。: 1280 金币/1秒 | 2k / 无参考视频, 基于 720p 原生生成后进行画质放大。: 1420 金币/1秒 | 4k / 无参考视频, 基于 720p 原生生成后进行画质放大。: 1630 金币/1秒 | 480p / 有参考视频, 模型原生直出的分辨率。\n计费秒数 = 取 [输入视频时长 + 生成视频时长] 与 [最低计费时长] 中的最大值；: 300 金币/1秒 | 720p / 有参考视频, 模型原生直出的分辨率。\n计费秒数 = 取 [输入视频时长 + 生成视频时长] 与 [最低计费时长] 中的最大值；: 600 金币/1秒 | 1080p / 有参考视频, 基于 720p 原生生成后进行画质放大。\n基础计费秒数 = 取 [输入视频时长 + 生成视频时长] 与 [最低计费时长] 中的最大值；: 基础: 600  附加: 280 金币/1秒 | 2k / 有参考视频, 基于 720p 原生生成后进行画质放大。\n基础计费秒数 = 取 [输入视频时长 + 生成视频时长] 与 [最低计费时长] 中的最大值；: 基础: 600  附加: 420 金币/1秒 | 4k / 有参考视频, 基于 720p 原生生成后进行画质放大。\n基础计费秒数 = 取 [输入视频时长 + 生成视频时长] 与 [最低计费时长] 中的最大值；: 基础: 600  附加: 630 金币/1秒",
+    "price": "480p / 无参考视频, 模型原生直出的分辨率。: 500 金币/1次 | 720p / 无参考视频, 模型原生直出的分辨率。: 1000 金币/1次 | 1080p / 无参考视频, 基于 720p 原生生成后进行画质放大。: 1280 金币/1次 | 2k / 无参考视频, 基于 720p 原生生成后进行画质放大。: 1420 金币/1次 | 4k / 无参考视频, 基于 720p 原生生成后进行画质放大。: 1630 金币/1次 | 480p / 有参考视频, 模型原生直出的分辨率。\n计费秒数 = 取 [输入视频时长 + 生成视频时长] 与 [最低计费时长] 中的最大值；: 300 金币/1次 | 720p / 有参考视频, 模型原生直出的分辨率。\n计费秒数 = 取 [输入视频时长 + 生成视频时长] 与 [最低计费时长] 中的最大值；: 600 金币/1次 | 1080p / 有参考视频, 基于 720p 原生生成后进行画质放大。\n基础计费秒数 = 取 [输入视频时长 + 生成视频时长] 与 [最低计费时长] 中的最大值；: 基础: 600  附加: 280 金币/1次 | 2k / 有参考视频, 基于 720p 原生生成后进行画质放大。\n基础计费秒数 = 取 [输入视频时长 + 生成视频时长] 与 [最低计费时长] 中的最大值；: 基础: 600  附加: 420 金币/1次 | 4k / 有参考视频, 基于 720p 原生生成后进行画质放大。\n基础计费秒数 = 取 [输入视频时长 + 生成视频时长] 与 [最低计费时长] 中的最大值；: 基础: 600  附加: 630 金币/1次",
     "price_url": "https://bizyair.cn/modelzoo/seedance-2-0-fast-base/reference-to-video?tab=price",
     "benefit": {
       "rpd": 200,
@@ -1079,7 +1079,7 @@
     "endpoint": "seedance-2-0-base/reference-to-video",
     "manufacturer": "字节",
     "url": "https://bizyair.cn/llms/modelzoo/seedance-2-0-base/reference-to-video?lang=javascript",
-    "price": "480p / 无参考视频, 模型原生直出的分辨率。: 600 金币/1秒 | 720p / 无参考视频, 模型原生直出的分辨率。: 1200 金币/1秒 | 1080p / 无参考视频, 基于 720p 原生生成后进行画质放大。: 1480 金币/1秒 | 2k / 无参考视频, 基于 720p 原生生成后进行画质放大。: 1620 金币/1秒 | 4k / 无参考视频, 基于 720p 原生生成后进行画质放大。: 1830 金币/1秒 | 480p / 有参考视频, 模型原生直出的分辨率。: 400 金币/1秒 | 720p / 有参考视频, 模型原生直出的分辨率。: 800 金币/1秒 | 1080p / 有参考视频, 基于 720p 原生生成后进行画质放大。\n计费秒数 = 取 [输入视频时长 + 生成视频时长] 与 [最低计费时长] 中的最大值；: 基础: 800/秒  附加: 280 金币/1秒 | 2k / 有参考视频, 基于 720p 原生生成后进行画质放大。\n计费秒数 = 取 [输入视频时长 + 生成视频时长] 与 [最低计费时长] 中的最大值；: 基础: 800/秒  附加: 420 金币/1秒 | 4k / 有参考视频, 基于 720p 原生生成后进行画质放大。\n计费秒数 = 取 [输入视频时长 + 生成视频时长] 与 [最低计费时长] 中的最大值；: 基础: 800/秒  附加: 630 金币/1秒 | 1080p原生 / 无参考视频, 模型原生直出的分辨率。: 3000 金币/1秒 | 1080p原生 / 有参考视频, 模型原生直出的分辨率。\n计费秒数 = 取 [输入视频时长 + 生成视频时长] 与 [最低计费时长] 中的最大值；: 2000 金币/1秒",
+    "price": "480p / 无参考视频, 模型原生直出的分辨率。: 600 金币/1次 | 720p / 无参考视频, 模型原生直出的分辨率。: 1200 金币/1次 | 1080p / 无参考视频, 基于 720p 原生生成后进行画质放大。: 1480 金币/1次 | 2k / 无参考视频, 基于 720p 原生生成后进行画质放大。: 1620 金币/1次 | 4k / 无参考视频, 基于 720p 原生生成后进行画质放大。: 1830 金币/1次 | 480p / 有参考视频, 模型原生直出的分辨率。: 400 金币/1次 | 720p / 有参考视频, 模型原生直出的分辨率。: 800 金币/1次 | 1080p / 有参考视频, 基于 720p 原生生成后进行画质放大。\n计费秒数 = 取 [输入视频时长 + 生成视频时长] 与 [最低计费时长] 中的最大值；: 基础: 800/秒  附加: 280 金币/1次 | 2k / 有参考视频, 基于 720p 原生生成后进行画质放大。\n计费秒数 = 取 [输入视频时长 + 生成视频时长] 与 [最低计费时长] 中的最大值；: 基础: 800/秒  附加: 420 金币/1次 | 4k / 有参考视频, 基于 720p 原生生成后进行画质放大。\n计费秒数 = 取 [输入视频时长 + 生成视频时长] 与 [最低计费时长] 中的最大值；: 基础: 800/秒  附加: 630 金币/1次 | 1080p原生 / 无参考视频, 模型原生直出的分辨率。: 3000 金币/1次 | 1080p原生 / 有参考视频, 模型原生直出的分辨率。\n计费秒数 = 取 [输入视频时长 + 生成视频时长] 与 [最低计费时长] 中的最大值；: 2000 金币/1次",
     "price_url": "https://bizyair.cn/modelzoo/seedance-2-0-base/reference-to-video?tab=price",
     "benefit": {
       "rpd": 200,
@@ -1096,7 +1096,7 @@
     "endpoint": "seedance-2-0-fast-base/flf-to-video",
     "manufacturer": "字节",
     "url": "https://bizyair.cn/llms/modelzoo/seedance-2-0-fast-base/flf-to-video?lang=javascript",
-    "price": "480p: 600 金币/1秒 | 720p: 1200 金币/1秒 | 1080p: 1480 金币/1秒 | 2k: 1620 金币/1秒 | 4k: 1830 金币/1秒",
+    "price": "480p: 600 金币/1次 | 720p: 1200 金币/1次 | 1080p: 1480 金币/1次 | 2k: 1620 金币/1次 | 4k: 1830 金币/1次",
     "price_url": "https://bizyair.cn/modelzoo/seedance-2-0-fast-base/flf-to-video?tab=price",
     "benefit": {
       "rpd": 200,
@@ -1113,7 +1113,7 @@
     "endpoint": "seedance-2-0-base/flf-to-video",
     "manufacturer": "字节",
     "url": "https://bizyair.cn/llms/modelzoo/seedance-2-0-base/flf-to-video?lang=javascript",
-    "price": "480p: 600 金币/1秒 | 720p: 1200 金币/1秒 | native1080p: 3000 金币/1秒 | 1080p: 1480 金币/1秒 | 2k: 1620 金币/1秒 | 4k: 1830 金币/1秒",
+    "price": "480p: 600 金币/1次 | 720p: 1200 金币/1次 | native1080p: 3000 金币/1次 | 1080p: 1480 金币/1次 | 2k: 1620 金币/1次 | 4k: 1830 金币/1次",
     "price_url": "https://bizyair.cn/modelzoo/seedance-2-0-base/flf-to-video?tab=price",
     "benefit": {
       "rpd": 200,
@@ -1130,7 +1130,7 @@
     "endpoint": "seedance-2-0-fast-base/text-to-video",
     "manufacturer": "字节",
     "url": "https://bizyair.cn/llms/modelzoo/seedance-2-0-fast-base/text-to-video?lang=javascript",
-    "price": "480p: 500 金币/1秒 | 720p: 1000 金币/1秒 | 1080p: 1200 金币/1秒 | 2k: 1420 金币/1秒 | 4k: 1630 金币/1秒",
+    "price": "480p: 500 金币/1次 | 720p: 1000 金币/1次 | 1080p: 1200 金币/1次 | 2k: 1420 金币/1次 | 4k: 1630 金币/1次",
     "price_url": "https://bizyair.cn/modelzoo/seedance-2-0-fast-base/text-to-video?tab=price",
     "benefit": {
       "rpd": 200,
@@ -1147,7 +1147,7 @@
     "endpoint": "bza-vision-g3-1-flash-lite-official/vision",
     "manufacturer": "谷歌",
     "url": "https://bizyair.cn/llms/modelzoo/bza-vision-g3-1-flash-lite-official/vision?lang=javascript",
-    "price": "700 金币/1M Tokens",
+    "price": "700 金币/1次",
     "price_url": "https://bizyair.cn/modelzoo/bza-vision-g3-1-flash-lite-official/vision?tab=price",
     "benefit": {
       "rpd": 200,
@@ -1164,7 +1164,7 @@
     "endpoint": "bza-chat-g3-flash-official/large-language-models",
     "manufacturer": "谷歌",
     "url": "https://bizyair.cn/llms/modelzoo/bza-chat-g3-flash-official/large-language-models?lang=javascript",
-    "price": "未知",
+    "price": "",
     "price_url": "https://bizyair.cn/modelzoo/bza-chat-g3-flash-official/large-language-models?tab=price",
     "benefit": {
       "rpd": 200,
@@ -1176,12 +1176,12 @@
     "id": 1086,
     "display_name": "可灵O3.4K-参考生视频-渠道版",
     "category": "Reference to Video",
-    "model_name": "kling-o3-4k-base",
+    "model_name": "kling-o3-4k",
     "function": "reference-to-video",
     "endpoint": "kling-o3-4k-base/reference-to-video",
     "manufacturer": "快手",
     "url": "https://bizyair.cn/llms/modelzoo/kling-o3-4k-base/reference-to-video?lang=javascript",
-    "price": "true: 700 金币/1秒 | false: 550 金币/1秒",
+    "price": "true: 700 金币/1次 | false: 550 金币/1次",
     "price_url": "https://bizyair.cn/modelzoo/kling-o3-4k-base/reference-to-video?tab=price",
     "benefit": {
       "rpd": 200,
@@ -1198,7 +1198,7 @@
     "endpoint": "kling-o3-std-base/flf-to-video",
     "manufacturer": "快手",
     "url": "https://bizyair.cn/llms/modelzoo/kling-o3-std-base/flf-to-video?lang=javascript",
-    "price": "true: 800 金币/1秒 | false: 550 金币/1秒",
+    "price": "true: 800 金币/1次 | false: 550 金币/1次",
     "price_url": "https://bizyair.cn/modelzoo/kling-o3-std-base/flf-to-video?tab=price",
     "benefit": {
       "rpd": 200,
@@ -1215,7 +1215,7 @@
     "endpoint": "kling-o3-std-base/text-to-video",
     "manufacturer": "快手",
     "url": "https://bizyair.cn/llms/modelzoo/kling-o3-std-base/text-to-video?lang=javascript",
-    "price": "true: 800 金币/1秒 | false: 550 金币/1秒",
+    "price": "true: 800 金币/1次 | false: 550 金币/1次",
     "price_url": "https://bizyair.cn/modelzoo/kling-o3-std-base/text-to-video?tab=price",
     "benefit": {
       "rpd": 200,
@@ -1249,7 +1249,7 @@
     "endpoint": "vidu-q3-pro-official/flf-to-video",
     "manufacturer": "生数科技",
     "url": "https://bizyair.cn/llms/modelzoo/vidu-q3-pro-official/flf-to-video?lang=javascript",
-    "price": "540P: 438 金币/1秒 | 720P: 938 金币/1秒 | 1080P: 1000 金币/1秒",
+    "price": "540P: 438 金币/1次 | 720P: 938 金币/1次 | 1080P: 1000 金币/1次",
     "price_url": "https://bizyair.cn/modelzoo/vidu-q3-pro-official/flf-to-video?tab=price",
     "benefit": {
       "rpd": 200,
@@ -1266,7 +1266,7 @@
     "endpoint": "vidu-q3-pro-official/image-to-video",
     "manufacturer": "生数科技",
     "url": "https://bizyair.cn/llms/modelzoo/vidu-q3-pro-official/image-to-video?lang=javascript",
-    "price": "540P: 438 金币/1秒 | 720P: 938 金币/1秒 | 1080P: 1000 金币/1秒",
+    "price": "540P: 438 金币/1次 | 720P: 938 金币/1次 | 1080P: 1000 金币/1次",
     "price_url": "https://bizyair.cn/modelzoo/vidu-q3-pro-official/image-to-video?tab=price",
     "benefit": {
       "rpd": 200,
@@ -1283,7 +1283,7 @@
     "endpoint": "vidu-q3-pro-official/text-to-video",
     "manufacturer": "生数科技",
     "url": "https://bizyair.cn/llms/modelzoo/vidu-q3-pro-official/text-to-video?lang=javascript",
-    "price": "540P: 438 金币/1秒 | 720P: 938 金币/1秒 | 1080P: 1000 金币/1秒",
+    "price": "540P: 438 金币/1次 | 720P: 938 金币/1次 | 1080P: 1000 金币/1次",
     "price_url": "https://bizyair.cn/modelzoo/vidu-q3-pro-official/text-to-video?tab=price",
     "benefit": {
       "rpd": 200,
@@ -1300,7 +1300,7 @@
     "endpoint": "vidu-q3-pro-base/flf-to-video",
     "manufacturer": "生数科技",
     "url": "https://bizyair.cn/llms/modelzoo/vidu-q3-pro-base/flf-to-video?lang=javascript",
-    "price": "540P: 350 金币/1秒 | 720P: 700 金币/1秒 | 1080P: 750 金币/1秒",
+    "price": "540P: 350 金币/1次 | 720P: 700 金币/1次 | 1080P: 750 金币/1次",
     "price_url": "https://bizyair.cn/modelzoo/vidu-q3-pro-base/flf-to-video?tab=price",
     "benefit": {
       "rpd": 200,
@@ -1317,7 +1317,7 @@
     "endpoint": "vidu-q3-pro-base/image-to-video",
     "manufacturer": "生数科技",
     "url": "https://bizyair.cn/llms/modelzoo/vidu-q3-pro-base/image-to-video?lang=javascript",
-    "price": "540P: 350 金币/1秒 | 720P: 700 金币/1秒 | 1080P: 750 金币/1秒",
+    "price": "540P: 350 金币/1次 | 720P: 700 金币/1次 | 1080P: 750 金币/1次",
     "price_url": "https://bizyair.cn/modelzoo/vidu-q3-pro-base/image-to-video?tab=price",
     "benefit": {
       "rpd": 200,
@@ -1334,7 +1334,7 @@
     "endpoint": "vidu-q3-pro-base/text-to-video",
     "manufacturer": "生数科技",
     "url": "https://bizyair.cn/llms/modelzoo/vidu-q3-pro-base/text-to-video?lang=javascript",
-    "price": "540P: 310 金币/1秒 | 720P: 660 金币/1秒 | 1080P: 700 金币/1秒",
+    "price": "540P: 310 金币/1次 | 720P: 660 金币/1次 | 1080P: 700 金币/1次",
     "price_url": "https://bizyair.cn/modelzoo/vidu-q3-pro-base/text-to-video?tab=price",
     "benefit": {
       "rpd": 200,
@@ -1351,7 +1351,7 @@
     "endpoint": "vidu-q3-turbo-official/flf-to-video",
     "manufacturer": "生数科技",
     "url": "https://bizyair.cn/llms/modelzoo/vidu-q3-turbo-official/flf-to-video?lang=javascript",
-    "price": "540P: 250 金币/1秒 | 720P: 375 金币/1秒 | 1080P: 500 金币/1秒",
+    "price": "540P: 250 金币/1次 | 720P: 375 金币/1次 | 1080P: 500 金币/1次",
     "price_url": "https://bizyair.cn/modelzoo/vidu-q3-turbo-official/flf-to-video?tab=price",
     "benefit": {
       "rpd": 200,
@@ -1368,7 +1368,7 @@
     "endpoint": "vidu-q3-turbo-official/image-to-video",
     "manufacturer": "生数科技",
     "url": "https://bizyair.cn/llms/modelzoo/vidu-q3-turbo-official/image-to-video?lang=javascript",
-    "price": "540P: 250 金币/1秒 | 720P: 375 金币/1秒 | 1080P: 500 金币/1秒",
+    "price": "540P: 250 金币/1次 | 720P: 375 金币/1次 | 1080P: 500 金币/1次",
     "price_url": "https://bizyair.cn/modelzoo/vidu-q3-turbo-official/image-to-video?tab=price",
     "benefit": {
       "rpd": 200,
@@ -1385,7 +1385,7 @@
     "endpoint": "vidu-q3-turbo-official/text-to-video",
     "manufacturer": "生数科技",
     "url": "https://bizyair.cn/llms/modelzoo/vidu-q3-turbo-official/text-to-video?lang=javascript",
-    "price": "540P: 250 金币/1秒 | 720P: 375 金币/1秒 | 1080P: 500 金币/1秒",
+    "price": "540P: 250 金币/1次 | 720P: 375 金币/1次 | 1080P: 500 金币/1次",
     "price_url": "https://bizyair.cn/modelzoo/vidu-q3-turbo-official/text-to-video?tab=price",
     "benefit": {
       "rpd": 200,
@@ -1402,7 +1402,7 @@
     "endpoint": "vidu-q3-turbo-base/flf-to-video",
     "manufacturer": "生数科技",
     "url": "https://bizyair.cn/llms/modelzoo/vidu-q3-turbo-base/flf-to-video?lang=javascript",
-    "price": "540P: 200 金币/1秒 | 720P: 300 金币/1秒 | 1080P: 350 金币/1秒",
+    "price": "540P: 200 金币/1次 | 720P: 300 金币/1次 | 1080P: 350 金币/1次",
     "price_url": "https://bizyair.cn/modelzoo/vidu-q3-turbo-base/flf-to-video?tab=price",
     "benefit": {
       "rpd": 200,
@@ -1419,7 +1419,7 @@
     "endpoint": "vidu-q3-turbo-base/image-to-video",
     "manufacturer": "生数科技",
     "url": "https://bizyair.cn/llms/modelzoo/vidu-q3-turbo-base/image-to-video?lang=javascript",
-    "price": "540P: 200 金币/1秒 | 720P: 300 金币/1秒 | 1080P: 350 金币/1秒",
+    "price": "540P: 200 金币/1次 | 720P: 300 金币/1次 | 1080P: 350 金币/1次",
     "price_url": "https://bizyair.cn/modelzoo/vidu-q3-turbo-base/image-to-video?tab=price",
     "benefit": {
       "rpd": 200,
@@ -1436,7 +1436,7 @@
     "endpoint": "vidu-q3-turbo-base/text-to-video",
     "manufacturer": "生数科技",
     "url": "https://bizyair.cn/llms/modelzoo/vidu-q3-turbo-base/text-to-video?lang=javascript",
-    "price": "540P: 200 金币/1秒 | 720P: 300 金币/1秒 | 1080P: 350 金币/1秒",
+    "price": "540P: 200 金币/1次 | 720P: 300 金币/1次 | 1080P: 350 金币/1次",
     "price_url": "https://bizyair.cn/modelzoo/vidu-q3-turbo-base/text-to-video?tab=price",
     "benefit": {
       "rpd": 200,
@@ -1533,7 +1533,7 @@
     "id": 1036,
     "display_name": "万相2.7.Pro-文生图-官方版",
     "category": "Text to Image",
-    "model_name": "wan-2-7-image-pro-offcial",
+    "model_name": "wan-2-7-image-pro-official",
     "function": "text-to-image",
     "endpoint": "wan-2-7-image-pro-offcial/text-to-image",
     "manufacturer": "阿里",
@@ -1589,7 +1589,7 @@
     "endpoint": "wan-2-7-official/reference-to-video",
     "manufacturer": "阿里",
     "url": "https://bizyair.cn/llms/modelzoo/wan-2-7-official/reference-to-video?lang=javascript",
-    "price": "720P: 600 金币/1秒 | 1080P: 1000 金币/1秒 | 480p: 300 金币/1秒",
+    "price": "720P: 600 金币/1次 | 1080P: 1000 金币/1次 | 480p: 300 金币/1次",
     "price_url": "https://bizyair.cn/modelzoo/wan-2-7-official/reference-to-video?tab=price",
     "benefit": {
       "rpd": 200,
@@ -1606,7 +1606,7 @@
     "endpoint": "wan-2-7-official/video-edit",
     "manufacturer": "阿里",
     "url": "https://bizyair.cn/llms/modelzoo/wan-2-7-official/video-edit?lang=javascript",
-    "price": "720P: 600 金币/1秒 | 1080P: 1000 金币/1秒 | 480p: 300 金币/1秒",
+    "price": "720P: 600 金币/1次 | 1080P: 1000 金币/1次 | 480p: 300 金币/1次",
     "price_url": "https://bizyair.cn/modelzoo/wan-2-7-official/video-edit?tab=price",
     "benefit": {
       "rpd": 200,
@@ -1618,12 +1618,12 @@
     "id": 1027,
     "display_name": "万相2.7-视频延长-官方版",
     "category": "Video Extend",
-    "model_name": "wan-2-7-offcial",
+    "model_name": "wan-2-7-official",
     "function": "video-extend",
     "endpoint": "wan-2-7-offcial/video-extend",
     "manufacturer": "阿里",
     "url": "https://bizyair.cn/llms/modelzoo/wan-2-7-offcial/video-extend?lang=javascript",
-    "price": "720P: 600 金币/1秒 | 1080P: 1000 金币/1秒 | 480p: 300 金币/1秒",
+    "price": "720P: 600 金币/1次 | 1080P: 1000 金币/1次 | 480p: 300 金币/1次",
     "price_url": "https://bizyair.cn/modelzoo/wan-2-7-offcial/video-extend?tab=price",
     "benefit": {
       "rpd": 200,
@@ -1640,7 +1640,7 @@
     "endpoint": "wan-2-7-official/image-to-video",
     "manufacturer": "阿里",
     "url": "https://bizyair.cn/llms/modelzoo/wan-2-7-official/image-to-video?lang=javascript",
-    "price": "720P: 600 金币/1秒 | 1080P: 1000 金币/1秒 | 480p: 300 金币/1秒",
+    "price": "720P: 600 金币/1次 | 1080P: 1000 金币/1次 | 480p: 300 金币/1次",
     "price_url": "https://bizyair.cn/modelzoo/wan-2-7-official/image-to-video?tab=price",
     "benefit": {
       "rpd": 200,
@@ -1657,7 +1657,7 @@
     "endpoint": "wan-2-7-official/text-to-video",
     "manufacturer": "阿里",
     "url": "https://bizyair.cn/llms/modelzoo/wan-2-7-official/text-to-video?lang=javascript",
-    "price": "720P: 600 金币/1秒 | 1080P: 1000 金币/1秒 | 480p: 300 金币/1秒",
+    "price": "720P: 600 金币/1次 | 1080P: 1000 金币/1次 | 480p: 300 金币/1次",
     "price_url": "https://bizyair.cn/modelzoo/wan-2-7-official/text-to-video?tab=price",
     "benefit": {
       "rpd": 200,
@@ -1674,7 +1674,7 @@
     "endpoint": "wan-2-6-official/image-to-video",
     "manufacturer": "阿里",
     "url": "https://bizyair.cn/llms/modelzoo/wan-2-6-official/image-to-video?lang=javascript",
-    "price": "480P: 300 金币/1秒 | 720P: 600 金币/1秒 | 1080P: 1000 金币/1秒",
+    "price": "480P: 300 金币/1次 | 720P: 600 金币/1次 | 1080P: 1000 金币/1次",
     "price_url": "https://bizyair.cn/modelzoo/wan-2-6-official/image-to-video?tab=price",
     "benefit": {
       "rpd": 200,
@@ -1691,7 +1691,7 @@
     "endpoint": "wan-2-5-official/image-to-video",
     "manufacturer": "阿里",
     "url": "https://bizyair.cn/llms/modelzoo/wan-2-5-official/image-to-video?lang=javascript",
-    "price": "480P: 300 金币/1秒 | 720P: 600 金币/1秒 | 1080P: 1000 金币/1秒",
+    "price": "480P: 300 金币/1次 | 720P: 600 金币/1次 | 1080P: 1000 金币/1次",
     "price_url": "https://bizyair.cn/modelzoo/wan-2-5-official/image-to-video?tab=price",
     "benefit": {
       "rpd": 200,
@@ -1708,7 +1708,7 @@
     "endpoint": "z-image-turbo/text-to-image",
     "manufacturer": "硅基流动",
     "url": "https://bizyair.cn/llms/modelzoo/z-image-turbo/text-to-image?lang=javascript",
-    "price": "未知",
+    "price": "",
     "price_url": "https://bizyair.cn/modelzoo/z-image-turbo/text-to-image?tab=price",
     "benefit": {
       "rpd": 200,
@@ -1759,7 +1759,7 @@
     "endpoint": "seedance-2-0-base/text-to-video",
     "manufacturer": "字节",
     "url": "https://bizyair.cn/llms/modelzoo/seedance-2-0-base/text-to-video?lang=javascript",
-    "price": "480p: 600 金币/1秒 | 720p: 1200 金币/1秒 | native1080p: 3000 金币/1秒 | 1080p: 1480 金币/1秒 | 2k: 1620 金币/1秒 | 4k: 1830 金币/1秒",
+    "price": "480p: 600 金币/1次 | 720p: 1200 金币/1次 | native1080p: 3000 金币/1次 | 1080p: 1480 金币/1次 | 2k: 1620 金币/1次 | 4k: 1830 金币/1次",
     "price_url": "https://bizyair.cn/modelzoo/seedance-2-0-base/text-to-video?tab=price",
     "benefit": {
       "rpd": 200,

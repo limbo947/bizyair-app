@@ -5,8 +5,9 @@ import { Pressable, View,
   Modal,
   ActivityIndicator,
   Platform, } from 'react-native';
+import { useEvent } from 'expo';
+import { useVideoPlayer, VideoView } from 'expo-video';
 import { Ionicons } from '@expo/vector-icons';
-import { Video, ResizeMode } from 'expo-av';
 import { Spacing, Typography, pressedOpacity } from '../constants/theme';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { useTheme } from '../context/ThemeContext';
@@ -135,40 +136,67 @@ function WebVideoPlayer({ visible, videoUrl, onClose }) {
 }
 
 /* ================================================================
- * NativeVideoPlayer — expo-av
+ * NativeVideoPlayer — expo-video (useVideoPlayer + VideoView)
  * ================================================================ */
 function NativeVideoPlayer({ visible, videoUrl, onClose }) {
   const s = useThemedStyles(createStyles);
   const { colors } = useTheme();
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [duration, setDuration] = useState(0);
-  const [position, setPosition] = useState(0);
-  const [volume, setVolume] = useState(1);
-  const [mutedVolume, setMutedVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
+  const [mutedVolume, setMutedVolume] = useState(1);
   const [error, setError] = useState('');
-  const videoRef = useRef(null);
 
-  // 可见性变化时重置播放状态
-  useEffect(() => { if (!visible) { try { videoRef.current?.stopAsync(); } catch (_e) { /* expected: component may be unmounted */ } setIsPlaying(false); setIsLoading(true); } else { setIsLoading(true); setError(''); setVolume(1); setIsMuted(false); setMutedVolume(1); } }, [visible]);
-  useEffect(() => () => { try { videoRef.current?.stopAsync(); } catch (_e) { /* expected: component may be unmounted */ } }, []);
+  const player = useVideoPlayer(videoUrl, (p) => {
+    p.loop = false;
+    p.volume = 1;
+    p.timeUpdateEventInterval = 0.25;
+  });
 
-  const onPlayback = useCallback((s) => {
-    if (!s.isLoaded) { if (s.error) setError('视频加载失败'); return; }
-    setDuration(s.durationMillis || 0); setPosition(s.positionMillis || 0); setIsPlaying(s.isPlaying); setIsLoading(false);
-    if (s.didJustFinish) setIsPlaying(false);
-  }, []);
+  const { status } = useEvent(player, 'statusChange', {
+    status: player.status,
+  });
+  const { isPlaying } = useEvent(player, 'playingChange', {
+    isPlaying: player.playing,
+  });
+  const { currentTime } = useEvent(player, 'timeUpdate', {
+    currentTime: player.currentTime,
+  });
+  const { duration } = useEvent(player, 'sourceLoad', {
+    duration: player.duration,
+  });
+  const { volume: playerVolume } = useEvent(player, 'volumeChange', {
+    volume: player.volume,
+  });
 
-  const togglePlay = useCallback(async () => {
-    if (!videoRef.current) return;
-    try { if (isPlaying) { await videoRef.current.pauseAsync(); } else { const st = await videoRef.current.getStatusAsync(); if (st.isLoaded && st.didJustFinish) { await videoRef.current.replayAsync(); } else { await videoRef.current.playAsync(); } } } catch (_e) { /* expected: component may be unmounted */ }
-  }, [isPlaying]);
+  const isLoading = status === 'loading' || status === 'idle';
+  const isErrored = status === 'error';
 
-  const toggleMute = () => { if (isMuted) { setVolume(mutedVolume); setIsMuted(false); } else { setMutedVolume(volume); setVolume(0); setIsMuted(true); } };
-  const fmt = (ms) => { if (!ms || ms < 0) return '0:00'; const t = Math.floor(ms / 1000); return `${Math.floor(t / 60)}:${(t % 60).toString().padStart(2, '0')}`; };
-  const seek = async (f) => { if (!videoRef.current || !duration) return; const t = f * duration; try { await videoRef.current.setPositionAsync(t); setPosition(t); } catch (_e) { /* expected: component may be unmounted */ } };
-  const pct = duration > 0 ? (position / duration) * 100 : 0;
+  // 可见性变化时暂停/重置
+  useEffect(() => {
+    if (!visible) { player.pause(); } else { setError(''); setIsMuted(false); player.volume = 1; }
+  }, [visible]);
+
+  // 错误状态时设置错误消息
+  useEffect(() => {
+    if (status === 'error') setError('视频加载失败');
+  }, [status]);
+
+  const togglePlay = useCallback(() => {
+    if (isPlaying) { player.pause(); }
+    else if (currentTime >= duration && duration > 0) { player.replay(); }
+    else if (status === 'readyToPlay') { player.play(); }
+  }, [isPlaying, status, currentTime, duration]);
+
+  const toggleMute = useCallback(() => {
+    if (isMuted) { player.volume = mutedVolume; setIsMuted(false); }
+    else { setMutedVolume(playerVolume); player.volume = 0; setIsMuted(true); }
+  }, [isMuted, mutedVolume, playerVolume]);
+
+  const fmt = (s) => { if (!s || s < 0) return '0:00'; const m = Math.floor(s / 60), sec = Math.floor(s % 60); return `${m}:${sec.toString().padStart(2, '0')}`; };
+
+  const seek = useCallback((frac) => { if (!duration) return; player.currentTime = frac * duration; }, [duration]);
+
+  const pct = duration > 0 ? (currentTime / duration) * 100 : 0;
+  const volPct = isMuted ? 0 : playerVolume * 100;
 
   if (!visible) return null;
 
@@ -182,15 +210,15 @@ function NativeVideoPlayer({ visible, videoUrl, onClose }) {
         </View>
 
         <View style={s.videoBox}>
-          {error ? <View style={s.center}><Ionicons name="alert-circle-outline" size={48} color="#999" /><Text style={s.errText}>{error}</Text></View>
-          : <Video ref={videoRef} source={{ uri: videoUrl }} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} resizeMode={ResizeMode.CONTAIN} shouldPlay={false} isLooping={false} volume={isMuted ? 0 : volume} onPlaybackStatusUpdate={onPlayback} onError={() => { setError('视频加载失败'); setIsLoading(false); }} />}
-          {isLoading && !error ? <View style={s.loadingOverlay}><ActivityIndicator size="large" color={colors.textOnOverlay} /><Text style={s.loadingText}>加载中...</Text></View> : null}
-          {!isPlaying && !isLoading && !error ? <Pressable style={({ pressed }) => [s.bigPlay, pressed && pressedOpacity()]} onPress={togglePlay}><Ionicons name="play-circle" size={72} color={colors.textOnOverlay} /></Pressable> : null}
+          {isErrored || error ? <View style={s.center}><Ionicons name="alert-circle-outline" size={48} color="#999" /><Text style={s.errText}>{error || '视频加载失败'}</Text></View>
+          : <VideoView player={player} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} contentFit="contain" nativeControls={false} />}
+          {isLoading && !isErrored && !error ? <View style={s.loadingOverlay}><ActivityIndicator size="large" color={colors.textOnOverlay} /><Text style={s.loadingText}>加载中...</Text></View> : null}
+          {!isPlaying && !isLoading && !isErrored && !error ? <Pressable style={({ pressed }) => [s.bigPlay, pressed && pressedOpacity()]} onPress={togglePlay}><Ionicons name="play-circle" size={72} color={colors.textOnOverlay} /></Pressable> : null}
         </View>
 
         <View style={s.ctrlBar}>
           <View style={s.progressRow}>
-            <Text style={s.t}>{fmt(position)}</Text>
+            <Text style={s.t}>{fmt(currentTime)}</Text>
             <Pressable style={({ pressed }) => [s.progArea, pressed && pressedOpacity()]} onPress={(e) => { e.currentTarget.measure((_, __, w) => seek(e.nativeEvent.locationX / w)); }}>
               <View style={s.progBg}><View style={[s.progFill, { width: `${pct}%` }]} /></View>
             </Pressable>
@@ -198,10 +226,10 @@ function NativeVideoPlayer({ visible, videoUrl, onClose }) {
           </View>
 
           <View style={s.ctrlRow}>
-            <Pressable style={({ pressed }) => [s.ctrlBtn, pressed && pressedOpacity()]} onPress={togglePlay}><Ionicons name={isPlaying ? 'pause' : 'play'} size={32} color={colors.textOnOverlay} /></Pressable>
-            <Pressable style={({ pressed }) => [s.ctrlBtn, pressed && pressedOpacity()]} onPress={toggleMute}><Ionicons name={isMuted || volume === 0 ? 'volume-mute' : volume < 0.5 ? 'volume-low' : 'volume-medium'} size={24} color={colors.textOnOverlay} /></Pressable>
-            <Pressable style={({ pressed }) => [s.volArea, pressed && pressedOpacity()]} onPress={(e) => { e.currentTarget.measure((_, __, w) => { const v = Math.max(0, Math.min(1, e.nativeEvent.locationX / w)); setVolume(v); if (v > 0 && isMuted) setIsMuted(false); }); }}>
-              <View style={s.volBg}><View style={[s.volFill, { width: `${isMuted ? 0 : volume * 100}%` }]} /></View>
+            <Pressable style={({ pressed }) => [s.ctrlBtn, pressed && pressedOpacity()]} onPress={togglePlay} disabled={isLoading}><Ionicons name={isPlaying ? 'pause' : 'play'} size={32} color={isLoading ? colors.textTertiary : colors.textOnOverlay} /></Pressable>
+            <Pressable style={({ pressed }) => [s.ctrlBtn, pressed && pressedOpacity()]} onPress={toggleMute}><Ionicons name={isMuted || playerVolume === 0 ? 'volume-mute' : playerVolume < 0.5 ? 'volume-low' : 'volume-medium'} size={24} color={colors.textOnOverlay} /></Pressable>
+            <Pressable style={({ pressed }) => [s.volArea, pressed && pressedOpacity()]} onPress={(e) => { e.currentTarget.measure((_, __, w) => { const v = Math.max(0, Math.min(1, e.nativeEvent.locationX / w)); player.volume = v; if (v > 0 && isMuted) setIsMuted(false); }); }}>
+              <View style={s.volBg}><View style={[s.volFill, { width: `${volPct}%` }]} /></View>
             </Pressable>
           </View>
         </View>

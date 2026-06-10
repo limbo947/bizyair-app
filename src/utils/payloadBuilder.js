@@ -68,7 +68,9 @@ export function buildPayload(modelId, mode, params) {
       payload.prompt = params.prompt;
       payload.width = params.width;
       payload.height = params.height;
-      payload.batch_size = params.batchSize || 1;
+      if (params.steps !== undefined && params.steps !== '') payload.steps = parseInt(params.steps);
+      if (params.guidanceScale !== undefined && params.guidanceScale !== '') payload.guidance_scale = parseFloat(params.guidanceScale);
+      if (model.supportsBatchSize) payload.batch_size = params.batchSize || 1;
       if (params.negativePrompt) payload.negative_prompt = params.negativePrompt;
       if (params.seed !== undefined && params.seed !== '') payload.seed = parseInt(params.seed);
       break;
@@ -364,6 +366,33 @@ export function buildPayload(modelId, mode, params) {
       if (params.language) payload.language = params.language;
       if (params.speed !== undefined) payload.speed = params.speed;
       if (params.maxTokens !== undefined) payload.max_tokens = params.maxTokens;
+      break;
+
+    case 'birefnet':
+      if (params.imageUrls?.length) payload.image = params.imageUrls[0];
+      if (params.outputmask !== undefined) payload.outputmask = params.outputmask;
+      break;
+
+    case 'ace-step':
+      payload.lyrics = params.lyrics || '';
+      if (params.tags) payload.tags = params.tags;
+      if (params.duration) payload.duration = parseInt(params.duration);
+      if (params.seed !== undefined && params.seed !== '') payload.seed = parseInt(params.seed);
+      break;
+
+    case 'seedvr2':
+      if (params.imageUrls?.length) payload.image = params.imageUrls[0];
+      payload.resolution = parseInt(params.resolution) || 1080;
+      break;
+
+    case 'flux-klein':
+      if (params.imageUrls?.length) payload.image = params.imageUrls[0];
+      break;
+
+    case 'kontext-lora':
+      if (params.imageUrls?.length) payload.images = params.imageUrls;
+      payload.prompt = params.prompt;
+      if (params.seed !== undefined && params.seed !== '') payload.seed = parseInt(params.seed);
       break;
 
     default:

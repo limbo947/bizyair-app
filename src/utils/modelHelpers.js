@@ -257,6 +257,11 @@ const PARAM_TYPE_PLACEHOLDERS = {
   'vision-g': { 'vision': '描述你想了解的图片内容...' },
   'joycaption': { 'vision': '描述你想了解的图片内容...' },
   'tts': { 'text-to-audio': '输入要合成的文本...' },
+  'birefnet': { 'image-to-image': '上传图片即可抠图...' },
+  'ace-step': { 'text-to-audio': '输入歌词或描述音乐风格...' },
+  'seedvr2': { 'image-to-image': '上传图片即可放大...' },
+  'flux-klein': { 'image-to-image': '上传图片即可去水印...' },
+  'kontext-lora': { 'image-to-image': '描述你想编辑的效果...' },
 };
 
 export function getModelPlaceholder(modelId, mode) {

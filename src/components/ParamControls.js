@@ -281,7 +281,7 @@ export function QwenImageControls({ customWidth, setCustomWidth, customHeight, s
   );
 }
 
-export function WidthHeightControls({ sizePreset, setSizePreset, customWidth, setCustomWidth, customHeight, setCustomHeight, negativePrompt, setNegativePrompt, seed, setSeed, batchSize, setBatchSize, supportsNegativePrompt, supportsSeed, supportsBatchSize }) {
+export function WidthHeightControls({ sizePreset, setSizePreset, customWidth, setCustomWidth, customHeight, setCustomHeight, negativePrompt, setNegativePrompt, seed, setSeed, batchSize, setBatchSize, supportsNegativePrompt, supportsSeed, supportsBatchSize, steps, setSteps, guidanceScale, setGuidanceScale, stepsRange, defaultSteps, guidanceScaleRange, defaultGuidanceScale }) {
   const { styles, colors } = useStyles();
   return (
     <>
@@ -310,6 +310,18 @@ export function WidthHeightControls({ sizePreset, setSizePreset, customWidth, se
           </View>
         </View>
       </View>
+      {stepsRange && (
+        <View style={styles.card}>
+          <ParamLabel label="步数" required={false} />
+          <TextInput style={styles.dimInputFull} value={steps !== undefined ? String(steps) : ''} onChangeText={(text) => setSteps(text ? parseInt(text) : undefined)} keyboardType="numeric" placeholder={`${stepsRange[0]} ~ ${stepsRange[1]}`} placeholderTextColor={colors.textTertiary} />
+        </View>
+      )}
+      {guidanceScaleRange && (
+        <View style={styles.card}>
+          <ParamLabel label="引导系数" required={false} />
+          <TextInput style={styles.dimInputFull} value={guidanceScale !== undefined ? String(guidanceScale) : ''} onChangeText={(text) => setGuidanceScale(text ? parseFloat(text) : undefined)} keyboardType="decimal-pad" placeholder={`${guidanceScaleRange[0]} ~ ${guidanceScaleRange[1]}`} placeholderTextColor={colors.textTertiary} />
+        </View>
+      )}
       {supportsNegativePrompt && (
         <View style={styles.card}>
           <ParamLabel label="反向提示词" required={false} />

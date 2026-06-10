@@ -12,7 +12,7 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import { File, Paths } from 'expo-file-system';
-import * as MediaLibrary from 'expo-media-library';
+function getMediaLibrary() { if (Platform.OS === 'web') return null; return require('expo-media-library'); }
 import { getVideoThumbnailAsync } from 'expo-video-thumbnails';
 import { useAppContext } from '../context/AppContext';
 import { useHistoryContext, useHomeStateContext } from '../context/HistoryContext';
@@ -407,6 +407,7 @@ export function HistoryScreen() {
               if (i < urls.length - 1) await new Promise((r) => setTimeout(r, 300));
             }
           } else {
+            const MediaLibrary = getMediaLibrary();
             const { status } = await MediaLibrary.requestPermissionsAsync();
             if (status !== 'granted') {
               Alert.alert('权限不足', '需要存储权限才能保存文件');

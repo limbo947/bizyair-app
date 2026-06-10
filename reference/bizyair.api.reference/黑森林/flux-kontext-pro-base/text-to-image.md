@@ -14,13 +14,10 @@
 
 ```javascript
 async function submitTask() {
-  const url = 'https://api.bizyair.cn/x/v1/modelzoo/tasks/openapi/bza-image-f-k-max-base/image-to-image';
+  const url = 'https://api.bizyair.cn/x/v1/modelzoo/tasks/openapi/flux-kontext-pro-base/text-to-image';
   const payload = {
-    "prompt": "A breathtaking, high-speed wildlife documentary photograph capturing a primal moment in nature. A massive Siberian tiger, with fierce amber eyes and tensed muscles, has just caught a white pigeon on the snowy ground. Flurries of pure white feathers are exploding and scattering violently into the cold air, blending with flying snow and dirt. The tiger's powerful paws and jaws are locked in a dramatic action pose. Set in a dense, misty winter forest at dawn. Shutter speed at 1/8000s freezing the explosive motion of the flying feathers and dust motes. Sharp focus on the tiger's intense expression, soft natural bokeh, shot on a 400mm lens, photorealistic.",
-    "image_urls": [
-      "https://bizyair-prod.oss-cn-shanghai.aliyuncs.com/inputs/20260519/mT5dU4cLXiJbDnJLbZS6qk1ioCPdwlzo.jpg"
-    ],
-    "aspect_ratio": "1:1"
+    "prompt": "A candid, photorealistic scene of a worn, wooden-fronted secondhand bookstore on a narrow European side street at sunset. A sunbeam streams through the cluttered display window, illuminating dust motes dancing in the warm light. Inside, a silver-haired shopkeeper in a patterned vest spectacles and a soft cardigan, smiles gently as they hand a book to a young customer. The shelves are packed chaotically, overflowing with aged, leather-bound books. A sleepy, fluffy tortoiseshell cat dozes on a small velvet armchair near the counter. Outside on the pavement, two red ceramic teacups and a half-eaten scone sit on a small, bistro table. Sunlight reflects warmly off a copper tea kettle in the distance. Rain-slicked cobblestones. Shallow depth of field, focused sharply on the shopkeeper, cat, and table details; soft, natural bokeh in the background with indistinct pedestrians. Filmic grain, shot on Fujifilm Velvia 50, vintage photograph look. Warm, saturated color palette of deep ambers, browns, soft greens, and golden hour light.",
+    "aspect_ratio": "21:9"
   };
 
   try {
@@ -47,13 +44,10 @@ submitTask();
 
 ```javascript
 async function submitTask() {
-  const url = 'https://api.bizyair.cn/x/v1/modelzoo/tasks/openapi/bza-image-f-k-max-base/image-to-image';
+  const url = 'https://api.bizyair.cn/x/v1/modelzoo/tasks/openapi/flux-kontext-pro-base/text-to-image';
   const payload = {
-    "prompt": "A breathtaking, high-speed wildlife documentary photograph capturing a primal moment in nature. A massive Siberian tiger, with fierce amber eyes and tensed muscles, has just caught a white pigeon on the snowy ground. Flurries of pure white feathers are exploding and scattering violently into the cold air, blending with flying snow and dirt. The tiger's powerful paws and jaws are locked in a dramatic action pose. Set in a dense, misty winter forest at dawn. Shutter speed at 1/8000s freezing the explosive motion of the flying feathers and dust motes. Sharp focus on the tiger's intense expression, soft natural bokeh, shot on a 400mm lens, photorealistic.",
-    "image_urls": [
-      "https://bizyair-prod.oss-cn-shanghai.aliyuncs.com/inputs/20260519/mT5dU4cLXiJbDnJLbZS6qk1ioCPdwlzo.jpg"
-    ],
-    "aspect_ratio": "1:1"
+    "prompt": "A candid, photorealistic scene of a worn, wooden-fronted secondhand bookstore on a narrow European side street at sunset. A sunbeam streams through the cluttered display window, illuminating dust motes dancing in the warm light. Inside, a silver-haired shopkeeper in a patterned vest spectacles and a soft cardigan, smiles gently as they hand a book to a young customer. The shelves are packed chaotically, overflowing with aged, leather-bound books. A sleepy, fluffy tortoiseshell cat dozes on a small velvet armchair near the counter. Outside on the pavement, two red ceramic teacups and a half-eaten scone sit on a small, bistro table. Sunlight reflects warmly off a copper tea kettle in the distance. Rain-slicked cobblestones. Shallow depth of field, focused sharply on the shopkeeper, cat, and table details; soft, natural bokeh in the background with indistinct pedestrians. Filmic grain, shot on Fujifilm Velvia 50, vintage photograph look. Warm, saturated color palette of deep ambers, browns, soft greens, and golden hour light.",
+    "aspect_ratio": "21:9"
   };
 
   try {
@@ -94,7 +88,6 @@ submitTask();
 | 参数名 | 类型 | 必填 | 说明 |
 | :--- | :--- | :--- | :--- |
 | prompt | string | 是 | 提示词 |
-| image_urls | array | 是 | 支持格式：jpeg、jpg、png、webp、bmp、tiff、gif、heic、heif<br/>最多上传数量：14<br/>输入图片 |
 | aspect_ratio | string | 否 | ⟨bz_enum_json⟩["21:9","16:9","4:3","1:1","3:4","9:16"]⟨/bz_enum_json⟩<br/>比例 |
 
 > 为保护您的业务敏感信息（如 prompt 设计等），我们支持对 API 调用记录中的指定字段进行脱敏处理。脱敏后的字段在查询调用记录时将显示为 `[调用方要求隐藏]`，但不影响实际请求的执行和计费准确性。
@@ -180,7 +173,7 @@ queryTaskStatus('${REQUEST_ID}');
   "ended_at": "2026-04-15 13:42:32",
   "outputs": {
     "images": [
-      "https://storage.bizyair.cn/outputs_examples/fluxkontext_55c48793b824453081ce78b59f90e9f1_1780311265_ps2z2xg3.jpg"
+      "https://storage.bizyair.cn/outputs_examples/fluxkontext_d1f291071cb04e7caa333c63505cf163_1780311166_3i0ygx8t.jpg"
     ]
   }
 }
@@ -215,7 +208,7 @@ queryTaskStatus('${REQUEST_ID}');
   "ended_at": "2026-05-22 17:14:44",
   "outputs": {
     "images": [
-      "https://storage.bizyair.cn/outputs_examples/fluxkontext_55c48793b824453081ce78b59f90e9f1_1780311265_ps2z2xg3.jpg"
+      "https://storage.bizyair.cn/outputs_examples/fluxkontext_d1f291071cb04e7caa333c63505cf163_1780311166_3i0ygx8t.jpg"
     ]
   },
   "cost_times": {

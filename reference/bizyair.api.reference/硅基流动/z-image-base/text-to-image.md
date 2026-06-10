@@ -14,13 +14,15 @@
 
 ```javascript
 async function submitTask() {
-  const url = 'https://api.bizyair.cn/x/v1/modelzoo/tasks/openapi/bza-image-f-k-max-base/image-to-image';
+  const url = 'https://api.bizyair.cn/x/v1/modelzoo/tasks/openapi/z-image-base/text-to-image';
   const payload = {
-    "prompt": "A breathtaking, high-speed wildlife documentary photograph capturing a primal moment in nature. A massive Siberian tiger, with fierce amber eyes and tensed muscles, has just caught a white pigeon on the snowy ground. Flurries of pure white feathers are exploding and scattering violently into the cold air, blending with flying snow and dirt. The tiger's powerful paws and jaws are locked in a dramatic action pose. Set in a dense, misty winter forest at dawn. Shutter speed at 1/8000s freezing the explosive motion of the flying feathers and dust motes. Sharp focus on the tiger's intense expression, soft natural bokeh, shot on a 400mm lens, photorealistic.",
-    "image_urls": [
-      "https://bizyair-prod.oss-cn-shanghai.aliyuncs.com/inputs/20260519/mT5dU4cLXiJbDnJLbZS6qk1ioCPdwlzo.jpg"
-    ],
-    "aspect_ratio": "1:1"
+    "prompt": "一个晶莹剔透的苹果，在阳光下闪闪发光，背景是一个美丽的花园，充满了鲜花和绿树。",
+    "width": 1024,
+    "height": 1024,
+    "steps": 28,
+    "negative_prompt": "",
+    "seed": 1,
+    "guidance_scale": 3
   };
 
   try {
@@ -47,13 +49,15 @@ submitTask();
 
 ```javascript
 async function submitTask() {
-  const url = 'https://api.bizyair.cn/x/v1/modelzoo/tasks/openapi/bza-image-f-k-max-base/image-to-image';
+  const url = 'https://api.bizyair.cn/x/v1/modelzoo/tasks/openapi/z-image-base/text-to-image';
   const payload = {
-    "prompt": "A breathtaking, high-speed wildlife documentary photograph capturing a primal moment in nature. A massive Siberian tiger, with fierce amber eyes and tensed muscles, has just caught a white pigeon on the snowy ground. Flurries of pure white feathers are exploding and scattering violently into the cold air, blending with flying snow and dirt. The tiger's powerful paws and jaws are locked in a dramatic action pose. Set in a dense, misty winter forest at dawn. Shutter speed at 1/8000s freezing the explosive motion of the flying feathers and dust motes. Sharp focus on the tiger's intense expression, soft natural bokeh, shot on a 400mm lens, photorealistic.",
-    "image_urls": [
-      "https://bizyair-prod.oss-cn-shanghai.aliyuncs.com/inputs/20260519/mT5dU4cLXiJbDnJLbZS6qk1ioCPdwlzo.jpg"
-    ],
-    "aspect_ratio": "1:1"
+    "prompt": "一个晶莹剔透的苹果，在阳光下闪闪发光，背景是一个美丽的花园，充满了鲜花和绿树。",
+    "width": 1024,
+    "height": 1024,
+    "steps": 28,
+    "negative_prompt": "",
+    "seed": 1,
+    "guidance_scale": 3
   };
 
   try {
@@ -94,8 +98,12 @@ submitTask();
 | 参数名 | 类型 | 必填 | 说明 |
 | :--- | :--- | :--- | :--- |
 | prompt | string | 是 | 提示词 |
-| image_urls | array | 是 | 支持格式：jpeg、jpg、png、webp、bmp、tiff、gif、heic、heif<br/>最多上传数量：14<br/>输入图片 |
-| aspect_ratio | string | 否 | ⟨bz_enum_json⟩["21:9","16:9","4:3","1:1","3:4","9:16"]⟨/bz_enum_json⟩<br/>比例 |
+| width | number | 否 | 取值范围：256 ~ 2048<br/>图像宽度 |
+| height | number | 否 | 取值范围：256 ~ 2048<br/>图片高度 |
+| steps | number | 否 | 取值范围：4 ~ 50<br/>缺失时将自动填充默认值：28<br/>步数 |
+| negative_prompt | string | 否 | 负向提示词 |
+| seed | number | 否 | 取值范围：1 ~ 2147483647<br/>种子 |
+| guidance_scale | number | 否 | 取值范围：0.1 ~ 8<br/>步进：0.1<br/>guidance_scale |
 
 > 为保护您的业务敏感信息（如 prompt 设计等），我们支持对 API 调用记录中的指定字段进行脱敏处理。脱敏后的字段在查询调用记录时将显示为 `[调用方要求隐藏]`，但不影响实际请求的执行和计费准确性。
 >
@@ -180,7 +188,7 @@ queryTaskStatus('${REQUEST_ID}');
   "ended_at": "2026-04-15 13:42:32",
   "outputs": {
     "images": [
-      "https://storage.bizyair.cn/outputs_examples/fluxkontext_55c48793b824453081ce78b59f90e9f1_1780311265_ps2z2xg3.jpg"
+      "https://bizyair-prod.oss-cn-shanghai.aliyuncs.com/outputs/1e8c2011-cc4b-4958-ad9d-c8371428764a.png"
     ]
   }
 }
@@ -215,7 +223,7 @@ queryTaskStatus('${REQUEST_ID}');
   "ended_at": "2026-05-22 17:14:44",
   "outputs": {
     "images": [
-      "https://storage.bizyair.cn/outputs_examples/fluxkontext_55c48793b824453081ce78b59f90e9f1_1780311265_ps2z2xg3.jpg"
+      "https://bizyair-prod.oss-cn-shanghai.aliyuncs.com/outputs/1e8c2011-cc4b-4958-ad9d-c8371428764a.png"
     ]
   },
   "cost_times": {

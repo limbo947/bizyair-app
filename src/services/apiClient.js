@@ -12,6 +12,7 @@ import {
   REQUEST_TIMEOUT_MS,
   MAX_RETRIES,
   RETRY_DELAY_MS,
+  MODELS,
 } from '../constants/models';
 
 /**
@@ -77,7 +78,9 @@ async function request(url, options = {}) {
  * @throws {Error} 提交失败或未返回任务ID时抛出
  */
 async function submitTask(apiKey, modelId, mode, payload) {
-  const url = `${API_BASE}/${modelId}/${mode}`;
+  const model = MODELS[modelId];
+  const path = model?.endpoint || `${modelId}/${mode}`;
+  const url = `${API_BASE}/${path}`;
   const result = await request(url, {
     method: 'POST',
     headers: {

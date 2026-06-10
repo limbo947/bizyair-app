@@ -1,7 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Pressable, View, Text, Modal, ActivityIndicator, Platform } from 'react-native';
+import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { Ionicons } from '@expo/vector-icons';
-import { Audio } from 'expo-av';
 import { Spacing, Typography, pressedOpacity } from '../constants/theme';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { useTheme } from '../context/ThemeContext';
@@ -125,54 +125,51 @@ function WebAudioPlayer({ visible, audioUrl, onClose }) {
 }
 
 /* ================================================================
- * NativeAudioPlayer — expo-av Audio.Sound
+ * NativeAudioPlayer — expo-audio (useAudioPlayer)
  * ================================================================ */
 function NativeAudioPlayer({ visible, audioUrl, onClose }) {
   const st = useThemedStyles(createStyles);
   const { colors } = useTheme();
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [duration, setDuration] = useState(0);
-  const [position, setPosition] = useState(0);
-  const [volume, setVolume] = useState(1);
-  const [mutedVolume, setMutedVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
-  const [error, setError] = useState('');
-  const soundRef = useRef(null);
-  const tickRef = useRef(null);
+  const [mutedVolume, setMutedVolume] = useState(1);
+  const [volume, setVolume] = useState(1);
 
-  const clean = () => { clearInterval(tickRef.current); tickRef.current = null; if (soundRef.current) { try { soundRef.current.unloadAsync(); } catch {} soundRef.current = null; } setIsPlaying(false); setPosition(0); setDuration(0); setError(''); };
+  const player = useAudioPlayer(audioUrl);
+  const status = useAudioPlayerStatus(player);
 
-  useEffect(() => { if (!visible) clean(); }, [visible]);
-  useEffect(() => () => clean(), []);
+  const isPlaying = status.playing;
+  const isLoading = !status.isLoaded;
+  const duration = status.duration || 0;
+  const position = status.currentTime || 0;
+  const error = status.error ? '音频加载失败，请检查网络连接' : '';
 
-  const onStatus = (s) => {
-    if (!s.isLoaded) return;
-    setDuration(s.durationMillis || 0); setPosition(s.positionMillis || 0);
-    if (s.didJustFinish) { setIsPlaying(false); setPosition(0); clearInterval(tickRef.current); }
-  };
-
-  const startTick = () => { clearInterval(tickRef.current); tickRef.current = setInterval(async () => { if (soundRef.current) { try { const s = await soundRef.current.getStatusAsync(); if (s.isLoaded) setPosition(s.positionMillis || 0); } catch {} } }, 200); };
+  // 可见性变化时暂停
+  useEffect(() => {
+    if (!visible) { player.pause(); }
+    else { setIsMuted(false); player.volume = 1; setVolume(1); }
+  }, [visible]);
 
   const handlePlay = useCallback(async () => {
     if (!audioUrl) return;
-    if (isPlaying && soundRef.current) { await soundRef.current.pauseAsync(); setIsPlaying(false); clearInterval(tickRef.current); return; }
-    if (soundRef.current && !isPlaying) { try { const s = await soundRef.current.getStatusAsync(); if (s.isLoaded && s.positionMillis === s.durationMillis) { await soundRef.current.replayAsync(); } else { await soundRef.current.playAsync(); } setIsPlaying(true); startTick(); } catch { setError('播放失败'); } return; }
+    if (isPlaying) { player.pause(); return; }
+    // 播放结束后重头播放
+    if (position >= duration && duration > 0) { player.seekTo(0); }
+    player.play();
+  }, [audioUrl, isPlaying, position, duration]);
 
-    setIsLoading(true); setError('');
-    try {
-      await Audio.setAudioModeAsync({ allowsRecordingIOS: false, playsInSilentModeIOS: true, staysActiveInBackground: false });
-      const { sound } = await Audio.Sound.createAsync({ uri: audioUrl }, { shouldPlay: true, volume }, onStatus);
-      soundRef.current = sound; setIsPlaying(true); setIsLoading(false); startTick();
-    } catch { setIsLoading(false); setError('音频加载失败，请检查网络连接'); }
-  }, [audioUrl, isPlaying, volume]);
+  const seek = useCallback((frac) => {
+    if (!duration) return;
+    player.seekTo(frac * duration);
+  }, [duration]);
 
-  const seek = useCallback(async (frac) => { if (!soundRef.current || !duration) return; const t = frac * duration; try { await soundRef.current.setPositionAsync(t); setPosition(t); } catch {} }, [duration]);
+  const toggleMute = useCallback(() => {
+    if (isMuted) { player.volume = mutedVolume; setVolume(mutedVolume); setIsMuted(false); }
+    else { setMutedVolume(volume); player.volume = 0; setVolume(0); setIsMuted(true); }
+  }, [isMuted, mutedVolume, volume]);
 
-  const toggleMute = () => { if (isMuted) { soundRef.current?.setVolumeAsync(mutedVolume); setVolume(mutedVolume); setIsMuted(false); } else { setMutedVolume(volume); soundRef.current?.setVolumeAsync(0); setVolume(0); setIsMuted(true); } };
-
-  const fmt = (ms) => { const t = Math.floor(ms / 1000); return `${Math.floor(t / 60)}:${(t % 60).toString().padStart(2, '0')}`; };
+  const fmt = (s) => { if (!s || s < 0) return '0:00'; const m = Math.floor(s / 60); return `${m}:${(Math.floor(s) % 60).toString().padStart(2, '0')}`; };
   const pct = duration > 0 ? (position / duration) * 100 : 0;
+  const volPct = isMuted ? 0 : volume * 100;
 
   return (
     <Modal visible={visible} animationType="fade" transparent={false} onRequestClose={onClose}>
@@ -205,8 +202,8 @@ function NativeAudioPlayer({ visible, audioUrl, onClose }) {
             <Pressable style={({ pressed }) => [st.volIcon, pressed && pressedOpacity()]} onPress={toggleMute}>
               <Ionicons name={isMuted || volume === 0 ? 'volume-mute' : volume < 0.5 ? 'volume-low' : 'volume-medium'} size={20} color={colors.textSecondary} />
             </Pressable>
-            <Pressable style={({ pressed }) => [st.volArea, pressed && pressedOpacity()]} onPress={(e) => { e.currentTarget.measure((_, __, w) => { const v = Math.max(0, Math.min(1, e.nativeEvent.locationX / w)); setVolume(v); if (v > 0 && isMuted) setIsMuted(false); soundRef.current?.setVolumeAsync(v); }); }}>
-              <View style={st.volBg}><View style={[st.volFill, { width: `${isMuted ? 0 : volume * 100}%` }]} /></View>
+            <Pressable style={({ pressed }) => [st.volArea, pressed && pressedOpacity()]} onPress={(e) => { e.currentTarget.measure((_, __, w) => { const v = Math.max(0, Math.min(1, e.nativeEvent.locationX / w)); player.volume = v; setVolume(v); if (v > 0 && isMuted) setIsMuted(false); }); }}>
+              <View style={st.volBg}><View style={[st.volFill, { width: `${volPct}%` }]} /></View>
             </Pressable>
           </View>
         </View>
