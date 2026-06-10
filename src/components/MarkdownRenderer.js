@@ -1,6 +1,6 @@
 import React from 'react';
 import Markdown from 'react-native-markdown-display';
-import { Radius, Spacing } from '../constants/theme';
+import { Radius, Spacing, Typography } from '../constants/theme';
 import { useTheme } from '../context/ThemeContext';
 
 export function MarkdownRenderer({ content, style }) {
@@ -9,20 +9,20 @@ export function MarkdownRenderer({ content, style }) {
   const markdownStyle = {
     body: {
       color: colors.textPrimary,
-      fontSize: 15,
-      lineHeight: 22,
+      fontSize: Typography.fontSize.subheadline,
+      lineHeight: Typography.lineHeight.normal,
     },
     heading1: {
       fontSize: 26,
-      fontWeight: '700',
+      fontWeight: Typography.fontWeight.bold,
       color: colors.textPrimary,
       marginTop: Spacing.xl,
       marginBottom: Spacing.sm,
       lineHeight: 34,
     },
     heading2: {
-      fontSize: 22,
-      fontWeight: '700',
+      fontSize: Typography.fontSize.title2,
+      fontWeight: Typography.fontWeight.bold,
       color: colors.textPrimary,
       marginTop: Spacing.lg,
       marginBottom: Spacing.sm,
@@ -30,38 +30,38 @@ export function MarkdownRenderer({ content, style }) {
     },
     heading3: {
       fontSize: 19,
-      fontWeight: '600',
+      fontWeight: Typography.fontWeight.semibold,
       color: colors.textPrimary,
       marginTop: Spacing.md,
       marginBottom: Spacing.xs,
-      lineHeight: 26,
+      lineHeight: Typography.lineHeight.relaxed,
     },
     heading4: {
-      fontSize: 17,
-      fontWeight: '600',
+      fontSize: Typography.fontSize.body,
+      fontWeight: Typography.fontWeight.semibold,
       color: colors.textSecondary,
       marginTop: Spacing.md,
       marginBottom: Spacing.xs,
       lineHeight: 24,
     },
     heading5: {
-      fontSize: 15,
-      fontWeight: '600',
+      fontSize: Typography.fontSize.subheadline,
+      fontWeight: Typography.fontWeight.semibold,
       color: colors.textSecondary,
       marginTop: Spacing.sm,
       marginBottom: Spacing.xs,
-      lineHeight: 22,
+      lineHeight: Typography.lineHeight.normal,
     },
     heading6: {
-      fontSize: 14,
-      fontWeight: '600',
+      fontSize: Typography.fontSize.footnote,
+      fontWeight: Typography.fontWeight.semibold,
       color: colors.textTertiary,
       marginTop: Spacing.sm,
       marginBottom: Spacing.xs,
-      lineHeight: 20,
+      lineHeight: Typography.lineHeight.tight,
     },
     strong: {
-      fontWeight: '700',
+      fontWeight: Typography.fontWeight.bold,
       color: colors.textPrimary,
     },
     em: {
@@ -72,7 +72,7 @@ export function MarkdownRenderer({ content, style }) {
       backgroundColor: colors.bg,
       color: colors.textPrimary,
       fontFamily: 'monospace',
-      fontSize: 13,
+      fontSize: Typography.fontSize.footnote,
       paddingHorizontal: 5,
       paddingVertical: 2,
       borderRadius: Radius.xs,
@@ -82,8 +82,8 @@ export function MarkdownRenderer({ content, style }) {
       backgroundColor: colors.bg,
       color: colors.textPrimary,
       fontFamily: 'monospace',
-      fontSize: 13,
-      lineHeight: 20,
+      fontSize: Typography.fontSize.footnote,
+      lineHeight: Typography.lineHeight.tight,
       padding: Spacing.md,
       borderRadius: Radius.sm,
       borderCurve: 'continuous',
@@ -94,8 +94,8 @@ export function MarkdownRenderer({ content, style }) {
       backgroundColor: colors.bg,
       color: colors.textPrimary,
       fontFamily: 'monospace',
-      fontSize: 13,
-      lineHeight: 20,
+      fontSize: Typography.fontSize.footnote,
+      lineHeight: Typography.lineHeight.tight,
       padding: Spacing.md,
       borderRadius: Radius.sm,
       borderCurve: 'continuous',
@@ -118,14 +118,14 @@ export function MarkdownRenderer({ content, style }) {
     },
     bullet_list_icon: {
       color: colors.textSecondary,
-      fontSize: 15,
-      lineHeight: 22,
+      fontSize: Typography.fontSize.subheadline,
+      lineHeight: Typography.lineHeight.normal,
       marginRight: Spacing.sm,
     },
     ordered_list_icon: {
       color: colors.textSecondary,
-      fontSize: 15,
-      lineHeight: 22,
+      fontSize: Typography.fontSize.subheadline,
+      lineHeight: Typography.lineHeight.normal,
       marginRight: Spacing.sm,
     },
     blockquote: {
@@ -166,7 +166,7 @@ export function MarkdownRenderer({ content, style }) {
     },
     th: {
       padding: Spacing.sm,
-      fontWeight: '600',
+      fontWeight: Typography.fontWeight.semibold,
       color: colors.textPrimary,
     },
     tbody: {},
@@ -183,7 +183,7 @@ export function MarkdownRenderer({ content, style }) {
     paragraph: {
       marginTop: Spacing.xs,
       marginBottom: Spacing.xs,
-      lineHeight: 22,
+      lineHeight: Typography.lineHeight.normal,
     },
   };
 

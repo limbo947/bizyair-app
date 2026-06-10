@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, Text, View, TextInput, Switch } from 'react-native';
 import { QUALITY_LABELS, SIZE_PRESETS } from '../constants/models';
-import { Radius, Spacing } from '../constants/theme';
+import { Radius, Spacing, Typography } from '../constants/theme';
 import { createSharedStyles } from '../constants/sharedStyles';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { useTheme } from '../context/ThemeContext';
@@ -242,7 +242,46 @@ export function WanSizeControls({ currentResolutions, resolution, setResolution,
   );
 }
 
-export function WidthHeightControls({ sizePreset, setSizePreset, customWidth, setCustomWidth, customHeight, setCustomHeight, negativePrompt, setNegativePrompt, seed, setSeed, batchSize, setBatchSize, supportsNegativePrompt, supportsSeed, supportsBatchSize }) {
+export function QwenImageControls({ customWidth, setCustomWidth, customHeight, setCustomHeight, steps, setSteps, guidanceScale, setGuidanceScale, negativePrompt, setNegativePrompt, seed, setSeed }) {
+  const { styles, colors } = useStyles();
+  return (
+    <>
+      <View style={styles.card}>
+        <ParamLabel label="图片尺寸" required={false} />
+        <View style={styles.dimsRow}>
+          <View style={styles.dimWrap}>
+            <Text style={styles.dimLabel}>宽</Text>
+            <TextInput style={styles.dimInput} value={customWidth} onChangeText={setCustomWidth} keyboardType="numeric" placeholder="1024" placeholderTextColor={colors.textTertiary} />
+          </View>
+          <Text style={styles.dimX}>×</Text>
+          <View style={styles.dimWrap}>
+            <Text style={styles.dimLabel}>高</Text>
+            <TextInput style={styles.dimInput} value={customHeight} onChangeText={setCustomHeight} keyboardType="numeric" placeholder="1024" placeholderTextColor={colors.textTertiary} />
+          </View>
+        </View>
+        <Text style={styles.priceHint}>宽高范围: 256~2048</Text>
+      </View>
+      <View style={styles.card}>
+        <ParamLabel label="步数" required={false} />
+        <TextInput style={styles.dimInputFull} value={steps !== undefined ? String(steps) : ''} onChangeText={(text) => setSteps(text ? parseInt(text) : undefined)} keyboardType="numeric" placeholder="6 ~ 50" placeholderTextColor={colors.textTertiary} />
+      </View>
+      <View style={styles.card}>
+        <ParamLabel label="引导系数" required={false} />
+        <TextInput style={styles.dimInputFull} value={guidanceScale !== undefined ? String(guidanceScale) : ''} onChangeText={(text) => setGuidanceScale(text ? parseFloat(text) : undefined)} keyboardType="decimal-pad" placeholder="0.1 ~ 10" placeholderTextColor={colors.textTertiary} />
+      </View>
+      <View style={styles.card}>
+        <ParamLabel label="反向提示词" required={false} />
+        <TextInput style={[styles.dimInputFull, { minHeight: 60 }]} value={negativePrompt || ''} onChangeText={setNegativePrompt} placeholder="描述不想要的元素" placeholderTextColor={colors.textTertiary} multiline numberOfLines={2} />
+      </View>
+      <View style={styles.card}>
+        <ParamLabel label="种子" required={false} />
+        <TextInput style={styles.dimInputFull} value={seed || ''} onChangeText={(text) => setSeed(text.replace(/[^0-9]/g, ''))} keyboardType="numeric" placeholder="留空随机" placeholderTextColor={colors.textTertiary} />
+      </View>
+    </>
+  );
+}
+
+export function WidthHeightControls({ sizePreset, setSizePreset, customWidth, setCustomWidth, customHeight, setCustomHeight, negativePrompt, setNegativePrompt, seed, setSeed, batchSize, setBatchSize, supportsNegativePrompt, supportsSeed, supportsBatchSize, steps, setSteps, guidanceScale, setGuidanceScale, stepsRange, defaultSteps, guidanceScaleRange, defaultGuidanceScale }) {
   const { styles, colors } = useStyles();
   return (
     <>
@@ -271,6 +310,18 @@ export function WidthHeightControls({ sizePreset, setSizePreset, customWidth, se
           </View>
         </View>
       </View>
+      {stepsRange && (
+        <View style={styles.card}>
+          <ParamLabel label="步数" required={false} />
+          <TextInput style={styles.dimInputFull} value={steps !== undefined ? String(steps) : ''} onChangeText={(text) => setSteps(text ? parseInt(text) : undefined)} keyboardType="numeric" placeholder={`${stepsRange[0]} ~ ${stepsRange[1]}`} placeholderTextColor={colors.textTertiary} />
+        </View>
+      )}
+      {guidanceScaleRange && (
+        <View style={styles.card}>
+          <ParamLabel label="引导系数" required={false} />
+          <TextInput style={styles.dimInputFull} value={guidanceScale !== undefined ? String(guidanceScale) : ''} onChangeText={(text) => setGuidanceScale(text ? parseFloat(text) : undefined)} keyboardType="decimal-pad" placeholder={`${guidanceScaleRange[0]} ~ ${guidanceScaleRange[1]}`} placeholderTextColor={colors.textTertiary} />
+        </View>
+      )}
       {supportsNegativePrompt && (
         <View style={styles.card}>
           <ParamLabel label="反向提示词" required={false} />
@@ -301,23 +352,23 @@ export function WidthHeightControls({ sizePreset, setSizePreset, customWidth, se
 
 const createStyles = (colors) => ({
   ...createSharedStyles(colors),
-  priceHint: { fontSize: 12, color: colors.textTertiary, marginTop: Spacing.sm },
-  errorHint: { fontSize: 12, color: colors.error, marginTop: Spacing.sm },
+  priceHint: { fontSize: Typography.fontSize.caption1, color: colors.textTertiary, marginTop: Spacing.sm },
+  errorHint: { fontSize: Typography.fontSize.caption1, color: colors.error, marginTop: Spacing.sm },
   aspectRatioGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
-  ratioButton: { width: '22%', paddingVertical: 9, borderRadius: Radius.sm, borderCurve: 'continuous', backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
+  ratioButton: { width: '22%', paddingVertical: Spacing.sm + 1, borderRadius: Radius.sm, borderCurve: 'continuous', backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
   ratioButtonActive: { backgroundColor: colors.primary },
-  ratioText: { fontSize: 13, color: colors.textSecondary, fontWeight: '500' },
-  ratioTextActive: { color: colors.textInverse, fontWeight: '600' },
+  ratioText: { fontSize: Typography.fontSize.footnote, color: colors.textSecondary, fontWeight: Typography.fontWeight.medium },
+  ratioTextActive: { color: colors.textInverse, fontWeight: Typography.fontWeight.semibold },
   presetGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
-  presetButton: { width: '30%', paddingVertical: 10, borderRadius: Radius.sm, borderCurve: 'continuous', backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
+  presetButton: { width: '30%', paddingVertical: Spacing.sm + 2, borderRadius: Radius.sm, borderCurve: 'continuous', backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
   presetButtonActive: { backgroundColor: colors.primary },
-  presetLabel: { fontSize: 14, color: colors.textSecondary, fontWeight: '500' },
-  presetLabelActive: { color: colors.textInverse, fontWeight: '600' },
-  presetDims: { fontSize: 11, color: colors.textTertiary, marginTop: 2 },
+  presetLabel: { fontSize: Typography.fontSize.footnote, color: colors.textSecondary, fontWeight: Typography.fontWeight.medium },
+  presetLabelActive: { color: colors.textInverse, fontWeight: Typography.fontWeight.semibold },
+  presetDims: { fontSize: Typography.fontSize.caption2, color: colors.textTertiary, marginTop: Spacing.xs },
   presetDimsActive: { color: colors.primaryBg },
   dimsRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
   dimWrap: { flex: 1, position: 'relative' },
-  dimLabel: { position: 'absolute', left: 8, top: 0, bottom: 0, textAlignVertical: 'center', fontSize: 13, color: colors.textTertiary, fontWeight: '500', zIndex: 1, lineHeight: 40 },
-  dimInput: { fontSize: 15, color: colors.textPrimary, borderWidth: 0, borderRadius: Radius.sm, borderCurve: 'continuous', paddingLeft: 32, paddingRight: 10, paddingVertical: 10, textAlign: 'right', backgroundColor: colors.bg },
-  dimX: { fontSize: 18, color: colors.textTertiary, fontWeight: '400', lineHeight: 40 },
+  dimLabel: { position: 'absolute', left: Spacing.sm, top: 0, bottom: 0, textAlignVertical: 'center', fontSize: Typography.fontSize.footnote, color: colors.textTertiary, fontWeight: Typography.fontWeight.medium, zIndex: 1, lineHeight: 40 },
+  dimInput: { fontSize: Typography.fontSize.subheadline, color: colors.textPrimary, borderWidth: 0, borderRadius: Radius.sm, borderCurve: 'continuous', paddingLeft: Spacing.xxxl, paddingRight: Spacing.sm + 2, paddingVertical: Spacing.sm + 2, textAlign: 'right', backgroundColor: colors.bg },
+  dimX: { fontSize: Typography.fontSize.title2, color: colors.textTertiary, fontWeight: Typography.fontWeight.regular, lineHeight: 40 },
 });

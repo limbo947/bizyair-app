@@ -7,13 +7,6 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
-    "jsEngine": "hermes",
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
     "ios": {
       "supportsTablet": true
     },
@@ -22,7 +15,6 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true,
       "package": "com.bizyair.assistant",
       "softwareKeyboardLayoutMode": "pan"
     },
@@ -41,15 +33,20 @@
             "compileSdk": 35,
             "targetSdk": 35,
             "minSdk": 26,
-            "newArchEnabled": true,
             "hermesEnabled": true,
+            "useHermesV1": true,
             "enableProguardInReleaseBuilds": true,
             "enableShrinkResourcesInReleaseBuilds": true,
             "enablePngCrunchInReleaseBuilds": true
           }
         }
       ],
-      "expo-router"
+      "expo-router",
+      "expo-image",
+      "expo-status-bar",
+      "expo-audio",
+      "expo-video",
+      "expo-asset"
     ],
     "extra": {
       "eas": {

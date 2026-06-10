@@ -37,6 +37,7 @@ export function useHomeSubmit({
     extraOptions, nameInput, customPrompt, voice, responseFormat,
     instructions, language, speed, enableSequential, thinkingMode,
     colorPalette, batchSize, webSearch, returnLastFrame, topP, style,
+    steps, guidanceScale, outputmask, lyrics, tags,
   } = state;
 
   const getPayloadParams = useCallback(() => {
@@ -60,7 +61,7 @@ export function useHomeSubmit({
       case 'wan-size':
         return { ...base, resolution, customWidth, customHeight, imageUrls: iu, seed, watermark, enableSequential, thinkingMode, colorPalette, bboxList };
       case 'width-height':
-        return { ...base, width: parseInt(customWidth), height: parseInt(customHeight), negativePrompt, seed, batchSize };
+        return { ...base, width: parseInt(customWidth), height: parseInt(customHeight), steps, guidanceScale, negativePrompt, seed, batchSize };
       case 'seedance-video':
         return { ...base, resolution, aspectRatio, duration, generateAudio, seed: seed !== '' && seed !== undefined ? parseInt(seed) : undefined, webSearch, returnLastFrame, imageUrls: iu, firstFrameUrls: ffu, lastFrameUrls: lfu, videoUrls: vu };
       case 'kling-video':
@@ -82,7 +83,9 @@ export function useHomeSubmit({
       case 'bza-video-x':
         return { ...base, resolution, aspectRatio, duration, imageUrls: iu, videoUrls: vu };
       case 'bza-video-v3':
-        return { ...base, resolution, aspectRatio, imageUrls: iu, firstFrameUrls: ffu, lastFrameUrls: lfu };
+        return { ...base, resolution, aspectRatio, duration, generateAudio, seed: seed !== '' && seed !== undefined ? parseInt(seed) : undefined, negativePrompt, imageUrls: iu, firstFrameUrls: ffu, lastFrameUrls: lfu };
+      case 'bza-video-g':
+        return { ...base, resolution, aspectRatio, duration, imageUrls: iu };
       case 'dreamactor':
         return { imageUrls: iu, videoUrls: vu };
       case 'llm-chat':
@@ -91,12 +94,24 @@ export function useHomeSubmit({
         return { systemPrompt, userPrompt: prompt.trim(), imageUrls: iu, temperature, maxTokens, detail, enableThinking };
       case 'joycaption':
         return { imageUrls: iu, captionType, captionLength, temperature, maxTokens, doSample, extraOptions, nameInput, customPrompt };
+      case 'qwen-image':
+        return { ...base, width: parseInt(customWidth) || 1024, height: parseInt(customHeight) || 1024, steps, guidanceScale, negativePrompt, seed: seed !== '' && seed !== undefined ? parseInt(seed) : undefined };
       case 'tts':
         return { input: prompt.trim(), voice, responseFormat, instructions, language, speed, maxTokens };
+      case 'birefnet':
+        return { imageUrls: iu, outputmask };
+      case 'ace-step':
+        return { lyrics, tags, duration, seed: seed !== '' && seed !== undefined ? parseInt(seed) : undefined };
+      case 'seedvr2':
+        return { imageUrls: iu, resolution };
+      case 'flux-klein':
+        return { imageUrls: iu };
+      case 'kontext-lora':
+        return { ...base, imageUrls: iu, seed: seed !== '' && seed !== undefined ? parseInt(seed) : undefined };
       default:
         return { ...base, resolution, aspectRatio, imageUrls: iu };
     }
-  }, [paramType, prompt, resolution, aspectRatio, imageUrls, customWidth, customHeight, quality, duration, generateAudio, sound, multiShot, shotType, multiPrompt, negativePrompt, promptExtend, watermark, seed, display, keepOriginalSound, audio, offPeak, isRec, promptOptimizer, fastPretreatment, aigcWatermark, movementAmplitude, videoUrls, firstFrameUrls, lastFrameUrls, mediaUrls, refImages, audioSetting, drivingAudio, audioUrl, referenceVoice, bboxList, firstClipUrls, systemPrompt, temperature, maxTokens, enableThinking, enableSearch, detail, captionType, captionLength, doSample, extraOptions, nameInput, customPrompt, voice, responseFormat, instructions, language, speed, enableSequential, thinkingMode, colorPalette, batchSize, webSearch, returnLastFrame, topP, style, mode]);
+  }, [paramType, prompt, resolution, aspectRatio, imageUrls, customWidth, customHeight, quality, duration, generateAudio, sound, multiShot, shotType, multiPrompt, negativePrompt, promptExtend, watermark, seed, display, keepOriginalSound, audio, offPeak, isRec, promptOptimizer, fastPretreatment, aigcWatermark, movementAmplitude, videoUrls, firstFrameUrls, lastFrameUrls, mediaUrls, refImages, audioSetting, drivingAudio, audioUrl, referenceVoice, bboxList, firstClipUrls, systemPrompt, temperature, maxTokens, enableThinking, enableSearch, detail, captionType, captionLength, doSample, extraOptions, nameInput, customPrompt, voice, responseFormat, instructions, language, speed, enableSequential, thinkingMode, colorPalette, batchSize, webSearch, returnLastFrame, topP, style, steps, guidanceScale, outputmask, lyrics, tags, mode]);
 
   const livePrice = useMemo(() => calculatePrice(modelId, getPayloadParams()), [modelId, getPayloadParams]);
 
@@ -104,7 +119,7 @@ export function useHomeSubmit({
     const initialOutputType = getOutputType(modelId);
     const isVideo = initialOutputType === 'video';
 
-    if (!prompt.trim() && paramType !== 'dreamactor') {
+    if (!prompt.trim() && paramType !== 'dreamactor' && paramType !== 'birefnet' && paramType !== 'seedvr2' && paramType !== 'flux-klein' && paramType !== 'ace-step') {
       setError('请输入提示词');
       return;
     }
@@ -182,6 +197,8 @@ export function useHomeSubmit({
       } else if (paramType === 'vision-g' || paramType === 'joycaption') {
         submitResult = await submitVisionTask(ek, modelId, mode, payload);
       } else if (paramType === 'tts') {
+        submitResult = await submitTTSTask(ek, modelId, mode, payload);
+      } else if (paramType === 'ace-step') {
         submitResult = await submitTTSTask(ek, modelId, mode, payload);
       } else if (isVideo) {
         submitResult = await submitVideoTask(ek, modelId, mode, payload);

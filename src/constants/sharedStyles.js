@@ -1,4 +1,19 @@
-import { Radius, Spacing } from './theme';
+import { Radius, Spacing, Typography } from './theme';
+
+export const badgeBase = {
+  flexDirection: 'row',
+  alignItems: 'center',
+  borderRadius: Radius.full,
+  borderCurve: 'continuous',
+  paddingHorizontal: Spacing.sm,
+  paddingVertical: 3,
+  gap: Spacing.xs,
+};
+
+export const avatarBase = {
+  borderRadius: Radius.full,
+  borderCurve: 'continuous',
+};
 
 export const createSharedStyles = (colors) => ({
   card: {
@@ -9,12 +24,12 @@ export const createSharedStyles = (colors) => ({
     marginBottom: Spacing.md,
   },
   label: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: Typography.fontSize.footnote,
+    fontWeight: Typography.fontWeight.semibold,
     color: colors.textSecondary,
     marginBottom: Spacing.sm,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: Typography.letterSpacing.wide,
   },
   selectorRow: {
     flexDirection: 'row',
@@ -36,13 +51,13 @@ export const createSharedStyles = (colors) => ({
     borderColor: colors.primary,
   },
   selectorText: {
-    fontSize: 14,
+    fontSize: Typography.fontSize.footnote,
     color: colors.textPrimary,
-    fontWeight: '500',
+    fontWeight: Typography.fontWeight.medium,
   },
   selectorTextActive: {
     color: colors.textInverse,
-    fontWeight: '600',
+    fontWeight: Typography.fontWeight.semibold,
   },
   switchRow: {
     flexDirection: 'row',
@@ -56,7 +71,7 @@ export const createSharedStyles = (colors) => ({
     borderCurve: 'continuous',
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
-    fontSize: 14,
+    fontSize: Typography.fontSize.footnote,
     color: colors.textPrimary,
   },
   pressedStyle: {

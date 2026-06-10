@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useCallback } from 'react';
 import { View, TextInput, PanResponder, Platform } from 'react-native';
-import { Radius, Spacing } from '../constants/theme';
+import { Radius, Spacing, Typography } from '../constants/theme';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { useTheme } from '../context/ThemeContext';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -87,7 +87,7 @@ const createStyles = (colors) => ({
     backgroundColor: colors.bg,
   },
   input: {
-    fontSize: 14,
+    fontSize: Typography.fontSize.footnote,
     color: colors.textPrimary,
     textAlignVertical: 'top',
     borderWidth: 0,
@@ -99,9 +99,9 @@ const createStyles = (colors) => ({
   },
   resizeHandle: {
     position: 'absolute',
-    right: 4,
-    bottom: 4,
-    padding: 4,
+    right: Spacing.xs,
+    bottom: Spacing.xs,
+    padding: Spacing.xs,
     zIndex: 1,
   },
 });
