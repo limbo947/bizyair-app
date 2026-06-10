@@ -818,16 +818,16 @@ export function BzaVideoV3Controls({
       )}
       {supportsAudio && (
         <View style={styles.card}>
-          <View style={styles.switchRow}>
-            <Text style={styles.switchLabel}>生成音频</Text>
-            <Switch value={generateAudio || false} onValueChange={setGenerateAudio} trackColor={{ false: colors.border, true: colors.primary }} thumbColor={generateAudio ? colors.textInverse : colors.bg} />
-          </View>
+          <Pressable style={styles.switchRow} onPress={() => setGenerateAudio(!generateAudio)}>
+            <ParamLabel label="生成音频" required={false} style={{ marginBottom: 0 }} />
+            <Switch value={generateAudio || false} trackColor={{ false: colors.disabled, true: colors.primary }} pointerEvents="none" />
+          </Pressable>
         </View>
       )}
       {supportsSeed && (
         <View style={styles.card}>
           <ParamLabel label="种子" required={false} />
-          <TextInput style={styles.textInput} value={seed ?? ''} onChangeText={setSeed} placeholder="留空则随机" placeholderTextColor={colors.textTertiary} keyboardType="numeric" />
+          <TextInput style={styles.textInput} value={seed ?? ''} onChangeText={(text) => setSeed(text.replace(/[^0-9]/g, ''))} placeholder="留空则随机" placeholderTextColor={colors.textTertiary} keyboardType="numeric" />
         </View>
       )}
       {supportsNegativePrompt && (
