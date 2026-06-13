@@ -8,7 +8,6 @@ import {
   Alert, } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getVideoThumbnailAsync } from 'expo-video-thumbnails';
-import { Asset, requestPermissionsAsync } from 'expo-media-library';
 import { File, Paths } from 'expo-file-system';
 import { useAppContext } from '../../context/AppContext';
 import { useHistoryContext, useHomeStateContext } from '../../context/history';
@@ -175,7 +174,8 @@ export function HistoryScreen() {
               if (i < urls.length - 1) await new Promise((r) => setTimeout(r, 300));
             }
           } else {
-            const { status } = await requestPermissionsAsync();
+            const MediaLibrary = require('expo-media-library');
+            const { status } = await MediaLibrary.requestPermissionsAsync();
             if (status !== 'granted') {
               Alert.alert('权限不足', '需要存储权限才能保存文件');
               return;
@@ -184,7 +184,7 @@ export function HistoryScreen() {
               const filename = `bizyair_${item.id}_${i + 1}${ext}`;
               const destination = new File(Paths.cache, filename);
               const downloadedFile = await File.downloadFileAsync(urls[i], destination);
-              await Asset.create(downloadedFile.uri);
+              await MediaLibrary.Asset.create(downloadedFile.uri);
               if (i < urls.length - 1) await new Promise((r) => setTimeout(r, 300));
             }
             showToast(`${urls.length} 张图片已保存到相册`, 'success');
