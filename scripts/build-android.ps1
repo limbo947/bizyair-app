@@ -6,7 +6,7 @@
 param([switch]$Clean)
 
 $ErrorActionPreference = "Stop"
-$ScriptDir = $PSScriptRoot
+$ScriptDir = Split-Path $PSScriptRoot -Parent
 
 # 要求 PowerShell 7+（Core），Windows PowerShell 5.1 会解析报错
 if ($PSVersionTable.PSVersion.Major -lt 7) {
@@ -172,19 +172,32 @@ Write-Host "`n[7/8] Syncing versionCode..." -ForegroundColor Yellow
 $gradlePropsPath = Join-Path $ScriptDir "android\gradle.properties"
 $propsContent = Get-Content $gradlePropsPath -Raw
 
-if ($propsContent -match 'android\.versionCode=(\d+)') {
-    $oldCode = [int]$Matches[1]
-    $newVersionCode = $oldCode + 1
-    $propsContent = $propsContent -replace "android\.versionCode=\d+", "android.versionCode=$newVersionCode"
-    [System.IO.File]::WriteAllText($gradlePropsPath, $propsContent)
-    Write-Host "  versionCode: $oldCode -> $newVersionCode" -ForegroundColor Green
-} else {
-    # 首次：从版本号计算初始值 major*10000 + minor*100 + patch
-    $newVersionCode = [int]$versionParts[0] * 10000 + [int]$versionParts[1] * 100 + [int]$versionParts[2]
-    $propsContent += "`nandroid.versionCode=$newVersionCode"
-    [System.IO.File]::WriteAllText($gradlePropsPath, $propsContent)
-    Write-Host "  versionCode: $newVersionCode (new, computed from version)" -ForegroundColor Green
+# 先删除 expo prebuild 自动生成的 versionCode，避免干扰
+if ($propsContent -match 'android\.versionCode=\d+') {
+    $propsContent = $propsContent -replace "android\.versionCode=\d+\s*\n?", ""
+    Write-Host "  Removed expo-generated versionCode" -ForegroundColor Gray
 }
+
+# 从 keystore-backup/versionCode.txt 读取上次值，实现跨 prebuild 递增
+$versionCodeFile = Join-Path $ScriptDir "keystore-backup\versionCode.txt"
+if (Test-Path $versionCodeFile) {
+    $oldCode = [int](Get-Content $versionCodeFile -Raw).Trim()
+    $newVersionCode = $oldCode + 1
+    Write-Host "  versionCode: $oldCode -> $newVersionCode (from backup)" -ForegroundColor Green
+} else {
+    # 首次：从 35 开始
+    $newVersionCode = 35
+    Write-Host "  versionCode: $newVersionCode (initial)" -ForegroundColor Green
+}
+
+$propsContent += "android.versionCode=$newVersionCode`n"
+[System.IO.File]::WriteAllText($gradlePropsPath, $propsContent)
+
+# 持久化到备份，供下次 prebuild 后恢复
+if (-not (Test-Path (Split-Path $versionCodeFile -Parent))) {
+    New-Item -ItemType Directory -Path (Split-Path $versionCodeFile -Parent) -Force | Out-Null
+}
+Set-Content $versionCodeFile $newVersionCode -NoNewline
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #  [8/8] Gradle 构建

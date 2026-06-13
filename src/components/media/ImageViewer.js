@@ -229,7 +229,7 @@ function ImageViewerContent({ urls, totalCount, prompt, onClose, colors, styles 
           }
         }
       },
-      onPanResponderRelease: () => {
+      onPanResponderRelease: (evt) => {
         lastDistance.current = 0;
 
         if (!gestureMoved.current) {
@@ -250,16 +250,21 @@ function ImageViewerContent({ urls, totalCount, prompt, onClose, colors, styles 
         if (baseScale.current <= 1.05) {
           const currentSlide = slideDeltaValue.current;
           const threshold = SCREEN_WIDTH * SLIDE_THRESHOLD;
+          const velocity = evt.nativeEvent.velocityX || 0;
+          const fastSwipe = Math.abs(velocity) > 0.5;
 
-          if (totalCount > 1 && Math.abs(currentSlide) > threshold) {
-            const direction = currentSlide > 0 ? -1 : 1;
+          if (totalCount > 1 && (Math.abs(currentSlide) > threshold || fastSwipe)) {
+            const direction = (currentSlide > 0 || velocity > 0) ? -1 : 1;
             const targetIdx = currentIndexRef.current + direction;
 
             if (targetIdx >= 0 && targetIdx < totalCount) {
-              Animated.timing(slideDelta, {
-                toValue: (currentSlide > 0 ? 1 : -1) * SCREEN_WIDTH,
-                duration: 200,
+              Animated.spring(slideDelta, {
+                toValue: (direction === -1 ? 1 : -1) * SCREEN_WIDTH,
+                velocity,
                 useNativeDriver: true,
+                overshootClamping: true,
+                friction: 26,
+                tension: 180,
               }).start(() => {
                 slideDelta.setValue(0);
                 panX.setValue(0);
@@ -267,10 +272,10 @@ function ImageViewerContent({ urls, totalCount, prompt, onClose, colors, styles 
                 setCurrentIndex(targetIdx);
               });
             } else {
-              Animated.spring(slideDelta, { toValue: 0, useNativeDriver: true, friction: 7 }).start();
+              Animated.spring(slideDelta, { toValue: 0, velocity, useNativeDriver: true, friction: 7 }).start();
             }
           } else {
-            Animated.spring(slideDelta, { toValue: 0, useNativeDriver: true, friction: 7 }).start();
+            Animated.spring(slideDelta, { toValue: 0, velocity, useNativeDriver: true, friction: 7 }).start();
           }
         } else {
           const curScale = baseScale.current;
@@ -509,23 +514,22 @@ const createStyles = (colors) => ({
   },
   zoomContainer: {
     flex: 1,
-    justifyContent: 'center',
   },
   imageRow: {
     flexDirection: 'row',
     width: SCREEN_WIDTH * 3,
     marginLeft: -SCREEN_WIDTH,
-    height: SCREEN_HEIGHT,
+    flex: 1,
   },
   imageCell: {
     width: SCREEN_WIDTH,
-    height: SCREEN_HEIGHT,
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
   image: {
     width: SCREEN_WIDTH,
-    height: SCREEN_HEIGHT,
+    flex: 1,
   },
   topBar: {
     position: 'absolute',
