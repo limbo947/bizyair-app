@@ -95,9 +95,10 @@ function homeParamReducer(state, action) {
     case 'SET_PARAMS':
       return { ...state, ...action.params };
     case 'SET_FIELD': {
+      const raw = typeof action.value === 'function' ? action.value(state[action.field]) : action.value;
       const value = ARRAY_FIELDS.has(action.field)
-        ? (Array.isArray(action.value) ? action.value : [])
-        : action.value;
+        ? (Array.isArray(raw) ? raw : [])
+        : raw;
       return { ...state, [action.field]: value };
     }
     default:

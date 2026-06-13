@@ -479,12 +479,13 @@ export function HistoryProvider({ children }) {
     });
   }, []);
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     loadHistory();
     loadHomeState();
     loadTotalCoins();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [loadHistory, loadHomeState, loadTotalCoins]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const historyListValue = useMemo(() => ({
     history,
