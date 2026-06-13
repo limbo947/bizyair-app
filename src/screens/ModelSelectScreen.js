@@ -128,7 +128,7 @@ export function ModelSelectScreen({ currentModelId, onSelectModel, onBack }) {
     }
   };
 
-  const categoryList = [
+  const categoryList = useMemo(() => [
     { key: 'all', label: '全部模型', icon: 'apps-outline', color: colors.primary, count: allModelEntries.length },
     ...Object.entries(CATEGORIES).map(([key, value]) => ({
       key,
@@ -137,7 +137,7 @@ export function ModelSelectScreen({ currentModelId, onSelectModel, onBack }) {
         ? (Array.isArray(favorites) ? favorites.length : 0)
         : allModelEntries.filter((m) => m.categories.includes(key)).length,
     })),
-  ];
+  ], [allModelEntries, favorites, colors.primary]);
 
   const renderModelItem = useCallback(({ item: model }) => {
     const isSelected = isEditMode ? selectedModels.includes(model.id) : currentModelId === model.id;

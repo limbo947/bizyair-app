@@ -85,7 +85,7 @@ export function ApiKeyProvider({ children }) {
       if (active) {
         setApiKey(active.key);
         setActiveApiKeyId(active.id);
-        refreshUserInfo(active.key).catch(() => {});
+        refreshUserInfo(active.key).catch((e) => console.warn('自动刷新用户信息失败:', e?.message || e));
       }
     } catch (e) {
       console.error('加载 API Keys 失败:', e);

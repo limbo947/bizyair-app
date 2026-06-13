@@ -14,8 +14,9 @@ import { ENV_API_KEY } from '../constants/models';
  * @param {function} options.setError - 设置错误信息
  * @param {function} options.setIsUploading - 设置上传中状态
  * @param {function} options.setUrls - 设置URL列表（函数式更新）
+ * @param {number} [options.maxRetries=2] - 上传失败最大重试次数
  */
-async function pickAndUpload({ mimeType, uploadFn, apiKey, setShowApiKeyInput, setError, setIsUploading, setUrls }) {
+async function pickAndUpload({ mimeType, uploadFn, apiKey, setShowApiKeyInput, setError, setIsUploading, setUrls, maxRetries = 2 }) {
   const ek = apiKey.trim() || ENV_API_KEY;
   if (!ek) {
     setShowApiKeyInput(true);
@@ -62,7 +63,22 @@ async function pickAndUpload({ mimeType, uploadFn, apiKey, setShowApiKeyInput, s
         fileObj.rawFile = file.file;
       }
     }
-    const remoteUrl = await uploadFn(ek, fileObj);
+    let remoteUrl;
+    let lastError;
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        remoteUrl = await uploadFn(ek, fileObj);
+        break;
+      } catch (err) {
+        lastError = err;
+        if (attempt < maxRetries) {
+          await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+        }
+      }
+    }
+    if (!remoteUrl) {
+      throw lastError;
+    }
     setUrls((prev) => [...prev, { remoteUrl, localUrl }]);
   } catch (err) {
     setError(err.message || '上传失败');

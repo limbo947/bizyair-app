@@ -39,12 +39,12 @@ export function useModelSwitch({ state, saveHomeState, stateDispatch }) {
           }
           modelStatesRef.current = parsed;
         }
-      } catch (_e) { /* ignore */ }
+      } catch (_e) { console.warn('加载模型状态失败:', _e?.message || _e); }
     })();
   }, []);
 
   const persistModelStates = useCallback(() => {
-    AsyncStorage.setItem(MODEL_STATES_KEY, JSON.stringify(modelStatesRef.current)).catch(() => {});
+    AsyncStorage.setItem(MODEL_STATES_KEY, JSON.stringify(modelStatesRef.current)).catch((e) => console.warn('保存模型状态失败:', e?.message || e));
   }, []);
 
   const switchToModel = useCallback((newId) => {

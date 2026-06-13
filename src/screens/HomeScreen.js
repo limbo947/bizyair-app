@@ -16,6 +16,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useToastContext } from '../context/ToastContext';
 import { getRatios, getResolutions, getModelInfo, getModelModes, getModelPlaceholder } from '../utils/modelHelpers';
 import { Radius, Spacing, Typography, ButtonVariants, pressedOpacity } from '../constants/theme';
+import { createSharedStyles } from '../constants/sharedStyles';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { useModelSwitch } from '../hooks/useModelSwitch';
 import { ModelSelector } from '../components/ModelSelector';
@@ -450,7 +451,9 @@ export function HomeScreen({ onOpenModelSelect }) {
   );
 }
 
-const createStyles = (colors) => ({
+const createStyles = (colors) => {
+  const shared = createSharedStyles(colors);
+  return {
   container: { flex: 1, backgroundColor: colors.bg },
   modelAndModeRow: { marginBottom: Spacing.sm },
   modeToggle: { flexDirection: 'row', borderRadius: Radius.sm, borderCurve: 'continuous', backgroundColor: colors.bg, padding: 1, gap: Spacing.xs, marginTop: Spacing.sm, borderWidth: 1, borderColor: colors.divider, height: 45 },
@@ -460,9 +463,9 @@ const createStyles = (colors) => ({
   modeButtonTextActive: { color: colors.primary, fontWeight: Typography.fontWeight.semibold },
   scroll: { flex: 1 },
   scrollContent: { paddingTop: Spacing.sm, paddingRight: Spacing.md, paddingBottom: Spacing.xxl, paddingLeft: Spacing.md },
-  card: { backgroundColor: colors.card, padding: Spacing.lg, borderRadius: Radius.md, borderCurve: 'continuous', marginBottom: Spacing.md },
+  card: shared.card,
   labelRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, marginBottom: Spacing.sm },
-  label: { fontSize: Typography.fontSize.footnote, fontWeight: Typography.fontWeight.semibold, color: colors.textSecondary, marginBottom: Spacing.sm, textTransform: 'uppercase', letterSpacing: Typography.letterSpacing.wide },
+  label: shared.label,
   promptLabelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.sm },
   promptClearText: { fontSize: Typography.fontSize.caption1, color: colors.primary, fontWeight: Typography.fontWeight.medium },
   charCount: { fontSize: Typography.fontSize.caption1, color: colors.textTertiary, textAlign: 'right', marginTop: Spacing.xs },
@@ -474,4 +477,5 @@ const createStyles = (colors) => ({
   apiKeyInput: { fontSize: Typography.fontSize.subheadline, color: colors.textPrimary, borderWidth: 0, borderRadius: Radius.sm, borderCurve: 'continuous', padding: Spacing.md, fontFamily: 'monospace', backgroundColor: colors.bg },
   saveKeyButton: { backgroundColor: colors.primary, paddingVertical: Spacing.sm + 2, borderRadius: Radius.sm, borderCurve: 'continuous', alignItems: 'center', marginTop: Spacing.sm },
   saveKeyButtonText: { color: colors.textInverse, fontSize: Typography.fontSize.subheadline, fontWeight: Typography.fontWeight.semibold },
-});
+  };
+};

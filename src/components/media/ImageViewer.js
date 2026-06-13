@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import {
   Pressable,
   StyleSheet,
@@ -18,94 +18,135 @@ import { useTheme } from '../../context/ThemeContext';
 import { triggerDownload, triggerBatchDownload } from '../../utils/download';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const MIN_SCALE = 1;
+const MAX_SCALE = 5;
+const DOUBLE_TAP_SCALE = 2.5;
+const SLIDE_THRESHOLD = 0.2;
 
-export function ImageViewer({ visible, imageUrl, imageUrls, prompt, onClose }) {
-  const styles = useThemedStyles(createStyles);
-  const { colors } = useTheme();
-  const urlsRef = useRef([]);
-  urlsRef.current = imageUrls?.length > 0 ? imageUrls : (imageUrl ? [imageUrl] : []);
+/* ════════════════════════════════════════════════════════
+   ImageViewerContent — 图片预览内容（key 驱动 remount 复位）
+   ════════════════════════════════════════════════════════ */
 
+/**
+ * 图片预览内容组件。
+ * 通过 key prop 在每次 Modal 打开时强制 remount，自动复位所有状态，
+ * 无需在 effect 中手动 setState。
+ */
+function ImageViewerContent({ urls, totalCount, prompt, onClose, colors, styles }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showInfo, setShowInfo] = useState(true);
   const [isDownloading, setIsDownloading] = useState(false);
 
-  const scale = useRef(new Animated.Value(1)).current;
-  const translateX = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(0)).current;
-  const slideX = useRef(new Animated.Value(0)).current;
+  /* ── 动画值 ── */
+  const [scale] = useState(() => new Animated.Value(1));
+  const [panX] = useState(() => new Animated.Value(0));
+  const [panY] = useState(() => new Animated.Value(0));
+  const [slideDelta] = useState(() => new Animated.Value(0));
 
+  /* ── 手势状态 ── */
   const baseScale = useRef(1);
   const lastScale = useRef(1);
+  const lastPanX = useRef(0);
+  const lastPanY = useRef(0);
+  const lastSlideDelta = useRef(0);
   const lastDistance = useRef(0);
-  const lastTranslateX = useRef(0);
-  const lastTranslateY = useRef(0);
   const gestureMoved = useRef(false);
-
-  const currentIndexRef = useRef(0);
-  const onCloseRef = useRef(onClose);
-  const translateXValue = useRef(0);
-  const translateYValue = useRef(0);
+  const isZoomedAtStart = useRef(false);
+  const touchStart = useRef({ x: 0, y: 0 });
   const lastTapTime = useRef(0);
 
+  /* ── JS 侧动画值快照 ── */
+  const currentIndexRef = useRef(0);
+  const panXValue = useRef(0);
+  const panYValue = useRef(0);
+  const slideDeltaValue = useRef(0);
+  const scaleValue = useRef(1);
+
   useEffect(() => { currentIndexRef.current = currentIndex; }, [currentIndex]);
-  useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
 
   useEffect(() => {
-    const xId = translateX.addListener(({ value }) => { translateXValue.current = value; });
-    const yId = translateY.addListener(({ value }) => { translateYValue.current = value; });
+    const ids = [];
+    ids.push(scale.addListener(({ value }) => { scaleValue.current = value; }));
+    ids.push(panX.addListener(({ value }) => { panXValue.current = value; }));
+    ids.push(panY.addListener(({ value }) => { panYValue.current = value; }));
+    ids.push(slideDelta.addListener(({ value }) => { slideDeltaValue.current = value; }));
     return () => {
-      translateX.removeListener(xId);
-      translateY.removeListener(yId);
+      scale.removeListener(ids[0]);
+      panX.removeListener(ids[1]);
+      panY.removeListener(ids[2]);
+      slideDelta.removeListener(ids[3]);
     };
-  }, [translateX, translateY]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
+  /* ── 预加载相邻图片 ── */
   useEffect(() => {
-    if (visible) {
-      setCurrentIndex(0);
-      currentIndexRef.current = 0;
-      setShowInfo(true);
-      baseScale.current = 1;
-      scale.setValue(1);
-      translateX.setValue(0);
-      translateY.setValue(0);
-      slideX.setValue(0);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible]);
-
-  useEffect(() => {
-    if (urlsRef.current.length > 1) {
-      const preloadIndices = [currentIndex - 1, currentIndex + 1];
-      preloadIndices.forEach((i) => {
-        if (i >= 0 && i < urlsRef.current.length) {
-          Image.prefetch(urlsRef.current[i]);
+    if (totalCount > 1) {
+      [currentIndex - 1, currentIndex + 1].forEach((i) => {
+        if (i >= 0 && i < totalCount) {
+          Image.prefetch(urls[i]);
         }
       });
     }
-  }, [currentIndex]);
+  }, [currentIndex, totalCount, urls]);
 
+  /* ── 复位缩放 ── */
   const resetTransform = useCallback(() => {
     baseScale.current = 1;
     scale.setValue(1);
-    translateX.setValue(0);
-    translateY.setValue(0);
-  }, [scale, translateX, translateY]);
+    panX.setValue(0);
+    panY.setValue(0);
+  }, [scale, panX, panY]);
 
+  /* ── 导航到指定索引 ── */
   const goToIndex = useCallback((index) => {
-    if (index < 0 || index >= urlsRef.current.length) return;
+    if (index < 0 || index >= totalCount) return;
     resetTransform();
+    slideDelta.setValue(0);
     setCurrentIndex(index);
-    slideX.setValue(0);
-  }, [resetTransform, slideX]);
+  }, [resetTransform, slideDelta, totalCount]);
 
-  const goToIndexRef = useRef(goToIndex);
-  useEffect(() => { goToIndexRef.current = goToIndex; }, [goToIndex]);
+  /* ── 单击 / 双击缩放 ── */
+  const handleSingleTap = useCallback(() => {
+    setShowInfo((v) => !v);
+  }, []);
 
+  const handleDoubleTapZoom = useCallback(() => {
+    const { x, y } = touchStart.current;
+    const centerX = SCREEN_WIDTH / 2;
+    const centerY = SCREEN_HEIGHT / 2;
+
+    if (baseScale.current > 1.05) {
+      Animated.parallel([
+        Animated.spring(scale, { toValue: 1, useNativeDriver: true, friction: 7 }),
+        Animated.spring(panX, { toValue: 0, useNativeDriver: true, friction: 7 }),
+        Animated.spring(panY, { toValue: 0, useNativeDriver: true, friction: 7 }),
+      ]).start();
+      baseScale.current = 1;
+    } else {
+      const newScale = DOUBLE_TAP_SCALE;
+      const offsetX = (centerX - x) * (newScale - 1);
+      const offsetY = (centerY - y) * (newScale - 1);
+
+      Animated.parallel([
+        Animated.spring(scale, { toValue: newScale, useNativeDriver: true, friction: 7 }),
+        Animated.spring(panX, { toValue: offsetX, useNativeDriver: true, friction: 7 }),
+        Animated.spring(panY, { toValue: offsetY, useNativeDriver: true, friction: 7 }),
+      ]).start();
+      baseScale.current = newScale;
+    }
+  }, [scale, panX, panY]);
+
+  const singleTapRef = useRef(handleSingleTap);
+  const doubleTapRef = useRef(handleDoubleTapZoom);
+  useEffect(() => { singleTapRef.current = handleSingleTap; }, [handleSingleTap]);
+  useEffect(() => { doubleTapRef.current = handleDoubleTapZoom; }, [handleDoubleTapZoom]);
+
+  /* ── 下载 ── */
   const handleDownload = useCallback(async () => {
     if (isDownloading) return;
     setIsDownloading(true);
     try {
-      const urls = urlsRef.current;
       if (urls.length > 1) {
         await triggerBatchDownload(urls);
       } else if (urls[0]) {
@@ -114,100 +155,308 @@ export function ImageViewer({ visible, imageUrl, imageUrls, prompt, onClose }) {
     } finally {
       setIsDownloading(false);
     }
-  }, [isDownloading]);
+  }, [isDownloading, urls]);
 
-  const panResponder = useRef(
+  /* ── PanResponder ── */
+  // eslint-disable-next-line react-hooks/refs
+  const [panResponder] = useState(() =>
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
-      onPanResponderGrant: () => {
+      onMoveShouldSetPanResponder: (evt, gs) => {
+        return Math.abs(gs.dx) > 4 || Math.abs(gs.dy) > 4
+          || (evt.nativeEvent.touches && evt.nativeEvent.touches.length >= 2);
+      },
+      onPanResponderGrant: (evt) => {
         lastScale.current = baseScale.current;
-        lastTranslateX.current = translateXValue.current;
-        lastTranslateY.current = translateYValue.current;
+        lastPanX.current = panXValue.current;
+        lastPanY.current = panYValue.current;
+        lastSlideDelta.current = slideDeltaValue.current;
+        lastDistance.current = 0;
         gestureMoved.current = false;
+        isZoomedAtStart.current = baseScale.current > 1.05;
+
+        const t0 = evt.nativeEvent.touches?.[0];
+        if (t0) {
+          touchStart.current = { x: t0.pageX, y: t0.pageY };
+        }
+        if (evt.nativeEvent.touches && evt.nativeEvent.touches.length >= 2) {
+          const t1 = evt.nativeEvent.touches[1];
+          const dx = t1.pageX - t0.pageX;
+          const dy = t1.pageY - t0.pageY;
+          lastDistance.current = Math.sqrt(dx * dx + dy * dy);
+        }
       },
       onPanResponderMove: (evt, gestureState) => {
         if (Math.abs(gestureState.dx) > 8 || Math.abs(gestureState.dy) > 8) {
           gestureMoved.current = true;
         }
-
         const touches = evt.nativeEvent.touches;
-        if (touches && touches.length === 2) {
+
+        if (touches && touches.length >= 2) {
+          // 双指捏合缩放
           const dx = touches[1].pageX - touches[0].pageX;
           const dy = touches[1].pageY - touches[0].pageY;
           const distance = Math.sqrt(dx * dx + dy * dy);
-
           if (lastDistance.current > 0) {
             const newScale = lastScale.current * (distance / lastDistance.current);
-            const clampedScale = Math.max(1, Math.min(newScale, 5));
-            baseScale.current = clampedScale;
-            scale.setValue(clampedScale);
+            const clamped = Math.max(MIN_SCALE, Math.min(newScale, MAX_SCALE));
+            baseScale.current = clamped;
+            scale.setValue(clamped);
           }
           lastDistance.current = distance;
         } else if (touches && touches.length === 1) {
-          if (baseScale.current > 1) {
-            const newX = lastTranslateX.current + gestureState.dx;
-            const newY = lastTranslateY.current + gestureState.dy;
-            translateX.setValue(newX);
-            translateY.setValue(newY);
-          } else if (urlsRef.current.length > 1) {
-            slideX.setValue(gestureState.dx);
+          if (isZoomedAtStart.current || baseScale.current > 1.05) {
+            panX.setValue(lastPanX.current + gestureState.dx);
+            panY.setValue(lastPanY.current + gestureState.dy);
+          } else if (totalCount > 1) {
+            slideDelta.setValue(lastSlideDelta.current + gestureState.dx);
           }
         }
       },
-      onPanResponderRelease: (evt, gestureState) => {
+      onPanResponderRelease: () => {
         lastDistance.current = 0;
 
         if (!gestureMoved.current) {
           const now = Date.now();
           if (now - lastTapTime.current < 300) {
-            onCloseRef.current();
+            doubleTapRef.current();
             lastTapTime.current = 0;
           } else {
             lastTapTime.current = now;
-            setShowInfo((v) => !v);
+            singleTapRef.current();
           }
+          if (baseScale.current <= 1.05) {
+            Animated.spring(slideDelta, { toValue: 0, useNativeDriver: true, friction: 7 }).start();
+          }
+          return;
         }
 
-        if (baseScale.current <= 1.1) {
-          Animated.parallel([
-            Animated.spring(scale, { toValue: 1, useNativeDriver: true }),
-            Animated.spring(translateX, { toValue: 0, useNativeDriver: true }),
-            Animated.spring(translateY, { toValue: 0, useNativeDriver: true }),
-          ]).start();
-          baseScale.current = 1;
+        if (baseScale.current <= 1.05) {
+          const currentSlide = slideDeltaValue.current;
+          const threshold = SCREEN_WIDTH * SLIDE_THRESHOLD;
 
-          if (urlsRef.current.length > 1 && Math.abs(gestureState.dx) > SCREEN_WIDTH * 0.15) {
-            const direction = gestureState.dx > 0 ? -1 : 1;
-            const nextIndex = currentIndexRef.current + direction;
-            if (nextIndex >= 0 && nextIndex < urlsRef.current.length) {
-              Animated.timing(slideX, {
-                toValue: -direction * SCREEN_WIDTH,
+          if (totalCount > 1 && Math.abs(currentSlide) > threshold) {
+            const direction = currentSlide > 0 ? -1 : 1;
+            const targetIdx = currentIndexRef.current + direction;
+
+            if (targetIdx >= 0 && targetIdx < totalCount) {
+              Animated.timing(slideDelta, {
+                toValue: (currentSlide > 0 ? 1 : -1) * SCREEN_WIDTH,
                 duration: 200,
                 useNativeDriver: true,
               }).start(() => {
-                goToIndexRef.current(nextIndex);
+                slideDelta.setValue(0);
+                panX.setValue(0);
+                panY.setValue(0);
+                setCurrentIndex(targetIdx);
               });
             } else {
-              Animated.spring(slideX, { toValue: 0, useNativeDriver: true }).start();
+              Animated.spring(slideDelta, { toValue: 0, useNativeDriver: true, friction: 7 }).start();
             }
           } else {
-            Animated.spring(slideX, { toValue: 0, useNativeDriver: true }).start();
+            Animated.spring(slideDelta, { toValue: 0, useNativeDriver: true, friction: 7 }).start();
+          }
+        } else {
+          const curScale = baseScale.current;
+          const maxPan = Math.max(0, (curScale - 1) * SCREEN_WIDTH / 2);
+          const maxPanY = Math.max(0, (curScale - 1) * SCREEN_HEIGHT / 2);
+          const curX = panXValue.current;
+          const curY = panYValue.current;
+          const clampedX = Math.max(-maxPan, Math.min(maxPan, curX));
+          const clampedY = Math.max(-maxPanY, Math.min(maxPanY, curY));
+
+          if (clampedX !== curX || clampedY !== curY) {
+            Animated.parallel([
+              Animated.spring(panX, { toValue: clampedX, useNativeDriver: true, friction: 7 }),
+              Animated.spring(panY, { toValue: clampedY, useNativeDriver: true, friction: 7 }),
+            ]).start();
           }
         }
       },
       onPanResponderTerminate: () => {
         lastDistance.current = 0;
-        if (baseScale.current <= 1.1) {
-          Animated.spring(slideX, { toValue: 0, useNativeDriver: true }).start();
+        if (baseScale.current <= 1.05) {
+          Animated.spring(slideDelta, { toValue: 0, useNativeDriver: true, friction: 7 }).start();
         }
       },
     })
-  ).current;
+  );
+
+  /* ── 渲染派生 ── */
+  const currentUrl = urls[currentIndex] || null;
+  const prevUrl = currentIndex > 0 ? urls[currentIndex - 1] : null;
+  const nextUrl = currentIndex < totalCount - 1 ? urls[currentIndex + 1] : null;
+  const showNav = totalCount > 1;
+  const composedTranslateX = Animated.add(slideDelta, panX);
+
+  return (
+    <View style={styles.overlay}>
+      {/* ── 手势层 + 缩放/平移容器 ── */}
+      <View style={StyleSheet.absoluteFillObject} {...panResponder.panHandlers}>
+        <Animated.View
+          style={[
+            styles.zoomContainer,
+            {
+              transform: [
+                { scale },
+                { translateX: composedTranslateX },
+                { translateY: panY },
+              ],
+            },
+          ]}
+        >
+          {/* ── 三图行 ── */}
+          <View style={styles.imageRow}>
+            <View style={styles.imageCell}>
+              {prevUrl ? (
+                <Image source={{ uri: prevUrl }} style={styles.image}
+                  contentFit="contain" cachePolicy="memory-disk"
+                  recyclingKey={prevUrl}
+                />
+              ) : null}
+            </View>
+            <View style={styles.imageCell}>
+              {currentUrl ? (
+                <Image source={{ uri: currentUrl }} style={styles.image}
+                  contentFit="contain" cachePolicy="memory-disk"
+                  recyclingKey={currentUrl}
+                />
+              ) : null}
+            </View>
+            <View style={styles.imageCell}>
+              {nextUrl ? (
+                <Image source={{ uri: nextUrl }} style={styles.image}
+                  contentFit="contain" cachePolicy="memory-disk"
+                  recyclingKey={nextUrl}
+                />
+              ) : null}
+            </View>
+          </View>
+        </Animated.View>
+      </View>
+
+      {/* ── 信息覆盖层 ── */}
+      {showInfo ? (
+        <>
+          <View style={styles.topBar} pointerEvents="box-none">
+            <Pressable
+              style={({ pressed }) => [styles.iconBtn, pressed && pressedOpacity()]}
+              onPress={onClose}
+            >
+              <Ionicons name="chevron-down" size={24} color={colors.textOnOverlay} />
+            </Pressable>
+            {showNav ? (
+              <View style={styles.pageIndicator}>
+                <Text style={styles.pageIndicatorText}>
+                  {currentIndex + 1} / {totalCount}
+                </Text>
+              </View>
+            ) : null}
+            <Pressable
+              style={({ pressed }) => [styles.iconBtn, pressed && pressedOpacity()]}
+              onPress={handleDownload}
+              disabled={isDownloading}
+            >
+              <Ionicons
+                name={isDownloading ? 'hourglass-outline' : 'download-outline'}
+                size={24}
+                color={colors.textOnOverlay}
+              />
+            </Pressable>
+          </View>
+
+          {showNav ? (
+            <View style={styles.navButtons} pointerEvents="box-none">
+              {currentIndex > 0 ? (
+                <Pressable
+                  style={({ pressed }) => [styles.navBtn, pressed && pressedOpacity()]}
+                  onPress={() => goToIndex(currentIndex - 1)}
+                >
+                  <Ionicons name="chevron-back" size={28} color={colors.textOnOverlay} />
+                </Pressable>
+              ) : <View style={styles.navBtnPlaceholder} />}
+              {currentIndex < totalCount - 1 ? (
+                <Pressable
+                  style={({ pressed }) => [styles.navBtn, pressed && pressedOpacity()]}
+                  onPress={() => goToIndex(currentIndex + 1)}
+                >
+                  <Ionicons name="chevron-forward" size={28} color={colors.textOnOverlay} />
+                </Pressable>
+              ) : <View style={styles.navBtnPlaceholder} />}
+            </View>
+          ) : null}
+
+          {prompt ? (
+            <View style={styles.bottomBar} pointerEvents="box-none">
+              <Text style={styles.promptText} numberOfLines={3}>{prompt}</Text>
+            </View>
+          ) : null}
+
+          {showNav ? (
+            <View style={styles.thumbnailStrip} pointerEvents="box-none">
+              <View style={styles.thumbnailList}>
+                {urls.map((url, idx) => (
+                  <Pressable
+                    key={`${idx}_${url}`}
+                    style={({ pressed }) => [
+                      styles.thumbnailItem,
+                      idx === currentIndex && styles.thumbnailItemActive,
+                      pressed && pressedOpacity(),
+                    ]}
+                    onPress={() => goToIndex(idx)}
+                  >
+                    <Image source={{ uri: url }} style={styles.thumbnailImage}
+                      contentFit="cover" cachePolicy="memory-disk"
+                      recyclingKey={`thumb_${idx}`}
+                    />
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+          ) : null}
+        </>
+      ) : null}
+    </View>
+  );
+}
+
+/* ════════════════════════════════════════════════════════
+   ImageViewer — 外层壳：数据派生 + key 驱动的 remount
+   ════════════════════════════════════════════════════════ */
+
+/**
+ * 全屏图片预览组件（顶层入口）。
+ *
+ * 核心机制：
+ * - visible 变为 true 时递增 resetKey，强制 ImageViewerContent 卸载后重新挂载，
+ *   所有内部 state / ref 自然回到初始值，无需 effect 内 setState。
+ * - 三图渲染（prev / current / next）：滑动切换图片零闪烁。
+ * - 双击缩放：以触点为中心在 1x ↔ 2.5x 之间切换。
+ * - 手势协调：双指缩放 > 缩放后平移 > 未缩放滑动。
+ */
+export function ImageViewer({ visible, imageUrl, imageUrls, prompt, onClose }) {
+  const styles = useThemedStyles(createStyles);
+  const { colors } = useTheme();
+
+  const urls = useMemo(
+    () => imageUrls?.length > 0 ? imageUrls : (imageUrl ? [imageUrl] : []),
+    [imageUrl, imageUrls]
+  );
+  const totalCount = urls.length;
+
+  /* Modal 每次打开时递增 key，触发子组件 remount → 自动复位
+     在 render 阶段检测 visible prop 跳变 → 更新派生状态 key，
+     这是 React 官方推荐的「在渲染期间更新 state」模式。 */
+  const [prevVisible, setPrevVisible] = useState(visible);
+  const [resetKey, setResetKey] = useState(0);
+  if (visible !== prevVisible) {
+    setPrevVisible(visible);
+    if (visible) {
+      setResetKey((k) => k + 1);
+    }
+  }
 
   if (!visible) return null;
-
-  const currentUrl = urlsRef.current[currentIndex];
 
   return (
     <Modal
@@ -215,129 +464,48 @@ export function ImageViewer({ visible, imageUrl, imageUrls, prompt, onClose }) {
       animationType="fade"
       transparent={true}
       onRequestClose={onClose}
+      statusBarTranslucent
     >
-      <StatusBar barStyle="light-content" backgroundColor={colors.overlayHeavy} />
-      <View style={styles.overlay}>
-        <View style={StyleSheet.absoluteFillObject} {...panResponder.panHandlers}>
-          <Animated.View
-            style={[
-              styles.imageWrapper,
-              {
-                transform: [
-                  { scale },
-                  { translateX: Animated.add(translateX, slideX) },
-                  { translateY },
-                ],
-              },
-            ]}
-          >
-            {currentUrl ? (
-              <Image
-                source={{ uri: currentUrl }}
-                style={styles.image}
-                contentFit="contain"
-                cachePolicy="memory-disk"
-                recyclingKey={currentUrl}
-              />
-            ) : null}
-          </Animated.View>
-        </View>
-
-        {showInfo ? (
-          <>
-            <View style={styles.topBar} pointerEvents="box-none">
-              <Pressable
-                style={({ pressed }) => [styles.iconBtn, pressed && pressedOpacity()]}
-                onPress={onClose}
-              >
-                <Ionicons name="chevron-down" size={24} color={colors.textOnOverlay} />
-              </Pressable>
-              {urlsRef.current.length > 1 ? (
-                <View style={styles.pageIndicator}>
-                  <Text style={styles.pageIndicatorText}>
-                    {currentIndex + 1} / {urlsRef.current.length}
-                  </Text>
-                </View>
-              ) : null}
-              <Pressable
-                style={({ pressed }) => [styles.iconBtn, pressed && pressedOpacity()]}
-                onPress={handleDownload}
-                disabled={isDownloading}
-              >
-                <Ionicons name={isDownloading ? 'hourglass-outline' : 'download-outline'} size={24} color={colors.textOnOverlay} />
-              </Pressable>
-            </View>
-
-            {urlsRef.current.length > 1 ? (
-              <View style={styles.navButtons} pointerEvents="box-none">
-                {currentIndex > 0 ? (
-                  <Pressable
-                    style={({ pressed }) => [styles.navBtn, pressed && pressedOpacity()]}
-                    onPress={() => goToIndex(currentIndex - 1)}
-                  >
-                    <Ionicons name="chevron-back" size={28} color={colors.textOnOverlay} />
-                  </Pressable>
-                ) : <View style={styles.navBtnPlaceholder} />}
-                {currentIndex < urlsRef.current.length - 1 ? (
-                  <Pressable
-                    style={({ pressed }) => [styles.navBtn, pressed && pressedOpacity()]}
-                    onPress={() => goToIndex(currentIndex + 1)}
-                  >
-                    <Ionicons name="chevron-forward" size={28} color={colors.textOnOverlay} />
-                  </Pressable>
-                ) : <View style={styles.navBtnPlaceholder} />}
-              </View>
-            ) : null}
-
-            {prompt ? (
-              <View style={styles.bottomBar} pointerEvents="box-none">
-                <Text style={styles.promptText} numberOfLines={3}>{prompt}</Text>
-              </View>
-            ) : null}
-
-            {urlsRef.current.length > 1 ? (
-              <View style={styles.thumbnailStrip} pointerEvents="box-none">
-                <View style={styles.thumbnailList}>
-                  {urlsRef.current.map((url, idx) => (
-                    <Pressable
-                      key={`${url}_${idx}`}
-                      style={({ pressed }) => [
-                        styles.thumbnailItem,
-                        idx === currentIndex && styles.thumbnailItemActive,
-                        pressed && pressedOpacity(),
-                      ]}
-                      onPress={() => goToIndex(idx)}
-                    >
-                      <Image
-                        source={{ uri: url }}
-                        style={styles.thumbnailImage}
-                        contentFit="cover"
-                        cachePolicy="memory-disk"
-                        recyclingKey={`thumb_${idx}`}
-                      />
-                    </Pressable>
-                  ))}
-                </View>
-              </View>
-            ) : null}
-          </>
-        ) : null}
-      </View>
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+      <ImageViewerContent
+        key={resetKey}
+        urls={urls}
+        totalCount={totalCount}
+        prompt={prompt}
+        onClose={onClose}
+        colors={colors}
+        styles={styles}
+      />
     </Modal>
   );
 }
+
+/* ════════════════════════════════════════════════════════
+   Styles
+   ════════════════════════════════════════════════════════ */
 
 const createStyles = (colors) => ({
   overlay: {
     flex: 1,
     backgroundColor: colors.overlayHeavy,
-    justifyContent: 'center',
-    alignItems: 'center',
+    overflow: 'hidden',
   },
-  imageWrapper: {
+  zoomContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  imageRow: {
+    flexDirection: 'row',
+    width: SCREEN_WIDTH * 3,
+    marginLeft: -SCREEN_WIDTH,
+    height: SCREEN_HEIGHT,
+  },
+  imageCell: {
+    width: SCREEN_WIDTH,
+    height: SCREEN_HEIGHT,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   image: {
     width: SCREEN_WIDTH,

@@ -70,8 +70,7 @@ export function HistoryScreen() {
   const [deleteConfirmBatch, setDeleteConfirmBatch] = useState(false);
   const flatListRef = useRef(null);
   const prevActiveTab = useRef(activeTab);
-  const thumbCache = useRef({});
-  const [thumbVersion, setThumbVersion] = useState(0);
+  const [thumbMap, setThumbMap] = useState({});
 
   useEffect(() => {
     if (
@@ -117,7 +116,7 @@ export function HistoryScreen() {
 
   useEffect(() => {
     const videoItems = displayedItems
-      .filter((item) => item.outputType === 'video' && item.videoUrl && !thumbCache.current[item.videoUrl]);
+      .filter((item) => item.outputType === 'video' && item.videoUrl && !thumbMap[item.videoUrl]);
     if (videoItems.length === 0) return;
     let cancelled = false;
     const loadThumbnails = async () => {
@@ -126,10 +125,9 @@ export function HistoryScreen() {
         try {
           const { uri } = await getVideoThumbnailAsync(item.videoUrl, { time: 2000 });
           if (!cancelled && uri) {
-            thumbCache.current[item.videoUrl] = uri;
-            setThumbVersion((v) => v + 1);
+            setThumbMap((prev) => ({ ...prev, [item.videoUrl]: uri }));
           }
-        } catch {}
+        } catch (e) { console.warn('生成缩略图失败:', e?.message || e); }
       }
     };
     loadThumbnails();
@@ -254,7 +252,7 @@ export function HistoryScreen() {
   const failedCount = Array.isArray(history) ? history.filter((h) => h && h.status === 'Failed').length : 0;
 
   const renderItem = useCallback(({ item }) => {
-    const thumbUri = item.outputType === 'video' && item.videoUrl ? thumbCache.current[item.videoUrl] : null;
+    const thumbUri = item.outputType === 'video' && item.videoUrl ? thumbMap[item.videoUrl] : null;
     return (
       <HistoryCard
         item={item}
@@ -274,9 +272,9 @@ export function HistoryScreen() {
         thumbUri={thumbUri}
       />
     );
-  }, [selectedIds, batchMode, toggleSelect, handleDownload, stopPolling, resubmitTask]);
+  }, [thumbMap, selectedIds, batchMode, toggleSelect, handleDownload, stopPolling, resubmitTask]);
 
-  const extraData = useMemo(() => ({ selectedIds, thumbVersion }), [selectedIds, thumbVersion]);
+  const extraData = useMemo(() => ({ selectedIds, thumbMap }), [selectedIds, thumbMap]);
 
   const renderFooter = useCallback(() => {
     if (!hasMore) {

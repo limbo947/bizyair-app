@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef, useEffect } from 'react';
 import { Keyboard } from 'react-native';
 import { submitImageTask, submitVideoTask, submitLLMTask, submitVisionTask, submitTTSTask } from '../../services/apiClient';
 import { calculatePrice, getActualResolution, getOutputType } from '../../utils/modelHelpers';
@@ -24,94 +24,82 @@ export function useHomeSubmit({
   updateHistoryItem,
   startPolling,
 }) {
-  const {
-    prompt, imageUrls, resolution, aspectRatio, quality,
-    customWidth, customHeight, duration, generateAudio, sound,
-    multiShot, shotType, multiPrompt, negativePrompt, promptExtend,
-    watermark, seed, display, keepOriginalSound, audio, offPeak, isRec,
-    promptOptimizer, fastPretreatment, aigcWatermark, movementAmplitude,
-    videoUrls, firstFrameUrls, lastFrameUrls, mediaUrls, firstClipUrls,
-    refImages, audioSetting, drivingAudio, audioUrl, referenceVoice,
-    bboxList, systemPrompt, temperature, maxTokens, enableThinking,
-    enableSearch, detail, captionType, captionLength, doSample,
-    extraOptions, nameInput, customPrompt, voice, responseFormat,
-    instructions, language, speed, enableSequential, thinkingMode,
-    colorPalette, batchSize, webSearch, returnLastFrame, topP, style,
-    steps, guidanceScale, outputmask, lyrics, tags,
-  } = state;
+  const stateRef = useRef(state);
+  useEffect(() => { stateRef.current = state; }, [state]);
 
   const getPayloadParams = useCallback(() => {
-    const base = { prompt: prompt.trim() };
-    const iu = toRemoteUrls(imageUrls);
-    const vu = toRemoteUrls(videoUrls);
-    const ffu = toRemoteUrls(firstFrameUrls);
-    const lfu = toRemoteUrls(lastFrameUrls);
-    const ri = toRemoteUrls(refImages);
-    const fcu = toRemoteUrls(firstClipUrls);
-    const mu = toRemoteUrls(mediaUrls);
+    const s = stateRef.current;
+    const base = { prompt: s.prompt.trim() };
+    const iu = toRemoteUrls(s.imageUrls);
+    const vu = toRemoteUrls(s.videoUrls);
+    const ffu = toRemoteUrls(s.firstFrameUrls);
+    const lfu = toRemoteUrls(s.lastFrameUrls);
+    const ri = toRemoteUrls(s.refImages);
+    const fcu = toRemoteUrls(s.firstClipUrls);
+    const mu = toRemoteUrls(s.mediaUrls);
     switch (paramType) {
       case 'resolution-ratio':
-        return { ...base, resolution, aspectRatio, imageUrls: iu, seed, webSearch, temperature, topP, maxTokens };
+        return { ...base, resolution: s.resolution, aspectRatio: s.aspectRatio, imageUrls: iu, seed: s.seed, webSearch: s.webSearch, temperature: s.temperature, topP: s.topP, maxTokens: s.maxTokens };
       case 'width-height-quality':
-        return { ...base, width: parseInt(customWidth), height: parseInt(customHeight), quality, imageUrls: iu };
+        return { ...base, width: parseInt(s.customWidth), height: parseInt(s.customHeight), quality: s.quality, imageUrls: iu };
       case 'size-only':
-        return { ...base, resolution, imageUrls: iu };
+        return { ...base, resolution: s.resolution, imageUrls: iu };
       case 'flux-kontext':
-        return { ...base, aspectRatio, imageUrls: iu };
+        return { ...base, aspectRatio: s.aspectRatio, imageUrls: iu };
       case 'wan-size':
-        return { ...base, resolution, customWidth, customHeight, imageUrls: iu, seed, watermark, enableSequential, thinkingMode, colorPalette, bboxList };
+        return { ...base, resolution: s.resolution, customWidth: s.customWidth, customHeight: s.customHeight, imageUrls: iu, seed: s.seed, watermark: s.watermark, enableSequential: s.enableSequential, thinkingMode: s.thinkingMode, colorPalette: s.colorPalette, bboxList: s.bboxList };
       case 'width-height':
-        return { ...base, width: parseInt(customWidth), height: parseInt(customHeight), steps, guidanceScale, negativePrompt, seed, batchSize };
+        return { ...base, width: parseInt(s.customWidth), height: parseInt(s.customHeight), steps: s.steps, guidanceScale: s.guidanceScale, negativePrompt: s.negativePrompt, seed: s.seed, batchSize: s.batchSize };
       case 'seedance-video':
-        return { ...base, resolution, aspectRatio, duration, generateAudio, seed: seed !== '' && seed !== undefined ? parseInt(seed) : undefined, webSearch, returnLastFrame, imageUrls: iu, firstFrameUrls: ffu, lastFrameUrls: lfu, videoUrls: vu };
+        return { ...base, resolution: s.resolution, aspectRatio: s.aspectRatio, duration: s.duration, generateAudio: s.generateAudio, seed: s.seed !== '' && s.seed !== undefined ? parseInt(s.seed) : undefined, webSearch: s.webSearch, returnLastFrame: s.returnLastFrame, imageUrls: iu, firstFrameUrls: ffu, lastFrameUrls: lfu, videoUrls: vu };
       case 'kling-video':
-        return { ...base, aspectRatio, duration, sound, multiShot, shotType, multiPrompt, seed: seed !== '' && seed !== undefined ? parseInt(seed) : undefined, firstFrameUrls: ffu, lastFrameUrls: lfu };
+        return { ...base, aspectRatio: s.aspectRatio, duration: s.duration, sound: s.sound, multiShot: s.multiShot, shotType: s.shotType, multiPrompt: s.multiPrompt, seed: s.seed !== '' && s.seed !== undefined ? parseInt(s.seed) : undefined, firstFrameUrls: ffu, lastFrameUrls: lfu };
       case 'kling-o3-4k':
-        return { ...base, aspectRatio, duration, sound, keepOriginalSound, multiShot, shotType, multiPrompt, imageUrls: iu, videoUrls: vu };
+        return { ...base, aspectRatio: s.aspectRatio, duration: s.duration, sound: s.sound, keepOriginalSound: s.keepOriginalSound, multiShot: s.multiShot, shotType: s.shotType, multiPrompt: s.multiPrompt, imageUrls: iu, videoUrls: vu };
       case 'vidu-video':
-        return { ...base, resolution, aspectRatio, duration, audio, isRec, offPeak, seed: seed ? parseInt(seed) : undefined, imageUrls: iu, lastFrameUrls: lfu, movementAmplitude, style };
+        return { ...base, resolution: s.resolution, aspectRatio: s.aspectRatio, duration: s.duration, audio: s.audio, isRec: s.isRec, offPeak: s.offPeak, seed: s.seed ? parseInt(s.seed) : undefined, imageUrls: iu, lastFrameUrls: lfu, movementAmplitude: s.movementAmplitude, style: s.style };
       case 'wan-video':
-        return { ...base, resolution, aspectRatio, duration, promptExtend, watermark, negativePrompt, imageUrls: iu, firstFrameUrls: mode === 'image-to-video' ? iu : ffu, lastFrameUrls: lfu, videoUrls: vu, refImages: mode === 'reference-to-video' ? iu : ri, refVideos: mode === 'reference-to-video' ? vu : undefined, referenceVoice, drivingAudio, firstClipUrls: mode === 'video-extend' ? vu : fcu, audioUrl, audioSetting, seed: seed ? parseInt(seed) : undefined };
+        return { ...base, resolution: s.resolution, aspectRatio: s.aspectRatio, duration: s.duration, promptExtend: s.promptExtend, watermark: s.watermark, negativePrompt: s.negativePrompt, imageUrls: iu, firstFrameUrls: mode === 'image-to-video' ? iu : ffu, lastFrameUrls: lfu, videoUrls: vu, refImages: mode === 'reference-to-video' ? iu : ri, refVideos: mode === 'reference-to-video' ? vu : undefined, referenceVoice: s.referenceVoice, drivingAudio: s.drivingAudio, firstClipUrls: mode === 'video-extend' ? vu : fcu, audioUrl: s.audioUrl, audioSetting: s.audioSetting, seed: s.seed ? parseInt(s.seed) : undefined };
       case 'wan-i2v':
-        return { ...base, resolution, duration, promptExtend, audio, audioUrl, imageUrls: iu };
+        return { ...base, resolution: s.resolution, duration: s.duration, promptExtend: s.promptExtend, audio: s.audio, audioUrl: s.audioUrl, imageUrls: iu };
       case 'hailuo-video':
-        return { ...base, resolution, duration, promptOptimizer, fastPretreatment, aigcWatermark, imageUrls: iu };
+        return { ...base, resolution: s.resolution, duration: s.duration, promptOptimizer: s.promptOptimizer, fastPretreatment: s.fastPretreatment, aigcWatermark: s.aigcWatermark, imageUrls: iu };
       case 'happyhorse-video':
-        return { ...base, resolution, aspectRatio, duration, watermark, seed: seed ? parseInt(seed) : undefined, imageUrls: iu, mediaUrls: mu, videoUrls: vu, refImages: ri, audioSetting };
+        return { ...base, resolution: s.resolution, aspectRatio: s.aspectRatio, duration: s.duration, watermark: s.watermark, seed: s.seed ? parseInt(s.seed) : undefined, imageUrls: iu, mediaUrls: mu, videoUrls: vu, refImages: ri, audioSetting: s.audioSetting };
       case 'ltx-video':
-        return { ...base, resolution, display, seed: seed ? parseInt(seed) : undefined, imageUrls: iu };
+        return { ...base, resolution: s.resolution, display: s.display, seed: s.seed ? parseInt(s.seed) : undefined, imageUrls: iu };
       case 'bza-video-x':
-        return { ...base, resolution, aspectRatio, duration, imageUrls: iu, videoUrls: vu };
+        return { ...base, resolution: s.resolution, aspectRatio: s.aspectRatio, duration: s.duration, imageUrls: iu, videoUrls: vu };
       case 'bza-video-v3':
-        return { ...base, resolution, aspectRatio, duration, generateAudio, seed: seed !== '' && seed !== undefined ? parseInt(seed) : undefined, negativePrompt, imageUrls: iu, firstFrameUrls: ffu, lastFrameUrls: lfu };
+        return { ...base, resolution: s.resolution, aspectRatio: s.aspectRatio, duration: s.duration, generateAudio: s.generateAudio, seed: s.seed !== '' && s.seed !== undefined ? parseInt(s.seed) : undefined, negativePrompt: s.negativePrompt, imageUrls: iu, firstFrameUrls: ffu, lastFrameUrls: lfu };
       case 'bza-video-g':
-        return { ...base, resolution, aspectRatio, duration, imageUrls: iu };
+        return { ...base, resolution: s.resolution, aspectRatio: s.aspectRatio, duration: s.duration, imageUrls: iu };
       case 'dreamactor':
         return { imageUrls: iu, videoUrls: vu };
       case 'llm-chat':
-        return { systemPrompt, userPrompt: prompt.trim(), temperature, maxTokens, enableThinking, enableSearch };
+        return { systemPrompt: s.systemPrompt, userPrompt: s.prompt.trim(), temperature: s.temperature, maxTokens: s.maxTokens, enableThinking: s.enableThinking, enableSearch: s.enableSearch };
       case 'vision-g':
-        return { systemPrompt, userPrompt: prompt.trim(), imageUrls: iu, temperature, maxTokens, detail, enableThinking };
+        return { systemPrompt: s.systemPrompt, userPrompt: s.prompt.trim(), imageUrls: iu, temperature: s.temperature, maxTokens: s.maxTokens, detail: s.detail, enableThinking: s.enableThinking };
       case 'joycaption':
-        return { imageUrls: iu, captionType, captionLength, temperature, maxTokens, doSample, extraOptions, nameInput, customPrompt };
+        return { imageUrls: iu, captionType: s.captionType, captionLength: s.captionLength, temperature: s.temperature, maxTokens: s.maxTokens, doSample: s.doSample, extraOptions: s.extraOptions, nameInput: s.nameInput, customPrompt: s.customPrompt };
       case 'qwen-image':
-        return { ...base, width: parseInt(customWidth) || 1024, height: parseInt(customHeight) || 1024, steps, guidanceScale, negativePrompt, seed: seed !== '' && seed !== undefined ? parseInt(seed) : undefined };
+        return { ...base, width: parseInt(s.customWidth) || 1024, height: parseInt(s.customHeight) || 1024, steps: s.steps, guidanceScale: s.guidanceScale, negativePrompt: s.negativePrompt, seed: s.seed !== '' && s.seed !== undefined ? parseInt(s.seed) : undefined };
       case 'tts':
-        return { input: prompt.trim(), voice, responseFormat, instructions, language, speed, maxTokens };
+        return { input: s.prompt.trim(), voice: s.voice, responseFormat: s.responseFormat, instructions: s.instructions, language: s.language, speed: s.speed, maxTokens: s.maxTokens };
       case 'birefnet':
-        return { imageUrls: iu, outputmask };
+        return { imageUrls: iu, outputmask: s.outputmask };
       case 'ace-step':
-        return { lyrics, tags, duration, seed: seed !== '' && seed !== undefined ? parseInt(seed) : undefined };
+        return { lyrics: s.lyrics, tags: s.tags, duration: s.duration, seed: s.seed !== '' && s.seed !== undefined ? parseInt(s.seed) : undefined };
       case 'seedvr2':
-        return { imageUrls: iu, resolution };
+        return { imageUrls: iu, resolution: s.resolution };
       case 'flux-klein':
         return { imageUrls: iu };
       case 'kontext-lora':
-        return { ...base, imageUrls: iu, seed: seed !== '' && seed !== undefined ? parseInt(seed) : undefined };
+        return { ...base, imageUrls: iu, seed: s.seed !== '' && s.seed !== undefined ? parseInt(s.seed) : undefined };
       default:
-        return { ...base, resolution, aspectRatio, imageUrls: iu };
+        return { ...base, resolution: s.resolution, aspectRatio: s.aspectRatio, imageUrls: iu };
     }
-  }, [paramType, prompt, resolution, aspectRatio, imageUrls, customWidth, customHeight, quality, duration, generateAudio, sound, multiShot, shotType, multiPrompt, negativePrompt, promptExtend, watermark, seed, display, keepOriginalSound, audio, offPeak, isRec, promptOptimizer, fastPretreatment, aigcWatermark, movementAmplitude, videoUrls, firstFrameUrls, lastFrameUrls, mediaUrls, refImages, audioSetting, drivingAudio, audioUrl, referenceVoice, bboxList, firstClipUrls, systemPrompt, temperature, maxTokens, enableThinking, enableSearch, detail, captionType, captionLength, doSample, extraOptions, nameInput, customPrompt, voice, responseFormat, instructions, language, speed, enableSequential, thinkingMode, colorPalette, batchSize, webSearch, returnLastFrame, topP, style, steps, guidanceScale, outputmask, lyrics, tags, mode]);
+  }, [paramType, mode]);
 
   const livePrice = useMemo(() => calculatePrice(modelId, getPayloadParams()), [modelId, getPayloadParams]);
 
@@ -213,7 +201,7 @@ export function useHomeSubmit({
         lastResponse: { status: 'Pending', request_id: requestId },
       });
       await addCoinsSpent(price);
-      await refreshUserInfo().catch(() => {});
+      await refreshUserInfo().catch((e) => console.warn('提交后刷新用户信息失败:', e?.message || e));
       startPolling(id, requestId, taskApiKey);
     } catch (err) {
       updateHistoryItem(id, {

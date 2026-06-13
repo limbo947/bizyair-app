@@ -3,6 +3,7 @@ import { Pressable, Text, View, ActivityIndicator } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { Radius, Spacing, Typography } from '../../constants/theme';
+import { createSharedStyles } from '../../constants/sharedStyles';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -74,16 +75,19 @@ function UploadCardInner({
 
 export const UploadCard = React.memo(UploadCardInner);
 
-const createStyles = (colors) => ({
-  card: { backgroundColor: colors.card, padding: Spacing.lg, borderRadius: Radius.md, borderCurve: 'continuous', marginBottom: Spacing.md },
-  label: { fontSize: Typography.fontSize.footnote, fontWeight: Typography.fontWeight.semibold, color: colors.textSecondary, marginBottom: Spacing.sm, textTransform: 'uppercase', letterSpacing: Typography.letterSpacing.wide },
-  uploadButton: { backgroundColor: colors.primaryBg, paddingVertical: Spacing.xl, borderRadius: Radius.md, borderCurve: 'continuous', borderWidth: 1.5, borderColor: colors.primaryBorder, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: Spacing.sm },
-  uploadButtonDisabled: { opacity: 0.6 },
-  uploadButtonText: { color: colors.primary, fontSize: Typography.fontSize.subheadline, fontWeight: Typography.fontWeight.semibold },
-  uploadedList: { marginTop: Spacing.md, gap: Spacing.sm },
-  uploadedItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.bg, borderRadius: Radius.sm, borderCurve: 'continuous', padding: Spacing.sm, gap: Spacing.md },
-  uploadedThumb: { width: 44, height: 44, borderRadius: Radius.xs, borderCurve: 'continuous' },
-  uploadedName: { flex: 1, fontSize: Typography.fontSize.footnote, color: colors.textPrimary, fontWeight: Typography.fontWeight.medium },
-  removeUploadedButton: { backgroundColor: colors.errorBg, paddingHorizontal: Spacing.md, paddingVertical: 5, borderRadius: Radius.xs, borderCurve: 'continuous' },
-  removeUploadedButtonText: { color: colors.error, fontSize: Typography.fontSize.footnote, fontWeight: Typography.fontWeight.semibold },
-});
+const createStyles = (colors) => {
+  const shared = createSharedStyles(colors);
+  return {
+    card: shared.card,
+    label: shared.label,
+    uploadButton: { backgroundColor: colors.primaryBg, paddingVertical: Spacing.xl, borderRadius: Radius.md, borderCurve: 'continuous', borderWidth: 1.5, borderColor: colors.primaryBorder, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: Spacing.sm },
+    uploadButtonDisabled: { opacity: 0.6 },
+    uploadButtonText: { color: colors.primary, fontSize: Typography.fontSize.subheadline, fontWeight: Typography.fontWeight.semibold },
+    uploadedList: { marginTop: Spacing.md, gap: Spacing.sm },
+    uploadedItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.bg, borderRadius: Radius.sm, borderCurve: 'continuous', padding: Spacing.sm, gap: Spacing.md },
+    uploadedThumb: { width: 44, height: 44, borderRadius: Radius.xs, borderCurve: 'continuous' },
+    uploadedName: { flex: 1, fontSize: Typography.fontSize.footnote, color: colors.textPrimary, fontWeight: Typography.fontWeight.medium },
+    removeUploadedButton: { backgroundColor: colors.errorBg, paddingHorizontal: Spacing.md, paddingVertical: 5, borderRadius: Radius.xs, borderCurve: 'continuous' },
+    removeUploadedButtonText: { color: colors.error, fontSize: Typography.fontSize.footnote, fontWeight: Typography.fontWeight.semibold },
+  };
+};

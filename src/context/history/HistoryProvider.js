@@ -61,10 +61,14 @@ export function HistoryProvider({ children }) {
   }, [persistHistory]);
 
   const removeHistoryItems = useCallback(async (predicate) => {
-    const updated = history.filter((item) => !predicate(item));
-    setHistory(updated);
+    let updated;
+    setHistory((prev) => {
+      const arr = prev ?? [];
+      updated = arr.filter((item) => !predicate(item));
+      return updated;
+    });
     await persistHistory(updated);
-  }, [history, persistHistory]);
+  }, [persistHistory]);
 
   const updateHistoryItem = useCallback((id, updates) => {
     setHistory((prev) => {
@@ -155,10 +159,10 @@ export function HistoryProvider({ children }) {
         failCount = 0;
         const rawStatus = detail.status;
         const mappedStatus = mapStatus(rawStatus);
-        updateHistoryItem(id, { status: mappedStatus, lastResponse: detail });
 
         if (rawStatus === 'Success') {
           delete pollingRef.current[id];
+          // 先尝试获取产物，再一次性更新状态+产物，避免中间态"已完成但无产物"
           try {
             const outputData = await queryWebappTaskOutputs(ak, requestId);
             const taskResult = extractWebappResult(outputData.outputs);
@@ -169,6 +173,7 @@ export function HistoryProvider({ children }) {
               lastResponse: { ...detail, outputs: outputData.outputs },
             });
           } catch (_outputErr) {
+            console.warn('获取 webapp 输出失败，使用 detail 作为 lastResponse:', _outputErr?.message || _outputErr);
             updateHistoryItem(id, {
               status: 'Success',
               completedAt: Date.now(),
@@ -187,6 +192,9 @@ export function HistoryProvider({ children }) {
           });
           return;
         }
+
+        // 非终态才更新中间状态
+        updateHistoryItem(id, { status: mappedStatus, lastResponse: detail });
       } catch (err) {
         failCount++;
         if (failCount >= MAX_POLL_FAILS) {

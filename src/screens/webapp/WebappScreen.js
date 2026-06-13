@@ -20,6 +20,7 @@ import { submitWebappTask, uploadImageFile, uploadVideoFile, fetchWebappDetail }
 import { generateId } from '../../utils/helpers';
 import { ENV_API_KEY } from '../../constants/models';
 import { Radius, Spacing, Typography, ButtonVariants, pressedOpacity } from '../../constants/theme';
+import { createSharedStyles } from '../../constants/sharedStyles';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { ResizableTextInput } from '../../components/common/ResizableTextInput';
 import { AppHeader } from '../../components/layout/AppHeader';
@@ -264,7 +265,7 @@ export function WebappScreen() {
       date: new Date(now).toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }),
     };
     await addToHistory(entry);
-    await refreshUserInfo().catch(() => {});
+    await refreshUserInfo().catch((e) => console.warn('提交后刷新用户信息失败:', e?.message || e));
     try {
       const requestId = await submitWebappTask(ek, webAppId, cleanInputValues);
       updateHistoryItem(id, { status: 'Pending', requestId, taskApiKey: ek, lastResponse: { status: 'Pending', request_id: requestId } });
@@ -565,7 +566,9 @@ export function WebappScreen() {
   );
 }
 
-const createStyles = (colors) => ({
+const createStyles = (colors) => {
+  const shared = createSharedStyles(colors);
+  return {
   container: { flex: 1, backgroundColor: colors.bg },
   header: { backgroundColor: colors.card, paddingLeft: Spacing.md, paddingRight: Spacing.md, paddingVertical: Spacing.sm, borderBottomWidth: 0.5, borderBottomColor: colors.separator },
   headerInner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
@@ -595,9 +598,9 @@ const createStyles = (colors) => ({
   // 编辑模式
   scroll: { flex: 1 },
   scrollContent: { paddingTop: Spacing.sm, paddingRight: Spacing.md, paddingBottom: Spacing.xxl, paddingLeft: Spacing.md },
-  card: { backgroundColor: colors.card, padding: Spacing.lg, borderRadius: Radius.md, borderCurve: 'continuous', marginBottom: Spacing.md },
+  card: shared.card,
   labelRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, marginBottom: Spacing.sm },
-  label: { fontSize: Typography.fontSize.footnote, fontWeight: Typography.fontWeight.semibold, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: Typography.letterSpacing.wide },
+  label: shared.label,
   clearButtonText: { fontSize: Typography.fontSize.footnote, color: colors.primary, fontWeight: Typography.fontWeight.medium },
   codeInput: { fontSize: Typography.fontSize.caption1, color: colors.textPrimary, backgroundColor: colors.bg, borderRadius: Radius.sm, borderCurve: 'continuous', padding: Spacing.md, fontFamily: 'monospace', minHeight: 60, textAlignVertical: 'top', marginBottom: Spacing.sm },
   parseButtonRow: { flexDirection: 'row', gap: Spacing.sm },
@@ -674,4 +677,5 @@ const createStyles = (colors) => ({
   apiKeyInput: { fontSize: Typography.fontSize.subheadline, color: colors.textPrimary, borderWidth: 0, borderRadius: Radius.sm, borderCurve: 'continuous', padding: Spacing.md, fontFamily: 'monospace', backgroundColor: colors.bg },
   saveKeyButton: { backgroundColor: colors.primary, paddingVertical: Spacing.sm + 2, borderRadius: Radius.sm, borderCurve: 'continuous', alignItems: 'center', marginTop: Spacing.sm },
   saveKeyButtonText: { color: colors.textInverse, fontSize: Typography.fontSize.subheadline, fontWeight: Typography.fontWeight.semibold },
-});
+  };
+};

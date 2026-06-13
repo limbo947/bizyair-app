@@ -212,6 +212,12 @@ export const HistoryCard = React.memo(function HistoryCard({
 (prevProps, nextProps) => {
   return prevProps.item.id === nextProps.item.id &&
     prevProps.item.status === nextProps.item.status &&
+    prevProps.item.imageUrl === nextProps.item.imageUrl &&
+    prevProps.item.videoUrl === nextProps.item.videoUrl &&
+    prevProps.item.audioUrl === nextProps.item.audioUrl &&
+    prevProps.item.textResult === nextProps.item.textResult &&
+    prevProps.item.errorMessage === nextProps.item.errorMessage &&
+    prevProps.item.completedAt === nextProps.item.completedAt &&
     prevProps.isSelected === nextProps.isSelected &&
     prevProps.batchMode === nextProps.batchMode &&
     prevProps.thumbUri === nextProps.thumbUri;
