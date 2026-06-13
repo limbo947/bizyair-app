@@ -1,7 +1,7 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useHistoryListContext } from '../../src/context/HistoryContext';
+import { useHistoryListContext } from '../../src/context/history';
 import { useTheme } from '../../src/context/ThemeContext';
 
 const ACTIVE_STATUSES = ['Pending', 'Running', 'Saving'];

@@ -1,4 +1,4 @@
-import { HistoryScreen } from '../../src/screens/HistoryScreen';
+import { HistoryScreen } from '../../src/screens/history/HistoryScreen';
 
 export default function HistoryTab() {
   return <HistoryScreen />;

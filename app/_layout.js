@@ -4,7 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { ThemeProvider, useTheme } from '../src/context/ThemeContext';
 import { AppProvider } from '../src/context/AppContext';
 import { ToastProvider } from '../src/context/ToastContext';
-import { ErrorBoundary } from '../src/components/ErrorBoundary';
+import { ErrorBoundary } from '../src/components/layout/ErrorBoundary';
 
 function RootLayoutNav() {
   const { colors, themeMode } = useTheme();

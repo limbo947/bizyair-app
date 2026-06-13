@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { ModelSelectScreen } from '../src/screens/ModelSelectScreen';
-import { useHomeStateContext } from '../src/context/HistoryContext';
+import { useHomeStateContext } from '../src/context/history';
 import { getModelModes } from '../src/utils/modelHelpers';
 
 export default function ModelSelectRoute() {
