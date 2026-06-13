@@ -61,13 +61,12 @@ export function HistoryProvider({ children }) {
   }, [persistHistory]);
 
   const removeHistoryItems = useCallback(async (predicate) => {
-    let updated;
     setHistory((prev) => {
       const arr = prev ?? [];
-      updated = arr.filter((item) => !predicate(item));
+      const updated = arr.filter((item) => !predicate(item));
+      persistHistory(updated);
       return updated;
     });
-    await persistHistory(updated);
   }, [persistHistory]);
 
   const updateHistoryItem = useCallback((id, updates) => {
@@ -398,6 +397,7 @@ export function HistoryProvider({ children }) {
       prompt: historyItem.prompt || '',
     };
 
+    // 图片/视频/参考资源 URL
     if (historyItem.imageUrls && historyItem.imageUrls.length > 0) {
       updates.imageUrls = historyItem.imageUrls;
     }
@@ -417,10 +417,11 @@ export function HistoryProvider({ children }) {
       updates.refImages = historyItem.refImages;
     }
 
+    // 生成参数
     if (historyItem.resolution) updates.resolution = historyItem.resolution;
     if (historyItem.aspectRatio) updates.aspectRatio = historyItem.aspectRatio;
     if (historyItem.quality) updates.quality = historyItem.quality;
-    if (historyItem.duration) updates.duration = historyItem.duration;
+    if (historyItem.duration != null) updates.duration = historyItem.duration;
     if (historyItem.seed) updates.seed = historyItem.seed;
     if (historyItem.negativePrompt) updates.negativePrompt = historyItem.negativePrompt;
     if (historyItem.systemPrompt) updates.systemPrompt = historyItem.systemPrompt;

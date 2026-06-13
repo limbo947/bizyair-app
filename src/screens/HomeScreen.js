@@ -65,15 +65,17 @@ export function HomeScreen({ onOpenModelSelect }) {
 
   useEffect(() => {
     if (isSwitchingModelRef.current) return;
-    const s = stateRef.current;
+    let s = stateRef.current;
     if (homeState.modelId !== undefined && homeState.modelId !== s.modelId) {
       switchToModel(homeState.modelId);
-      return;
+      // switchToModel 同步 dispatch 了 SET_PARAMS，stateRef 已更新
+      s = stateRef.current;
     }
     const patch = {};
     if (homeState.mode !== undefined && homeState.mode !== s.mode) {
       patch.mode = homeState.mode;
     }
+    // 同步 URL 数组字段
     const syncUrlArray = (key, homeVal) => {
       if (homeVal === undefined) return;
       if (!Array.isArray(homeVal)) {
@@ -81,7 +83,12 @@ export function HomeScreen({ onOpenModelSelect }) {
         return;
       }
       const stateVal = s[key];
-      if (!Array.isArray(stateVal) || homeVal.length !== stateVal.length) {
+      if (!Array.isArray(stateVal) || homeVal.length !== stateVal.length
+        || homeVal.some((v, i) => {
+          const hv = typeof v === 'object' ? v.remoteUrl : v;
+          const sv = typeof stateVal[i] === 'object' ? stateVal[i].remoteUrl : stateVal[i];
+          return hv !== sv;
+        })) {
         patch[key] = homeVal;
       }
     };
@@ -91,10 +98,17 @@ export function HomeScreen({ onOpenModelSelect }) {
     syncUrlArray('lastFrameUrls', homeState.lastFrameUrls);
     syncUrlArray('firstClipUrls', homeState.firstClipUrls);
     syncUrlArray('refImages', homeState.refImages);
+    // 同步标量参数字段
+    const SCALAR_PARAMS = ['prompt', 'resolution', 'aspectRatio', 'quality', 'duration', 'seed', 'negativePrompt', 'systemPrompt', 'temperature', 'maxTokens', 'voice', 'style'];
+    for (const key of SCALAR_PARAMS) {
+      if (homeState[key] !== undefined && homeState[key] !== s[key]) {
+        patch[key] = homeState[key];
+      }
+    }
     if (Object.keys(patch).length > 0) {
       stateDispatch({ type: 'SET_PARAMS', params: patch });
     }
-  }, [homeState.modelId, homeState.mode, homeState.imageUrls, homeState.videoUrls, homeState.firstFrameUrls, homeState.lastFrameUrls, homeState.firstClipUrls, homeState.refImages, switchToModel]);
+  }, [homeState.modelId, homeState.mode, homeState.imageUrls, homeState.videoUrls, homeState.firstFrameUrls, homeState.lastFrameUrls, homeState.firstClipUrls, homeState.refImages, homeState.prompt, homeState.resolution, homeState.aspectRatio, homeState.quality, homeState.duration, homeState.seed, homeState.negativePrompt, homeState.systemPrompt, homeState.temperature, homeState.maxTokens, homeState.voice, homeState.style, switchToModel]);
   const {
     modelId, mode, prompt, imageUrls,
     videoUrls, firstFrameUrls, lastFrameUrls, firstClipUrls,
