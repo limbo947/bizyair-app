@@ -36,7 +36,7 @@ npx serve dist -l 3000
 
 **一键构建（推荐）：**
 ```powershell
-.\build-android.ps1 -Clean
+.\scripts\build-android.ps1 -Clean
 ```
 该脚本自动执行：版本递增 → prebuild → 配置修补 → 签名注入 → Gradle 构建 → 产物验证（arm64-v8a）
 
@@ -96,22 +96,49 @@ npx eas build --platform android --profile preview --local
 │       ├── index.js          # 主页 → HomeScreen
 │       ├── webapp.js         # AI应用 → WebappScreen
 │       └── history.js        # 历史 → HistoryScreen
-├── api.js                    # API 兼容层（重新导出）
 ├── package.json              # 依赖配置
 ├── app.json                  # Expo 配置
 ├── eas.json                  # EAS Build 配置
-├── build-android.ps1         # APK 一键构建脚本（版本递增 → prebuild → 修补 → Gradle）
 ├── scripts/
-│   └── patch-android-build.ps1   # post-prebuild 配置修补（ProGuard、签名、APK命名）
+│   ├── build-android.ps1     # APK 一键构建脚本
+│   ├── patch-android-build.ps1 # post-prebuild 配置修补
+│   └── upload-proxy.mjs     # Web 端文件上传代理（OSS STS 签名）
 ├── src/
-│   ├── context/              # 全局状态管理（ApiKeyContext、HistoryContext、FavoritesContext、ThemeContext）
-│   ├── screens/              # 页面组件（HomeScreen、HistoryScreen、ModelSelectScreen、WebappScreen）
-│   ├── components/           # UI 组件（21 个，ImageViewer、VideoPlayer、AudioPlayer 等）
-│   ├── constants/            # 常量定义（models、modelMeta、ratios、theme）
-│   ├── hooks/                # 自定义 Hooks（useFileUpload、useThemedStyles）
-│   ├── utils/                # 工具函数（helpers、modelHelpers、payloadBuilder）
-│   └── services/             # API 服务层（apiClient）
+│   ├── context/              # 全局状态管理
+│   │   ├── history/          # 历史记录（contexts + hooks + HistoryProvider + index）
+│   │   ├── ApiKeyContext.js  # API 密钥、多密钥切换、钱包余额
+│   │   ├── FavoritesContext.js # 收藏模型管理
+│   │   ├── AppContext.js     # 组合 Provider + activeTab
+│   │   ├── ThemeContext.js   # 亮/暗主题
+│   │   └── ToastContext.js   # Toast 提示
+│   ├── screens/              # 页面组件
+│   │   ├── HomeScreen.js    # 主页
+│   │   ├── home/            # 主页子模块（homeReducer + useHomeSubmit）
+│   │   ├── history/         # 历史页子模块（HistoryScreen + HistoryCard + DurationDisplay）
+│   │   ├── webapp/          # AI 应用子模块（WebappScreen + WebappListItem + utils + storage）
+│   │   └── ModelSelectScreen.js # 模型选择
+│   ├── components/           # UI 组件（按功能分组）
+│   │   ├── params/          # 参数控件（12 个：HomeParamControls、VideoParamControls 等）
+│   │   ├── media/           # 媒体组件（4 个：ImageViewer、VideoPlayer、AudioPlayer、UploadCard）
+│   │   ├── layout/          # 布局组件（5 个：AppHeader、Toast、ErrorBoundary 等）
+│   │   ├── common/          # 通用组件（3 个：ResizableTextInput、MarkdownRenderer、TextResultView）
+│   │   ├── HistoryFilters.js
+│   │   ├── HistoryModals.js
+│   │   └── ModelSelector.js
+│   ├── constants/            # 常量定义
+│   │   ├── models.js        # MODELS 对象 + re-export（向后兼容）
+│   │   ├── pricing.js       # 价格常量 + 计算函数
+│   │   ├── apiConfig.js     # API 端点 + 超时配置
+│   │   ├── storageKeys.js   # AsyncStorage 键名
+│   │   ├── uiConstants.js   # UI 常量
+│   │   ├── modelMeta.js / ratios.js / theme.js / sharedStyles.js
+│   ├── hooks/                # 自定义 Hooks（useFileUpload、useThemedStyles、useDownload、useModelSwitch）
+│   ├── utils/                # 工具函数（helpers、modelHelpers、payloadBuilder、download）
+│   └── services/             # API 服务层
+│       ├── httpClient.js     # 核心 HTTP 请求
+│       ├── taskApi.js / uploadApi.js / userApi.js / webappApi.js
+│       └── apiClient.js      # 统一入口（re-export，向后兼容）
 ├── assets/                   # 图标资源
-├── reference/                # 参考文档（BizyAir API 参考等）
+├── reference/                # 参考文档
 └── .env.example              # 环境变量模板
 ```
