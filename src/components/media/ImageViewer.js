@@ -42,6 +42,7 @@ function ImageViewerContent({ urls, totalCount, prompt, onClose, colors, styles 
   const [panX] = useState(() => new Animated.Value(0));
   const [panY] = useState(() => new Animated.Value(0));
   const [slideDelta] = useState(() => new Animated.Value(0));
+  const [fadeOpacity] = useState(() => new Animated.Value(1));
 
   /* ── 手势状态 ── */
   const baseScale = useRef(1);
@@ -98,13 +99,28 @@ function ImageViewerContent({ urls, totalCount, prompt, onClose, colors, styles 
     panY.setValue(0);
   }, [scale, panX, panY]);
 
-  /* ── 导航到指定索引 ── */
+  /* ── 导航到指定索引（淡入淡出） ── */
   const goToIndex = useCallback((index) => {
     if (index < 0 || index >= totalCount) return;
+    if (index === currentIndexRef.current) return;
+
     resetTransform();
-    slideDelta.setValue(0);
-    setCurrentIndex(index);
-  }, [resetTransform, slideDelta, totalCount]);
+    Animated.timing(fadeOpacity, {
+      toValue: 0,
+      duration: 120,
+      useNativeDriver: true,
+    }).start(() => {
+      slideDelta.setValue(0);
+      panX.setValue(0);
+      panY.setValue(0);
+      setCurrentIndex(index);
+      Animated.timing(fadeOpacity, {
+        toValue: 1,
+        duration: 150,
+        useNativeDriver: true,
+      }).start();
+    });
+  }, [resetTransform, fadeOpacity, slideDelta, panX, panY, totalCount]);
 
   /* ── 单击 / 双击缩放 ── */
   const handleSingleTap = useCallback(() => {
@@ -297,6 +313,7 @@ function ImageViewerContent({ urls, totalCount, prompt, onClose, colors, styles 
           style={[
             styles.zoomContainer,
             {
+              opacity: fadeOpacity,
               transform: [
                 { scale },
                 { translateX: composedTranslateX },
@@ -492,7 +509,6 @@ const createStyles = (colors) => ({
   },
   zoomContainer: {
     flex: 1,
-    alignItems: 'center',
     justifyContent: 'center',
   },
   imageRow: {

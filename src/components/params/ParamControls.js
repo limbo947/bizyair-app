@@ -112,7 +112,6 @@ export function WidthHeightQualityControls({ sizePreset, setSizePreset, customWi
         </View>
         {hasError && (
           <Text style={styles.errorHint}>
-            {!stepValid ? '宽高须为16的倍数。' : ''}
             {!ratioValid ? '宽高比不能超过3:1。' : ''}
             {!pixelsValid ? '总像素须在655,360~8,294,400之间。' : ''}
           </Text>

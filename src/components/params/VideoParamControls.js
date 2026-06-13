@@ -895,7 +895,7 @@ export function DreamActorControls() {
 
 const createStyles = (colors) => ({
   ...createSharedStyles(colors),
-  selectorButtonSmall: { paddingVertical: Spacing.sm, paddingHorizontal: Spacing.sm + 2, borderRadius: Radius.sm, borderCurve: 'continuous', backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
+  selectorButtonSmall: { minWidth: '10%', paddingVertical: Spacing.sm, paddingHorizontal: Spacing.sm + 2, borderRadius: Radius.sm, borderCurve: 'continuous', backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
   priceHint: { fontSize: Typography.fontSize.caption1, color: colors.textTertiary, marginTop: Spacing.sm },
   ratioGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
   ratioButton: { width: '22%', paddingVertical: Spacing.sm + 1, borderRadius: Radius.sm, borderCurve: 'continuous', backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },

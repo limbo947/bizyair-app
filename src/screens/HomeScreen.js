@@ -61,21 +61,25 @@ export function HomeScreen({ onOpenModelSelect }) {
     ...homeState,
   });
 
-  const { switchToModel, isSwitchingModelRef } = useModelSwitch({ state, saveHomeState, stateDispatch });
+  const { switchToModel, isSwitchingModelRef, stateRef } = useModelSwitch({ state, saveHomeState, stateDispatch });
 
   // 模型切换：homeState.modelId 变化时触发 switchToModel
   useEffect(() => {
     if (isSwitchingModelRef.current) return;
-    if (homeState.modelId !== undefined && homeState.modelId !== state.modelId) {
+    if (homeState.modelId !== undefined && homeState.modelId !== stateRef.current.modelId) {
       switchToModel(homeState.modelId);
     }
-  }, [homeState.modelId, state.modelId, switchToModel, isSwitchingModelRef]);
+  }, [homeState.modelId, switchToModel, isSwitchingModelRef, stateRef]);
 
-  // 参数同步：homeState 其他字段变化时同步到本地 state（排除 modelId，由上面 effect 处理）
+  // 参数同步：homeState 字段变化时同步到本地 state
+  // 通过 stateRef 读取当前 state，避免将 state 加入依赖导致 dispatch 后无限循环
+  // 当模型切换时，switchToModel 会重置 state，因此需要无条件包含所有 homeState 参数
   useEffect(() => {
     if (isSwitchingModelRef.current) return;
+    const s = stateRef.current;
+    const modelSwitching = homeState.modelId !== undefined && homeState.modelId !== s.modelId;
     const patch = {};
-    if (homeState.mode !== undefined && homeState.mode !== state.mode) {
+    if (homeState.mode !== undefined && (modelSwitching || homeState.mode !== s.mode)) {
       patch.mode = homeState.mode;
     }
     // 同步 URL 数组字段
@@ -85,7 +89,11 @@ export function HomeScreen({ onOpenModelSelect }) {
         patch[key] = [];
         return;
       }
-      const stateVal = state[key];
+      if (modelSwitching) {
+        patch[key] = homeVal;
+        return;
+      }
+      const stateVal = s[key];
       if (!Array.isArray(stateVal) || homeVal.length !== stateVal.length
         || homeVal.some((v, i) => {
           const hv = typeof v === 'object' ? v.remoteUrl : v;
@@ -104,14 +112,15 @@ export function HomeScreen({ onOpenModelSelect }) {
     // 同步标量参数字段
     const SCALAR_PARAMS = ['prompt', 'resolution', 'aspectRatio', 'quality', 'duration', 'seed', 'negativePrompt', 'systemPrompt', 'temperature', 'maxTokens', 'voice', 'style'];
     for (const key of SCALAR_PARAMS) {
-      if (homeState[key] !== undefined && homeState[key] !== state[key]) {
+      if (homeState[key] !== undefined && (modelSwitching || homeState[key] !== s[key])) {
         patch[key] = homeState[key];
       }
     }
     if (Object.keys(patch).length > 0) {
       stateDispatch({ type: 'SET_PARAMS', params: patch });
     }
-  }, [homeState, homeState.mode, homeState.imageUrls, homeState.videoUrls, homeState.firstFrameUrls, homeState.lastFrameUrls, homeState.firstClipUrls, homeState.refImages, homeState.prompt, homeState.resolution, homeState.aspectRatio, homeState.quality, homeState.duration, homeState.seed, homeState.negativePrompt, homeState.systemPrompt, homeState.temperature, homeState.maxTokens, homeState.voice, homeState.style, state, isSwitchingModelRef, stateDispatch]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [homeState.mode, homeState.imageUrls, homeState.videoUrls, homeState.firstFrameUrls, homeState.lastFrameUrls, homeState.firstClipUrls, homeState.refImages, homeState.prompt, homeState.resolution, homeState.aspectRatio, homeState.quality, homeState.duration, homeState.seed, homeState.negativePrompt, homeState.systemPrompt, homeState.temperature, homeState.maxTokens, homeState.voice, homeState.style, switchToModel, stateDispatch]);
   const {
     modelId, mode, prompt, imageUrls,
     videoUrls, firstFrameUrls, lastFrameUrls, firstClipUrls,
@@ -155,32 +164,35 @@ export function HomeScreen({ onOpenModelSelect }) {
     return latest?.textResult || '';
   }, [history, modelId, paramType]);
 
+  // 模型默认值同步：仅在模型/模式变化时触发，通过 stateRef 读取当前 state 避免无限循环
   useEffect(() => {
     const model = getModelInfo(modelId);
-    if (currentResolutions.length > 0 && !currentResolutions.includes(state.resolution)) {
+    const s = stateRef.current;
+    if (currentResolutions.length > 0 && !currentResolutions.includes(s.resolution)) {
       stateDispatch({ type: 'SET_FIELD', field: 'resolution', value: model.defaultResolution || currentResolutions[0] });
     }
-    if (currentRatios.length > 0 && !currentRatios.includes(state.aspectRatio)) {
+    if (currentRatios.length > 0 && !currentRatios.includes(s.aspectRatio)) {
       stateDispatch({ type: 'SET_FIELD', field: 'aspectRatio', value: currentRatios[0] });
     }
-    if (model.defaultWatermark !== undefined && state.watermark !== model.defaultWatermark) stateDispatch({ type: 'SET_FIELD', field: 'watermark', value: model.defaultWatermark });
-    if (model.defaultThinkingMode !== undefined && state.thinkingMode !== model.defaultThinkingMode) stateDispatch({ type: 'SET_FIELD', field: 'thinkingMode', value: model.defaultThinkingMode });
-    if (model.defaultPromptExtend !== undefined && state.promptExtend !== model.defaultPromptExtend) stateDispatch({ type: 'SET_FIELD', field: 'promptExtend', value: model.defaultPromptExtend });
-    if (model.defaultAudio !== undefined && state.audio !== model.defaultAudio) stateDispatch({ type: 'SET_FIELD', field: 'audio', value: model.defaultAudio });
-    if (model.defaultAudioSetting !== undefined && state.audioSetting !== model.defaultAudioSetting) stateDispatch({ type: 'SET_FIELD', field: 'audioSetting', value: model.defaultAudioSetting });
-    if (model.defaultDuration !== undefined && state.duration !== model.defaultDuration) stateDispatch({ type: 'SET_FIELD', field: 'duration', value: model.defaultDuration });
-    if (model.defaultSound !== undefined && state.sound !== model.defaultSound) stateDispatch({ type: 'SET_FIELD', field: 'sound', value: model.defaultSound });
-    if (model.defaultKeepOriginalSound !== undefined && state.keepOriginalSound !== model.defaultKeepOriginalSound) stateDispatch({ type: 'SET_FIELD', field: 'keepOriginalSound', value: model.defaultKeepOriginalSound });
-    if (model.defaultTemperature !== undefined && state.temperature !== model.defaultTemperature) stateDispatch({ type: 'SET_FIELD', field: 'temperature', value: model.defaultTemperature });
-    if (model.defaultMaxTokens !== undefined && state.maxTokens !== model.defaultMaxTokens) stateDispatch({ type: 'SET_FIELD', field: 'maxTokens', value: model.defaultMaxTokens });
-    if (model.defaultSpeed !== undefined && state.speed !== model.defaultSpeed) stateDispatch({ type: 'SET_FIELD', field: 'speed', value: model.defaultSpeed });
-    if (model.defaultVoice !== undefined && state.voice !== model.defaultVoice) stateDispatch({ type: 'SET_FIELD', field: 'voice', value: model.defaultVoice });
-    if (model.defaultFormat !== undefined && state.responseFormat !== model.defaultFormat) stateDispatch({ type: 'SET_FIELD', field: 'responseFormat', value: model.defaultFormat });
-    if (model.defaultLanguage !== undefined && state.language !== model.defaultLanguage) stateDispatch({ type: 'SET_FIELD', field: 'language', value: model.defaultLanguage });
-    if (currentModes.length > 0 && !currentModes.includes(state.mode)) {
+    if (model.defaultWatermark !== undefined && s.watermark !== model.defaultWatermark) stateDispatch({ type: 'SET_FIELD', field: 'watermark', value: model.defaultWatermark });
+    if (model.defaultThinkingMode !== undefined && s.thinkingMode !== model.defaultThinkingMode) stateDispatch({ type: 'SET_FIELD', field: 'thinkingMode', value: model.defaultThinkingMode });
+    if (model.defaultPromptExtend !== undefined && s.promptExtend !== model.defaultPromptExtend) stateDispatch({ type: 'SET_FIELD', field: 'promptExtend', value: model.defaultPromptExtend });
+    if (model.defaultAudio !== undefined && s.audio !== model.defaultAudio) stateDispatch({ type: 'SET_FIELD', field: 'audio', value: model.defaultAudio });
+    if (model.defaultAudioSetting !== undefined && s.audioSetting !== model.defaultAudioSetting) stateDispatch({ type: 'SET_FIELD', field: 'audioSetting', value: model.defaultAudioSetting });
+    if (model.defaultDuration !== undefined && s.duration !== model.defaultDuration) stateDispatch({ type: 'SET_FIELD', field: 'duration', value: model.defaultDuration });
+    if (model.defaultSound !== undefined && s.sound !== model.defaultSound) stateDispatch({ type: 'SET_FIELD', field: 'sound', value: model.defaultSound });
+    if (model.defaultKeepOriginalSound !== undefined && s.keepOriginalSound !== model.defaultKeepOriginalSound) stateDispatch({ type: 'SET_FIELD', field: 'keepOriginalSound', value: model.defaultKeepOriginalSound });
+    if (model.defaultTemperature !== undefined && s.temperature !== model.defaultTemperature) stateDispatch({ type: 'SET_FIELD', field: 'temperature', value: model.defaultTemperature });
+    if (model.defaultMaxTokens !== undefined && s.maxTokens !== model.defaultMaxTokens) stateDispatch({ type: 'SET_FIELD', field: 'maxTokens', value: model.defaultMaxTokens });
+    if (model.defaultSpeed !== undefined && s.speed !== model.defaultSpeed) stateDispatch({ type: 'SET_FIELD', field: 'speed', value: model.defaultSpeed });
+    if (model.defaultVoice !== undefined && s.voice !== model.defaultVoice) stateDispatch({ type: 'SET_FIELD', field: 'voice', value: model.defaultVoice });
+    if (model.defaultFormat !== undefined && s.responseFormat !== model.defaultFormat) stateDispatch({ type: 'SET_FIELD', field: 'responseFormat', value: model.defaultFormat });
+    if (model.defaultLanguage !== undefined && s.language !== model.defaultLanguage) stateDispatch({ type: 'SET_FIELD', field: 'language', value: model.defaultLanguage });
+    if (currentModes.length > 0 && !currentModes.includes(s.mode)) {
       stateDispatch({ type: 'SET_FIELD', field: 'mode', value: currentModes[0] });
     }
-  }, [modelId, mode, paramType, currentResolutions, currentRatios, currentModes, state, stateDispatch]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modelId, mode, paramType, currentResolutions, currentRatios, currentModes]);
 
   useEffect(() => {
     const timer = setTimeout(() => {

@@ -28,13 +28,13 @@ export function TTSControls({
     <>
       <View style={styles.card}>
         <ParamLabel label="语音" required />
-        <View style={styles.chipRow}>
+        <View style={styles.selectorRow}>
           {(voices || []).map((v) => (
             <Pressable
               key={v}
-              style={({ pressed }) => [styles.chip, voice === v && styles.chipActive, pressed && styles.pressedStyle]} onPress={() => setVoice(v)}
+              style={({ pressed }) => [styles.selectorButton, voice === v && styles.selectorButtonActive, pressed && styles.pressedStyle]} onPress={() => setVoice(v)}
             >
-              <Text style={[styles.chipText, voice === v && styles.chipTextActive]}>{v}</Text>
+              <Text style={[styles.selectorText, voice === v && styles.selectorTextActive]}>{v}</Text>
             </Pressable>
           ))}
         </View>
@@ -42,13 +42,13 @@ export function TTSControls({
 
       <View style={styles.card}>
         <ParamLabel label="输出格式" required={false} />
-        <View style={styles.chipRow}>
+        <View style={styles.selectorRow}>
           {(formats || []).map((f) => (
             <Pressable
               key={f}
-              style={({ pressed }) => [styles.chip, responseFormat === f && styles.chipActive, pressed && styles.pressedStyle]} onPress={() => setResponseFormat(f)}
+              style={({ pressed }) => [styles.selectorButton, responseFormat === f && styles.selectorButtonActive, pressed && styles.pressedStyle]} onPress={() => setResponseFormat(f)}
             >
-              <Text style={[styles.chipText, responseFormat === f && styles.chipTextActive]}>{f}</Text>
+              <Text style={[styles.selectorText, responseFormat === f && styles.selectorTextActive]}>{f}</Text>
             </Pressable>
           ))}
         </View>
@@ -56,13 +56,13 @@ export function TTSControls({
 
       <View style={styles.card}>
         <ParamLabel label="语言" required={false} />
-        <View style={styles.chipRow}>
+        <View style={styles.selectorRow}>
           {(languages || []).map((l) => (
             <Pressable
               key={l}
-              style={({ pressed }) => [styles.chip, language === l && styles.chipActive, pressed && styles.pressedStyle]} onPress={() => setLanguage(l)}
+              style={({ pressed }) => [styles.selectorButton, language === l && styles.selectorButtonActive, pressed && styles.pressedStyle]} onPress={() => setLanguage(l)}
             >
-              <Text style={[styles.chipText, language === l && styles.chipTextActive]}>{l}</Text>
+              <Text style={[styles.selectorText, language === l && styles.selectorTextActive]}>{l}</Text>
             </Pressable>
           ))}
         </View>
@@ -164,11 +164,6 @@ const createStyles = (colors) => ({
   valueRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs + 2 },
   valueInput: { fontSize: Typography.fontSize.footnote, color: colors.primary, fontWeight: Typography.fontWeight.semibold, borderWidth: 1, borderColor: colors.border, borderRadius: Radius.sm, borderCurve: 'continuous', paddingHorizontal: Spacing.sm, paddingVertical: Spacing.xs, minWidth: 52, textAlign: 'center' },
   stepBtn: { width: 28, height: 28, borderRadius: 14, borderCurve: 'continuous', backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.separator },
-  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs },
-  chip: { paddingHorizontal: Spacing.md, paddingVertical: Spacing.xs, borderRadius: Radius.sm, borderCurve: 'continuous', backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.separator },
-  chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  chipText: { fontSize: Typography.fontSize.footnote, color: colors.textSecondary, fontWeight: Typography.fontWeight.medium },
-  chipTextActive: { color: colors.textInverse, fontWeight: Typography.fontWeight.semibold },
   promptInput: { fontSize: Typography.fontSize.footnote, color: colors.textPrimary, lineHeight: Typography.lineHeight.normal, minHeight: 60, textAlignVertical: 'top', borderWidth: 0, borderRadius: Radius.sm, borderCurve: 'continuous', paddingHorizontal: Spacing.sm, paddingVertical: Spacing.sm, backgroundColor: colors.bg },
   inputRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs + 2 },
   inputSingle: { flex: 1, fontSize: Typography.fontSize.subheadline, color: colors.textPrimary, textAlign: 'center', borderWidth: 0, borderRadius: Radius.sm, borderCurve: 'continuous', paddingHorizontal: Spacing.sm, paddingVertical: Spacing.sm + 2, backgroundColor: colors.bg },

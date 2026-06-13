@@ -381,6 +381,7 @@ export function HistoryProvider({ children }) {
   const saveHomeState = useCallback(async (state) => {
     try {
       const updated = { ...homeStateRef.current, ...state };
+      homeStateRef.current = updated; // 同步更新 ref，确保后续调用能读到最新值
       setHomeState(updated);
       await AsyncStorage.setItem(HOME_STATE_KEY, JSON.stringify(updated));
     } catch (e) {
@@ -397,13 +398,16 @@ export function HistoryProvider({ children }) {
       prompt: historyItem.prompt || '',
     };
 
-    // 图片/视频/参考资源 URL
-    if (historyItem.imageUrls && historyItem.imageUrls.length > 0) {
+    // 图片/视频 URL
+    // 任务完成后 imageUrls/videoUrls 会被输出结果覆盖，不再恢复
+    const isCompleted = historyItem.status === 'Success' || historyItem.status === 'Failed' || historyItem.status === 'Canceled';
+    if (!isCompleted && historyItem.imageUrls && historyItem.imageUrls.length > 0) {
       updates.imageUrls = historyItem.imageUrls;
     }
-    if (historyItem.videoUrls && historyItem.videoUrls.length > 0) {
+    if (!isCompleted && historyItem.videoUrls && historyItem.videoUrls.length > 0) {
       updates.videoUrls = historyItem.videoUrls;
     }
+    // 以下字段不会被输出结果覆盖，可安全恢复
     if (historyItem.firstFrameUrls && historyItem.firstFrameUrls.length > 0) {
       updates.firstFrameUrls = historyItem.firstFrameUrls;
     }

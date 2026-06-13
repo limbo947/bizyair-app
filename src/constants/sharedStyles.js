@@ -34,21 +34,20 @@ export const createSharedStyles = (colors) => ({
   selectorRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: Spacing.xs,
+    gap: Spacing.sm,
     marginBottom: Spacing.md,
   },
   selectorButton: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
+    width: '18%',
+    paddingVertical: Spacing.sm + 1,
     borderRadius: Radius.sm,
     borderCurve: 'continuous',
-    backgroundColor: colors.primaryBg,
-    borderWidth: 1,
-    borderColor: colors.primaryBorder,
+    backgroundColor: colors.bg,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   selectorButtonActive: {
     backgroundColor: colors.primary,
-    borderColor: colors.primary,
   },
   selectorText: {
     fontSize: Typography.fontSize.footnote,

@@ -423,5 +423,5 @@ const createStyles = (colors) => ({
   hintRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   clearText: { fontSize: Typography.fontSize.caption1, color: colors.primary, fontWeight: Typography.fontWeight.medium },
   promptInput: { fontSize: Typography.fontSize.footnote, color: colors.textPrimary, lineHeight: Typography.lineHeight.normal, minHeight: 80, textAlignVertical: 'top', borderWidth: 0, borderRadius: Radius.sm, borderCurve: 'continuous', paddingHorizontal: Spacing.sm, paddingVertical: Spacing.sm, backgroundColor: colors.bg },
-  selectorButtonSmall: { paddingVertical: Spacing.sm, paddingHorizontal: Spacing.sm + 2, borderRadius: Radius.sm, borderCurve: 'continuous', backgroundColor: colors.bg, alignItems: 'center' },
+  selectorButtonSmall: { minWidth: '10%', paddingVertical: Spacing.sm, paddingHorizontal: Spacing.sm + 2, borderRadius: Radius.sm, borderCurve: 'continuous', backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
 });
