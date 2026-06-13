@@ -1,258 +1,63 @@
 import { BZA_RATIOS_FULL, BZA_RATIOS_10, BZA_RATIOS_10_ALT, O2_I2I_RATIOS } from './ratios';
+import {
+  O2_PRICE_TIERS, SEEDANCE_RATES, SEEDANCE_FAST_RATE, SEEDANCE_BASE_PRICES, SEEDANCE_FAST_BASE_PRICES,
+  KLING_O3_PRO_RATES, KLING_PRO_RATES, KLING_STD_RATES, KLING_O3_4K_RATES,
+  VIDU_Q3_PRO_PRICES, VIDU_Q3_PRO_BASE_T2V_PRICES, VIDU_Q3_PRO_BASE_I2V_PRICES,
+  VIDU_Q3_TURBO_PRICES, VIDU_Q3_TURBO_BASE_PRICES,
+  WAN_27_VIDEO_PRICES, WAN_27_EXTEND_PRICES, WAN_I2V_PRICES,
+  HAILUO_23_PRICES, HAILUO_23_FAST_PRICES, HAPPYHORSE_PRICES,
+  BZA_V3_PRO_PRICES, BZA_V3_FAST_PRICES,
+  BZA_V3_LITE_OFFICIAL_PRICES, BZA_V3_OFFICIAL_PRICES, BZA_V3_FAST_OFFICIAL_PRICES,
+  BZA_VIDEO_G_PRICES, Z_IMAGE_PRICES, Z_IMAGE_PIXEL_THRESHOLD,
+  BZA_VIDEO_X_PRICES, BZA_VIDEO_X_BASE_RATE,
+  LTX_PRICE, DREAMACTOR_PRICE, JOYCAPTION_PRICE, TTS_PRICE, BIREFNET_PRICE,
+  ACE_STEP_PRICE, SEEDVR2_PRICES, FLUX_KLEIN_PRICE, KONTEXT_LORA_PRICE, QWEN_IMAGE_PRICE,
+  calcByDuration, calcByResolutionDuration, calcByCombo, calcByResolution,
+  calcO2Price, calcSeedancePrice, calcKlingPrice, calcKlingO3_4KPrice,
+  calcBzaVideoXPrice, calcZImagePrice, calcViduQ3ProBasePrice,
+  calcViduQ3ProOfficialPrice, calcViduQ3TurboOfficialPrice,
+  calcFixedPrice, calcV3OfficialPrice, calcVideoGPrice,
+} from './pricing';
 
-// ─── 价格常量 ────────────────────────────────────────────────────────────────
+// ─── Re-export for backward compatibility ──────────────────────────────────────
+export {
+  O2_PRICE_TIERS, SEEDANCE_RATES, SEEDANCE_FAST_RATE, SEEDANCE_BASE_PRICES, SEEDANCE_FAST_BASE_PRICES,
+  KLING_O3_PRO_RATES, KLING_PRO_RATES, KLING_STD_RATES, KLING_O3_4K_RATES,
+  VIDU_Q3_PRO_PRICES, VIDU_Q3_PRO_BASE_T2V_PRICES, VIDU_Q3_PRO_BASE_I2V_PRICES,
+  VIDU_Q3_TURBO_PRICES, VIDU_Q3_TURBO_BASE_PRICES,
+  WAN_27_VIDEO_PRICES, WAN_27_EXTEND_PRICES, WAN_I2V_PRICES,
+  HAILUO_23_PRICES, HAILUO_23_FAST_PRICES, HAPPYHORSE_PRICES,
+  BZA_V3_PRO_PRICES, BZA_V3_FAST_PRICES,
+  BZA_V3_LITE_OFFICIAL_PRICES, BZA_V3_OFFICIAL_PRICES, BZA_V3_FAST_OFFICIAL_PRICES,
+  BZA_VIDEO_G_PRICES, Z_IMAGE_PRICES, Z_IMAGE_PIXEL_THRESHOLD,
+  BZA_VIDEO_X_PRICES, BZA_VIDEO_X_BASE_RATE,
+  LTX_PRICE, DREAMACTOR_PRICE, JOYCAPTION_PRICE, TTS_PRICE, BIREFNET_PRICE,
+  ACE_STEP_PRICE, SEEDVR2_PRICES, FLUX_KLEIN_PRICE, KONTEXT_LORA_PRICE, QWEN_IMAGE_PRICE,
+  calcByDuration, calcByResolutionDuration, calcByCombo, calcByResolution,
+  calcO2Price, calcSeedancePrice, calcKlingPrice, calcKlingO3_4KPrice,
+  calcBzaVideoXPrice, calcZImagePrice, calcViduQ3ProBasePrice,
+  calcViduQ3ProOfficialPrice, calcViduQ3TurboOfficialPrice,
+  calcFixedPrice, calcV3OfficialPrice, calcVideoGPrice,
+} from './pricing';
 
-/** O.2 官方版按像素层级计费表 */
-const O2_PRICE_TIERS = {
-  high: [
-    { max: 1920 * 1080, price: 1120 },
-    { max: 2560 * 1440, price: 2149 },
-    { max: Infinity, price: 3486 },
-  ],
-  medium: [
-    { max: 1920 * 1080, price: 378 },
-    { max: 2560 * 1440, price: 630 },
-    { max: Infinity, price: 966 },
-  ],
-  low: [
-    { max: 1920 * 1080, price: 161 },
-    { max: 2560 * 1440, price: 182 },
-    { max: Infinity, price: 224 },
-  ],
-};
+export {
+  API_HOST, API_BASE, WEBAPP_API_BASE, WEBAPP_DETAIL_URL,
+  UPLOAD_TOKEN_URL, COMMIT_RESOURCE_URL, USER_METADATA_URL, WALLET_BALANCE_URL, ENV_API_KEY,
+  REQUEST_TIMEOUT_MS, MAX_RETRIES, RETRY_DELAY_MS, POLLING_INTERVAL_MS,
+  TAB_FADE_OUT_MS, TAB_FADE_IN_MS,
+} from './apiConfig';
 
-/** Seedance 2.0 按秒计费（有参考视频/无参考视频） */
-const SEEDANCE_RATES = { withRefVideo: 59, withoutRefVideo: 98 };
-const SEEDANCE_FAST_RATE = 80;
-/** Seedance 2.0 渠道版 按分辨率×时长计费 */
-const SEEDANCE_BASE_PRICES = { '480p': 600, '720p': 1200, 'native1080p': 3000, '1080p': 1480, '2k': 1620, '4k': 1830 };
-/** Seedance 2.0 Fast 渠道版 按分辨率×时长计费 */
-const SEEDANCE_FAST_BASE_PRICES = { '480p': 500, '720p': 1000, '1080p': 1200, '2k': 1420, '4k': 1630 };
+export {
+  HISTORY_KEY, API_KEY_STORAGE_KEY, API_KEYS_STORAGE_KEY, ACTIVE_KEY_ID_KEY,
+  ACTIVE_TAB_KEY, HOME_STATE_KEY, MODEL_STATES_KEY, TOTAL_COINS_KEY,
+} from './storageKeys';
 
-/** 可灵系列按秒计费 */
-const KLING_O3_PRO_RATES = { sound: 900, noSound: 700 };
-const KLING_PRO_RATES = { sound: 1050, noSound: 700 };
-const KLING_STD_RATES = { sound: 800, noSound: 550 };
-/** 可灵 O3 4K 按秒计费（keepOriginalSound） */
-const KLING_O3_4K_RATES = { keepOriginalSound: 700, noKeepOriginalSound: 550 };
+export {
+  VIDEO_RESOLUTIONS, VIDEO_RATIOS, SIZE_PRESETS, STATUS_LABELS, QUALITY_LABELS,
+  TAB_HOME, TAB_WEBAPP, TAB_HISTORY, PAGE_SIZE,
+} from './uiConstants';
 
-/** Vidu Q3 Pro 按分辨率计费 */
-const VIDU_Q3_PRO_PRICES = { '540P': 438, '720P': 938, '1080P': 1000 };
-const VIDU_Q3_PRO_BASE_T2V_PRICES = { '540P': 310, '720P': 660, '1080P': 700 };
-const VIDU_Q3_PRO_BASE_I2V_PRICES = { '540P': 350, '720P': 700, '1080P': 750 };
-/** Vidu Q3 Turbo 按分辨率计费 */
-const VIDU_Q3_TURBO_PRICES = { '540P': 250, '720P': 375, '1080P': 500 };
-/** Vidu Q3 Turbo 渠道版 按分辨率计费 */
-const VIDU_Q3_TURBO_BASE_PRICES = { '540P': 200, '720P': 300, '1080P': 350 };
-
-/** 万相2.7视频 按分辨率计费 */
-const WAN_27_VIDEO_PRICES = { '720P': 600, '1080P': 1000 };
-/** 万相2.7视频延长 按分辨率计费 */
-const WAN_27_EXTEND_PRICES = { '480P': 300, '720P': 600, '1080P': 1000 };
-/** 万相2.5/2.6图生视频 按分辨率计费 */
-const WAN_I2V_PRICES = { '480P': 300, '720P': 600, '1080P': 1000 };
-
-/** 海螺2.3 按分辨率+时长组合计费 */
-const HAILUO_23_PRICES = { '768P/6': 1600, '768P/10': 3200, '1080P/6': 2800 };
-/** 海螺2.3 Fast 按分辨率+时长组合计费 */
-const HAILUO_23_FAST_PRICES = { '768P/6': 1080, '768P/10': 1800, '1080P/6': 1850 };
-
-/** HappyHorse 按分辨率计费 */
-const HAPPYHORSE_PRICES = { '720P': 900, '1080P': 1600 };
-
-/** Video V3.1 Pro 按分辨率计费 */
-const BZA_V3_PRO_PRICES = { '720p': 800, '1080p': 1000, '4k': 1400 };
-/** Video V3.1 Fast 按分辨率计费 */
-const BZA_V3_FAST_PRICES = { '720p': 200, '1080p': 250, '4k': 500 };
-
-/** Video V3.1 Lite 官方版 按分辨率×时长×音频计费 */
-const BZA_V3_LITE_OFFICIAL_PRICES = {
-  '720p': { 4: { false: 720, true: 1200 }, 6: { false: 1080, true: 1800 }, 8: { false: 1440, true: 2400 } },
-  '1080p': { 4: { false: 1200, true: 2000 }, 6: { false: 1800, true: 3000 }, 8: { false: 2400, true: 4000 } },
-};
-/** Video V3.1 官方版 按分辨率×时长×音频计费 */
-const BZA_V3_OFFICIAL_PRICES = {
-  '720p': { 4: { false: 4800, true: 9600 }, 6: { false: 7200, true: 14400 }, 8: { false: 9600, true: 19200 } },
-  '1080p': { 4: { false: 4800, true: 9600 }, 6: { false: 7200, true: 14400 }, 8: { false: 9600, true: 19200 } },
-  '4k': { 4: { false: 9600, true: 13000 }, 6: { false: 14400, true: 19500 }, 8: { false: 19200, true: 26000 } },
-};
-/** Video V3.1 Fast 官方版 按分辨率×时长×音频计费 */
-const BZA_V3_FAST_OFFICIAL_PRICES = {
-  '720p': { 4: { false: 2000, true: 2400 }, 6: { false: 3000, true: 3600 }, 8: { false: 4000, true: 4800 } },
-  '1080p': { 4: { false: 2400, true: 3000 }, 6: { false: 3600, true: 4500 }, 8: { false: 4800, true: 6000 } },
-  '4k': { 4: { false: 6000, true: 6800 }, 6: { false: 9000, true: 10200 }, 8: { false: 12000, true: 13600 } },
-};
-
-/** Video G.Omni Flash 按分辨率×时长计费 */
-const BZA_VIDEO_G_PRICES = {
-  '720p': { 4: 280, 6: 280, 8: 280, 10: 300 },
-  '1080p': { 4: 280, 6: 280, 8: 280, 10: 300 },
-  '4k': { 4: 450, 6: 510, 8: 540, 10: 600 },
-};
-
-/** Z-Image Turbo 按像素面积计费阈值 */
-const Z_IMAGE_PRICES = { small: 5, large: 10 };
-const Z_IMAGE_PIXEL_THRESHOLD = 1024 * 1024;
-
-/** Video X 按时长计费 */
-const BZA_VIDEO_X_PRICES = { 6: 1900, 10: 3150 };
-/** Video X 渠道版 按秒计费 */
-const BZA_VIDEO_X_BASE_RATE = 50;
-
-/** LTX 2.3 固定价格 */
-const LTX_PRICE = 300;
-
-/** DreamActor 2.0 固定价格 */
-const DREAMACTOR_PRICE = 350;
-
-/** JoyCaption3 固定价格 */
-const JOYCAPTION_PRICE = 6;
-
-/** Qwen3 TTS 固定价格 */
-const TTS_PRICE = 10;
-
-/** BiRefNet 固定价格 */
-const BIREFNET_PRICE = 2;
-/** ACE Step 固定价格 */
-const ACE_STEP_PRICE = 1;
-/** SeedVR2 按分辨率计费 */
-const SEEDVR2_PRICES = { 720: 1, 1080: 2, 1440: 3, 2160: 4 };
-/** Flux Klein 固定价格 */
-const FLUX_KLEIN_PRICE = 60;
-/** Kontext-dev-LoRA 固定价格 */
-const KONTEXT_LORA_PRICE = 50;
-
-// ─── 通用价格计算函数 ─────────────────────────────────────────────────────────
-
-/** 按秒计费：duration × 单价 */
-function calcByDuration(rate) {
-  return (params) => {
-    const dur = params.duration === 'auto' ? 5 : (parseInt(params.duration) || params.duration || 5);
-    return rate * dur;
-  };
-}
-
-/** 按分辨率×时长计费 */
-function calcByResolutionDuration(prices, defaultRate) {
-  return (params) => {
-    const dur = params.duration || 5;
-    const rate = prices[params.resolution] || defaultRate;
-    return rate * dur;
-  };
-}
-
-/** 按分辨率+时长组合计费 */
-function calcByCombo(prices, defaultPrice) {
-  return (params) => {
-    const combo = `${params.resolution}/${params.duration}`;
-    return prices[combo] || defaultPrice;
-  };
-}
-
-/** 按分辨率固定价格（不乘时长） */
-function calcByResolution(prices, defaultPrice) {
-  return (params) => prices[params.resolution] || defaultPrice;
-}
-
-/** O.2 官方版按像素层级计费 */
-function calcO2Price(params) {
-  const w = params.width || 1024;
-  const h = params.height || 1024;
-  const q = params.quality || 'medium';
-  const pixels = w * h;
-  const tiers = O2_PRICE_TIERS[q] || O2_PRICE_TIERS.medium;
-  const tier = tiers.find((t) => pixels <= t.max);
-  return tier ? tier.price : tiers[tiers.length - 1].price;
-}
-
-/** Seedance 2.0 按秒计费（区分有无参考视频） */
-function calcSeedancePrice(params) {
-  const dur = params.duration === 'auto' ? 5 : parseInt(params.duration) || 5;
-  const hasRefVideo = params.videoUrls?.length > 0;
-  const rate = hasRefVideo ? SEEDANCE_RATES.withRefVideo : SEEDANCE_RATES.withoutRefVideo;
-  return rate * dur;
-}
-
-/** 可灵系列按秒计费（区分有无声音） */
-function calcKlingPrice(rates) {
-  return (params) => {
-    const dur = params.duration || 5;
-    const rate = params.sound ? rates.sound : rates.noSound;
-    return rate * dur;
-  };
-}
-
-/** 可灵 O3 4K 按秒计费（区分是否保留原始声音） */
-function calcKlingO3_4KPrice(params) {
-  const dur = params.duration || 5;
-  const rate = params.keepOriginalSound ? KLING_O3_4K_RATES.keepOriginalSound : KLING_O3_4K_RATES.noKeepOriginalSound;
-  return rate * dur;
-}
-
-/** Video X 按时长计费 */
-function calcBzaVideoXPrice(params) {
-  const dur = parseInt(params.duration) || 6;
-  return BZA_VIDEO_X_PRICES[dur] || BZA_VIDEO_X_PRICES[6];
-}
-
-/** Z-Image Turbo 按像素面积计费 */
-function calcZImagePrice(params) {
-  const w = params.width || 1024;
-  const h = params.height || 1024;
-  return w * h <= Z_IMAGE_PIXEL_THRESHOLD ? Z_IMAGE_PRICES.small : Z_IMAGE_PRICES.large;
-}
-
-/** Vidu Q3 Pro 渠道版 按模式区分价格计费 */
-function calcViduQ3ProBasePrice(params) {
-  const isI2V = params.imageUrls?.length > 0 || params.lastFrameUrls?.length > 0;
-  const prices = isI2V ? VIDU_Q3_PRO_BASE_I2V_PRICES : VIDU_Q3_PRO_BASE_T2V_PRICES;
-  const dur = params.duration || 5;
-  const rate = prices[params.resolution] || 660;
-  return rate * dur;
-}
-
-/** Vidu Q3 Pro 官方版 按分辨率*时长计费 + is_rec 额外费用 */
-function calcViduQ3ProOfficialPrice(params) {
-  const dur = params.duration || 5;
-  const rate = VIDU_Q3_PRO_PRICES[params.resolution] || 938;
-  let price = rate * dur;
-  if (params.isRec) price += 320;
-  return price;
-}
-
-/** Vidu Q3 Turbo 官方版 按分辨率*时长计费 + is_rec 额外费用 */
-function calcViduQ3TurboOfficialPrice(params) {
-  const dur = params.duration || 5;
-  const rate = VIDU_Q3_TURBO_PRICES[params.resolution] || 375;
-  let price = rate * dur;
-  if (params.isRec) price += 320;
-  return price;
-}
-
-/** 固定价格（忽略参数） */
-function calcFixedPrice(price) {
-  return () => price;
-}
-
-/** Video V3.1 官方版 按分辨率×时长×音频计费 */
-function calcV3OfficialPrice(priceTable) {
-  return (params) => {
-    const res = params.resolution || '720p';
-    const dur = parseInt(params.duration) || 4;
-    const audio = !!params.generateAudio;
-    return priceTable[res]?.[dur]?.[audio] || priceTable[res]?.[4]?.[false] || 720;
-  };
-}
-
-/** Video G.Omni Flash 按分辨率×时长计费 */
-function calcVideoGPrice(params) {
-  const res = params.resolution || '720p';
-  const dur = parseInt(params.duration) || 4;
-  return BZA_VIDEO_G_PRICES[res]?.[dur] || 280;
-}
-
-/** Qwen-Image 固定价格 */
-const QWEN_IMAGE_PRICE = 100;
+// ─── 模型定义 ──────────────────────────────────────────────────────────────────
 
 export const MODELS = {
   'bza-image-b2-base': {
@@ -1285,74 +1090,3 @@ export const MODELS = {
     supportsSeed: true,
   },
 };
-
-export const VIDEO_RESOLUTIONS = {
-  SEEDANCE: ['480p', '720p', '1080p'],
-  SEEDANCE_OPTIONAL: ['480p', '720p', '1080p'],
-  KLING: ['720p', '1080p'],
-  VIDU: ['540P', '720P', '1080P'],
-  WAN: ['480P', '720P', '1080P'],
-  HAILUO: ['768P', '1080P'],
-  LTX: ['1080P'],
-  HAPPYHORSE: ['720P', '1080P'],
-  BZA_X: ['480p', '720p'],
-  BZA_V3: ['720p', '1080p', '4k'],
-  BZA_G: ['720p', '1080p', '4k'],
-  DREAMACTOR: [],
-};
-
-export const VIDEO_RATIOS = {
-  STANDARD: ['16:9', '9:16', '1:1'],
-  EXTENDED: ['16:9', '9:16', '1:1', '4:3', '3:4'],
-  SEEDANCE: ['auto', '16:9', '4:3', '1:1', '3:4', '9:16', '21:9'],
-  HAPPYHORSE: ['16:9', '9:16', '1:1', '4:3', '3:4', '4:5', '5:4'],
-  BZA_X: ['16:9', '2:3', '1:1', '3:2', '9:16'],
-  BZA_V3: ['16:9', '9:16'],
-  BZA_G: ['16:9', '9:16'],
-  VIDU: ['16:9', '9:16', '4:3', '3:4', '1:1'],
-  KLING: ['16:9', '9:16', '1:1'],
-  WAN: ['16:9', '9:16', '1:1', '4:3', '3:4'],
-};
-
-export const SIZE_PRESETS = [
-  { label: '1:1', width: 1024, height: 1024 },
-  { label: '16:9', width: 1920, height: 1080 },
-  { label: '9:16', width: 1080, height: 1920 },
-  { label: '4:3', width: 1440, height: 1080 },
-  { label: '3:4', width: 1080, height: 1440 },
-  { label: '3:2', width: 1536, height: 1024 },
-  { label: '2:3', width: 1024, height: 1536 },
-];
-
-export const STATUS_LABELS = { Pending: '排队中', Queuing: '排队中', Preparing: '准备中', Running: '生成中', Saving: '转存中', Success: '已完成', Failed: '失败' };
-export const QUALITY_LABELS = { low: '低', medium: '中', high: '高' };
-
-export const API_HOST = 'https://api.bizyair.cn';
-export const API_BASE = `${API_HOST}/x/v1/modelzoo/tasks/openapi`;
-export const WEBAPP_API_BASE = `${API_HOST}/w/v1/webapp/task/openapi`;
-export const WEBAPP_DETAIL_URL = `${API_HOST}/x/v1/webapp`;
-export const UPLOAD_TOKEN_URL = `${API_HOST}/x/v1/upload/token`;
-export const COMMIT_RESOURCE_URL = `${API_HOST}/x/v1/input_resource/commit`;
-export const USER_METADATA_URL = `${API_HOST}/x/v1/user/metadata`;
-export const WALLET_BALANCE_URL = `${API_HOST}/y/v1/wallet`;
-export const ENV_API_KEY = process.env.EXPO_PUBLIC_BIZYAIR_API_KEY || '';
-
-export const REQUEST_TIMEOUT_MS = 15000;
-export const MAX_RETRIES = 3;
-export const RETRY_DELAY_MS = 1000;
-export const POLLING_INTERVAL_MS = 3000;
-export const TAB_FADE_OUT_MS = 120;
-export const TAB_FADE_IN_MS = 180;
-
-export const HISTORY_KEY = '@image_history';
-export const API_KEY_STORAGE_KEY = '@api_key';
-export const API_KEYS_STORAGE_KEY = '@api_keys';
-export const ACTIVE_KEY_ID_KEY = '@active_key_id';
-export const ACTIVE_TAB_KEY = '@active_tab';
-export const HOME_STATE_KEY = '@home_state';
-export const MODEL_STATES_KEY = '@model_states';
-export const TOTAL_COINS_KEY = '@total_coins_spent';
-export const TAB_HOME = 'home';
-export const TAB_WEBAPP = 'webapp';
-export const TAB_HISTORY = 'history';
-export const PAGE_SIZE = 20;

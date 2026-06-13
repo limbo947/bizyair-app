@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useMemo } from '
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ACTIVE_TAB_KEY, TAB_HOME, TAB_WEBAPP } from '../constants/models';
 import { ApiKeyProvider } from './ApiKeyContext';
-import { HistoryProvider } from './HistoryContext';
+import { HistoryProvider } from './history';
 import { FavoritesProvider } from './FavoritesContext';
 
 const AppContext = createContext(null);

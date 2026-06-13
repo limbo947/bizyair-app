@@ -1,10 +1,6 @@
 import { Platform } from 'react-native';
 import { File, Paths } from 'expo-file-system';
-
-function getMediaLibrary() {
-  if (Platform.OS === 'web') return null;
-  return require('expo-media-library');
-}
+import { Asset, requestPermissionsAsync } from 'expo-media-library';
 
 export async function triggerDownload(url, filename) {
   if (Platform.OS === 'web') {
@@ -18,15 +14,14 @@ export async function triggerDownload(url, filename) {
     return { success: true };
   }
 
-  const MediaLibrary = getMediaLibrary();
-  const { status } = await MediaLibrary.requestPermissionsAsync();
+  const { status } = await requestPermissionsAsync();
   if (status !== 'granted') {
     return { success: false, errorType: 'permission' };
   }
   try {
     const destination = new File(Paths.cache, filename || 'download');
     const downloadedFile = await File.downloadFileAsync(url, destination);
-    await MediaLibrary.createAssetAsync(downloadedFile.uri);
+    await Asset.create(downloadedFile.uri);
     return { success: true };
   } catch (err) {
     return { success: false, errorType: 'network', message: err.message || '请检查网络连接' };
@@ -48,8 +43,7 @@ export async function triggerBatchDownload(urls) {
     return { success: true };
   }
 
-  const MediaLibrary = getMediaLibrary();
-  const { status } = await MediaLibrary.requestPermissionsAsync();
+  const { status } = await requestPermissionsAsync();
   if (status !== 'granted') {
     return { success: false, errorType: 'permission' };
   }
@@ -58,7 +52,7 @@ export async function triggerBatchDownload(urls) {
       const filename = `bizyair_image_${i + 1}.jpg`;
       const dest = new File(Paths.cache, filename);
       const downloadedFile = await File.downloadFileAsync(urls[i], dest);
-      await MediaLibrary.createAssetAsync(downloadedFile.uri);
+      await Asset.create(downloadedFile.uri);
       if (i < urls.length - 1) await new Promise((r) => setTimeout(r, 300));
     }
     return { success: true, count: urls.length };

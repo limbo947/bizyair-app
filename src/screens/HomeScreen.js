@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useReducer, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useReducer } from 'react';
 import { Pressable, Text,
   View,
   TextInput,
@@ -7,33 +7,27 @@ import { Pressable, Text,
   Keyboard,
   KeyboardAvoidingView,
   Platform, } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useApiKeyContext } from '../context/ApiKeyContext';
-import { useHomeStateContext, usePollingContext, useHistoryListContext } from '../context/HistoryContext';
+import { useHomeStateContext, usePollingContext, useHistoryListContext } from '../context/history';
 import { useFavoritesContext } from '../context/FavoritesContext';
 import { useTheme } from '../context/ThemeContext';
 import { useToastContext } from '../context/ToastContext';
 import { getRatios, getResolutions, getModelInfo, getModelModes, getModelPlaceholder } from '../utils/modelHelpers';
 import { Radius, Spacing, Typography, ButtonVariants, pressedOpacity } from '../constants/theme';
 import { useThemedStyles } from '../hooks/useThemedStyles';
+import { useModelSwitch } from '../hooks/useModelSwitch';
 import { ModelSelector } from '../components/ModelSelector';
-import { FavoriteModelsLayer } from '../components/FavoriteModelsLayer';
-import { HomeParamControls } from '../components/HomeParamControls';
-import { ResizableTextInput } from '../components/ResizableTextInput';
-import { MarkdownRenderer } from '../components/MarkdownRenderer';
-import { AppHeader } from '../components/AppHeader';
-import { UploadCard } from '../components/UploadCard';
+import { FavoriteModelsLayer } from '../components/layout/FavoriteModelsLayer';
+import { HomeParamControls } from '../components/params/HomeParamControls';
+import { ResizableTextInput } from '../components/common/ResizableTextInput';
+import { MarkdownRenderer } from '../components/common/MarkdownRenderer';
+import { AppHeader } from '../components/layout/AppHeader';
+import { UploadCard } from '../components/media/UploadCard';
 import { useFileUpload } from '../hooks/useFileUpload';
 import { MODE_LABELS, initialState, homeParamReducer } from './home/homeReducer';
 import { useHomeSubmit } from './home/useHomeSubmit';
-import { MODEL_STATES_KEY } from '../constants/models';
-
-const MODEL_ID_MIGRATIONS = {
-  'wan-2-7-image-pro-offcial': 'wan-2-7-image-pro-official',
-  'wan-2-7-offcial': 'wan-2-7-extend-official',
-};
 
 export function HomeScreen({ onOpenModelSelect }) {
   const insets = useSafeAreaInsets();
@@ -66,71 +60,7 @@ export function HomeScreen({ onOpenModelSelect }) {
     ...homeState,
   });
 
-  const stateRef = useRef(state);
-  useEffect(() => {
-    stateRef.current = state;
-    const { modelId: mid, ...rest } = state;
-    modelStatesRef.current[mid] = rest;
-  }, [state]);
-
-  const modelStatesRef = useRef({});
-  const isSwitchingModelRef = useRef(false);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const stored = await AsyncStorage.getItem(MODEL_STATES_KEY);
-        if (stored) {
-          const parsed = JSON.parse(stored) || {};
-          let migrated = false;
-          for (const [oldId, newId] of Object.entries(MODEL_ID_MIGRATIONS)) {
-            if (parsed[oldId]) {
-              parsed[newId] = parsed[oldId];
-              delete parsed[oldId];
-              migrated = true;
-            }
-          }
-          if (migrated) {
-            await AsyncStorage.setItem(MODEL_STATES_KEY, JSON.stringify(parsed));
-          }
-          modelStatesRef.current = parsed;
-        }
-      } catch (_e) { /* ignore */ }
-    })();
-  }, []);
-
-  const persistModelStates = useCallback(() => {
-    AsyncStorage.setItem(MODEL_STATES_KEY, JSON.stringify(modelStatesRef.current)).catch(() => {});
-  }, []);
-
-  const switchToModel = useCallback((newId) => {
-    const oldId = stateRef.current.modelId;
-    if (oldId === newId) return;
-
-    isSwitchingModelRef.current = true;
-
-    const { modelId: _, ...oldSnapshot } = stateRef.current;
-    modelStatesRef.current[oldId] = oldSnapshot;
-
-    const cached = modelStatesRef.current[newId];
-    const newModes = getModelModes(newId);
-    let updates;
-    if (cached) {
-      updates = { ...cached, modelId: newId };
-      if (newModes.length > 0 && !newModes.includes(cached.mode)) {
-        updates.mode = newModes[0];
-      }
-    } else {
-      updates = { ...initialState, modelId: newId };
-      if (newModes.length > 0) updates.mode = newModes[0];
-    }
-
-    saveHomeState({ modelId: newId, mode: updates.mode });
-    stateDispatch({ type: 'SET_PARAMS', params: updates });
-    persistModelStates();
-
-    isSwitchingModelRef.current = false;
-  }, [saveHomeState, persistModelStates]);
+  const { switchToModel, isSwitchingModelRef, stateRef } = useModelSwitch({ state, saveHomeState, stateDispatch });
 
   useEffect(() => {
     if (isSwitchingModelRef.current) return;
