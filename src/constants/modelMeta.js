@@ -52,7 +52,7 @@ export const MODEL_MANUFACTURERS = {
   'kling-3-0-pro-base': 'kuaishou',
   'kling-o3-std-base': 'kuaishou',
   'kling-o3-pro-base': 'kuaishou',
-  'kling-o3-4k-base': 'kuaishou',
+  'kling-o3-4k': 'kuaishou',
   'vidu-q3-turbo-base': 'shengshuo',
   'vidu-q3-turbo-official': 'shengshuo',
   'vidu-q3-pro-base': 'shengshuo',
@@ -82,6 +82,12 @@ export const MODEL_MANUFACTURERS = {
   'wan-2-5-official': 'alibaba',
   'wan-2-6-official': 'alibaba',
   'wan-2-7-extend-official': 'alibaba',
+  'birefnet-background-remover': 'siliconflow',
+  'ace-step': 'siliconflow',
+  'seedvr2-upscale-image': 'siliconflow',
+  'z-image-base': 'siliconflow',
+  'flux-klein-watermarker-remover': 'blackforest',
+  'kontext-dev-lora': 'blackforest',
 };
 
 export const FAVORITES_MAX_COUNT = 7;

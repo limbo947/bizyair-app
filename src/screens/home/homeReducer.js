@@ -80,6 +80,9 @@ const initialState = {
   style: 'general',
   steps: undefined,
   guidanceScale: undefined,
+  outputmask: false,
+  lyrics: '',
+  tags: '',
 };
 
 const ARRAY_FIELDS = new Set([

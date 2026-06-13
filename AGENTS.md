@@ -6,20 +6,20 @@
 - **启动 Web 预览**: `npx expo start --web --port 8081`
 - **启动开发服务器**: `npx expo start`
 - **静态导出 Web**: `npx expo export --platform web`，然后用 `npx serve dist -l 3000` 预览
-- **构建 APK（一键脚本，推荐）**: `.\build-android.ps1 -Clean`（全量构建）；`.\build-android.ps1`（增量构建）
+- **构建 APK（一键脚本，推荐）**: `.\scripts\build-android.ps1 -Clean`（全量构建）；`.\scripts\build-android.ps1`（增量构建）
 - **增量 Gradle 构建（已有 android/ 目录时）**: `cd android && .\gradlew.bat assembleRelease -PreactNativeArchitectures=arm64-v8a`
 - **EAS Build（兜底方案）**: `npx eas build --platform android --profile preview --local`
 - **配置 API 密钥**: 复制 `.env.example` 为 `.env`，填入 `EXPO_PUBLIC_BIZYAIR_API_KEY=你的密钥`
 - **Lint 检查**: `npx eslint .`
 
 ## 技术栈与版本
-- Expo SDK 54，参考文档：https://docs.expo.dev/versions/v54.0.0/
-- React Native 0.81.5 + React 19，Hermes 引擎 + 新架构（New Arch）默认启用
+- Expo SDK 56，参考文档：https://docs.expo.dev/versions/v56.0.0/
+- React Native 0.85.3 + React 19.2，Hermes v1 引擎 + 新架构（New Arch）默认启用
 - 目标架构：Android arm64-v8a / Web
 - expo-router 文件路由（原生 Tab 导航 + Modal 路由）
 - expo-image（替代 RN Image，内存/磁盘双缓存）
 - expo-file-system OOP API（File/Paths，替代 legacy downloadAsync）
-- AsyncStorage 本地存储，expo-av 音频播放，react-native-markdown-display Markdown 渲染
+- AsyncStorage 本地存储，expo-audio 音频播放，expo-video 视频播放，react-native-markdown-display Markdown 渲染
 - jssha（阿里云 OSS HMAC-SHA1 签名）
 
 ## 项目结构
@@ -34,54 +34,100 @@
 │       ├── index.js          # 主页 → HomeScreen
 │       ├── webapp.js         # AI应用 → WebappScreen
 │       └── history.js        # 历史 → HistoryScreen
-├── api.js                    # API 兼容层（重新导出 services/utils/constants 的公共接口）
 ├── package.json              # 依赖配置（main: expo-router/entry）
 ├── package-lock.json         # 依赖锁定
 ├── app.json                  # Expo 配置（scheme: bizyair）
 ├── eas.json                  # EAS Build 配置
-├── build-android.ps1         # APK 一键构建脚本（prebuild → 修补 → Gradle）
 ├── scripts/                  # 构建辅助脚本
-│   └── patch-android-build.ps1  # post-prebuild 配置修补（签名/ProGuard/allowBackup）
+│   ├── build-android.ps1     # APK 一键构建脚本（prebuild → 修补 → Gradle）
+│   ├── patch-android-build.ps1  # post-prebuild 配置修补（签名/ProGuard/allowBackup）
+│   └── upload-proxy.mjs     # Web 端文件上传代理（OSS STS 签名，端口 3001）
 ├── src/
 │   ├── context/              # 全局状态管理
+│   │   ├── history/          # 历史记录子模块
+│   │   │   ├── contexts.js   # Context 创建 + 工具函数（extractTaskResult/extractWebappResult）
+│   │   │   ├── hooks.js      # useContext hooks（useHistoryListContext/useHomeStateContext/usePollingContext/useHistoryContext）
+│   │   │   ├── HistoryProvider.js # Provider 逻辑（状态、轮询、回调）
+│   │   │   └── index.js      # 统一导出
 │   │   ├── ApiKeyContext.js  # API 密钥、多密钥切换、钱包余额
-│   │   ├── HistoryContext.js # 历史记录、轮询、homeState
 │   │   ├── FavoritesContext.js # 收藏模型管理
 │   │   ├── AppContext.js     # 组合 Provider（ApiKey → History → Favorites）+ activeTab
-│   │   └── ThemeContext.js   # 亮/暗主题
+│   │   ├── ThemeContext.js   # 亮/暗主题
+│   │   └── ToastContext.js   # Toast 提示（showToast）
 │   ├── screens/              # 页面级组件
 │   │   ├── HomeScreen.js    # 主页（useReducer + expo-image + Pressable）
 │   │   ├── home/            # 主页子模块
 │   │   │   ├── homeReducer.js  # reducer + initialState + MODE_LABELS
 │   │   │   └── useHomeSubmit.js # 提交逻辑自定义 Hook
-│   │   ├── HistoryScreen.js # 历史（HistoryCard memo + DurationDisplay 独立定时器 + FlatList）
-│   │   ├── ModelSelectScreen.js # 模型选择（FlatList 虚拟化 + ModelCard memo）
-│   │   └── WebappScreen.js  # AI 应用
-│   ├── components/           # UI 组件（20 个，按功能拆分）
-│   │   ├── HomeParamControls.js  # paramType 路由分发
-│   │   ├── VideoParamControls.js # 视频模型参数（10 种，Switch 用 Pressable 包裹）
-│   │   ├── ParamControls.js      # 图片模型参数（6 种）
-│   │   ├── LLMControls.js        # LLM 参数
-│   │   ├── VisionParamControls.js # 视觉理解参数
-│   │   ├── TTSControls.js        # TTS 参数
-│   │   ├── ImageViewer.js        # 图片预览（PanResponder 双指缩放 + 左右划切换）
-│   │   ├── ModelSelector.js      # 模型选择器
-│   │   ├── FavoriteModelsLayer.js # 收藏模型浮层
-│   │   ├── ApiKeyDropdown.js     # 密钥管理下拉
-│   │   ├── AppHeader.js          # 共享头部组件（用户信息/余额/主题切换/密钥）
+│   │   ├── history/         # 历史页子模块
+│   │   │   ├── HistoryScreen.js # 历史页（HistoryCard memo + DurationDisplay + FlatList）
+│   │   │   ├── HistoryCard.js   # 历史卡片组件
+│   │   │   └── DurationDisplay.js # 运行时长显示组件
+│   │   ├── webapp/          # AI 应用子模块
+│   │   │   ├── WebappScreen.js  # AI 应用页
+│   │   │   ├── WebappListItem.js # 应用列表项组件
+│   │   │   ├── utils.js     # 工具函数（parseApiCode/stripJsComments/getMediaType 等）
+│   │   │   └── storage.js   # 存储逻辑（loadSavedApps/persistSavedApps）
+│   │   └── ModelSelectScreen.js # 模型选择（FlatList 虚拟化 + ModelCard memo）
+│   ├── components/           # UI 组件（按功能分组）
+│   │   ├── params/          # 参数控件（12 个）
+│   │   │   ├── HomeParamControls.js  # paramType 路由分发
+│   │   │   ├── VideoParamControls.js # 视频模型参数（10 种）
+│   │   │   ├── ParamControls.js      # 图片模型参数（6 种）
+│   │   │   ├── LLMControls.js        # LLM 参数
+│   │   │   ├── VisionParamControls.js # 视觉理解参数
+│   │   │   ├── TTSControls.js        # TTS 参数
+│   │   │   ├── AceStepControls.js    # ACE Step 参数
+│   │   │   ├── BirefnetControls.js   # BiRefNet 参数
+│   │   │   ├── FluxKleinControls.js  # Flux Klein 参数
+│   │   │   ├── KontextLoraControls.js # Kontext LoRA 参数
+│   │   │   ├── Seedvr2Controls.js    # SeedVR2 参数
+│   │   │   └── ParamLabel.js         # 参数标签组件
+│   │   ├── media/           # 媒体组件（4 个）
+│   │   │   ├── ImageViewer.js   # 图片预览（PanResponder 双指缩放 + 左右划切换）
+│   │   │   ├── VideoPlayer.js   # 视频播放（expo-video）
+│   │   │   ├── AudioPlayer.js   # 音频播放（expo-audio）
+│   │   │   └── UploadCard.js    # 文件上传卡片
+│   │   ├── layout/          # 布局组件（5 个）
+│   │   │   ├── AppHeader.js         # 共享头部（用户信息/余额/主题切换/密钥）
+│   │   │   ├── FavoriteModelsLayer.js # 收藏模型浮层
+│   │   │   ├── ApiKeyDropdown.js    # 密钥管理下拉
+│   │   │   ├── Toast.js             # Toast 提示
+│   │   │   └── ErrorBoundary.js     # 错误边界
+│   │   ├── common/          # 通用组件（3 个）
+│   │   │   ├── ResizableTextInput.js # 自适应输入框
+│   │   │   ├── MarkdownRenderer.js   # Markdown 渲染
+│   │   │   └── TextResultView.js     # 文本结果展示
 │   │   ├── HistoryFilters.js     # 历史筛选
 │   │   ├── HistoryModals.js      # 历史弹窗
-│   │   ├── VideoPlayer.js        # 视频播放
-│   │   ├── AudioPlayer.js        # 音频播放
-│   │   ├── MarkdownRenderer.js   # Markdown 渲染
-│   │   ├── TextResultView.js     # 文本结果展示
-│   │   ├── ResizableTextInput.js # 自适应输入框
-│   │   ├── StatusBadge.js        # 状态徽章
-│   │   └── ErrorBoundary.js      # 错误边界
-│   ├── constants/            # 常量定义（models / modelMeta / ratios / theme）
-│   ├── hooks/                # 自定义 Hooks（useFileUpload / useThemedStyles）
-│   ├── utils/                # 工具函数（modelHelpers / payloadBuilder / helpers / download）
-│   └── services/             # API 服务层（apiClient）
+│   │   └── ModelSelector.js      # 模型选择器
+│   ├── constants/            # 常量定义
+│   │   ├── models.js        # MODELS 对象定义 + re-export（向后兼容）
+│   │   ├── pricing.js       # 价格常量 + 计算函数（calcO2Price/calcSeedancePrice 等）
+│   │   ├── apiConfig.js     # API 端点 + 超时/重试配置
+│   │   ├── storageKeys.js   # AsyncStorage 键名
+│   │   ├── uiConstants.js   # UI 常量（分辨率/比例/状态标签/分页）
+│   │   ├── modelMeta.js     # 模型厂商元数据
+│   │   ├── ratios.js        # 图片比例常量
+│   │   ├── theme.js         # 主题色定义
+│   │   └── sharedStyles.js  # 共享样式
+│   ├── hooks/                # 自定义 Hooks
+│   │   ├── useFileUpload.js  # 文件上传
+│   │   ├── useThemedStyles.js # 主题样式
+│   │   ├── useDownload.js    # 下载逻辑（handleDownload/handleBatchDownload）
+│   │   └── useModelSwitch.js # 模型切换逻辑（switchToModel/modelStatesRef）
+│   ├── utils/                # 工具函数
+│   │   ├── helpers.js        # 通用工具
+│   │   ├── modelHelpers.js   # 模型相关（价格计算等）
+│   │   ├── payloadBuilder.js # 请求体构建
+│   │   └── download.js       # 下载功能（triggerDownload/triggerBatchDownload）
+│   └── services/             # API 服务层
+│       ├── httpClient.js     # 核心 HTTP 请求函数（request，超时/重试）
+│       ├── taskApi.js        # 任务提交/查询（submitTask/queryTaskResult）
+│       ├── uploadApi.js      # 上传相关（getUploadToken/uploadImageFile 等）
+│       ├── userApi.js        # 用户信息（fetchUserInfo/fetchWalletBalance）
+│       ├── webappApi.js      # WebApp 相关（submitWebappTask/cancelWebappTask 等）
+│       └── apiClient.js      # 统一入口（re-export 所有 API，向后兼容）
 ├── assets/                   # 图标资源
 ├── reference/                # 参考文档
 └── .env.example              # 环境变量模板
@@ -100,14 +146,16 @@
 ### Provider 链与路由
 ```
 expo-router entry → app/_layout.js
-SafeAreaProvider → ThemeProvider → AppProvider → Stack
-AppProvider = ApiKeyProvider → HistoryProvider → FavoritesProvider
+SafeAreaProvider → ThemeProvider → AppProvider → ToastProvider → ErrorBoundary → Stack
+AppProvider = AppContext.Provider → ApiKeyProvider → HistoryProvider → FavoritesProvider
 ```
 - `ThemeProvider` — 亮/暗主题（`useTheme()`），持久化到 AsyncStorage。
+- `AppProvider` — 组合 ApiKey/History/Favorites 三个 Provider + activeTab 导航状态（`useAppContext()`）。
 - `ApiKeyProvider` — API 密钥、多密钥切换、钱包余额（`useApiKeyContext()`）。
 - `HistoryProvider` — 历史记录、轮询、homeState（`useHistoryContext()`）。
 - `FavoritesProvider` — 收藏模型管理（`useFavoritesContext()`）。
-- `AppProvider` — 组合以上三个 Provider + activeTab 导航状态。
+- `ToastProvider` — Toast 提示（`useToastContext()`），2 秒自动消失。
+- `ErrorBoundary` — 捕获渲染错误，显示降级 UI。
 - 路由：expo-router 文件路由，`(tabs)/` 组提供三标签导航，`model-select` 提供 Modal 路由。
 
 ### 任务提交 → 轮询 → 结果
@@ -134,7 +182,7 @@ AppProvider = ApiKeyProvider → HistoryProvider → FavoritesProvider
 4. `apiClient.commitResource()` → 通知服务端确认
 
 ### API 请求封装
-`apiClient.js` 的 `request()` 统一封装：15 秒超时（AbortController）、指数退避重试（最多 3 次）、错误分类（超时/服务端/客户端）。
+`httpClient.js` 的 `request()` 统一封装：15 秒超时（AbortController）、指数退避重试（最多 3 次）、错误分类（超时/服务端/客户端）。`apiClient.js` 作为统一入口 re-export 所有 API 函数，保持向后兼容。
 
 ## 错误处理
 - 所有 API 调用必须处理超时、重试和状态码
@@ -143,13 +191,14 @@ AppProvider = ApiKeyProvider → HistoryProvider → FavoritesProvider
 ## 新增模型检查清单
 添加新模型时需同步修改：
 1. `src/constants/models.js` — `MODELS` 对象中添加模型配置（paramType、modes、prices/priceCalculator）
-2. `src/constants/modelMeta.js` — `MODEL_MANUFACTURERS` 映射中添加条目
-3. `src/components/HomeParamControls.js` — 若新的 paramType，添加 import + case 分支
-4. `src/utils/payloadBuilder.js` — 若新的 paramType，添加 switch-case
-5. `src/utils/modelHelpers.js` — 若新计费方式，添加计算函数
-6. `src/components/` — 若新参数控件，创建组件并在 `HomeParamControls.js` 中引入
+2. `src/constants/pricing.js` — 若新计费方式，添加价格常量和计算函数
+3. `src/constants/modelMeta.js` — `MODEL_MANUFACTURERS` 映射中添加条目
+4. `src/components/params/HomeParamControls.js` — 若新的 paramType，添加 import + case 分支
+5. `src/utils/payloadBuilder.js` — 若新的 paramType，添加 switch-case
+6. `src/utils/modelHelpers.js` — 若新计费方式，添加计算函数
+7. `src/components/params/` — 若新参数控件，创建组件并在 `HomeParamControls.js` 中引入
 
 ## 构建（Build）
 - *用户明确要构建apk时*，阅读参考文档 `reference\apk-build-reference.md`
-- `build-android.ps1` 自动执行：版本号递增 → 签名密钥备份/恢复 → expo prebuild → patch-android-build.ps1 修补 → Gradle 构建 → 产物验证 → 复制到 apk/ 目录
+- `scripts/build-android.ps1` 自动执行：版本号递增 → 签名密钥备份/恢复 → expo prebuild → patch-android-build.ps1 修补 → Gradle 构建 → 产物验证 → 复制到 apk/ 目录
 - `patch-android-build.ps1` 修补内容：ProGuard 规则、gradle.properties 配置、AndroidManifest allowBackup=false、build.gradle 签名注入和 APK 命名
