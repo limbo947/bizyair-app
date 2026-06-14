@@ -58,9 +58,11 @@ export function FavoritesProvider({ children }) {
     }
   }, []);
 
+  /* eslint-disable react-hooks/set-state-in-effect -- load favorites from AsyncStorage on mount */
   useEffect(() => {
     loadFavorites();
   }, [loadFavorites]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const addFavorite = useCallback((modelId) => {
     if (!MODELS[modelId]) return;

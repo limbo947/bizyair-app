@@ -137,6 +137,7 @@ export function AppHeader({ paddingTop, showAllModelsButton, onAllModelsPress })
         onDeleteKey={removeApiKey}
         onAddKey={addApiKey}
         onRenameKey={renameApiKey}
+        triggerTop={(paddingTop || 0) + 56}
       />
     </>
   );

@@ -28,9 +28,11 @@ export function AppProvider({ children }) {
     }
   };
 
+  /* eslint-disable react-hooks/set-state-in-effect -- load active tab from AsyncStorage on mount */
   useEffect(() => {
     loadActiveTab();
   }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const value = useMemo(() => ({
     activeTab,

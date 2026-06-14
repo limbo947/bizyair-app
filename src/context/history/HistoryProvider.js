@@ -10,6 +10,7 @@ import {
 } from '../../constants/models';
 import { useApiKeyContext } from '../ApiKeyContext';
 import { HistoryListContext, HomeStateContext, PollingContext, DEFAULT_HOME_STATE, MAX_POLL_FAILS, getPollingInterval, extractTaskResult, extractWebappResult } from './contexts';
+import { cacheTaskResults, deleteCachedFiles } from '../../utils/resultCache';
 
 export function HistoryProvider({ children }) {
   const { apiKey } = useApiKeyContext();
@@ -63,7 +64,10 @@ export function HistoryProvider({ children }) {
   const removeHistoryItems = useCallback(async (predicate) => {
     setHistory((prev) => {
       const arr = prev ?? [];
+      const removed = arr.filter(predicate);
       const updated = arr.filter((item) => !predicate(item));
+      // 异步清理已删除项的本地缓存
+      removed.forEach((item) => deleteCachedFiles(item.id));
       persistHistory(updated);
       return updated;
     });
@@ -107,6 +111,14 @@ export function HistoryProvider({ children }) {
             ...taskResult,
             completedAt: Date.now(),
             lastResponse: result,
+          });
+          // 异步缓存结果文件到本地（不阻塞 UI）
+          cacheTaskResults(taskResult, id).then((localPaths) => {
+            if (Object.keys(localPaths).length > 0) {
+              updateHistoryItem(id, localPaths);
+            }
+          }).catch((err) => {
+            console.warn('[HistoryProvider] 缓存结果失败:', err?.message || err);
           });
           return;
         } else if (result.status === 'Failed') {
@@ -171,6 +183,14 @@ export function HistoryProvider({ children }) {
               completedAt: Date.now(),
               lastResponse: { ...detail, outputs: outputData.outputs },
             });
+            // 异步缓存结果文件到本地
+            cacheTaskResults(taskResult, id).then((localPaths) => {
+              if (Object.keys(localPaths).length > 0) {
+                updateHistoryItem(id, localPaths);
+              }
+            }).catch((err) => {
+              console.warn('[HistoryProvider] 缓存 webapp 结果失败:', err?.message || err);
+            });
           } catch (_outputErr) {
             console.warn('获取 webapp 输出失败，使用 detail 作为 lastResponse:', _outputErr?.message || _outputErr);
             updateHistoryItem(id, {
@@ -228,6 +248,14 @@ export function HistoryProvider({ children }) {
           ...taskResult,
           completedAt: Date.now(),
           lastResponse: result,
+        });
+        // 异步缓存结果文件到本地
+        cacheTaskResults(taskResult, item.id).then((localPaths) => {
+          if (Object.keys(localPaths).length > 0) {
+            updateHistoryItem(item.id, localPaths);
+          }
+        }).catch((err) => {
+          console.warn('[HistoryProvider] 缓存结果失败:', err?.message || err);
         });
       } else if (result.status === 'Failed') {
         updateHistoryItem(item.id, {

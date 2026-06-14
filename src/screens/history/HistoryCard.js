@@ -5,6 +5,7 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import { isTokenPricedModel } from '../../utils/modelHelpers';
+import { resolveUrl } from '../../utils/resultCache';
 import { pressedOpacity, Radius, Spacing, Typography } from '../../constants/theme';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { useTheme } from '../../context/ThemeContext';
@@ -64,6 +65,12 @@ export const HistoryCard = React.memo(function HistoryCard({
   const isActive = ACTIVE_STATUSES.includes(item.status);
   const isWebapp = item.source === 'webapp';
 
+  // 优先使用本地缓存路径，fallback 远程 URL
+  const imageUrl = resolveUrl(item.localImageUrl, item.imageUrl);
+  const videoUrl = resolveUrl(item.localVideoUrl, item.videoUrl);
+  const audioUrl = resolveUrl(item.localAudioUrl, item.audioUrl);
+  const imageUrls = (item.localImageUrls?.length > 0 ? item.localImageUrls : item.imageUrls) || item.imageUrls;
+
   return (
     <View style={styles.historyCard}>
       {batchMode ? (
@@ -76,21 +83,21 @@ export const HistoryCard = React.memo(function HistoryCard({
       <Pressable
         style={({ pressed }) => [styles.historyCardInner, pressed && { opacity: batchMode ? 0.6 : 0.7 }]} onPress={() => {
           if (batchMode) toggleSelect(item.id);
-          else if (item.outputType === 'video' && item.videoUrl) {
-            setVideoPreview({ visible: true, url: item.videoUrl });
+          else if (item.outputType === 'video' && videoUrl) {
+            setVideoPreview({ visible: true, url: videoUrl });
           } else if (item.outputType === 'text' && item.textResult) {
             setTextPreview({ visible: true, text: item.textResult });
-          } else if (item.outputType === 'audio' && item.audioUrl) {
-            setAudioPreview({ visible: true, url: item.audioUrl });
-          } else if (item.imageUrl) {
-            setPreviewImage({ url: item.imageUrl, prompt: item.prompt });
-            setPreviewImageUrls(item.imageUrls || null);
+          } else if (item.outputType === 'audio' && audioUrl) {
+            setAudioPreview({ visible: true, url: audioUrl });
+          } else if (imageUrl) {
+            setPreviewImage({ url: imageUrl, prompt: item.prompt });
+            setPreviewImageUrls(imageUrls || null);
           }
         }}
-        disabled={batchMode ? false : !(item.imageUrl || item.videoUrl || item.textResult || item.audioUrl)}
+        disabled={batchMode ? false : !(imageUrl || videoUrl || item.textResult || audioUrl)}
       >
         <View style={styles.historyThumbWrap}>
-          {item.outputType === 'video' && item.videoUrl ? (
+          {item.outputType === 'video' && videoUrl ? (
             <View style={styles.thumbContainer}>
               {thumbUri ? (
                 <Image source={{ uri: thumbUri }} style={styles.historyThumb} contentFit="cover" cachePolicy="memory-disk" recyclingKey={`${item.id}_thumb`} transition={200} />
@@ -103,7 +110,7 @@ export const HistoryCard = React.memo(function HistoryCard({
                 <Ionicons name="play-circle" size={28} color={colors.textOnOverlay} />
               </View>
             </View>
-          ) : item.outputType === 'audio' && item.audioUrl ? (
+          ) : item.outputType === 'audio' && audioUrl ? (
             <View style={styles.thumbContainer}>
               <View style={[styles.historyThumbPlaceholder, styles.historyThumbAudio]}>
                 <Ionicons name="musical-notes" size={32} color={colors.purple} />
@@ -116,17 +123,17 @@ export const HistoryCard = React.memo(function HistoryCard({
             <View style={[styles.historyThumbPlaceholder, styles.historyThumbText]}>
               <Ionicons name="document-text" size={32} color={colors.primary} />
             </View>
-          ) : item.imageUrl ? (
-            item.imageUrls && item.imageUrls.length > 1 ? (
+          ) : imageUrl ? (
+            imageUrls && imageUrls.length > 1 ? (
               <View style={styles.thumbGrid}>
-                {item.imageUrls.slice(0, 4).map((url, idx) => (
+                {imageUrls.slice(0, 4).map((url, idx) => (
                   <Image
                     key={`${item.id}_thumb_${idx}`}
                     source={{ uri: url }}
                     style={[
                       styles.thumbGridItem,
-                      item.imageUrls.length === 2 && styles.thumbGridItem2,
-                      item.imageUrls.length === 3 && idx === 0 && styles.thumbGridItem3First,
+                      imageUrls.length === 2 && styles.thumbGridItem2,
+                      imageUrls.length === 3 && idx === 0 && styles.thumbGridItem3First,
                     ]}
                     contentFit="cover"
                     cachePolicy="memory-disk"
@@ -134,14 +141,14 @@ export const HistoryCard = React.memo(function HistoryCard({
                     transition={200}
                   />
                 ))}
-                {item.imageUrls.length > 4 ? (
+                {imageUrls.length > 4 ? (
                   <View style={styles.thumbGridOverlay}>
-                    <Text style={styles.thumbGridOverlayText}>+{item.imageUrls.length - 4}</Text>
+                    <Text style={styles.thumbGridOverlayText}>+{imageUrls.length - 4}</Text>
                   </View>
                 ) : null}
               </View>
             ) : (
-              <Image source={{ uri: item.imageUrl }} style={styles.historyThumb} contentFit="cover" cachePolicy="memory-disk" recyclingKey={`${item.id}_thumb`} transition={200} />
+              <Image source={{ uri: imageUrl }} style={styles.historyThumb} contentFit="cover" cachePolicy="memory-disk" recyclingKey={`${item.id}_thumb`} transition={200} />
             )
           ) : item.status === 'Failed' ? (
             <View style={[styles.historyThumbPlaceholder, styles.historyThumbFailed]}>
@@ -176,7 +183,7 @@ export const HistoryCard = React.memo(function HistoryCard({
               <Text style={styles.historyPrice}>{isTokenPricedModel(item.modelId) ? '按量计费' : `${item.price} 金币`}</Text>
             ) : <View />}
             <View style={styles.historyActions}>
-              {((item.imageUrl && !batchMode) || (item.outputType === 'video' && item.videoUrl && !batchMode) || (item.outputType === 'audio' && item.audioUrl && !batchMode)) ? (
+              {((imageUrl && !batchMode) || (item.outputType === 'video' && videoUrl && !batchMode) || (item.outputType === 'audio' && audioUrl && !batchMode)) ? (
                 <Pressable style={({ pressed }) => [styles.iconButton, styles.iconButtonSuccess, pressed && pressedOpacity()]} onPress={() => handleDownload(item)}>
                   <Ionicons name="download" size={18} color={colors.success} />
                 </Pressable>
@@ -215,6 +222,10 @@ export const HistoryCard = React.memo(function HistoryCard({
     prevProps.item.imageUrl === nextProps.item.imageUrl &&
     prevProps.item.videoUrl === nextProps.item.videoUrl &&
     prevProps.item.audioUrl === nextProps.item.audioUrl &&
+    prevProps.item.localImageUrl === nextProps.item.localImageUrl &&
+    prevProps.item.localVideoUrl === nextProps.item.localVideoUrl &&
+    prevProps.item.localAudioUrl === nextProps.item.localAudioUrl &&
+    prevProps.item.localImageUrls === nextProps.item.localImageUrls &&
     prevProps.item.textResult === nextProps.item.textResult &&
     prevProps.item.errorMessage === nextProps.item.errorMessage &&
     prevProps.item.completedAt === nextProps.item.completedAt &&

@@ -1,8 +1,9 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, Text, View, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Radius, Spacing, Typography, Shadow } from '../../constants/theme';
+import { Radius, Spacing, Typography } from '../../constants/theme';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
+import { useTheme } from '../../context/ThemeContext';
 
 const ICON_MAP = {
   success: 'checkmark-circle',
@@ -50,6 +51,8 @@ const createStyles = (colors, theme) => ({
 
 export function Toast({ message, type = 'info' }) {
   const styles = useThemedStyles(createStyles);
+  const { colors } = useTheme();
+  // eslint-disable-next-line react-hooks/refs -- Animated.Value must be stored in ref to persist across renders
   const opacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -74,7 +77,7 @@ export function Toast({ message, type = 'info' }) {
   return (
     <Animated.View style={[styles.container, { opacity }]}>
       <View style={[styles.wrapper, styles[typeStyleKey]]}>
-        <Ionicons name={ICON_MAP[type]} size={16} color="#FFFFFF" />
+        <Ionicons name={ICON_MAP[type]} size={16} color={colors.textInverse} />
         <Text style={styles.text}>{message}</Text>
       </View>
     </Animated.View>

@@ -38,6 +38,7 @@ export function ResizableTextInput({
     }
   }, [height, effectiveMaxHeight]);
 
+  /* eslint-disable react-hooks/refs -- PanResponder must be stored in ref to persist across renders */
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
@@ -54,6 +55,7 @@ export function ResizableTextInput({
       },
     })
   ).current;
+  /* eslint-enable react-hooks/refs */
 
   return (
     <View style={[styles.wrapper, { height }, style]}>
@@ -72,6 +74,7 @@ export function ResizableTextInput({
         returnKeyType="done"
         blurOnSubmit={true}
       />
+      {/* eslint-disable-next-line react-hooks/refs -- panResponder.panHandlers must be spread during render for gesture handling */}
       <View style={styles.resizeHandle} {...panResponder.panHandlers}>
         <MaterialCommunityIcons name="resize-bottom-right" size={14} color={colors.textTertiary} />
       </View>

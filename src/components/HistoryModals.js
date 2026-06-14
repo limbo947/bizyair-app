@@ -6,6 +6,7 @@ import { Pressable, Text,
 import * as Haptics from 'expo-haptics';
 import { Radius, Spacing, Typography, pressedOpacity } from '../constants/theme';
 import { useThemedStyles } from '../hooks/useThemedStyles';
+import { PickerModal } from './common/PickerModal';
 
 const createStyles = (colors) => ({
   modalOverlay: { flex: 1, backgroundColor: colors.overlayMedium, justifyContent: 'center', alignItems: 'center' },
@@ -15,14 +16,6 @@ const createStyles = (colors) => ({
   logModalClose: { fontSize: Typography.fontSize.title3, color: colors.textTertiary, fontWeight: Typography.fontWeight.semibold, paddingHorizontal: 8 },
   logModalScroll: { padding: Spacing.lg, maxHeight: 500 },
   logModalText: { fontSize: Typography.fontSize.footnote, color: colors.textTertiary, fontFamily: 'monospace' },
-  pickerOverlay: { flex: 1, backgroundColor: colors.overlayLight, justifyContent: 'center', alignItems: 'center' },
-  pickerContent: { width: '80%', backgroundColor: colors.card, borderRadius: Radius.lg, borderCurve: 'continuous', padding: Spacing.xl },
-  pickerTitle: { fontSize: Typography.fontSize.headline, fontWeight: Typography.fontWeight.semibold, color: colors.textPrimary, marginBottom: Spacing.lg, textAlign: 'center' },
-  pickerOption: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12, paddingHorizontal: Spacing.lg, borderRadius: Radius.sm, borderCurve: 'continuous', marginBottom: 2 },
-  pickerOptionActive: { backgroundColor: colors.primaryBg },
-  pickerOptionText: { fontSize: Typography.fontSize.callout, color: colors.textSecondary },
-  pickerOptionTextActive: { color: colors.primary, fontWeight: Typography.fontWeight.semibold },
-  pickerCheck: { fontSize: 18, color: colors.primary, fontWeight: Typography.fontWeight.semibold },
   confirmOverlay: { flex: 1, backgroundColor: colors.overlayLight, justifyContent: 'center', alignItems: 'center' },
   confirmBox: { width: '82%', backgroundColor: colors.card, borderRadius: Radius.xl, borderCurve: 'continuous', padding: Spacing.xxl },
   confirmTitle: { fontSize: 18, fontWeight: Typography.fontWeight.semibold, color: colors.textPrimary, marginBottom: Spacing.sm, textAlign: 'center' },
@@ -94,19 +87,14 @@ export function HistoryModals({
         </View>
       </Modal>
 
-      <Modal visible={showSortPicker} transparent animationType="fade" onRequestClose={() => setShowSortPicker(false)}>
-        <Pressable style={styles.pickerOverlay} onPress={() => setShowSortPicker(false)}>
-          <View style={styles.pickerContent}>
-            <Text style={styles.pickerTitle}>排序方式</Text>
-            {SORT_OPTIONS.map((opt) => (
-              <Pressable key={opt.key} style={({ pressed }) => [styles.pickerOption, sortBy === opt.key && styles.pickerOptionActive, pressed && pressedOpacity()]} onPress={() => handleSortChange(opt.key)}>
-                <Text style={[styles.pickerOptionText, sortBy === opt.key && styles.pickerOptionTextActive]}>{opt.label}</Text>
-                {sortBy === opt.key ? <Text style={styles.pickerCheck}>✓</Text> : null}
-              </Pressable>
-            ))}
-          </View>
-        </Pressable>
-      </Modal>
+      <PickerModal
+        visible={showSortPicker}
+        onClose={() => setShowSortPicker(false)}
+        title="排序方式"
+        options={SORT_OPTIONS}
+        selectedKey={sortBy}
+        onSelect={handleSortChange}
+      />
     </>
   );
 }

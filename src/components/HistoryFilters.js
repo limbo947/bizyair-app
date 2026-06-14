@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Pressable, View, Text, TextInput, ScrollView, Modal } from 'react-native';
+import { Pressable, View, Text, TextInput, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Radius, Spacing, Typography, pressedOpacity } from '../constants/theme';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { useTheme } from '../context/ThemeContext';
+import { PickerModal } from './common/PickerModal';
 
 const FILTER_OPTIONS = [
   { key: 'all', label: '全部' },
@@ -38,14 +39,6 @@ const createStyles = (colors) => ({
   allChipBadgeActive: { color: colors.textOnOverlay, fontWeight: Typography.fontWeight.semibold },
   allChipCaret: { marginTop: 1 },
   sortButton: { paddingHorizontal: Spacing.sm, paddingVertical: Spacing.xs, marginLeft: Spacing.xs },
-  sourcePickerOverlay: { flex: 1, backgroundColor: colors.overlayLight, justifyContent: 'center', alignItems: 'center' },
-  sourcePickerContent: { width: '70%', backgroundColor: colors.card, borderRadius: Radius.lg, borderCurve: 'continuous', padding: Spacing.xl },
-  sourcePickerTitle: { fontSize: Typography.fontSize.body, fontWeight: Typography.fontWeight.semibold, color: colors.textPrimary, marginBottom: Spacing.lg, textAlign: 'center' },
-  sourcePickerOption: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: Spacing.md, paddingHorizontal: Spacing.lg, borderRadius: Radius.sm, borderCurve: 'continuous', marginBottom: 2 },
-  sourcePickerOptionActive: { backgroundColor: colors.primaryBg },
-  sourcePickerOptionText: { fontSize: Typography.fontSize.callout, color: colors.textSecondary },
-  sourcePickerOptionTextActive: { color: colors.primary, fontWeight: Typography.fontWeight.semibold },
-  sourcePickerCheck: { fontSize: Typography.fontSize.title2, color: colors.primary, fontWeight: Typography.fontWeight.semibold },
   batchBar: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', backgroundColor: colors.card, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, borderBottomWidth: 0.5, borderBottomColor: colors.separator, gap: Spacing.sm },
   batchToggleButton: { paddingHorizontal: Spacing.md + 2, paddingVertical: Spacing.xs + 2, borderRadius: Radius.full, borderCurve: 'continuous', backgroundColor: colors.primaryBg },
   batchToggleButtonActive: { backgroundColor: colors.primary },
@@ -102,7 +95,7 @@ export function HistoryFilters({
       <View style={[styles.searchBar, { paddingTop: Spacing.md + (topInset || 0) }]}>
         <View style={styles.searchInputWrap}>
           <Ionicons name="search" size={18} color={colors.textTertiary} />
-          <TextInput style={styles.searchInput} placeholder="搜索提示词、模型名..." value={searchText} onChangeText={onSearchChange} placeholderTextColor={colors.textPlaceholder} />
+          <TextInput style={styles.searchInput} placeholder="搜索提示词、模型、模式..." value={searchText} onChangeText={onSearchChange} placeholderTextColor={colors.textPlaceholder} />
           {searchText.length > 0 ? (
             <Pressable style={({ pressed }) => pressed && pressedOpacity()} onPress={() => onSearchChange('')}><Text style={styles.clearSearch}>✕</Text></Pressable>
           ) : null}
@@ -146,19 +139,14 @@ export function HistoryFilters({
         </Pressable>
       </View>
 
-      <Modal visible={showSourcePicker} transparent animationType="fade" onRequestClose={() => setShowSourcePicker(false)}>
-        <Pressable style={styles.sourcePickerOverlay} onPress={() => setShowSourcePicker(false)}>
-          <View style={styles.sourcePickerContent}>
-            <Text style={styles.sourcePickerTitle}>来源筛选</Text>
-            {SOURCE_OPTIONS.map((opt) => (
-              <Pressable key={opt.key} style={({ pressed }) => [styles.sourcePickerOption, sourceFilter === opt.key && styles.sourcePickerOptionActive, pressed && pressedOpacity()]} onPress={() => { onSourceFilterChange(opt.key); setShowSourcePicker(false); }}>
-                <Text style={[styles.sourcePickerOptionText, sourceFilter === opt.key && styles.sourcePickerOptionTextActive]}>{opt.label}</Text>
-                {sourceFilter === opt.key ? <Text style={styles.sourcePickerCheck}>✓</Text> : null}
-              </Pressable>
-            ))}
-          </View>
-        </Pressable>
-      </Modal>
+      <PickerModal
+        visible={showSourcePicker}
+        onClose={() => setShowSourcePicker(false)}
+        title="来源筛选"
+        options={SOURCE_OPTIONS}
+        selectedKey={sourceFilter}
+        onSelect={onSourceFilterChange}
+      />
 
       {history.length > 0 ? (
         <View style={styles.batchBar}>

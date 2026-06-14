@@ -3,7 +3,6 @@ import { Pressable, Text,
   View,
   ScrollView,
   FlatList,
-  Modal,
   useWindowDimensions, } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -14,6 +13,7 @@ import { createSharedStyles } from '../constants/sharedStyles';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { useTheme } from '../context/ThemeContext';
 import { useFavoritesContext } from '../context/FavoritesContext';
+import { PickerModal } from '../components/common/PickerModal';
 
 const ModelCard = React.memo(function ModelCard({ model, isSelected, isEditMode, onPress, colors, styles }) {
   return (
@@ -21,7 +21,8 @@ const ModelCard = React.memo(function ModelCard({ model, isSelected, isEditMode,
       style={({ pressed }) => [
         styles.modelCard,
         isSelected && styles.modelCardActive,
-      , pressed && pressedOpacity()]} onPress={onPress} >
+        pressed && pressedOpacity(),
+      ]} onPress={onPress} >
       <View style={styles.modelCardHeader}>
         <Ionicons
           name={model.icon.name}
@@ -266,28 +267,14 @@ export function ModelSelectScreen({ currentModelId, onSelectModel, onBack }) {
         />
       </View>
 
-      <Modal visible={showManufacturerPicker} transparent animationType="fade" onRequestClose={() => setShowManufacturerPicker(false)}>
-        <Pressable style={styles.pickerOverlay} onPress={() => setShowManufacturerPicker(false)}>
-          <View style={styles.pickerContent}>
-            <Text style={styles.pickerTitle}>选择厂商</Text>
-            <ScrollView showsVerticalScrollIndicator={false}>
-              {manufacturerList.map((mf) => (
-              <Pressable
-                key={mf.key}
-                style={({ pressed }) => [
-                  styles.pickerOption,
-                  selectedManufacturer === mf.key && styles.pickerOptionActive,
-                , pressed && pressedOpacity()]}
-                onPress={() => handleManufacturerSelect(mf.key)}
-              >
-                <Text style={[styles.pickerOptionText, selectedManufacturer === mf.key && styles.pickerOptionTextActive]}>{mf.label}</Text>
-                <Text style={[styles.pickerOptionCount, selectedManufacturer === mf.key && styles.pickerOptionCountActive]}>{mf.count}</Text>
-                </Pressable>
-              ))}
-            </ScrollView>
-          </View>
-        </Pressable>
-      </Modal>
+      <PickerModal
+        visible={showManufacturerPicker}
+        onClose={() => setShowManufacturerPicker(false)}
+        title="选择厂商"
+        options={manufacturerList}
+        selectedKey={selectedManufacturer}
+        onSelect={handleManufacturerSelect}
+      />
     </View>
   );
 }
@@ -395,15 +382,6 @@ const createStyles = (colors) => {
     color: colors.textSecondary,
     fontWeight: Typography.fontWeight.medium,
   },
-  pickerOverlay: { flex: 1, backgroundColor: colors.overlayLight, justifyContent: 'center', alignItems: 'center' },
-  pickerContent: { width: '80%', maxHeight: '70%', backgroundColor: colors.card, borderRadius: Radius.lg, borderCurve: 'continuous', padding: Spacing.xl },
-  pickerTitle: { fontSize: Typography.fontSize.headline, fontWeight: Typography.fontWeight.semibold, color: colors.textPrimary, marginBottom: Spacing.lg, textAlign: 'center' },
-  pickerOption: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12, paddingHorizontal: Spacing.lg, borderRadius: Radius.sm, borderCurve: 'continuous', marginBottom: 2 },
-  pickerOptionActive: { backgroundColor: colors.primaryBg },
-  pickerOptionText: { fontSize: Typography.fontSize.callout, color: colors.textSecondary },
-  pickerOptionTextActive: { color: colors.primary, fontWeight: Typography.fontWeight.semibold },
-  pickerOptionCount: { fontSize: Typography.fontSize.footnote, color: colors.textTertiary },
-  pickerOptionCountActive: { color: colors.primary },
   modelListHeader: {
     flexDirection: 'row',
     alignItems: 'center',

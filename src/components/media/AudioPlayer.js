@@ -106,7 +106,7 @@ function WebAudioPlayer({ visible, audioUrl, onClose }) {
 
           <View style={st.controls}>
             <Pressable style={({ pressed }) => [st.playBtn, pressed && pressedOpacity()]} onPress={togglePlay} disabled={loading}>
-              {loading ? <ActivityIndicator color="#fff" size="small" /> : <Ionicons name={isPlaying ? 'pause' : 'play'} size={36} color="#fff" />}
+              {loading ? <ActivityIndicator color={colors.textInverse} size="small" /> : <Ionicons name={isPlaying ? 'pause' : 'play'} size={36} color={colors.textInverse} />}
             </Pressable>
           </View>
 
@@ -146,6 +146,7 @@ function NativeAudioPlayer({ visible, audioUrl, onClose }) {
   // 可见性变化时暂停
   useEffect(() => {
     if (!visible) { player.pause(); }
+    // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/immutability -- expo-audio imperative API: volume is a writable property
     else { setIsMuted(false); player.volume = 1; setVolume(1); }
   }, [visible]);
 
@@ -163,6 +164,7 @@ function NativeAudioPlayer({ visible, audioUrl, onClose }) {
   }, [duration]);
 
   const toggleMute = useCallback(() => {
+    // eslint-disable-next-line react-hooks/immutability -- expo-audio imperative API: volume is a writable property
     if (isMuted) { player.volume = mutedVolume; setVolume(mutedVolume); setIsMuted(false); }
     else { setMutedVolume(volume); player.volume = 0; setVolume(0); setIsMuted(true); }
   }, [isMuted, mutedVolume, volume]);
@@ -194,7 +196,7 @@ function NativeAudioPlayer({ visible, audioUrl, onClose }) {
 
           <View style={st.controls}>
             <Pressable style={({ pressed }) => [st.playBtn, pressed && pressedOpacity()]} onPress={handlePlay} disabled={isLoading}>
-              {isLoading ? <ActivityIndicator color="#fff" size="small" /> : <Ionicons name={isPlaying ? 'pause' : 'play'} size={36} color="#fff" />}
+              {isLoading ? <ActivityIndicator color={colors.textInverse} size="small" /> : <Ionicons name={isPlaying ? 'pause' : 'play'} size={36} color={colors.textInverse} />}
             </Pressable>
           </View>
 

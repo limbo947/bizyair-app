@@ -77,6 +77,7 @@ async function handleUpload(rawBody) {
       Date: date,
       'Content-Type': contentType,
     },
+    // eslint-disable-next-line no-undef -- Buffer is available in Node.js runtime
     body: Buffer.from(fileData, 'base64'),
   });
 

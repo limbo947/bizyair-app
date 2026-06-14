@@ -15,7 +15,7 @@ import { useFavoritesContext } from '../context/FavoritesContext';
 import { useTheme } from '../context/ThemeContext';
 import { useToastContext } from '../context/ToastContext';
 import { getRatios, getResolutions, getModelInfo, getModelModes, getModelPlaceholder } from '../utils/modelHelpers';
-import { Radius, Spacing, Typography, ButtonVariants, pressedOpacity } from '../constants/theme';
+import { Radius, Spacing, Typography, ButtonVariants, Shadow, pressedOpacity } from '../constants/theme';
 import { createSharedStyles } from '../constants/sharedStyles';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { useModelSwitch } from '../hooks/useModelSwitch';
@@ -30,6 +30,7 @@ import { useFileUpload } from '../hooks/useFileUpload';
 import { MODE_LABELS, initialState, homeParamReducer } from './home/homeReducer';
 import { useHomeSubmit } from './home/useHomeSubmit';
 import { usePresets } from '../hooks/usePresets';
+import { useFormValidation } from '../hooks/useFormValidation';
 import { ParamPresetBar } from '../components/ParamPresetBar';
 
 export function HomeScreen({ onOpenModelSelect }) {
@@ -143,6 +144,7 @@ export function HomeScreen({ onOpenModelSelect }) {
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 
   useEffect(() => {
     if (error) showToast(error, 'error');
@@ -264,6 +266,14 @@ export function HomeScreen({ onOpenModelSelect }) {
     startPolling,
   });
 
+  const { isValid, errors } = useFormValidation({ state, paramType, mode, apiKey });
+
+  const handleGeneratePress = useCallback(() => {
+    setHasAttemptedSubmit(true);
+    Keyboard.dismiss();
+    handleGenerate();
+  }, [handleGenerate]);
+
   const priceFormulaText = useMemo(() => {
     const model = getModelInfo(modelId);
     if (!model) return null;
@@ -358,7 +368,7 @@ export function HomeScreen({ onOpenModelSelect }) {
           ))}
         </View>
 
-        <View style={styles.card}>
+        <View style={[styles.card, hasAttemptedSubmit && errors.prompt && styles.cardError]}>
           <View style={styles.promptLabelRow}>
             <Text style={[styles.label, { marginBottom: 0 }]}>
               提示词{paramType === 'dreamactor' ? <Text style={{ color: colors.textTertiary, fontWeight: Typography.fontWeight.regular }}> (可选)</Text> : <Text style={{ color: colors.error }}> *</Text>}
@@ -379,6 +389,7 @@ export function HomeScreen({ onOpenModelSelect }) {
           <Text style={styles.charCount}>
             {prompt.length} / {currentModel.maxPromptLength}
           </Text>
+          {hasAttemptedSubmit && errors.prompt ? <Text style={styles.fieldErrorText}>{errors.prompt}</Text> : null}
         </View>
 
         {(mode === 'image-to-image' || mode === 'image-to-video' || mode === 'flf-to-video' || mode === 'reference-to-video' || mode === 'vision' || paramType === 'dreamactor' || paramType === 'vision-g' || paramType === 'joycaption') ? (
@@ -391,6 +402,7 @@ export function HomeScreen({ onOpenModelSelect }) {
             onRemove={(i) => stateDispatch({ type: 'SET_FIELD', field: 'imageUrls', value: imageUrls.filter((_, j) => j !== i) })}
             acceptType="image"
             itemPrefix={mode === 'flf-to-video' ? '首帧' : '图片'}
+            error={hasAttemptedSubmit && errors.imageUrls ? errors.imageUrls : null}
           />
         ) : null}
 
@@ -417,6 +429,7 @@ export function HomeScreen({ onOpenModelSelect }) {
             onRemove={(i) => stateDispatch({ type: 'SET_FIELD', field: 'videoUrls', value: videoUrls.filter((_, j) => j !== i) })}
             acceptType="video"
             itemPrefix="视频"
+            error={hasAttemptedSubmit && errors.videoUrls ? errors.videoUrls : null}
           />
         ) : null}
 
@@ -461,9 +474,23 @@ export function HomeScreen({ onOpenModelSelect }) {
 
         {paramControls}
 
+        {(paramType === 'llm-chat' || paramType === 'vision-g' || paramType === 'joycaption') && latestTextResult ? (
+          <View style={styles.card}>
+            <Text style={styles.label}>返回结果</Text>
+            <ScrollView style={styles.textResultBox} nestedScrollEnabled>
+              <MarkdownRenderer content={latestTextResult} />
+            </ScrollView>
+          </View>
+        ) : null}
+      </ScrollView>
+
+      <View style={[styles.bottomBar, { paddingBottom: insets.bottom || Spacing.md }]}>
+        {priceFormulaText ? (
+          <Text style={styles.priceFormulaText}>{priceFormulaText}</Text>
+        ) : null}
         <Pressable
-          style={({ pressed }) => [styles.generateButton, isSubmitting && styles.generateButtonDisabled, pressed && pressedOpacity()]} onPress={() => { Keyboard.dismiss(); handleGenerate(); }}
-          disabled={isSubmitting}
+          style={({ pressed }) => [styles.generateButton, (isSubmitting || !isValid) && styles.generateButtonDisabled, pressed && pressedOpacity()]} onPress={handleGeneratePress}
+          disabled={isSubmitting || !isValid}
         >
           {isSubmitting ? (
             <ActivityIndicator color={colors.textInverse} />
@@ -474,20 +501,7 @@ export function HomeScreen({ onOpenModelSelect }) {
               : `${MODE_LABELS[mode] || '生成'}${priceFormulaText ? '' : ` · ${livePrice} 金币`}`}
           </Text>
         </Pressable>
-
-        {priceFormulaText ? (
-          <Text style={styles.priceFormulaText}>{priceFormulaText}</Text>
-        ) : null}
-
-        {(paramType === 'llm-chat' || paramType === 'vision-g' || paramType === 'joycaption') && latestTextResult ? (
-          <View style={styles.card}>
-            <Text style={styles.label}>返回结果</Text>
-            <ScrollView style={styles.textResultBox} nestedScrollEnabled>
-              <MarkdownRenderer content={latestTextResult} />
-            </ScrollView>
-          </View>
-        ) : null}
-      </ScrollView>
+      </View>
       </KeyboardAvoidingView>
 
       <FavoriteModelsLayer
@@ -514,19 +528,22 @@ const createStyles = (colors) => {
   modeButtonTextActive: { color: colors.primary, fontWeight: Typography.fontWeight.semibold },
   scroll: { flex: 1 },
   scrollContent: { paddingTop: Spacing.sm, paddingRight: Spacing.md, paddingBottom: Spacing.xxl, paddingLeft: Spacing.md },
+  bottomBar: { backgroundColor: colors.card, paddingHorizontal: Spacing.md, paddingTop: Spacing.sm, borderTopWidth: 0.5, borderTopColor: colors.separator, ...Shadow.md },
   card: shared.card,
   labelRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, marginBottom: Spacing.sm },
   label: shared.label,
   promptLabelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.sm },
   promptClearText: { fontSize: Typography.fontSize.caption1, color: colors.primary, fontWeight: Typography.fontWeight.medium },
   charCount: { fontSize: Typography.fontSize.caption1, color: colors.textTertiary, textAlign: 'right', marginTop: Spacing.xs },
-  generateButton: { backgroundColor: colors.primary, paddingVertical: ButtonVariants.primary.paddingVertical, borderRadius: ButtonVariants.primary.borderRadius, borderCurve: 'continuous', alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: Spacing.md, marginBottom: Spacing.sm },
+  generateButton: { backgroundColor: colors.primary, paddingVertical: ButtonVariants.primary.paddingVertical, borderRadius: ButtonVariants.primary.borderRadius, borderCurve: 'continuous', alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: Spacing.md },
   generateButtonDisabled: { backgroundColor: colors.primaryDisabled },
   generateButtonText: { color: colors.textInverse, fontSize: ButtonVariants.primary.fontSize, fontWeight: ButtonVariants.primary.fontWeight, letterSpacing: Typography.letterSpacing.tight },
-  priceFormulaText: { fontSize: Typography.fontSize.caption1, color: colors.textTertiary, textAlign: 'center', marginBottom: Spacing.md, lineHeight: Typography.lineHeight.tight },
+  priceFormulaText: { fontSize: Typography.fontSize.caption1, color: colors.textTertiary, textAlign: 'center', marginBottom: Spacing.xs, lineHeight: Typography.lineHeight.tight },
   textResultBox: { maxHeight: 300, backgroundColor: colors.bg, borderRadius: Radius.sm, borderCurve: 'continuous', padding: Spacing.md },
   apiKeyInput: { fontSize: Typography.fontSize.subheadline, color: colors.textPrimary, borderWidth: 0, borderRadius: Radius.sm, borderCurve: 'continuous', padding: Spacing.md, fontFamily: 'monospace', backgroundColor: colors.bg },
   saveKeyButton: { backgroundColor: colors.primary, paddingVertical: Spacing.sm + 2, borderRadius: Radius.sm, borderCurve: 'continuous', alignItems: 'center', marginTop: Spacing.sm },
   saveKeyButtonText: { color: colors.textInverse, fontSize: Typography.fontSize.subheadline, fontWeight: Typography.fontWeight.semibold },
+  cardError: { borderColor: colors.error, borderWidth: 1 },
+  fieldErrorText: { fontSize: Typography.fontSize.caption1, color: colors.error, marginTop: Spacing.xs },
   };
 };

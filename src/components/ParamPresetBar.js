@@ -1,10 +1,11 @@
 import React, { useState, useCallback, useRef } from 'react';
-import { Pressable, Text, View, ScrollView, Modal, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
+import { Pressable, Text, View, ScrollView, Modal, TextInput, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Radius, Spacing, Typography, pressedOpacity } from '../constants/theme';
 import { createSharedStyles } from '../constants/sharedStyles';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { useTheme } from '../context/ThemeContext';
+import { DropdownModal } from './common/DropdownModal';
 
 export function ParamPresetBar({ modelId, mode, currentParams, onApplyPreset, presets, onSavePreset, onDeletePreset }) {
   const styles = useThemedStyles(createStyles);
@@ -54,11 +55,13 @@ export function ParamPresetBar({ modelId, mode, currentParams, onApplyPreset, pr
         <Ionicons name="ellipsis-horizontal" size={18} color={colors.textTertiary} style={{ paddingLeft: Spacing.xs, paddingRight: Spacing.xs }} />
       </Pressable>
 
-      <Modal visible={visible} transparent animationType="fade" onRequestClose={() => setVisible(false)}>
-        <View style={styles.overlay}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={() => setVisible(false)} />
-          <View style={[styles.dropdownContainer, { paddingTop: triggerY }]}>
-            <View style={styles.dropdown}>
+      <DropdownModal
+        visible={visible}
+        onClose={() => setVisible(false)}
+        triggerTop={triggerY}
+        width={280}
+        align="right"
+      >
               <View style={styles.dropdownHeader}>
                 <Text style={styles.dropdownTitle}>参数预设</Text>
                 <Text style={styles.dropdownSubtitle}>
@@ -133,10 +136,7 @@ export function ParamPresetBar({ modelId, mode, currentParams, onApplyPreset, pr
                 <Ionicons name="add-circle-outline" size={20} color={colors.primary} />
                 <Text style={styles.dropdownFooterText}>保存当前参数</Text>
               </Pressable>
-            </View>
-          </View>
-        </View>
-      </Modal>
+      </DropdownModal>
 
       <Modal visible={saveModalVisible} transparent animationType="fade" onRequestClose={() => setSaveModalVisible(false)}>
         <View style={styles.saveOverlay}>
@@ -187,23 +187,6 @@ const createStyles = (colors) => {
       fontWeight: Typography.fontWeight.semibold,
       paddingLeft: Spacing.xs,
       paddingRight: Spacing.xs,
-    },
-    overlay: {
-      flex: 1,
-      backgroundColor: colors.overlayLight,
-      justifyContent: 'flex-start',
-      alignItems: 'flex-end',
-      paddingHorizontal: Spacing.md,
-      paddingTop: 0,
-    },
-    dropdownContainer: {
-      width: 280,
-    },
-    dropdown: {
-      backgroundColor: colors.card,
-      borderRadius: Radius.md,
-      borderCurve: 'continuous',
-      overflow: 'hidden',
     },
     dropdownHeader: {
       flexDirection: 'row',
@@ -288,7 +271,7 @@ const createStyles = (colors) => {
     },
     confirmDeleteText: {
       fontSize: Typography.fontSize.subheadline,
-      color: '#FFFFFF',
+      color: colors.textInverse,
       fontWeight: Typography.fontWeight.semibold,
     },
     dropdownFooter: {

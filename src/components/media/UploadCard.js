@@ -22,12 +22,13 @@ function UploadCardInner({
   onRemove,
   acceptType,
   itemPrefix,
+  error,
 }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
 
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, error && styles.cardError]}>
       <Text style={styles.label}>
         {label}
         {required ? (
@@ -89,5 +90,7 @@ const createStyles = (colors) => {
     uploadedName: { flex: 1, fontSize: Typography.fontSize.footnote, color: colors.textPrimary, fontWeight: Typography.fontWeight.medium },
     removeUploadedButton: { backgroundColor: colors.errorBg, paddingHorizontal: Spacing.md, paddingVertical: 5, borderRadius: Radius.xs, borderCurve: 'continuous' },
     removeUploadedButtonText: { color: colors.error, fontSize: Typography.fontSize.footnote, fontWeight: Typography.fontWeight.semibold },
+    cardError: { borderColor: colors.error, borderWidth: 1 },
+    errorText: { fontSize: Typography.fontSize.caption1, color: colors.error, marginTop: Spacing.xs },
   };
 };

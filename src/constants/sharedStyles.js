@@ -15,6 +15,9 @@ export const avatarBase = {
   borderCurve: 'continuous',
 };
 
+export const emptyIconSize = 48;
+export const emptyPanelIconSize = 36;
+
 export const createSharedStyles = (colors) => ({
   card: {
     backgroundColor: colors.card,

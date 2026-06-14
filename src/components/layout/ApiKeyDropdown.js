@@ -3,15 +3,14 @@ import {
   Text,
   View,
   ScrollView,
-  Modal,
-  Pressable,
   TextInput,
+  Pressable,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Radius, Spacing, Typography, pressedOpacity } from '../../constants/theme';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { useTheme } from '../../context/ThemeContext';
+import { DropdownModal } from '../common/DropdownModal';
 
 export function ApiKeyDropdown({
   visible,
@@ -22,10 +21,10 @@ export function ApiKeyDropdown({
   onDeleteKey,
   onAddKey,
   onRenameKey,
+  triggerTop,
 }) {
   const styles = useThemedStyles(createStyles);
   const { colors } = useTheme();
-  const insets = useSafeAreaInsets();
   const [showAddInput, setShowAddInput] = useState(false);
   const [newKey, setNewKey] = useState('');
   const [newKeyName, setNewKeyName] = useState('');
@@ -56,160 +55,149 @@ export function ApiKeyDropdown({
   };
 
   return (
-    <Modal
+    <DropdownModal
       visible={visible}
-      transparent={true}
-      animationType="fade"
-      onRequestClose={onClose}
+      onClose={onClose}
+      triggerTop={triggerTop}
+      width={300}
+      align="right"
     >
-      <Pressable style={({ pressed }) => [styles.overlay, { paddingTop: insets.top + 56 }, pressed && pressedOpacity()]} onPress={onClose}>
-        <View style={styles.dropdownContainer}>
-          <Pressable>
-            <View style={styles.dropdown}>
-            <View style={styles.dropdownHeader}>
-              <Text style={styles.dropdownTitle}>🔑 API 密钥</Text>
-              <Text style={styles.dropdownSubtitle}>
-                {apiKeys.length} 个
-              </Text>
-            </View>
+      <View style={styles.dropdownHeader}>
+        <Text style={styles.dropdownTitle}>API 密钥</Text>
+        <Text style={styles.dropdownSubtitle}>
+          {apiKeys.length} 个
+        </Text>
+      </View>
 
-            <ScrollView
-              style={styles.dropdownList}
-              showsVerticalScrollIndicator={false}
-            >
-              {apiKeys.length === 0 ? (
-                <View style={styles.emptyState}>
-                  <Text style={styles.emptyIcon}>🔑</Text>
-                  <Text style={styles.emptyText}>暂无密钥</Text>
-                  <Text style={styles.emptySubtext}>点击下方按钮添加</Text>
-                </View>
-              ) : (
-                apiKeys.map((keyItem, index) => (
-                  <Pressable
-                    key={keyItem.id}
-                    style={({ pressed }) => [
-                      styles.dropdownItem,
-                      activeApiKeyId === keyItem.id && styles.dropdownItemActive,
-                      index < apiKeys.length - 1 && styles.dropdownItemBorder,
-                    , pressed && pressedOpacity()]} onPress={() => {
-                      onSwitchKey(keyItem.id);
-                    }} >
-                    <View style={styles.itemContent}>
-                      {editingKeyId === keyItem.id ? (
-                        <TextInput
-                          style={styles.renameInput}
-                          value={editName}
-                          onChangeText={setEditName}
-                          onSubmitEditing={confirmRename}
-                          onBlur={confirmRename}
-                          placeholderTextColor={colors.textPlaceholder}
-                          autoFocus
-                          selectTextOnFocus
-                        />
-                      ) : (
-                        <Text
-                          style={[
-                            styles.itemKeyText,
-                            activeApiKeyId === keyItem.id && styles.itemKeyTextActive,
-                          ]}
-                          numberOfLines={1}
-                        >
-                          {keyItem.name || `密钥 ${index + 1}`}
-                          <Text style={styles.itemKeySubtext}>
-                            {keyItem.key.slice(0, 8)}●●●●{keyItem.key.slice(-4)}
-                          </Text>
-                        </Text>
-                      )}
-                    </View>
-                    <Pressable
-                      style={({ pressed }) => [styles.editKeyNameButton, pressed && pressedOpacity()]} onPress={(e) => {
-                        e.stopPropagation();
-                        startRename(keyItem);
-                      }} >
-                      <Ionicons name="pencil-outline" size={14} color={colors.textTertiary} />
-                    </Pressable>
-                    <Pressable
-                      style={({ pressed }) => [styles.deleteButton, pressed && pressedOpacity()]} onPress={(e) => {
-                        e.stopPropagation();
-                        onDeleteKey(keyItem.id);
-                      }} >
-                      <Ionicons name="trash-outline" size={16} color={colors.error} />
-                    </Pressable>
-                  </Pressable>
-                ))
-              )}
-            </ScrollView>
-
-            {showAddInput ? (
-              <View style={styles.addInputSection}>
-                <TextInput
-                  style={styles.addInput}
-                  placeholder="输入 API Key"
-                  value={newKey}
-                  onChangeText={setNewKey}
-                  secureTextEntry
-                  placeholderTextColor={colors.textPlaceholder}
-                  autoFocus
-                />
-                <TextInput
-                  style={styles.addNameInput}
-                  placeholder="密钥名称（可选）"
-                  value={newKeyName}
-                  onChangeText={setNewKeyName}
-                  placeholderTextColor={colors.textPlaceholder}
-                  maxLength={30}
-                />
-                <View style={styles.addInputRow}>
-                  <Pressable
-                    style={({ pressed }) => [styles.cancelButton, pressed && pressedOpacity()]} onPress={() => {
-                      setShowAddInput(false);
-                      setNewKey('');
-                      setNewKeyName('');
-                    }} >
-                    <Text style={styles.cancelButtonText}>取消</Text>
-                  </Pressable>
-                  <Pressable
-                    style={({ pressed }) => [styles.addConfirmButton, !newKey.trim() && styles.addConfirmButtonDisabled, pressed && pressedOpacity()]} onPress={handleAdd}
-                    disabled={!newKey.trim()} >
-                    <Text style={styles.addConfirmButtonText}>添加</Text>
-                  </Pressable>
-                </View>
-              </View>
-            ) : (
-              <View style={styles.dropdownFooter}>
-                <Pressable
-                  style={({ pressed }) => [styles.addButton, pressed && pressedOpacity()]} onPress={() => setShowAddInput(true)} >
-                  <Ionicons name="add-circle-outline" size={18} color={colors.primary} />
-                  <Text style={styles.addButtonText}>新增密钥</Text>
-                </Pressable>
-              </View>
-            )}
+      <ScrollView
+        style={styles.dropdownList}
+        showsVerticalScrollIndicator={false}
+      >
+        {apiKeys.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Ionicons name="key-outline" size={36} color={colors.textTertiary} />
+            <Text style={styles.emptyText}>暂无密钥</Text>
+            <Text style={styles.emptySubtext}>点击下方按钮添加</Text>
           </View>
+        ) : (
+          apiKeys.map((keyItem, index) => (
+            <Pressable
+              key={keyItem.id}
+              style={({ pressed }) => [
+                styles.dropdownItem,
+                activeApiKeyId === keyItem.id && styles.dropdownItemActive,
+                index < apiKeys.length - 1 && styles.dropdownItemBorder,
+                pressed && pressedOpacity(),
+              ]}
+              onPress={() => {
+                onSwitchKey(keyItem.id);
+              }}
+            >
+              <View style={styles.itemContent}>
+                {editingKeyId === keyItem.id ? (
+                  <TextInput
+                    style={styles.renameInput}
+                    value={editName}
+                    onChangeText={setEditName}
+                    onSubmitEditing={confirmRename}
+                    onBlur={confirmRename}
+                    placeholderTextColor={colors.textPlaceholder}
+                    autoFocus
+                    selectTextOnFocus
+                  />
+                ) : (
+                  <Text
+                    style={[
+                      styles.itemKeyText,
+                      activeApiKeyId === keyItem.id && styles.itemKeyTextActive,
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {keyItem.name || `密钥 ${index + 1}`}
+                    <Text style={styles.itemKeySubtext}>
+                      {keyItem.key.slice(0, 8)}●●●●{keyItem.key.slice(-4)}
+                    </Text>
+                  </Text>
+                )}
+              </View>
+              <Pressable
+                style={({ pressed }) => [styles.editKeyNameButton, pressed && pressedOpacity()]}
+                onPress={(e) => {
+                  e.stopPropagation();
+                  startRename(keyItem);
+                }}
+              >
+                <Ionicons name="pencil-outline" size={14} color={colors.textTertiary} />
+              </Pressable>
+              <Pressable
+                style={({ pressed }) => [styles.deleteButton, pressed && pressedOpacity()]}
+                onPress={(e) => {
+                  e.stopPropagation();
+                  onDeleteKey(keyItem.id);
+                }}
+              >
+                <Ionicons name="trash-outline" size={16} color={colors.error} />
+              </Pressable>
+            </Pressable>
+          ))
+        )}
+      </ScrollView>
+
+      {showAddInput ? (
+        <View style={styles.addInputSection}>
+          <TextInput
+            style={styles.addInput}
+            placeholder="输入 API Key"
+            value={newKey}
+            onChangeText={setNewKey}
+            secureTextEntry
+            placeholderTextColor={colors.textPlaceholder}
+            autoFocus
+          />
+          <TextInput
+            style={styles.addNameInput}
+            placeholder="密钥名称（可选）"
+            value={newKeyName}
+            onChangeText={setNewKeyName}
+            placeholderTextColor={colors.textPlaceholder}
+            maxLength={30}
+          />
+          <View style={styles.addInputRow}>
+            <Pressable
+              style={({ pressed }) => [styles.cancelButton, pressed && pressedOpacity()]}
+              onPress={() => {
+                setShowAddInput(false);
+                setNewKey('');
+                setNewKeyName('');
+              }}
+            >
+              <Text style={styles.cancelButtonText}>取消</Text>
+            </Pressable>
+            <Pressable
+              style={({ pressed }) => [styles.addConfirmButton, !newKey.trim() && styles.addConfirmButtonDisabled, pressed && pressedOpacity()]}
+              onPress={handleAdd}
+              disabled={!newKey.trim()}
+            >
+              <Text style={styles.addConfirmButtonText}>添加</Text>
+            </Pressable>
+          </View>
+        </View>
+      ) : (
+        <View style={styles.dropdownFooter}>
+          <Pressable
+            style={({ pressed }) => [styles.addButton, pressed && pressedOpacity()]}
+            onPress={() => setShowAddInput(true)}
+          >
+            <Ionicons name="add-circle-outline" size={18} color={colors.primary} />
+            <Text style={styles.addButtonText}>新增密钥</Text>
           </Pressable>
         </View>
-      </Pressable>
-    </Modal>
+      )}
+    </DropdownModal>
   );
 }
 
 const createStyles = (colors) => ({
-  overlay: {
-    flex: 1,
-    backgroundColor: colors.overlayLight,
-    justifyContent: 'flex-start',
-    alignItems: 'flex-start',
-    paddingHorizontal: Spacing.md,
-    paddingTop: 0,
-  },
-  dropdownContainer: {
-    width: '100%',
-  },
-  dropdown: {
-    backgroundColor: colors.card,
-    borderRadius: Radius.md,
-    borderCurve: 'continuous',
-    overflow: 'hidden',
-  },
   dropdownHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -282,10 +270,6 @@ const createStyles = (colors) => ({
     paddingVertical: Spacing.xxl,
     paddingHorizontal: Spacing.lg,
   },
-  emptyIcon: {
-    fontSize: 36,
-    marginBottom: Spacing.sm,
-  },
   emptyText: {
     fontSize: Typography.fontSize.subheadline,
     color: colors.textPrimary,
@@ -321,6 +305,16 @@ const createStyles = (colors) => ({
     paddingTop: Spacing.lg,
     paddingBottom: Spacing.sm,
   },
+  addInput: {
+    fontSize: Typography.fontSize.footnote,
+    color: colors.textPrimary,
+    backgroundColor: colors.bg,
+    borderRadius: Radius.sm,
+    borderCurve: 'continuous',
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.md + 2,
+    fontFamily: 'monospace',
+  },
   addNameInput: {
     fontSize: Typography.fontSize.footnote,
     color: colors.textPrimary,
@@ -348,17 +342,6 @@ const createStyles = (colors) => ({
     fontSize: Typography.fontSize.footnote,
     color: colors.textSecondary,
     fontWeight: Typography.fontWeight.semibold,
-  },
-  addInput: {
-    flex: 1,
-    fontSize: Typography.fontSize.footnote,
-    color: colors.textPrimary,
-    backgroundColor: colors.bg,
-    borderRadius: Radius.sm,
-    borderCurve: 'continuous',
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.md + 2,
-    fontFamily: 'monospace',
   },
   addConfirmButton: {
     paddingHorizontal: Spacing.md,

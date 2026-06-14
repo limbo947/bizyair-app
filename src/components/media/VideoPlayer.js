@@ -172,11 +172,13 @@ function NativeVideoPlayer({ visible, videoUrl, onClose }) {
 
   // 可见性变化时暂停/重置
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/immutability -- expo-video imperative API: volume is a writable property
     if (!visible) { player.pause(); } else { setError(''); setIsMuted(false); player.volume = 1; }
   }, [visible]);
 
   // 错误状态时设置错误消息
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- error state must sync with player status
     if (status === 'error') setError('视频加载失败');
   }, [status]);
 
@@ -187,12 +189,14 @@ function NativeVideoPlayer({ visible, videoUrl, onClose }) {
   }, [isPlaying, status, currentTime, duration]);
 
   const toggleMute = useCallback(() => {
+    // eslint-disable-next-line react-hooks/immutability -- expo-video imperative API: volume is a writable property
     if (isMuted) { player.volume = mutedVolume; setIsMuted(false); }
     else { setMutedVolume(playerVolume); player.volume = 0; setIsMuted(true); }
   }, [isMuted, mutedVolume, playerVolume]);
 
   const fmt = (s) => { if (!s || s < 0) return '0:00'; const m = Math.floor(s / 60), sec = Math.floor(s % 60); return `${m}:${sec.toString().padStart(2, '0')}`; };
 
+  // eslint-disable-next-line react-hooks/immutability -- expo-video imperative API: currentTime is a writable property for seeking
   const seek = useCallback((frac) => { if (!duration) return; player.currentTime = frac * duration; }, [duration]);
 
   const pct = duration > 0 ? (currentTime / duration) * 100 : 0;
@@ -264,6 +268,6 @@ const createStyles = (colors) => ({
   ctrlRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, paddingVertical: Spacing.sm },
   ctrlBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   volArea: { flex: 1, height: 28, justifyContent: 'center', cursor: 'pointer' },
-  volBg: { height: 3, borderRadius: 1.5, borderCurve: 'continuous', backgroundColor: 'rgba(255,255,255,0.3)', overflow: 'hidden' },
+  volBg: { height: 3, borderRadius: 1.5, borderCurve: 'continuous', backgroundColor: colors.overlayLight, overflow: 'hidden' },
   volFill: { height: '100%', backgroundColor: colors.textOnOverlay, borderRadius: 1.5, borderCurve: 'continuous' },
 });

@@ -36,7 +36,7 @@ const createStyles = (colors) => ({
   switchTrackActive: { backgroundColor: colors.primary },
   switchThumb: {
     width: 20, height: 20, borderRadius: Radius.full, borderCurve: 'continuous',
-    backgroundColor: '#fff', transform: [{ translateX: 0 }],
+    backgroundColor: colors.card, transform: [{ translateX: 0 }],
   },
   switchThumbActive: { transform: [{ translateX: 20 }] },
 });

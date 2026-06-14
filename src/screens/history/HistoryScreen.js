@@ -20,8 +20,10 @@ import { VideoPlayer } from '../../components/media/VideoPlayer';
 import { AudioPlayer } from '../../components/media/AudioPlayer';
 import { ImageViewer } from '../../components/media/ImageViewer';
 import { TextResultView } from '../../components/common/TextResultView';
-import { PAGE_SIZE, TAB_HISTORY } from '../../constants/models';
+import { PAGE_SIZE, TAB_HISTORY, STATUS_LABELS } from '../../constants/models';
+import { MODE_LABELS } from '../home/homeReducer';
 import { useDownload } from '../../hooks/useDownload';
+import { resolveUrl } from '../../utils/resultCache';
 import { Spacing, Typography } from '../../constants/theme';
 import { createSharedStyles } from '../../constants/sharedStyles';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
@@ -54,6 +56,8 @@ export function HistoryScreen() {
   const { handleDownload: downloadFile } = useDownload(showToast);
 
   const [searchText, setSearchText] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const searchTimerRef = useRef(null);
   const [sortBy, setSortBy] = useState('newest');
   const [filterBy, setFilterBy] = useState('all');
   const [sourceFilter, setSourceFilter] = useState('all');
@@ -98,13 +102,15 @@ export function HistoryScreen() {
   const filteredHistory = useMemo(() => {
     if (!Array.isArray(history)) return [];
     let items = [...history];
-    if (searchText.trim()) {
-      const kw = searchText.trim().toLowerCase();
+    if (debouncedSearch.trim()) {
+      const kw = debouncedSearch.trim().toLowerCase();
       items = items.filter(
         (item) =>
           item.prompt?.toLowerCase().includes(kw) ||
           item.modelName?.toLowerCase().includes(kw) ||
-          item.id?.includes(kw)
+          item.id?.includes(kw) ||
+          MODE_LABELS[item.mode]?.toLowerCase().includes(kw) ||
+          STATUS_LABELS[item.status]?.toLowerCase().includes(kw)
       );
     }
     if (filterBy !== 'all') {
@@ -122,23 +128,24 @@ export function HistoryScreen() {
       case 'price_low': items.sort((a, b) => (a.price || 0) - (b.price || 0)); break;
     }
     return items;
-  }, [history, searchText, sortBy, filterBy, sourceFilter]);
+  }, [history, debouncedSearch, sortBy, filterBy, sourceFilter]);
 
   const displayedItems = useMemo(() => filteredHistory.slice(0, visibleCount), [filteredHistory, visibleCount]);
   const hasMore = visibleCount < filteredHistory.length;
 
   useEffect(() => {
     const videoItems = displayedItems
-      .filter((item) => item.outputType === 'video' && item.videoUrl && !thumbMap[item.videoUrl]);
+      .filter((item) => item.outputType === 'video' && (item.videoUrl || item.localVideoUrl) && !thumbMap[item.localVideoUrl || item.videoUrl]);
     if (videoItems.length === 0) return;
     let cancelled = false;
     const loadThumbnails = async () => {
       for (const item of videoItems) {
         if (cancelled) break;
         try {
-          const { uri } = await getVideoThumbnailAsync(item.videoUrl, { time: 2000 });
+          const url = resolveUrl(item.localVideoUrl, item.videoUrl);
+          const { uri } = await getVideoThumbnailAsync(url, { time: 2000 });
           if (!cancelled && uri) {
-            setThumbMap((prev) => ({ ...prev, [item.videoUrl]: uri }));
+            setThumbMap((prev) => ({ ...prev, [url]: uri }));
           }
         } catch (e) { console.warn('生成缩略图失败:', e?.message || e); }
       }
@@ -148,7 +155,14 @@ export function HistoryScreen() {
   }, [displayedItems]);
 
   const loadMore = useCallback(() => { if (hasMore) setVisibleCount((prev) => prev + PAGE_SIZE); }, [hasMore]);
-  const handleSearch = useCallback((text) => { setSearchText(text); setVisibleCount(PAGE_SIZE); }, []);
+  const handleSearch = useCallback((text) => {
+    setSearchText(text);
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    searchTimerRef.current = setTimeout(() => {
+      setDebouncedSearch(text);
+      setVisibleCount(PAGE_SIZE);
+    }, 300);
+  }, []);
   const handleSortChange = useCallback((key) => { setSortBy(key); setShowSortPicker(false); setVisibleCount(PAGE_SIZE); }, []);
   const handleFilterChange = useCallback((key) => { setFilterBy(key); setVisibleCount(PAGE_SIZE); setBatchMode(false); setSelectedIds(new Set()); }, []);
   const handleSourceFilterChange = useCallback((key) => { setSourceFilter(key); setVisibleCount(PAGE_SIZE); setBatchMode(false); setSelectedIds(new Set()); }, []);
@@ -169,8 +183,10 @@ export function HistoryScreen() {
     if (isDownloading || downloadingRef.current.has(item.id)) return;
     downloadingRef.current.add(item.id);
     const ext = item.outputType === 'video' ? '.mp4' : item.outputType === 'audio' ? `.${item.responseFormat || 'mp3'}` : '.jpg';
-    if (item.outputType === 'image' && item.imageUrls && item.imageUrls.length > 1) {
-      const urls = item.imageUrls;
+    const localImageUrls = item.localImageUrls?.length > 0 ? item.localImageUrls : null;
+    const dlImageUrls = localImageUrls || item.imageUrls;
+    if (item.outputType === 'image' && dlImageUrls && dlImageUrls.length > 1) {
+      const urls = dlImageUrls;
       (async () => {
         try {
           if (Platform.OS === 'web') {
@@ -207,7 +223,7 @@ export function HistoryScreen() {
         }
       })();
     } else {
-      const url = item.videoUrl || item.audioUrl || item.imageUrl;
+      const url = resolveUrl(item.localVideoUrl, item.videoUrl) || resolveUrl(item.localAudioUrl, item.audioUrl) || resolveUrl(item.localImageUrl, item.imageUrl);
       if (!url) { downloadingRef.current.delete(item.id); return; }
       (async () => {
         await downloadFile(url, `bizyair_${item.id}${ext}`);
@@ -226,15 +242,17 @@ export function HistoryScreen() {
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
       const ext = item.outputType === 'video' ? '.mp4' : item.outputType === 'audio' ? `.${item.responseFormat || 'mp3'}` : '.jpg';
-      if (item.outputType === 'image' && item.imageUrls && item.imageUrls.length > 1) {
-        for (let j = 0; j < item.imageUrls.length; j++) {
-          const result = await downloadFile(item.imageUrls[j], `bizyair_${item.id}_${j + 1}${ext}`, { silent: true });
+      const localImageUrls = item.localImageUrls?.length > 0 ? item.localImageUrls : null;
+      const dlImageUrls = localImageUrls || item.imageUrls;
+      if (item.outputType === 'image' && dlImageUrls && dlImageUrls.length > 1) {
+        for (let j = 0; j < dlImageUrls.length; j++) {
+          const result = await downloadFile(dlImageUrls[j], `bizyair_${item.id}_${j + 1}${ext}`, { silent: true });
           if (result.skipped) { /* already downloading */ }
           else if (result.success) successCount++; else failCount++;
           await new Promise((resolve) => setTimeout(resolve, 300));
         }
       } else {
-        const url = item.videoUrl || item.audioUrl || item.imageUrl;
+        const url = resolveUrl(item.localVideoUrl, item.videoUrl) || resolveUrl(item.localAudioUrl, item.audioUrl) || resolveUrl(item.localImageUrl, item.imageUrl);
         const result = await downloadFile(url, `bizyair_${item.id}${ext}`, { silent: true });
         if (result.skipped) { /* already downloading */ }
         else if (result.success) successCount++; else failCount++;
@@ -265,7 +283,7 @@ export function HistoryScreen() {
   const failedCount = Array.isArray(history) ? history.filter((h) => h && h.status === 'Failed').length : 0;
 
   const renderItem = useCallback(({ item }) => {
-    const thumbUri = item.outputType === 'video' && item.videoUrl ? thumbMap[item.videoUrl] : null;
+    const thumbUri = item.outputType === 'video' ? thumbMap[resolveUrl(item.localVideoUrl, item.videoUrl)] : null;
     return (
       <HistoryCard
         item={item}
