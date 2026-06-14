@@ -519,17 +519,17 @@ const createStyles = (colors) => ({
     flexDirection: 'row',
     width: SCREEN_WIDTH * 3,
     marginLeft: -SCREEN_WIDTH,
-    flex: 1,
+    height: SCREEN_HEIGHT,
   },
   imageCell: {
     width: SCREEN_WIDTH,
-    flex: 1,
+    height: SCREEN_HEIGHT,
     justifyContent: 'center',
     alignItems: 'center',
   },
   image: {
     width: SCREEN_WIDTH,
-    flex: 1,
+    height: SCREEN_HEIGHT,
   },
   topBar: {
     position: 'absolute',
