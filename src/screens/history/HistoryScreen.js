@@ -5,7 +5,9 @@ import {
   ActivityIndicator,
   FlatList,
   Platform,
-  Alert, } from 'react-native';
+  Alert,
+  RefreshControl, } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getVideoThumbnailAsync } from 'expo-video-thumbnails';
 import { File, Paths } from 'expo-file-system';
@@ -21,6 +23,7 @@ import { TextResultView } from '../../components/common/TextResultView';
 import { PAGE_SIZE, TAB_HISTORY } from '../../constants/models';
 import { useDownload } from '../../hooks/useDownload';
 import { Spacing, Typography } from '../../constants/theme';
+import { createSharedStyles } from '../../constants/sharedStyles';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { useTheme } from '../../context/ThemeContext';
 import { HistoryCard } from './HistoryCard';
@@ -66,6 +69,7 @@ export function HistoryScreen() {
   const [batchMode, setBatchMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const downloadingRef = useRef(new Set());
   const [deleteConfirmBatch, setDeleteConfirmBatch] = useState(false);
   const flatListRef = useRef(null);
@@ -81,6 +85,15 @@ export function HistoryScreen() {
     }
     prevActiveTab.current = activeTab;
   }, [activeTab, refreshRunningTasks]);
+
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      await refreshRunningTasks();
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [refreshRunningTasks]);
 
   const filteredHistory = useMemo(() => {
     if (!Array.isArray(history)) return [];
@@ -287,9 +300,21 @@ export function HistoryScreen() {
 
   const renderEmpty = useCallback(() => {
     const histLen = Array.isArray(history) ? history.length : 0;
-    if (histLen === 0) return <View style={styles.emptyContainer}><Text style={styles.emptyIcon}>📭</Text><Text style={styles.emptyTitle}>暂无历史记录</Text><Text style={styles.emptySubtitle}>开始创作，你的作品将在这里展示</Text></View>;
-    return <View style={styles.emptyContainer}><Text style={styles.emptyIcon}>🔍</Text><Text style={styles.emptyTitle}>未找到匹配记录</Text><Text style={styles.emptySubtitle}>尝试调整搜索条件或筛选器</Text></View>;
-  }, [history, styles]);
+    if (histLen === 0) return (
+      <View style={styles.emptyContainer}>
+        <Ionicons name="inbox-outline" size={48} color={colors.textTertiary} />
+        <Text style={styles.emptyTitle}>暂无历史记录</Text>
+        <Text style={styles.emptySubtitle}>开始创作，你的作品将在这里展示</Text>
+      </View>
+    );
+    return (
+      <View style={styles.emptyContainer}>
+        <Ionicons name="search-outline" size={48} color={colors.textTertiary} />
+        <Text style={styles.emptyTitle}>未找到匹配记录</Text>
+        <Text style={styles.emptySubtitle}>尝试调整搜索条件或筛选器</Text>
+      </View>
+    );
+  }, [history, styles, colors]);
 
   return (
     <View style={styles.container}>
@@ -318,7 +343,7 @@ export function HistoryScreen() {
         onBatchDownload={handleBatchDownload}
       />
 
-      <FlatList ref={flatListRef} data={displayedItems} keyExtractor={(item) => item.id} renderItem={renderItem} extraData={extraData} ListEmptyComponent={renderEmpty} ListFooterComponent={renderFooter} onEndReached={loadMore} onEndReachedThreshold={0.3} contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false} />
+      <FlatList ref={flatListRef} data={displayedItems} keyExtractor={(item) => item.id} renderItem={renderItem} extraData={extraData} ListEmptyComponent={renderEmpty} ListFooterComponent={renderFooter} onEndReached={loadMore} onEndReachedThreshold={0.3} contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} tintColor={colors.primary} colors={[colors.primary]} />} />
 
       <HistoryModals
         logModal={logModal}
@@ -362,15 +387,17 @@ export function HistoryScreen() {
   );
 }
 
-const createStyles = (colors) => ({
+const createStyles = (colors) => {
+  const shared = createSharedStyles(colors);
+  return {
   container: { flex: 1, backgroundColor: colors.bg },
   listContent: { paddingHorizontal: Spacing.sm, paddingTop: Spacing.md, paddingBottom: Spacing.xxl },
-  emptyContainer: { alignItems: 'center', justifyContent: 'center', paddingTop: 60 },
-  emptyIcon: { fontSize: 48, marginBottom: Spacing.md },
-  emptyTitle: { fontSize: Typography.fontSize.title3, color: colors.textPrimary, fontWeight: Typography.fontWeight.bold, marginBottom: 6 },
-  emptySubtitle: { fontSize: Typography.fontSize.footnote, color: colors.textTertiary },
+  emptyContainer: shared.emptyContainer,
+  emptyTitle: shared.emptyTitle,
+  emptySubtitle: shared.emptySubtitle,
   footerEnd: { alignItems: 'center', paddingVertical: Spacing.xl },
   footerEndText: { fontSize: Typography.fontSize.footnote, color: colors.disabled },
   footerLoading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: Spacing.xl, gap: Spacing.sm },
   footerLoadingText: { fontSize: Typography.fontSize.footnote, color: colors.textTertiary },
-});
+  };
+};

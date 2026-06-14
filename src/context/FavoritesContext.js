@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MODELS } from '../constants/models';
-import { STORAGE_KEYS, FAVORITES_MAX_COUNT } from '../constants/modelMeta';
+import { STORAGE_KEYS } from '../constants/modelMeta';
 
 const FavoritesContext = createContext(null);
 
@@ -28,9 +28,8 @@ export function FavoritesProvider({ children }) {
   const saveFavorites = useCallback(async (newFavorites) => {
     try {
       const filtered = newFavorites.filter((modelId) => MODELS[modelId]);
-      const limited = filtered.slice(0, FAVORITES_MAX_COUNT);
-      setFavorites(limited);
-      await AsyncStorage.setItem(STORAGE_KEYS.favorites, JSON.stringify(limited));
+      setFavorites(filtered);
+      await AsyncStorage.setItem(STORAGE_KEYS.favorites, JSON.stringify(filtered));
     } catch (e) {
       console.error('保存常用模型失败:', e);
     }
@@ -67,7 +66,7 @@ export function FavoritesProvider({ children }) {
     if (!MODELS[modelId]) return;
     setFavorites((prev) => {
       if (prev.includes(modelId)) return prev;
-      const newFavorites = [...prev, modelId].slice(0, FAVORITES_MAX_COUNT);
+      const newFavorites = [...prev, modelId];
       saveFavorites(newFavorites);
       return newFavorites;
     });
@@ -89,7 +88,7 @@ export function FavoritesProvider({ children }) {
         saveFavorites(newFavorites);
         return newFavorites;
       }
-      const newFavorites = [...prev, modelId].slice(0, FAVORITES_MAX_COUNT);
+      const newFavorites = [...prev, modelId];
       saveFavorites(newFavorites);
       return newFavorites;
     });

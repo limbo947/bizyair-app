@@ -8,6 +8,8 @@ import {
   ACTIVE_KEY_ID_KEY,
 } from '../constants/models';
 
+const USER_INFO_KEY = 'bizyair_cached_user_info';
+
 const ApiKeyContext = createContext(null);
 
 export function ApiKeyProvider({ children }) {
@@ -27,6 +29,13 @@ export function ApiKeyProvider({ children }) {
       ]);
       if (info.status === 'fulfilled') setUserInfo(info.value);
       if (balance.status === 'fulfilled') setWalletBalance(balance.value);
+      if (info.status === 'fulfilled' || balance.status === 'fulfilled') {
+        AsyncStorage.setItem(USER_INFO_KEY, JSON.stringify({
+          userInfo: info.status === 'fulfilled' ? info.value : null,
+          walletBalance: balance.status === 'fulfilled' ? balance.value : null,
+          cachedAt: Date.now(),
+        })).catch(() => {});
+      }
       if (info.status === 'rejected' && balance.status === 'rejected') {
         throw new Error('密钥验证失败，请检查密钥是否正确');
       }
@@ -145,8 +154,22 @@ export function ApiKeyProvider({ children }) {
   }, [apiKeys, saveApiKeys, addApiKey, refreshUserInfo]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/set-state-in-effect
     loadApiKeys();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    AsyncStorage.getItem(USER_INFO_KEY).then((cached) => {
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          if (Date.now() - parsed.cachedAt < 3600000) {
+            if (parsed.userInfo) setUserInfo(parsed.userInfo);
+            if (parsed.walletBalance) setWalletBalance(parsed.walletBalance);
+          }
+        } catch {}
+      }
+    });
   }, []);
 
   const value = useMemo(() => ({

@@ -3,6 +3,7 @@ import { Pressable, Text,
   View,
   ScrollView,
   Modal, } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { Radius, Spacing, Typography, pressedOpacity } from '../constants/theme';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 
@@ -74,7 +75,7 @@ export function HistoryModals({
             <Text style={styles.confirmMessage}>确定要删除这条记录吗？此操作不可恢复。</Text>
             <View style={styles.confirmActions}>
               <Pressable style={({ pressed }) => [styles.confirmCancelButton, pressed && pressedOpacity()]} onPress={() => setDeleteConfirmId(null)}><Text style={styles.confirmCancelText}>取消</Text></Pressable>
-              <Pressable style={({ pressed }) => [styles.confirmDeleteButton, pressed && pressedOpacity()]} onPress={() => handleDelete(deleteConfirmId)}><Text style={styles.confirmDeleteText}>删除</Text></Pressable>
+              <Pressable style={({ pressed }) => [styles.confirmDeleteButton, pressed && pressedOpacity()]} onPress={() => { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning); handleDelete(deleteConfirmId); }}><Text style={styles.confirmDeleteText}>删除</Text></Pressable>
             </View>
           </View>
         </View>
@@ -87,7 +88,7 @@ export function HistoryModals({
             <Text style={styles.confirmMessage}>确定要删除选中的 {selectedIds.size} 条记录吗？此操作不可恢复。</Text>
             <View style={styles.confirmActions}>
               <Pressable style={({ pressed }) => [styles.confirmCancelButton, pressed && pressedOpacity()]} onPress={() => setDeleteConfirmBatch(false)}><Text style={styles.confirmCancelText}>取消</Text></Pressable>
-              <Pressable style={({ pressed }) => [styles.confirmDeleteButton, pressed && pressedOpacity()]} onPress={handleBatchDelete}><Text style={styles.confirmDeleteText}>删除</Text></Pressable>
+              <Pressable style={({ pressed }) => [styles.confirmDeleteButton, pressed && pressedOpacity()]} onPress={() => { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning); handleBatchDelete(); }}><Text style={styles.confirmDeleteText}>删除</Text></Pressable>
             </View>
           </View>
         </View>

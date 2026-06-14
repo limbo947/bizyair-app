@@ -3,12 +3,14 @@ import { Pressable, Text,
   View,
   ScrollView,
   FlatList,
+  Modal,
   useWindowDimensions, } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { MODELS } from '../constants/models';
-import { CATEGORIES, MANUFACTURERS, FAVORITES_MAX_COUNT } from '../constants/modelMeta';
+import { CATEGORIES, MANUFACTURERS } from '../constants/modelMeta';
 import { Radius, Spacing, Typography, pressedOpacity } from '../constants/theme';
+import { createSharedStyles } from '../constants/sharedStyles';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { useTheme } from '../context/ThemeContext';
 import { useFavoritesContext } from '../context/FavoritesContext';
@@ -59,6 +61,8 @@ export function ModelSelectScreen({ currentModelId, onSelectModel, onBack }) {
   const { colors } = useTheme();
   const { favorites, saveFavorites, isFavorite } = useFavoritesContext();
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedManufacturer, setSelectedManufacturer] = useState('all');
+  const [showManufacturerPicker, setShowManufacturerPicker] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedModels, setSelectedModels] = useState([...favorites]);
 
@@ -88,21 +92,49 @@ export function ModelSelectScreen({ currentModelId, onSelectModel, onBack }) {
   }, [isFavorite]);
 
   const filteredModels = useMemo(() => {
+    let items = allModelEntries;
     if (selectedCategory === 'all') {
-      return allModelEntries;
-    }
-    if (selectedCategory === 'favorite') {
+      // no category filter
+    } else if (selectedCategory === 'favorite') {
       const favs = Array.isArray(favorites) ? favorites : [];
-      return allModelEntries.filter((m) => favs.includes(m.id));
+      items = allModelEntries.filter((m) => favs.includes(m.id));
+    } else {
+      items = allModelEntries.filter((m) => m.categories.includes(selectedCategory));
     }
-    return allModelEntries.filter((m) => m.categories.includes(selectedCategory));
-  }, [selectedCategory, favorites, allModelEntries]);
+    if (selectedManufacturer !== 'all') {
+      items = items.filter((m) => m.manufacturer === selectedManufacturer);
+    }
+    return items;
+  }, [selectedCategory, selectedManufacturer, favorites, allModelEntries]);
+
+  const manufacturerList = useMemo(() => {
+    const seen = new Set();
+    const list = [{ key: 'all', label: '全部厂商', count: allModelEntries.length }];
+    allModelEntries.forEach((m) => {
+      if (m.manufacturer && MANUFACTURERS[m.manufacturer] && !seen.has(m.manufacturer)) {
+        seen.add(m.manufacturer);
+        list.push({
+          key: m.manufacturer,
+          label: MANUFACTURERS[m.manufacturer].label,
+          count: allModelEntries.filter((x) => x.manufacturer === m.manufacturer).length,
+        });
+      }
+    });
+    return list;
+  }, [allModelEntries]);
+
+  const currentManufacturerLabel = manufacturerList.find((m) => m.key === selectedManufacturer)?.label || '全部厂商';
+
+  const handleManufacturerSelect = (key) => {
+    setSelectedManufacturer(key);
+    setShowManufacturerPicker(false);
+  };
 
   const handleModelPress = (modelId, category) => {
     if (isEditMode) {
       if (selectedModels.includes(modelId)) {
         setSelectedModels(selectedModels.filter((id) => id !== modelId));
-      } else if (selectedModels.length < FAVORITES_MAX_COUNT) {
+      } else {
         setSelectedModels([...selectedModels, modelId]);
       }
     } else {
@@ -213,9 +245,16 @@ export function ModelSelectScreen({ currentModelId, onSelectModel, onBack }) {
           data={filteredModels}
           keyExtractor={(item) => item.id}
           renderItem={renderModelItem}
+          ListHeaderComponent={
+            <Pressable style={({ pressed }) => [styles.manufacturerDropdown, pressed && pressedOpacity()]} onPress={() => setShowManufacturerPicker(true)}>
+              <Ionicons name="business-outline" size={16} color={colors.textSecondary} />
+              <Text style={styles.manufacturerDropdownText}>{currentManufacturerLabel}</Text>
+              <Ionicons name="chevron-down" size={16} color={colors.textTertiary} />
+            </Pressable>
+          }
           ListEmptyComponent={
             <View style={styles.emptyState}>
-              <Text style={styles.emptyIcon}>📦</Text>
+              <Ionicons name="cube-outline" size={48} color={colors.textTertiary} />
               <Text style={styles.emptyText}>暂无模型</Text>
               {selectedCategory === 'favorite' && !isEditMode && (
                 <Text style={styles.emptySubtext}>点击右上角添加常用模型</Text>
@@ -226,11 +265,36 @@ export function ModelSelectScreen({ currentModelId, onSelectModel, onBack }) {
           showsVerticalScrollIndicator={false}
         />
       </View>
+
+      <Modal visible={showManufacturerPicker} transparent animationType="fade" onRequestClose={() => setShowManufacturerPicker(false)}>
+        <Pressable style={styles.pickerOverlay} onPress={() => setShowManufacturerPicker(false)}>
+          <View style={styles.pickerContent}>
+            <Text style={styles.pickerTitle}>选择厂商</Text>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {manufacturerList.map((mf) => (
+              <Pressable
+                key={mf.key}
+                style={({ pressed }) => [
+                  styles.pickerOption,
+                  selectedManufacturer === mf.key && styles.pickerOptionActive,
+                , pressed && pressedOpacity()]}
+                onPress={() => handleManufacturerSelect(mf.key)}
+              >
+                <Text style={[styles.pickerOptionText, selectedManufacturer === mf.key && styles.pickerOptionTextActive]}>{mf.label}</Text>
+                <Text style={[styles.pickerOptionCount, selectedManufacturer === mf.key && styles.pickerOptionCountActive]}>{mf.count}</Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </View>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
 
-const createStyles = (colors) => ({
+const createStyles = (colors) => {
+  const shared = createSharedStyles(colors);
+  return {
   container: {
     flex: 1,
     backgroundColor: colors.bg,
@@ -315,6 +379,31 @@ const createStyles = (colors) => ({
     flex: 1,
     backgroundColor: colors.card,
   },
+  manufacturerDropdown: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    backgroundColor: colors.card,
+    borderBottomWidth: 0.5,
+    borderBottomColor: colors.separator,
+  },
+  manufacturerDropdownText: {
+    flex: 1,
+    fontSize: Typography.fontSize.footnote,
+    color: colors.textSecondary,
+    fontWeight: Typography.fontWeight.medium,
+  },
+  pickerOverlay: { flex: 1, backgroundColor: colors.overlayLight, justifyContent: 'center', alignItems: 'center' },
+  pickerContent: { width: '80%', maxHeight: '70%', backgroundColor: colors.card, borderRadius: Radius.lg, borderCurve: 'continuous', padding: Spacing.xl },
+  pickerTitle: { fontSize: Typography.fontSize.headline, fontWeight: Typography.fontWeight.semibold, color: colors.textPrimary, marginBottom: Spacing.lg, textAlign: 'center' },
+  pickerOption: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12, paddingHorizontal: Spacing.lg, borderRadius: Radius.sm, borderCurve: 'continuous', marginBottom: 2 },
+  pickerOptionActive: { backgroundColor: colors.primaryBg },
+  pickerOptionText: { fontSize: Typography.fontSize.callout, color: colors.textSecondary },
+  pickerOptionTextActive: { color: colors.primary, fontWeight: Typography.fontWeight.semibold },
+  pickerOptionCount: { fontSize: Typography.fontSize.footnote, color: colors.textTertiary },
+  pickerOptionCountActive: { color: colors.primary },
   modelListHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -333,24 +422,9 @@ const createStyles = (colors) => ({
     fontSize: Typography.fontSize.footnote,
     color: colors.textTertiary,
   },
-  emptyState: {
-    alignItems: 'center',
-    paddingVertical: Spacing.xxl * 2,
-  },
-  emptyIcon: {
-    fontSize: 48,
-    marginBottom: Spacing.md,
-  },
-  emptyText: {
-    fontSize: Typography.fontSize.callout,
-    color: colors.textPrimary,
-    fontWeight: Typography.fontWeight.semibold,
-    marginBottom: Spacing.sm,
-  },
-  emptySubtext: {
-    fontSize: Typography.fontSize.footnote,
-    color: colors.textTertiary,
-  },
+  emptyState: { ...shared.emptyContainer, paddingVertical: Spacing.xxl * 2 },
+  emptyText: shared.emptyTitle,
+  emptySubtext: shared.emptySubtitle,
   modelGrid: {
     padding: Spacing.sm,
     gap: Spacing.sm,
@@ -400,4 +474,5 @@ const createStyles = (colors) => ({
     color: colors.textTertiary,
     marginRight: Spacing.sm,
   },
-});
+  };
+};

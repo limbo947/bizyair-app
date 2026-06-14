@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useReducer } from 'react';
+import React, { useState, useEffect, useMemo, useReducer, useCallback, useRef } from 'react';
 import { Pressable, Text,
   View,
   TextInput,
@@ -29,6 +29,8 @@ import { UploadCard } from '../components/media/UploadCard';
 import { useFileUpload } from '../hooks/useFileUpload';
 import { MODE_LABELS, initialState, homeParamReducer } from './home/homeReducer';
 import { useHomeSubmit } from './home/useHomeSubmit';
+import { usePresets } from '../hooks/usePresets';
+import { ParamPresetBar } from '../components/ParamPresetBar';
 
 export function HomeScreen({ onOpenModelSelect }) {
   const insets = useSafeAreaInsets();
@@ -54,12 +56,18 @@ export function HomeScreen({ onOpenModelSelect }) {
   const { favorites } = useFavoritesContext();
   const { colors } = useTheme();
   const { showToast } = useToastContext();
+  const { presets, savePreset, deletePreset } = usePresets();
+
   const styles = useThemedStyles(createStyles);
 
   const [state, stateDispatch] = useReducer(homeParamReducer, {
     ...initialState,
     ...homeState,
   });
+
+  const handleApplyPreset = useCallback((params) => {
+    stateDispatch({ type: 'SET_PARAMS', params });
+  }, [stateDispatch]);
 
   const { switchToModel, isSwitchingModelRef, stateRef } = useModelSwitch({ state, saveHomeState, stateDispatch });
 
@@ -128,6 +136,8 @@ export function HomeScreen({ onOpenModelSelect }) {
   } = state;
 
   const [showFavorites, setShowFavorites] = useState(false);
+  const [favTriggerY, setFavTriggerY] = useState(0);
+  const favTriggerRef = useRef(null);
   const [showApiKeyInput, setShowApiKeyInput] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -206,6 +216,11 @@ export function HomeScreen({ onOpenModelSelect }) {
   };
 
   const handleOpenFavorites = () => {
+    if (favTriggerRef.current) {
+      favTriggerRef.current.measure((_x, y, _w, _h, _px, py) => {
+        setFavTriggerY(py);
+      });
+    }
     setShowFavorites(true);
   };
 
@@ -279,7 +294,7 @@ export function HomeScreen({ onOpenModelSelect }) {
         onAllModelsPress={handleOpenAllModels}
       />
 
-      <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" nestedScrollEnabled>
         {showApiKeyInput ? (
           <View style={styles.card}>
@@ -312,24 +327,35 @@ export function HomeScreen({ onOpenModelSelect }) {
         ) : null}
 
         <View style={styles.modelAndModeRow}>
-          <ModelSelector
-            currentModel={currentModel}
-            modelId={modelId}
-            onSelectModel={handleModelSelect}
-            onOpenFavorites={handleOpenFavorites}
-          />
-          <View style={styles.modeToggle}>
-            {currentModes.map((m) => (
-              <Pressable
-                key={m}
-                style={({ pressed }) => [styles.modeButton, mode === m && styles.modeButtonActive, pressed && pressedOpacity()]} onPress={() => stateDispatch({ type: 'SET_FIELD', field: 'mode', value: m })}
-              >
-                <Text style={[styles.modeButtonText, mode === m && styles.modeButtonTextActive]}>
-                  {MODE_LABELS[m] || m}
-                </Text>
-              </Pressable>
-            ))}
+          <View style={{ flex: 1 }} ref={favTriggerRef} collapsable={false}>
+            <ModelSelector
+              currentModel={currentModel}
+              modelId={modelId}
+              onSelectModel={handleModelSelect}
+              onOpenFavorites={handleOpenFavorites}
+            />
           </View>
+          <ParamPresetBar
+            modelId={modelId}
+            mode={mode}
+            currentParams={state}
+            onApplyPreset={handleApplyPreset}
+            presets={presets}
+            onSavePreset={savePreset}
+            onDeletePreset={deletePreset}
+          />
+        </View>
+        <View style={styles.modeToggle}>
+          {currentModes.map((m) => (
+            <Pressable
+              key={m}
+              style={({ pressed }) => [styles.modeButton, mode === m && styles.modeButtonActive, pressed && pressedOpacity()]} onPress={() => stateDispatch({ type: 'SET_FIELD', field: 'mode', value: m })}
+            >
+              <Text style={[styles.modeButtonText, mode === m && styles.modeButtonTextActive]}>
+                {MODE_LABELS[m] || m}
+              </Text>
+            </Pressable>
+          ))}
         </View>
 
         <View style={styles.card}>
@@ -470,6 +496,7 @@ export function HomeScreen({ onOpenModelSelect }) {
         currentModelId={modelId}
         onSelectModel={handleModelSelect}
         favorites={favorites}
+        triggerTop={favTriggerY}
       />
     </View>
   );
@@ -479,8 +506,8 @@ const createStyles = (colors) => {
   const shared = createSharedStyles(colors);
   return {
   container: { flex: 1, backgroundColor: colors.bg },
-  modelAndModeRow: { marginBottom: Spacing.sm },
-  modeToggle: { flexDirection: 'row', borderRadius: Radius.sm, borderCurve: 'continuous', backgroundColor: colors.bg, padding: 1, gap: Spacing.xs, marginTop: Spacing.sm, borderWidth: 1, borderColor: colors.divider, height: 45 },
+  modelAndModeRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
+  modeToggle: { flexDirection: 'row', borderRadius: Radius.sm, borderCurve: 'continuous', backgroundColor: colors.bg, padding: 1, gap: Spacing.xs, marginTop: Spacing.sm, marginBottom: Spacing.sm, borderWidth: 1, borderColor: colors.divider, height: 45 },
   modeButton: { flex: 1, paddingVertical: Spacing.sm, borderRadius: Radius.xs, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center' },
   modeButtonActive: { backgroundColor: colors.card },
   modeButtonText: { fontSize: Typography.fontSize.footnote, color: colors.textTertiary, fontWeight: Typography.fontWeight.medium },

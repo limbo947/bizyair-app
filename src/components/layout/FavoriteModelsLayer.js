@@ -9,12 +9,15 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { MODELS } from '../../constants/models';
-import { MANUFACTURERS, FAVORITES_MAX_COUNT } from '../../constants/modelMeta';
+import { MANUFACTURERS } from '../../constants/modelMeta';
 import { Radius, Spacing, Typography, pressedOpacity } from '../../constants/theme';
+import { createSharedStyles } from '../../constants/sharedStyles';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { useTheme } from '../../context/ThemeContext';
 
-const createStyles = (colors) => ({
+const createStyles = (colors) => {
+  const shared = createSharedStyles(colors);
+  return {
   overlay: {
     flex: 1,
     backgroundColor: colors.overlayLight,
@@ -95,26 +98,11 @@ const createStyles = (colors) => ({
     fontSize: Typography.fontSize.caption1,
     color: colors.warning,
   },
-  emptyState: {
-    alignItems: 'center',
-    paddingVertical: Spacing.xxl,
-    paddingHorizontal: Spacing.lg,
-  },
-  emptyIcon: {
-    fontSize: 36,
-    marginBottom: Spacing.sm,
-  },
-  emptyText: {
-    fontSize: Typography.fontSize.subheadline,
-    color: colors.textPrimary,
-    fontWeight: Typography.fontWeight.semibold,
-    marginBottom: Spacing.xs,
-  },
-  emptySubtext: {
-    fontSize: Typography.fontSize.footnote,
-    color: colors.textTertiary,
-  },
-});
+  emptyState: { ...shared.emptyContainer, paddingVertical: Spacing.xxl, paddingHorizontal: Spacing.lg },
+  emptyText: { ...shared.emptyTitle, fontSize: Typography.fontSize.subheadline },
+  emptySubtext: shared.emptySubtitle,
+  };
+};
 
 export function FavoriteModelsLayer({
   visible,
@@ -122,10 +110,13 @@ export function FavoriteModelsLayer({
   currentModelId,
   onSelectModel,
   favorites,
+  triggerTop,
 }) {
   const styles = useThemedStyles(createStyles);
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
+
+  const topOffset = triggerTop || insets.top + 56;
 
   const favoriteModels = useMemo(() => favorites.map((modelId) => ({
     id: modelId,
@@ -140,23 +131,22 @@ export function FavoriteModelsLayer({
       animationType="fade"
       onRequestClose={onClose}
     >
-      <Pressable style={({ pressed }) => [styles.overlay, { paddingTop: insets.top + 56 }, pressed && pressedOpacity()]} onPress={onClose}>
+      <Pressable style={({ pressed }) => [styles.overlay, { paddingTop: topOffset }, pressed && pressedOpacity()]} onPress={onClose}>
         <View style={styles.dropdownContainer}>
           <View style={styles.dropdown}>
             <View style={styles.dropdownHeader}>
-              <Text style={styles.dropdownTitle}>⭐ 常用模型</Text>
-              <Text style={styles.dropdownSubtitle}>
-                {favoriteModels.length}/{FAVORITES_MAX_COUNT}
-              </Text>
+              <Text style={styles.dropdownTitle}>常用模型</Text>
             </View>
 
             <ScrollView
               style={styles.dropdownList}
               showsVerticalScrollIndicator={false}
+              canCancelContentTouches={false}
+              keyboardShouldPersistTaps="handled"
             >
               {favoriteModels.length === 0 ? (
                 <View style={styles.emptyState}>
-                  <Text style={styles.emptyIcon}>📭</Text>
+                  <Ionicons name="inbox-outline" size={36} color={colors.textTertiary} />
                   <Text style={styles.emptyText}>暂无常用模型</Text>
                   <Text style={styles.emptySubtext}>点击下方按钮添加</Text>
                 </View>

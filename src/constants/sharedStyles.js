@@ -76,4 +76,20 @@ export const createSharedStyles = (colors) => ({
   pressedStyle: {
     opacity: 0.7,
   },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 60,
+  },
+  emptyTitle: {
+    fontSize: Typography.fontSize.title3,
+    color: colors.textPrimary,
+    fontWeight: Typography.fontWeight.bold,
+    marginTop: Spacing.md,
+    marginBottom: 6,
+  },
+  emptySubtitle: {
+    fontSize: Typography.fontSize.footnote,
+    color: colors.textTertiary,
+  },
 });

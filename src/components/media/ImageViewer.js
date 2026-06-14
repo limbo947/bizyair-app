@@ -22,6 +22,8 @@ const MIN_SCALE = 1;
 const MAX_SCALE = 5;
 const DOUBLE_TAP_SCALE = 2.5;
 const SLIDE_THRESHOLD = 0.2;
+const DISMISS_THRESHOLD = 100;
+const DISMISS_VELOCITY = 0.5;
 
 /* ════════════════════════════════════════════════════════
    ImageViewerContent — 图片预览内容（key 驱动 remount 复位）
@@ -43,6 +45,8 @@ function ImageViewerContent({ urls, totalCount, prompt, onClose, colors, styles 
   const [panY] = useState(() => new Animated.Value(0));
   const [slideDelta] = useState(() => new Animated.Value(0));
   const [fadeOpacity] = useState(() => new Animated.Value(1));
+  const [dismissY] = useState(() => new Animated.Value(0));
+  const [dismissOpacity] = useState(() => new Animated.Value(1));
 
   /* ── 手势状态 ── */
   const baseScale = useRef(1);
@@ -61,6 +65,7 @@ function ImageViewerContent({ urls, totalCount, prompt, onClose, colors, styles 
   const panXValue = useRef(0);
   const panYValue = useRef(0);
   const slideDeltaValue = useRef(0);
+  const dismissYValue = useRef(0);
   const scaleValue = useRef(1);
 
   useEffect(() => { currentIndexRef.current = currentIndex; }, [currentIndex]);
@@ -71,11 +76,13 @@ function ImageViewerContent({ urls, totalCount, prompt, onClose, colors, styles 
     ids.push(panX.addListener(({ value }) => { panXValue.current = value; }));
     ids.push(panY.addListener(({ value }) => { panYValue.current = value; }));
     ids.push(slideDelta.addListener(({ value }) => { slideDeltaValue.current = value; }));
+    ids.push(dismissY.addListener(({ value }) => { dismissYValue.current = value; }));
     return () => {
       scale.removeListener(ids[0]);
       panX.removeListener(ids[1]);
       panY.removeListener(ids[2]);
       slideDelta.removeListener(ids[3]);
+      dismissY.removeListener(ids[4]);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -226,6 +233,16 @@ function ImageViewerContent({ urls, totalCount, prompt, onClose, colors, styles 
             panY.setValue(lastPanY.current + gestureState.dy);
           } else if (totalCount > 1) {
             slideDelta.setValue(lastSlideDelta.current + gestureState.dx);
+            if (gestureState.dy > 0 && Math.abs(gestureState.dx) < 50) {
+              dismissY.setValue(gestureState.dy);
+              dismissOpacity.setValue(Math.max(0.3, 1 - gestureState.dy / (SCREEN_HEIGHT * 0.5)));
+            }
+          } else {
+            // Single image: vertical swipe to dismiss
+            if (gestureState.dy > 0) {
+              dismissY.setValue(gestureState.dy);
+              dismissOpacity.setValue(Math.max(0.3, 1 - gestureState.dy / (SCREEN_HEIGHT * 0.5)));
+            }
           }
         }
       },
@@ -244,6 +261,28 @@ function ImageViewerContent({ urls, totalCount, prompt, onClose, colors, styles 
           if (baseScale.current <= 1.05) {
             Animated.spring(slideDelta, { toValue: 0, useNativeDriver: true, friction: 7 }).start();
           }
+          return;
+        }
+
+        // Vertical dismiss detection
+        const dismissVelocity = evt.nativeEvent.velocityY || 0;
+        const currentDismissY = dismissYValue.current;
+        if (baseScale.current <= 1.05 && currentDismissY > 0) {
+          if (currentDismissY > DISMISS_THRESHOLD || dismissVelocity > DISMISS_VELOCITY) {
+            Animated.parallel([
+              Animated.timing(dismissY, { toValue: SCREEN_HEIGHT, duration: 200, useNativeDriver: true }),
+              Animated.timing(dismissOpacity, { toValue: 0, duration: 200, useNativeDriver: true }),
+            ]).start(() => {
+              dismissY.setValue(0);
+              dismissOpacity.setValue(1);
+              onClose();
+            });
+            return;
+          }
+          Animated.parallel([
+            Animated.spring(dismissY, { toValue: 0, useNativeDriver: true, friction: 7 }),
+            Animated.spring(dismissOpacity, { toValue: 1, useNativeDriver: true, friction: 7 }),
+          ]).start();
           return;
         }
 
@@ -312,50 +351,53 @@ function ImageViewerContent({ urls, totalCount, prompt, onClose, colors, styles 
 
   return (
     <View style={styles.overlay}>
-      {/* ── 手势层 + 缩放/平移容器 ── */}
-      <View style={StyleSheet.absoluteFillObject} {...panResponder.panHandlers}>
-        <Animated.View
-          style={[
-            styles.zoomContainer,
-            {
-              opacity: fadeOpacity,
-              transform: [
-                { scale },
-                { translateX: composedTranslateX },
-                { translateY: panY },
-              ],
-            },
-          ]}
-        >
-          {/* ── 三图行 ── */}
-          <View style={styles.imageRow}>
-            <View style={styles.imageCell}>
-              {prevUrl ? (
-                <Image source={{ uri: prevUrl }} style={styles.image}
-                  contentFit="contain" cachePolicy="memory-disk"
-                  recyclingKey={prevUrl}
-                />
-              ) : null}
+      {/* ── Dismiss wrapper (下滑关闭动画) ── */}
+      <Animated.View style={[StyleSheet.absoluteFillObject, { opacity: dismissOpacity, transform: [{ translateY: dismissY }] }]}>
+        {/* ── 手势层 + 缩放/平移容器 ── */}
+        <View style={StyleSheet.absoluteFillObject} {...panResponder.panHandlers}>
+          <Animated.View
+            style={[
+              styles.zoomContainer,
+              {
+                opacity: fadeOpacity,
+                transform: [
+                  { scale },
+                  { translateX: composedTranslateX },
+                  { translateY: panY },
+                ],
+              },
+            ]}
+          >
+            {/* ── 三图行 ── */}
+            <View style={styles.imageRow}>
+              <View style={styles.imageCell}>
+                {prevUrl ? (
+                  <Image source={{ uri: prevUrl }} style={styles.image}
+                    contentFit="contain" cachePolicy="memory-disk"
+                    recyclingKey={prevUrl}
+                  />
+                ) : null}
+              </View>
+              <View style={styles.imageCell}>
+                {currentUrl ? (
+                  <Image source={{ uri: currentUrl }} style={styles.image}
+                    contentFit="contain" cachePolicy="memory-disk"
+                    recyclingKey={currentUrl}
+                  />
+                ) : null}
+              </View>
+              <View style={styles.imageCell}>
+                {nextUrl ? (
+                  <Image source={{ uri: nextUrl }} style={styles.image}
+                    contentFit="contain" cachePolicy="memory-disk"
+                    recyclingKey={nextUrl}
+                  />
+                ) : null}
+              </View>
             </View>
-            <View style={styles.imageCell}>
-              {currentUrl ? (
-                <Image source={{ uri: currentUrl }} style={styles.image}
-                  contentFit="contain" cachePolicy="memory-disk"
-                  recyclingKey={currentUrl}
-                />
-              ) : null}
-            </View>
-            <View style={styles.imageCell}>
-              {nextUrl ? (
-                <Image source={{ uri: nextUrl }} style={styles.image}
-                  contentFit="contain" cachePolicy="memory-disk"
-                  recyclingKey={nextUrl}
-                />
-              ) : null}
-            </View>
-          </View>
-        </Animated.View>
-      </View>
+          </Animated.View>
+        </View>
+      </Animated.View>
 
       {/* ── 信息覆盖层 ── */}
       {showInfo ? (
