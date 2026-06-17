@@ -35,4 +35,6 @@ export {
   fetchWebappDetail,
   cancelWebappTask,
   interruptWebappTask,
+  fetchCommunityApps,
+  fetchDict,
 } from './webappApi';

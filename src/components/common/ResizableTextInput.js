@@ -50,9 +50,6 @@ export function ResizableTextInput({
         );
         setHeight(newHeight);
       },
-      onPanResponderRelease: () => {
-        heightRef.current = height;
-      },
     })
   ).current;
   /* eslint-enable react-hooks/refs */

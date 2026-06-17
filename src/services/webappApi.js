@@ -1,6 +1,8 @@
 import {
   WEBAPP_API_BASE,
   WEBAPP_DETAIL_URL,
+  COMMUNITY_API_BASE,
+  DICT_API_URL,
 } from '../constants/models';
 import { request } from './httpClient';
 
@@ -98,7 +100,7 @@ async function fetchWebappDetail(id) {
  * @returns {Promise<object>} 响应数据
  */
 async function cancelWebappTask(apiKey, requestId) {
-  const url = `${WEBAPP_API_BASE}/openapi/cancel?requestId=${encodeURIComponent(requestId)}`;
+  const url = `${WEBAPP_API_BASE}/cancel?requestId=${encodeURIComponent(requestId)}`;
   const result = await request(url, {
     method: 'PUT',
     headers: {
@@ -116,7 +118,7 @@ async function cancelWebappTask(apiKey, requestId) {
  * @returns {Promise<object>} 响应数据
  */
 async function interruptWebappTask(apiKey, requestId) {
-  const url = `${WEBAPP_API_BASE}/openapi/interrupt?requestId=${encodeURIComponent(requestId)}`;
+  const url = `${WEBAPP_API_BASE}/interrupt?requestId=${encodeURIComponent(requestId)}`;
   const result = await request(url, {
     method: 'PUT',
     headers: {
@@ -127,6 +129,64 @@ async function interruptWebappTask(apiKey, requestId) {
   return result;
 }
 
+/**
+ * 获取社区应用列表（公开接口，无需 API Key）。
+ * @param {object} [opts]
+ * @param {number} [opts.current=1] - 页码，从 1 开始
+ * @param {number} [opts.pageSize=28] - 每页数量
+ * @param {string} [opts.keyword=''] - 搜索关键词
+ * @param {string} [opts.sort='Recently'] - 排序：Recently / Most Used / Most Forked / Most Liked
+ * @param {string} [opts.modelTypes='Application'] - 类型筛选
+ * @param {string} [opts.baseModel] - 基础模型筛选（如 "GPT-Image"）
+ * @returns {Promise<{list: Array, total: number, current: number, pageSize: number}>}
+ * @throws {Error} 获取失败时抛出
+ */
+async function fetchCommunityApps({
+  current = 1,
+  pageSize = 28,
+  keyword = '',
+  sort = 'Recently',
+  modelTypes = 'Application',
+  baseModel,
+} = {}) {
+  const params = new URLSearchParams({
+    current: String(current),
+    page_size: String(pageSize),
+    keyword,
+    sort,
+    model_types: modelTypes,
+  });
+  if (baseModel) params.append('base_models', baseModel);
+
+  const url = `${COMMUNITY_API_BASE}?${params}`;
+  const result = await request(url, { method: 'GET' });
+  if (result.code !== 20000 || !result.data) {
+    throw new Error(result.message || '获取应用列表失败');
+  }
+  return {
+    list: result.data.list || [],
+    total: result.data.total || 0,
+    current: result.data.current || current,
+    pageSize: result.data.pageSize || pageSize,
+  };
+}
+
+/**
+ * 获取字典数据（含基础模型分类列表）。
+ * 公开接口，无需 API Key。
+ * @returns {Promise<{baseModels: Array<{label: string, value: string}>, tags: Array}>}
+ */
+async function fetchDict() {
+  const result = await request(DICT_API_URL, { method: 'GET' });
+  if (result.code !== 20000 || !result.data) {
+    throw new Error(result.message || '获取字典数据失败');
+  }
+  return {
+    baseModels: result.data.base_models || [],
+    tags: result.data.tags || [],
+  };
+}
+
 export {
   submitWebappTask,
   queryWebappTaskDetail,
@@ -134,4 +194,6 @@ export {
   fetchWebappDetail,
   cancelWebappTask,
   interruptWebappTask,
+  fetchCommunityApps,
+  fetchDict,
 };
