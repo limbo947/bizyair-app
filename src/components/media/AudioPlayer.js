@@ -1,10 +1,12 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { Pressable, View, Text, Modal, ActivityIndicator, Platform } from 'react-native';
+import { Pressable, View, Text, Modal, ActivityIndicator, Platform, PanResponder } from 'react-native';
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { Ionicons } from '@expo/vector-icons';
 import { Spacing, Typography, pressedOpacity } from '../../constants/theme';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { useTheme } from '../../context/ThemeContext';
+import { useToastContext } from '../../context/ToastContext';
+import { triggerDownload } from '../../utils/download';
 
 const NATIVE = Platform.OS !== 'web';
 
@@ -14,6 +16,7 @@ const NATIVE = Platform.OS !== 'web';
 function WebAudioPlayer({ visible, audioUrl, onClose }) {
   const st = useThemedStyles(createStyles);
   const { colors } = useTheme();
+  const { showToast } = useToastContext();
   const audioRef = useRef(null);
   const rafRef = useRef(null);
   const barRef = useRef(null);
@@ -27,6 +30,7 @@ function WebAudioPlayer({ visible, audioUrl, onClose }) {
   const [mutedVolume, setMutedVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
   const [error, setError] = useState('');
+  const [isDownloading, setIsDownloading] = useState(false);
 
   useEffect(() => {
     if (!visible) return;
@@ -81,15 +85,30 @@ function WebAudioPlayer({ visible, audioUrl, onClose }) {
   const pct = duration > 0 ? (position / duration) * 100 : 0;
   const volPct = isMuted ? 0 : volume * 100;
 
+  const handleDownload = async () => {
+    if (isDownloading || !audioUrl) return;
+    setIsDownloading(true);
+    try {
+      const result = await triggerDownload(audioUrl, `bizyair_audio_${Date.now()}.mp3`);
+      if (result.success) showToast('音频已保存', 'success');
+      else if (result.errorType === 'permission') showToast('需要存储权限才能保存文件', 'error');
+      else showToast(result.message || '下载失败', 'error');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   if (!visible) return null;
 
   return (
     <Modal visible={visible} animationType="fade" transparent={false} onRequestClose={onClose}>
       <View style={st.container}>
         <View style={st.header}>
-          <Pressable style={({ pressed }) => [st.closeBtn, pressed && pressedOpacity()]} onPress={onClose}><Ionicons name="close" size={28} color={colors.textPrimary} /></Pressable>
+          <Pressable style={({ pressed }) => [st.closeBtn, pressed && pressedOpacity()]} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }} onPress={onClose}><Ionicons name="close" size={28} color={colors.textPrimary} /></Pressable>
           <Text style={st.title}>音频预览</Text>
-          <View style={st.closeBtn} />
+          <Pressable style={({ pressed }) => [st.closeBtn, pressed && pressedOpacity()]} onPress={handleDownload} disabled={isDownloading}>
+            <Ionicons name={isDownloading ? 'hourglass-outline' : 'download-outline'} size={24} color={colors.primary} />
+          </Pressable>
         </View>
 
         <View style={st.body}>
@@ -130,9 +149,11 @@ function WebAudioPlayer({ visible, audioUrl, onClose }) {
 function NativeAudioPlayer({ visible, audioUrl, onClose }) {
   const st = useThemedStyles(createStyles);
   const { colors } = useTheme();
+  const { showToast } = useToastContext();
   const [isMuted, setIsMuted] = useState(false);
   const [mutedVolume, setMutedVolume] = useState(1);
   const [volume, setVolume] = useState(1);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const player = useAudioPlayer(audioUrl);
   const status = useAudioPlayerStatus(player);
@@ -173,13 +194,60 @@ function NativeAudioPlayer({ visible, audioUrl, onClose }) {
   const pct = duration > 0 ? (position / duration) * 100 : 0;
   const volPct = isMuted ? 0 : volume * 100;
 
+  const handleDownload = async () => {
+    if (isDownloading || !audioUrl) return;
+    setIsDownloading(true);
+    try {
+      const result = await triggerDownload(audioUrl, `bizyair_audio_${Date.now()}.mp3`);
+      if (result.success) showToast('音频已保存到相册', 'success');
+      else if (result.errorType === 'permission') showToast('需要存储权限才能保存文件', 'error');
+      else showToast(result.message || '下载失败', 'error');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  // 问题5：进度条拖拽支持（PanResponder）
+  const progWidthRef = useRef(1);
+  // eslint-disable-next-line react-hooks/refs -- PanResponder created once, ref accessed only in handlers
+  const [progPanResponder] = useState(() => PanResponder.create({
+    onStartShouldSetPanResponder: () => true,
+    onMoveShouldSetPanResponder: (_, gs) => Math.abs(gs.dx) > 2,
+    onPanResponderGrant: (evt) => {
+      const frac = Math.max(0, Math.min(1, evt.nativeEvent.locationX / progWidthRef.current));
+      seek(frac);
+    },
+    onPanResponderMove: (evt) => {
+      const frac = Math.max(0, Math.min(1, evt.nativeEvent.locationX / progWidthRef.current));
+      seek(frac);
+    },
+  }));
+
+  // 问题5：音量条拖拽支持（PanResponder）
+  const volWidthRef = useRef(1);
+  // eslint-disable-next-line react-hooks/refs -- PanResponder created once, player accessed only in handlers
+  const [volPanResponder] = useState(() => PanResponder.create({
+    onStartShouldSetPanResponder: () => true,
+    onMoveShouldSetPanResponder: (_, gs) => Math.abs(gs.dx) > 2,
+    onPanResponderGrant: (evt) => {
+      const v = Math.max(0, Math.min(1, evt.nativeEvent.locationX / volWidthRef.current));
+      player.volume = v; setVolume(v); if (v > 0 && isMuted) setIsMuted(false);
+    },
+    onPanResponderMove: (evt) => {
+      const v = Math.max(0, Math.min(1, evt.nativeEvent.locationX / volWidthRef.current));
+      player.volume = v; setVolume(v); if (v > 0 && isMuted) setIsMuted(false);
+    },
+  }));
+
   return (
     <Modal visible={visible} animationType="fade" transparent={false} onRequestClose={onClose}>
       <View style={st.container}>
         <View style={st.header}>
-          <Pressable style={({ pressed }) => [st.closeBtn, pressed && pressedOpacity()]} onPress={onClose}><Ionicons name="close" size={28} color={colors.textPrimary} /></Pressable>
+          <Pressable style={({ pressed }) => [st.closeBtn, pressed && pressedOpacity()]} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }} onPress={onClose}><Ionicons name="close" size={28} color={colors.textPrimary} /></Pressable>
           <Text style={st.title}>音频预览</Text>
-          <View style={st.closeBtn} />
+          <Pressable style={({ pressed }) => [st.closeBtn, pressed && pressedOpacity()]} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }} onPress={handleDownload} disabled={isDownloading}>
+            <Ionicons name={isDownloading ? 'hourglass-outline' : 'download-outline'} size={24} color={colors.primary} />
+          </Pressable>
         </View>
 
         <View style={st.body}>
@@ -188,9 +256,13 @@ function NativeAudioPlayer({ visible, audioUrl, onClose }) {
 
           <View style={st.progressRow}>
             <Text style={st.t}>{fmt(position)}</Text>
-            <Pressable style={({ pressed }) => [st.progArea, pressed && pressedOpacity()]} onPress={(e) => { e.currentTarget.measure((_, __, w) => seek(e.nativeEvent.locationX / w)); }}>
+            <View
+              style={st.progArea}
+              onLayout={(e) => { progWidthRef.current = e.nativeEvent.layout.width || 1; }}
+              {...progPanResponder.panHandlers}
+            >
               <View style={st.progBg}><View style={[st.progFill, { width: `${pct}%` }]} /></View>
-            </Pressable>
+            </View>
             <Text style={st.t}>{fmt(duration)}</Text>
           </View>
 
@@ -204,9 +276,13 @@ function NativeAudioPlayer({ visible, audioUrl, onClose }) {
             <Pressable style={({ pressed }) => [st.volIcon, pressed && pressedOpacity()]} onPress={toggleMute}>
               <Ionicons name={isMuted || volume === 0 ? 'volume-mute' : volume < 0.5 ? 'volume-low' : 'volume-medium'} size={20} color={colors.textSecondary} />
             </Pressable>
-            <Pressable style={({ pressed }) => [st.volArea, pressed && pressedOpacity()]} onPress={(e) => { e.currentTarget.measure((_, __, w) => { const v = Math.max(0, Math.min(1, e.nativeEvent.locationX / w)); player.volume = v; setVolume(v); if (v > 0 && isMuted) setIsMuted(false); }); }}>
+            <View
+              style={st.volArea}
+              onLayout={(e) => { volWidthRef.current = e.nativeEvent.layout.width || 1; }}
+              {...volPanResponder.panHandlers}
+            >
               <View style={st.volBg}><View style={[st.volFill, { width: `${volPct}%` }]} /></View>
-            </Pressable>
+            </View>
           </View>
         </View>
       </View>

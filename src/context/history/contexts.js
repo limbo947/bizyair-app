@@ -19,6 +19,8 @@ export const DEFAULT_HOME_STATE = {
 
 export const MAX_POLL_FAILS = 5;
 
+export const ACTIVE_STATUSES = ['Pending', 'Running', 'Saving'];
+
 export function getPollingInterval(elapsedMs) {
   if (elapsedMs < 30000) return 3000;
   if (elapsedMs < 60000) return 5000;

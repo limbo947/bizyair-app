@@ -4,13 +4,16 @@ import { Pressable, View,
   StyleSheet,
   Modal,
   ActivityIndicator,
-  Platform, } from 'react-native';
+  Platform,
+  PanResponder, } from 'react-native';
 import { useEvent } from 'expo';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { Ionicons } from '@expo/vector-icons';
 import { Spacing, Typography, pressedOpacity } from '../../constants/theme';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { useTheme } from '../../context/ThemeContext';
+import { useToastContext } from '../../context/ToastContext';
+import { triggerDownload } from '../../utils/download';
 
 const NATIVE = Platform.OS !== 'web';
 
@@ -20,6 +23,7 @@ const NATIVE = Platform.OS !== 'web';
 function WebVideoPlayer({ visible, videoUrl, onClose }) {
   const s = useThemedStyles(createStyles);
   const { colors } = useTheme();
+  const { showToast } = useToastContext();
   const vidRef = useRef(null);
   const elRef = useRef(null);
   const rafRef = useRef(null);
@@ -33,6 +37,8 @@ function WebVideoPlayer({ visible, videoUrl, onClose }) {
   const [isMuted, setIsMuted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   /* ---- create / destroy -------------------------------------------------- */
   useEffect(() => {
@@ -91,6 +97,32 @@ function WebVideoPlayer({ visible, videoUrl, onClose }) {
   const pct = duration > 0 ? (position / duration) * 100 : 0;
   const volPct = isMuted ? 0 : volume * 100;
 
+  const handleDownload = async () => {
+    if (isDownloading || !videoUrl) return;
+    setIsDownloading(true);
+    try {
+      const result = await triggerDownload(videoUrl, `bizyair_video_${Date.now()}.mp4`);
+      if (result.success) showToast('视频已保存', 'success');
+      else if (result.errorType === 'permission') showToast('需要存储权限才能保存文件', 'error');
+      else showToast(result.message || '下载失败', 'error');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  const toggleFullscreen = async () => {
+    try {
+      const container = elRef.current?.parentElement;
+      if (!document.fullscreenElement && container) {
+        await container.requestFullscreen?.();
+        setIsFullscreen(true);
+      } else if (document.exitFullscreen) {
+        await document.exitFullscreen();
+        setIsFullscreen(false);
+      }
+    } catch { /* 全屏 API 部分浏览器不支持，静默忽略 */ }
+  };
+
   if (!visible) return null;
 
   return (
@@ -98,9 +130,16 @@ function WebVideoPlayer({ visible, videoUrl, onClose }) {
       <View style={s.full}>
         {/* header */}
         <View style={s.header}>
-          <Pressable style={({ pressed }) => [s.btn, pressed && pressedOpacity()]} onPress={onClose}><Ionicons name="chevron-down" size={28} color={colors.textOnOverlay} /></Pressable>
+          <Pressable style={({ pressed }) => [s.btn, pressed && pressedOpacity()]} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }} onPress={onClose}><Ionicons name="close" size={28} color={colors.textOnOverlay} /></Pressable>
           <Text style={s.title}>视频预览</Text>
-          <View style={s.btn} />
+          <View style={s.headerActions}>
+            <Pressable style={({ pressed }) => [s.btn, pressed && pressedOpacity()]} onPress={handleDownload} disabled={isDownloading}>
+              <Ionicons name={isDownloading ? 'hourglass-outline' : 'download-outline'} size={24} color={colors.textOnOverlay} />
+            </Pressable>
+            <Pressable style={({ pressed }) => [s.btn, pressed && pressedOpacity()]} onPress={toggleFullscreen}>
+              <Ionicons name={isFullscreen ? 'contract-outline' : 'expand-outline'} size={24} color={colors.textOnOverlay} />
+            </Pressable>
+          </View>
         </View>
 
         {/* video container */}
@@ -141,9 +180,12 @@ function WebVideoPlayer({ visible, videoUrl, onClose }) {
 function NativeVideoPlayer({ visible, videoUrl, onClose }) {
   const s = useThemedStyles(createStyles);
   const { colors } = useTheme();
+  const { showToast } = useToastContext();
   const [isMuted, setIsMuted] = useState(false);
   const [mutedVolume, setMutedVolume] = useState(1);
   const [error, setError] = useState('');
+  const [isDownloading, setIsDownloading] = useState(false);
+  const videoRef = useRef(null);
 
   const player = useVideoPlayer(videoUrl, (p) => {
     p.loop = false;
@@ -202,20 +244,79 @@ function NativeVideoPlayer({ visible, videoUrl, onClose }) {
   const pct = duration > 0 ? (currentTime / duration) * 100 : 0;
   const volPct = isMuted ? 0 : playerVolume * 100;
 
+  const handleDownload = async () => {
+    if (isDownloading || !videoUrl) return;
+    setIsDownloading(true);
+    try {
+      const result = await triggerDownload(videoUrl, `bizyair_video_${Date.now()}.mp4`);
+      if (result.success) showToast('视频已保存到相册', 'success');
+      else if (result.errorType === 'permission') showToast('需要存储权限才能保存文件', 'error');
+      else showToast(result.message || '下载失败', 'error');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  const toggleFullscreen = () => {
+    // expo-video VideoView 提供 enterFullscreen/exitFullscreen 命令式 API
+    if (videoRef.current) {
+      videoRef.current.enterFullscreen?.();
+    }
+  };
+
+  // 问题5：进度条拖拽支持（PanResponder）
+  const progWidthRef = useRef(1);
+  // eslint-disable-next-line react-hooks/refs, react-hooks/immutability -- PanResponder created once, seek modifies player only in handlers
+  const [progPanResponder] = useState(() => PanResponder.create({
+    onStartShouldSetPanResponder: () => true,
+    onMoveShouldSetPanResponder: (_, gs) => Math.abs(gs.dx) > 2,
+    onPanResponderGrant: (evt) => {
+      const frac = Math.max(0, Math.min(1, evt.nativeEvent.locationX / progWidthRef.current));
+      seek(frac);
+    },
+    onPanResponderMove: (evt) => {
+      const frac = Math.max(0, Math.min(1, evt.nativeEvent.locationX / progWidthRef.current));
+      seek(frac);
+    },
+  }));
+
+  // 问题5：音量条拖拽支持（PanResponder）
+  const volWidthRef = useRef(1);
+  // eslint-disable-next-line react-hooks/refs -- PanResponder created once, player accessed only in handlers
+  const [volPanResponder] = useState(() => PanResponder.create({
+    onStartShouldSetPanResponder: () => true,
+    onMoveShouldSetPanResponder: (_, gs) => Math.abs(gs.dx) > 2,
+    onPanResponderGrant: (evt) => {
+      const v = Math.max(0, Math.min(1, evt.nativeEvent.locationX / volWidthRef.current));
+      player.volume = v; if (v > 0 && isMuted) setIsMuted(false);
+    },
+    onPanResponderMove: (evt) => {
+      const v = Math.max(0, Math.min(1, evt.nativeEvent.locationX / volWidthRef.current));
+      player.volume = v; if (v > 0 && isMuted) setIsMuted(false);
+    },
+  }));
+
   if (!visible) return null;
 
   return (
     <Modal visible={visible} animationType="fade" transparent={false} onRequestClose={onClose}>
       <Pressable style={s.full} >
         <View style={s.header}>
-          <Pressable style={({ pressed }) => [s.btn, pressed && pressedOpacity()]} onPress={onClose}><Ionicons name="chevron-down" size={28} color={colors.textOnOverlay} /></Pressable>
+          <Pressable style={({ pressed }) => [s.btn, pressed && pressedOpacity()]} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }} onPress={onClose}><Ionicons name="close" size={28} color={colors.textOnOverlay} /></Pressable>
           <Text style={s.title}>视频预览</Text>
-          <View style={s.btn} />
+          <View style={s.headerActions}>
+            <Pressable style={({ pressed }) => [s.btn, pressed && pressedOpacity()]} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }} onPress={handleDownload} disabled={isDownloading}>
+              <Ionicons name={isDownloading ? 'hourglass-outline' : 'download-outline'} size={24} color={colors.textOnOverlay} />
+            </Pressable>
+            <Pressable style={({ pressed }) => [s.btn, pressed && pressedOpacity()]} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }} onPress={toggleFullscreen}>
+              <Ionicons name="expand-outline" size={24} color={colors.textOnOverlay} />
+            </Pressable>
+          </View>
         </View>
 
         <View style={s.videoBox}>
           {isErrored || error ? <View style={s.center}><Ionicons name="alert-circle-outline" size={48} color="#999" /><Text style={s.errText}>{error || '视频加载失败'}</Text></View>
-          : <VideoView player={player} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} contentFit="contain" nativeControls={false} />}
+          : <VideoView ref={videoRef} player={player} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} contentFit="contain" nativeControls={false} />}
           {isLoading && !isErrored && !error ? <View style={s.loadingOverlay}><ActivityIndicator size="large" color={colors.textOnOverlay} /><Text style={s.loadingText}>加载中...</Text></View> : null}
           {!isPlaying && !isLoading && !isErrored && !error ? <Pressable style={({ pressed }) => [s.bigPlay, pressed && pressedOpacity()]} onPress={togglePlay}><Ionicons name="play-circle" size={72} color={colors.textOnOverlay} /></Pressable> : null}
         </View>
@@ -223,18 +324,26 @@ function NativeVideoPlayer({ visible, videoUrl, onClose }) {
         <View style={s.ctrlBar}>
           <View style={s.progressRow}>
             <Text style={s.t}>{fmt(currentTime)}</Text>
-            <Pressable style={({ pressed }) => [s.progArea, pressed && pressedOpacity()]} onPress={(e) => { e.currentTarget.measure((_, __, w) => seek(e.nativeEvent.locationX / w)); }}>
+            <View
+              style={s.progArea}
+              onLayout={(e) => { progWidthRef.current = e.nativeEvent.layout.width || 1; }}
+              {...progPanResponder.panHandlers}
+            >
               <View style={s.progBg}><View style={[s.progFill, { width: `${pct}%` }]} /></View>
-            </Pressable>
+            </View>
             <Text style={s.t}>{fmt(duration)}</Text>
           </View>
 
           <View style={s.ctrlRow}>
             <Pressable style={({ pressed }) => [s.ctrlBtn, pressed && pressedOpacity()]} onPress={togglePlay} disabled={isLoading}><Ionicons name={isPlaying ? 'pause' : 'play'} size={32} color={isLoading ? colors.textTertiary : colors.textOnOverlay} /></Pressable>
             <Pressable style={({ pressed }) => [s.ctrlBtn, pressed && pressedOpacity()]} onPress={toggleMute}><Ionicons name={isMuted || playerVolume === 0 ? 'volume-mute' : playerVolume < 0.5 ? 'volume-low' : 'volume-medium'} size={24} color={colors.textOnOverlay} /></Pressable>
-            <Pressable style={({ pressed }) => [s.volArea, pressed && pressedOpacity()]} onPress={(e) => { e.currentTarget.measure((_, __, w) => { const v = Math.max(0, Math.min(1, e.nativeEvent.locationX / w)); player.volume = v; if (v > 0 && isMuted) setIsMuted(false); }); }}>
+            <View
+              style={s.volArea}
+              onLayout={(e) => { volWidthRef.current = e.nativeEvent.layout.width || 1; }}
+              {...volPanResponder.panHandlers}
+            >
               <View style={s.volBg}><View style={[s.volFill, { width: `${volPct}%` }]} /></View>
-            </Pressable>
+            </View>
           </View>
         </View>
       </Pressable>
@@ -252,6 +361,7 @@ const createStyles = (colors) => ({
   full: { flex: 1, backgroundColor: colors.overlayHeavy },
   header: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 50, paddingHorizontal: Spacing.lg, paddingBottom: Spacing.md, backgroundColor: colors.overlayMedium },
   btn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
   title: { fontSize: Typography.fontSize.callout, fontWeight: Typography.fontWeight.semibold, color: colors.textOnOverlay },
   videoBox: { flex: 1, width: '100%', overflow: 'hidden' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },

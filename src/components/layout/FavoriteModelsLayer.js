@@ -119,7 +119,7 @@ export function FavoriteModelsLayer({
       >
         {favoriteModels.length === 0 ? (
           <View style={styles.emptyState}>
-            <Ionicons name="inbox-outline" size={36} color={colors.textTertiary} />
+            <Ionicons name="file-tray-outline" size={36} color={colors.textTertiary} />
             <Text style={styles.emptyText}>暂无常用模型</Text>
             <Text style={styles.emptySubtext}>点击下方按钮添加</Text>
           </View>

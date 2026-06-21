@@ -115,34 +115,7 @@ export function useHomeSubmit({
     const isVideo = initialOutputType === 'video';
     const s = stateRef.current;
 
-    if (!s.prompt.trim() && paramType !== 'dreamactor' && paramType !== 'birefnet' && paramType !== 'seedvr2' && paramType !== 'flux-klein' && paramType !== 'ace-step') {
-      setError('请输入提示词');
-      return;
-    }
-    if (mode === 'image-to-image' && s.imageUrls.length === 0) {
-      setError('请至少上传一张参考图片');
-      return;
-    }
-    if (mode === 'image-to-video' && s.imageUrls.length === 0 && s.firstFrameUrls.length === 0) {
-      setError('请至少上传一张参考图片');
-      return;
-    }
-    if (mode === 'flf-to-video' && s.firstFrameUrls.length === 0) {
-      setError('请上传首帧图片');
-      return;
-    }
-    if (mode === 'video-edit' && s.videoUrls.length === 0) {
-      setError('请上传视频文件');
-      return;
-    }
-    if (mode === 'video-extend' && s.firstFrameUrls.length === 0 && s.videoUrls.length === 0) {
-      setError('请上传视频文件');
-      return;
-    }
-    if (mode === 'reference-to-video' && paramType === 'dreamactor' && (s.imageUrls.length === 0 || s.videoUrls.length === 0)) {
-      setError('请上传人物图片和参考视频');
-      return;
-    }
+    // 表单校验由 useFormValidation 统一负责，此处仅做 API Key 回退处理
     const ek = apiKey.trim() || ENV_API_KEY;
     if (!ek) {
       setShowApiKeyInput(true);
@@ -202,6 +175,8 @@ export function useHomeSubmit({
 
     try {
       const payload = buildPayload(modelId, mode, params);
+      // 将真实请求体存入历史记录，供日志弹窗展示
+      updateHistoryItem(id, { requestPayload: payload });
       let submitResult;
       if (paramType === 'llm-chat') {
         submitResult = await submitLLMTask(ek, modelId, mode, payload);

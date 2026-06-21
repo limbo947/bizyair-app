@@ -6,7 +6,8 @@ import {
   FlatList,
   Platform,
   Alert,
-  RefreshControl, } from 'react-native';
+  RefreshControl,
+  BackHandler, } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getVideoThumbnailAsync } from 'expo-video-thumbnails';
@@ -79,6 +80,8 @@ export function HistoryScreen() {
   const flatListRef = useRef(null);
   const prevActiveTab = useRef(activeTab);
   const [thumbMap, setThumbMap] = useState({});
+  // 问题4修复：用 ref 追踪已处理过的视频 URL，避免重复生成缩略图
+  const processedThumbsRef = useRef(new Set());
 
   useEffect(() => {
     if (
@@ -89,6 +92,13 @@ export function HistoryScreen() {
     }
     prevActiveTab.current = activeTab;
   }, [activeTab, refreshRunningTasks]);
+
+  // 问题1修复：组件卸载时清理搜索防抖定时器，避免内存泄漏
+  useEffect(() => {
+    return () => {
+      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    };
+  }, []);
 
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
@@ -135,26 +145,67 @@ export function HistoryScreen() {
 
   useEffect(() => {
     const videoItems = displayedItems
-      .filter((item) => item.outputType === 'video' && (item.videoUrl || item.localVideoUrl) && !thumbMap[item.localVideoUrl || item.videoUrl]);
+      .filter((item) => {
+        if (item.outputType !== 'video') return false;
+        const url = resolveUrl(item.localVideoUrl, item.videoUrl);
+        if (!url) return false;
+        // 跳过已有缩略图或已处理过的 URL
+        if (thumbMap[url]) return false;
+        if (processedThumbsRef.current.has(url)) return false;
+        return true;
+      });
     if (videoItems.length === 0) return;
     let cancelled = false;
+    // 标记为已处理，防止后续 effect 重复触发
+    videoItems.forEach((item) => {
+      const url = resolveUrl(item.localVideoUrl, item.videoUrl);
+      processedThumbsRef.current.add(url);
+    });
+    // 并发生成缩略图，限制并发数 3，避免长列表串行阻塞
+    const CONCURRENCY = 3;
     const loadThumbnails = async () => {
-      for (const item of videoItems) {
-        if (cancelled) break;
-        try {
-          const url = resolveUrl(item.localVideoUrl, item.videoUrl);
-          const { uri } = await getVideoThumbnailAsync(url, { time: 2000 });
-          if (!cancelled && uri) {
-            setThumbMap((prev) => ({ ...prev, [url]: uri }));
-          }
-        } catch (e) { console.warn('生成缩略图失败:', e?.message || e); }
-      }
+      let cursor = 0;
+      const workers = Array.from({ length: Math.min(CONCURRENCY, videoItems.length) }, async () => {
+        while (cursor < videoItems.length) {
+          const idx = cursor++;
+          if (cancelled) break;
+          const item = videoItems[idx];
+          try {
+            const url = resolveUrl(item.localVideoUrl, item.videoUrl);
+            const { uri } = await getVideoThumbnailAsync(url, { time: 2000 });
+            if (!cancelled && uri) {
+              setThumbMap((prev) => ({ ...prev, [url]: uri }));
+            }
+          } catch (e) { console.warn('生成缩略图失败:', e?.message || e); }
+        }
+      });
+      await Promise.all(workers);
     };
     loadThumbnails();
     return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- thumbMap 仅用于跳过判断，不作为触发依赖
   }, [displayedItems]);
 
-  const loadMore = useCallback(() => { if (hasMore) setVisibleCount((prev) => prev + PAGE_SIZE); }, [hasMore]);
+  const loadingMoreRef = useRef(false);
+  const loadMore = useCallback(() => {
+    if (!hasMore || loadingMoreRef.current) return;
+    loadingMoreRef.current = true;
+    setVisibleCount((prev) => prev + PAGE_SIZE);
+    // 防抖：避免快速滚动时 onEndReached 多次触发
+    setTimeout(() => { loadingMoreRef.current = false; }, 300);
+  }, [hasMore]);
+
+  // 批量模式下按返回键退出批量模式（Android）
+  useEffect(() => {
+    if (!batchMode) return;
+    const handler = () => {
+      setBatchMode(false);
+      setSelectedIds(new Set());
+      return true; // 拦截返回键
+    };
+    const sub = BackHandler.addEventListener('hardwareBackPress', handler);
+    return () => sub.remove();
+  }, [batchMode]);
   const handleSearch = useCallback((text) => {
     setSearchText(text);
     if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
@@ -239,28 +290,42 @@ export function HistoryScreen() {
     setIsDownloading(true);
     let successCount = 0;
     let failCount = 0;
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
+    let totalCount = 0;
+
+    // 问题2修复：构建所有下载任务列表
+    const tasks = [];
+    for (const item of items) {
       const ext = item.outputType === 'video' ? '.mp4' : item.outputType === 'audio' ? `.${item.responseFormat || 'mp3'}` : '.jpg';
       const localImageUrls = item.localImageUrls?.length > 0 ? item.localImageUrls : null;
       const dlImageUrls = localImageUrls || item.imageUrls;
       if (item.outputType === 'image' && dlImageUrls && dlImageUrls.length > 1) {
         for (let j = 0; j < dlImageUrls.length; j++) {
-          const result = await downloadFile(dlImageUrls[j], `bizyair_${item.id}_${j + 1}${ext}`, { silent: true });
-          if (result.skipped) { /* already downloading */ }
-          else if (result.success) successCount++; else failCount++;
-          await new Promise((resolve) => setTimeout(resolve, 300));
+          tasks.push({ url: dlImageUrls[j], filename: `bizyair_${item.id}_${j + 1}${ext}` });
         }
       } else {
         const url = resolveUrl(item.localVideoUrl, item.videoUrl) || resolveUrl(item.localAudioUrl, item.audioUrl) || resolveUrl(item.localImageUrl, item.imageUrl);
-        const result = await downloadFile(url, `bizyair_${item.id}${ext}`, { silent: true });
-        if (result.skipped) { /* already downloading */ }
-        else if (result.success) successCount++; else failCount++;
+        if (url) tasks.push({ url, filename: `bizyair_${item.id}${ext}` });
       }
-      if (i < items.length - 1) await new Promise((resolve) => setTimeout(resolve, 500));
     }
+    totalCount = tasks.length;
+
+    // 问题2修复：并发下载，限制并发数 3，移除 500ms 硬延迟
+    const CONCURRENCY = 3;
+    let cursor = 0;
+    const workers = Array.from({ length: Math.min(CONCURRENCY, tasks.length) }, async () => {
+      while (cursor < tasks.length) {
+        const idx = cursor++;
+        const task = tasks[idx];
+        const result = await downloadFile(task.url, task.filename, { silent: true });
+        if (result.skipped) { /* already downloading */ }
+        else if (result.success) successCount++;
+        else failCount++;
+      }
+    });
+    await Promise.all(workers);
+
     if (failCount > 0) {
-      showToast(`${successCount} 个下载成功，${failCount} 个失败`, 'error');
+      showToast(`${successCount}/${totalCount} 个下载成功，${failCount} 个失败`, 'error');
     } else {
       showToast(`${successCount} 个文件已保存到相册`, 'success');
     }
@@ -305,7 +370,7 @@ export function HistoryScreen() {
     );
   }, [thumbMap, selectedIds, batchMode, toggleSelect, handleDownload, stopPolling, resubmitTask]);
 
-  const extraData = useMemo(() => ({ selectedIds, thumbMap }), [selectedIds, thumbMap]);
+  const extraData = useMemo(() => ({ selectedIds }), [selectedIds]);
 
   const renderFooter = useCallback(() => {
     if (!hasMore) {
@@ -320,7 +385,7 @@ export function HistoryScreen() {
     const histLen = Array.isArray(history) ? history.length : 0;
     if (histLen === 0) return (
       <View style={styles.emptyContainer}>
-        <Ionicons name="inbox-outline" size={48} color={colors.textTertiary} />
+        <Ionicons name="file-tray-outline" size={48} color={colors.textTertiary} />
         <Text style={styles.emptyTitle}>暂无历史记录</Text>
         <Text style={styles.emptySubtitle}>开始创作，你的作品将在这里展示</Text>
       </View>
@@ -339,6 +404,7 @@ export function HistoryScreen() {
       <HistoryFilters
         topInset={insets.top}
         history={history}
+        filteredCount={filteredHistory.length}
         searchText={searchText}
         filterBy={filterBy}
         sortBy={sortBy}

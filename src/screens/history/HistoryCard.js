@@ -1,27 +1,20 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { Pressable, StyleSheet, Text, View, ActivityIndicator } from 'react-native';
+import { Pressable, StyleSheet, Text, View, ActivityIndicator, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import { isTokenPricedModel } from '../../utils/modelHelpers';
 import { resolveUrl } from '../../utils/resultCache';
+import { STATUS_LABELS } from '../../constants/models';
 import { pressedOpacity, Radius, Spacing, Typography } from '../../constants/theme';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { useTheme } from '../../context/ThemeContext';
+import { useToastContext } from '../../context/ToastContext';
 import { DurationDisplay } from './DurationDisplay';
 
 const ACTIVE_STATUSES = ['Pending', 'Running', 'Saving'];
 const FINAL_STATUSES = ['Success', 'Failed', 'Canceled'];
-
-const STATUS_LABELS = {
-  Pending: '等待中',
-  Running: '运行中',
-  Saving: '保存中',
-  Success: '已完成',
-  Failed: '失败',
-  Canceled: '已取消',
-};
 
 export const HistoryCard = React.memo(function HistoryCard({
   item,
@@ -42,9 +35,13 @@ export const HistoryCard = React.memo(function HistoryCard({
 }) {
   const styles = useThemedStyles(createStyles);
   const { colors, theme } = useTheme();
+  const { showToast } = useToastContext();
   const router = useRouter();
 
   const [copied, setCopied] = useState(false);
+  const [stopping, setStopping] = useState(false);
+  const [resubmitting, setResubmitting] = useState(false);
+  const [errorExpanded, setErrorExpanded] = useState(false); // 问题16：错误信息展开/收起
   const copiedTimer = useRef(null);
 
   const handleCopy = useCallback(async () => {
@@ -53,6 +50,38 @@ export const HistoryCard = React.memo(function HistoryCard({
     if (copiedTimer.current) clearTimeout(copiedTimer.current);
     copiedTimer.current = setTimeout(() => setCopied(false), 1500);
   }, [item.prompt]);
+
+  const handleResubmit = useCallback(async () => {
+    if (resubmitting) return;
+    setResubmitting(true);
+    try {
+      const ok = await resubmitTask(item);
+      if (ok) {
+        // 问题17修复：不自动跳转，让用户选择是否前往主页
+        showToast('参数已恢复', 'success');
+        Alert.alert('参数已恢复', '是否前往主页继续编辑？', [
+          { text: '留在此处', style: 'cancel' },
+          { text: '前往主页', onPress: () => router.navigate('/') },
+        ]);
+      } else {
+        showToast('恢复参数失败，请重试', 'error');
+      }
+    } catch {
+      showToast('恢复参数失败，请重试', 'error');
+    } finally {
+      setResubmitting(false);
+    }
+  }, [resubmitting, resubmitTask, item, showToast, router]);
+
+  const handleStop = useCallback(async () => {
+    if (stopping) return;
+    setStopping(true);
+    try {
+      await stopPolling(item.id);
+    } finally {
+      setStopping(false);
+    }
+  }, [stopping, stopPolling, item.id]);
 
   useEffect(() => {
     return () => { if (copiedTimer.current) clearTimeout(copiedTimer.current); };
@@ -164,15 +193,15 @@ export const HistoryCard = React.memo(function HistoryCard({
           <View style={styles.historyInfoHeader}>
             <Text style={styles.historyPrompt} numberOfLines={2}>{item.prompt}</Text>
             {isWebapp && isActive && !batchMode ? (
-              <Pressable style={({ pressed }) => [styles.stopButton, pressed && pressedOpacity()]} onPress={() => stopPolling(item.id)} >
-                <Ionicons name="stop-circle" size={18} color={colors.error} />
-                <Text style={styles.stopButtonText}>终止</Text>
+              <Pressable style={({ pressed }) => [styles.stopButton, pressed && pressedOpacity(), stopping && styles.stopButtonDisabled]} onPress={handleStop} disabled={stopping}>
+                {stopping ? <ActivityIndicator size="small" color={colors.error} /> : <Ionicons name="stop-circle" size={18} color={colors.error} />}
+                <Text style={styles.stopButtonText}>{stopping ? '终止中' : '终止'}</Text>
               </Pressable>
             ) : null}
           </View>
           <Text style={styles.historyMeta}>{item.modelName}{(item.outputType === 'image' || item.outputType === 'video') && item.actualResolution ? ` · ${item.actualResolution}` : item.resolution ? ` · ${item.resolution}` : ''} · {item.date}</Text>
           <View style={styles.historyDurationRow}>
-            <DurationDisplay startedAt={item.startedAt} completedAt={item.completedAt} isFinal={isFinal} isActive={isActive} colors={colors} />
+            <DurationDisplay startedAt={item.startedAt} completedAt={item.completedAt} isFinal={isFinal} isActive={isActive} colors={colors} status={item.status} />
             <View style={[styles.statusBadge, { backgroundColor: statusBg }]}>
               {isActive ? <ActivityIndicator size="small" color={statusColor} style={styles.statusSpinner} /> : null}
               <Text style={[styles.statusText, { color: statusColor }]}>{statusLabel}</Text>
@@ -194,8 +223,8 @@ export const HistoryCard = React.memo(function HistoryCard({
                 </Pressable>
               ) : null}
               {!batchMode ? (
-                <Pressable style={({ pressed }) => [styles.iconButton, styles.iconButtonWarning, pressed && pressedOpacity()]} onPress={() => { resubmitTask(item); router.navigate('/'); }}>
-                  <Ionicons name="refresh-outline" size={18} color={colors.warning} />
+                <Pressable style={({ pressed }) => [styles.iconButton, styles.iconButtonWarning, pressed && pressedOpacity(), resubmitting && styles.iconButtonDisabled]} onPress={handleResubmit} disabled={resubmitting}>
+                  {resubmitting ? <ActivityIndicator size="small" color={colors.warning} /> : <Ionicons name="refresh-outline" size={18} color={colors.warning} />}
                 </Pressable>
               ) : null}
               <Pressable style={({ pressed }) => [styles.iconButton, styles.iconButtonPrimary, pressed && pressedOpacity()]} onPress={() => setLogModal(item)}>
@@ -209,7 +238,21 @@ export const HistoryCard = React.memo(function HistoryCard({
             </View>
           </View>
           {item.errorMessage ? (
-            <Text style={[styles.historyError, item.status !== 'Failed' && styles.historyErrorWarning]} numberOfLines={1}>{item.errorMessage}</Text>
+            <Pressable
+              onPress={() => setErrorExpanded((prev) => !prev)}
+              disabled={errorExpanded && (item.errorMessage?.length || 0) <= 80}
+              style={styles.errorWrap}
+            >
+              <Text
+                style={[styles.historyError, item.status !== 'Failed' && styles.historyErrorWarning]}
+                numberOfLines={errorExpanded ? undefined : 2}
+              >
+                {item.errorMessage}
+              </Text>
+              {(item.errorMessage?.length || 0) > 80 ? (
+                <Text style={styles.errorToggleText}>{errorExpanded ? '收起' : '展开'}</Text>
+              ) : null}
+            </Pressable>
           ) : null}
         </View>
       </Pressable>
@@ -235,7 +278,7 @@ export const HistoryCard = React.memo(function HistoryCard({
 });
 
 const createStyles = (colors) => ({
-  historyCard: { flexDirection: 'row', backgroundColor: colors.card, borderRadius: Radius.xs, borderCurve: 'continuous', marginBottom: Spacing.sm, overflow: 'hidden' },
+  historyCard: { flexDirection: 'row', backgroundColor: colors.card, borderRadius: Radius.xs, borderCurve: 'continuous', marginBottom: Spacing.sm, overflow: 'hidden', maxWidth: 720, width: '100%', alignSelf: 'center' },
   checkboxArea: { width: 44, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg },
   checkbox: { width: 22, height: 22, borderRadius: Radius.full, borderCurve: 'continuous', borderWidth: 1.5, borderColor: colors.disabled, alignItems: 'center', justifyContent: 'center' },
   checkboxChecked: { backgroundColor: colors.primary, borderColor: colors.primary },
@@ -266,19 +309,20 @@ const createStyles = (colors) => ({
     backgroundColor: colors.bg,
   },
   thumbGridItem: {
-    width: '48%',
-    height: '48%',
+    flex: 1,
+    aspectRatio: 1,
     borderRadius: 2,
     borderCurve: 'continuous',
     resizeMode: 'cover',
+    minWidth: 0,
   },
   thumbGridItem2: {
-    width: '48%',
+    flex: 1,
     height: '100%',
   },
   thumbGridItem3First: {
-    width: '100%',
-    height: '48%',
+    flexBasis: '100%',
+    aspectRatio: 2,
   },
   thumbGridOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -296,6 +340,7 @@ const createStyles = (colors) => ({
   historyInfo: { flex: 1, padding: Spacing.md, justifyContent: 'space-between', alignSelf: 'center' },
   historyInfoHeader: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: Spacing.sm },
   stopButton: { flexDirection: 'row', alignItems: 'center', gap: 2, paddingHorizontal: Spacing.sm, paddingVertical: 3, borderRadius: Radius.full, borderCurve: 'continuous', backgroundColor: colors.errorBg },
+  stopButtonDisabled: { opacity: 0.5 },
   stopButtonText: { fontSize: Typography.fontSize.caption1, color: colors.error, fontWeight: Typography.fontWeight.semibold },
   historyPrompt: { fontSize: Typography.fontSize.footnote, color: colors.textPrimary, fontWeight: Typography.fontWeight.medium, lineHeight: 18, flex: 1 },
   historyMeta: { fontSize: Typography.fontSize.caption1, color: colors.textTertiary, marginTop: 3 },
@@ -308,6 +353,7 @@ const createStyles = (colors) => ({
   historyPrice: { fontSize: Typography.fontSize.footnote, color: colors.warning, fontWeight: Typography.fontWeight.bold, lineHeight: 18 },
   historyActions: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   iconButton: { width: 28, height: 28, borderRadius: Radius.xs, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center' },
+  iconButtonDisabled: { opacity: 0.5 },
   iconButtonSuccess: { backgroundColor: colors.successBg },
   iconButtonPurple: { backgroundColor: colors.purpleBg },
   iconButtonCopied: { backgroundColor: colors.successBg },
@@ -317,4 +363,6 @@ const createStyles = (colors) => ({
   iconButtonRunning: { backgroundColor: colors.primaryBg },
   historyError: { fontSize: Typography.fontSize.caption2, color: colors.error, marginTop: 2 },
   historyErrorWarning: { color: colors.warning },
+  errorWrap: { marginTop: 2 },
+  errorToggleText: { fontSize: Typography.fontSize.caption2, color: colors.primary, fontWeight: Typography.fontWeight.semibold, marginTop: 2, alignSelf: 'flex-end' },
 });

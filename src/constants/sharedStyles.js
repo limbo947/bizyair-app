@@ -31,8 +31,9 @@ export const createSharedStyles = (colors) => ({
     fontWeight: Typography.fontWeight.semibold,
     color: colors.textSecondary,
     marginBottom: Spacing.sm,
-    textTransform: 'uppercase',
-    letterSpacing: Typography.letterSpacing.wide,
+    // 移除 textTransform: uppercase（对中文无意义，中英混排如"API 密钥"会不一致）
+    // letterSpacing 设为 normal（wide 对中文字符间距过大）
+    letterSpacing: Typography.letterSpacing.normal,
   },
   selectorRow: {
     flexDirection: 'row',

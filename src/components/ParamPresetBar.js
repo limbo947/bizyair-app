@@ -29,7 +29,7 @@ export function ParamPresetBar({ modelId, mode, currentParams, onApplyPreset, pr
 
   const handleOpenSave = useCallback(() => {
     setVisible(false);
-    setTimeout(() => setSaveModalVisible(true), 200);
+    setSaveModalVisible(true);
   }, []);
 
   const handleConfirmDelete = useCallback((id) => {

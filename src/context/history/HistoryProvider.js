@@ -9,7 +9,7 @@ import {
   POLLING_INTERVAL_MS,
 } from '../../constants/models';
 import { useApiKeyContext } from '../ApiKeyContext';
-import { HistoryListContext, HomeStateContext, PollingContext, DEFAULT_HOME_STATE, MAX_POLL_FAILS, getPollingInterval, extractTaskResult, extractWebappResult } from './contexts';
+import { HistoryListContext, HomeStateContext, PollingContext, DEFAULT_HOME_STATE, MAX_POLL_FAILS, ACTIVE_STATUSES, getPollingInterval, extractTaskResult, extractWebappResult } from './contexts';
 import { cacheTaskResults, deleteCachedFiles } from '../../utils/resultCache';
 
 export function HistoryProvider({ children }) {
@@ -66,6 +66,13 @@ export function HistoryProvider({ children }) {
       const arr = prev ?? [];
       const removed = arr.filter(predicate);
       const updated = arr.filter((item) => !predicate(item));
+      // 停止已删除项的轮询定时器，避免资源泄漏
+      removed.forEach((item) => {
+        if (pollingRef.current[item.id]) {
+          clearTimeout(pollingRef.current[item.id]);
+          delete pollingRef.current[item.id];
+        }
+      });
       // 异步清理已删除项的本地缓存
       removed.forEach((item) => deleteCachedFiles(item.id));
       persistHistory(updated);
@@ -314,7 +321,7 @@ export function HistoryProvider({ children }) {
     const current = historyRef.current;
     if (!Array.isArray(current)) return;
     const running = current.filter(
-      (h) => h && h.status === 'Running' && h.requestId
+      (h) => h && ACTIVE_STATUSES.includes(h.status) && h.requestId
     );
     const results = await Promise.allSettled(
       running.map((item) => {
@@ -412,13 +419,15 @@ export function HistoryProvider({ children }) {
       homeStateRef.current = updated; // 同步更新 ref，确保后续调用能读到最新值
       setHomeState(updated);
       await AsyncStorage.setItem(HOME_STATE_KEY, JSON.stringify(updated));
+      return true;
     } catch (e) {
       console.error('保存主页状态失败:', e);
+      return false;
     }
   }, []);
 
-  const resubmitTask = useCallback((historyItem) => {
-    if (!historyItem) return;
+  const resubmitTask = useCallback(async (historyItem) => {
+    if (!historyItem) return false;
 
     const updates = {
       modelId: historyItem.modelId,
@@ -462,9 +471,9 @@ export function HistoryProvider({ children }) {
     if (historyItem.voice) updates.voice = historyItem.voice;
     if (historyItem.style) updates.style = historyItem.style;
 
-    saveHomeState(updates);
+    await saveHomeState(updates);
+    return true;
   }, [saveHomeState]);
-
   const loadHomeState = useCallback(async () => {
     try {
       const stored = await AsyncStorage.getItem(HOME_STATE_KEY);

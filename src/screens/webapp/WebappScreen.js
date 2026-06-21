@@ -8,7 +8,8 @@ import { Pressable, Text,
   Modal,
   FlatList,
   KeyboardAvoidingView,
-  Platform, } from 'react-native';
+  Platform,
+  Dimensions, } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
@@ -23,6 +24,7 @@ import { ENV_API_KEY } from '../../constants/models';
 import { Radius, Spacing, Typography, ButtonVariants, Shadow, pressedOpacity } from '../../constants/theme';
 import { createSharedStyles } from '../../constants/sharedStyles';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
+import { useFocusEffect } from 'expo-router';
 import { ResizableTextInput } from '../../components/common/ResizableTextInput';
 import { AppHeader } from '../../components/layout/AppHeader';
 import { isBizyairFileUrl, getMediaType, parseApiCode, parseFieldOptions } from './utils';
@@ -67,7 +69,7 @@ export function WebappScreen() {
 
   // Combo 就地下拉状态
   const [comboExpanded, setComboExpanded] = useState(null);
-  const [comboLayout, setComboLayout] = useState({ x: 0, y: 0, width: 0 });
+  const [comboLayout, setComboLayout] = useState({ x: 0, y: 0, bottomY: 0, width: 0, showBelow: true });
   const [comboOptions, setComboOptions] = useState([]);
   const comboRefs = useRef({});
 
@@ -78,6 +80,13 @@ export function WebappScreen() {
   // 未保存修改追踪
   const [isDirty, setIsDirty] = useState(false);
   const skipDirtyRef = useRef(false);
+
+  // 问题5：Tab 焦点追踪 — 编辑模式下切 Tab 再切回时提醒未保存修改
+  const wasBlurredRef = useRef(false);
+  const modeRef = useRef(mode);
+  const isDirtyRef = useRef(isDirty);
+  useEffect(() => { modeRef.current = mode; }, [mode]);
+  useEffect(() => { isDirtyRef.current = isDirty; }, [isDirty]);
 
   // 应用广场浮层
   const [squareVisible, setSquareVisible] = useState(false);
@@ -96,6 +105,23 @@ export function WebappScreen() {
     setError(msg);
     if (msg) showToast(msg, 'error');
   }, [showToast]);
+
+  // 问题5：编辑模式下切 Tab 再切回时，若有未保存修改则 Toast 提醒
+  useFocusEffect(
+    useCallback(() => {
+      // 切回 Tab 时检查是否有未保存修改
+      if (wasBlurredRef.current && modeRef.current === 'edit' && isDirtyRef.current) {
+        showToast('您有未保存的修改，请记得保存', 'warning');
+        wasBlurredRef.current = false;
+      }
+      return () => {
+        // 离开 Tab 时，若正在编辑且有未保存修改则标记
+        if (modeRef.current === 'edit' && isDirtyRef.current) {
+          wasBlurredRef.current = true;
+        }
+      };
+    }, [showToast])
+  );
 
   // 加载已保存列表
   useEffect(() => {
@@ -351,7 +377,13 @@ export function WebappScreen() {
     await refreshUserInfo().catch((e) => console.warn('提交后刷新用户信息失败:', e?.message || e));
     try {
       const requestId = await submitWebappTask(ek, webAppId, cleanInputValues);
-      updateHistoryItem(id, { status: 'Pending', requestId, taskApiKey: ek, lastResponse: { status: 'Pending', request_id: requestId } });
+      // 存储真实 API 请求体（与 submitWebappTask 发送的结构一致）
+      const requestPayload = {
+        web_app_id: Number(webAppId),
+        suppress_preview_output: false,
+        input_values: cleanInputValues,
+      };
+      updateHistoryItem(id, { status: 'Pending', requestId, taskApiKey: ek, requestPayload, lastResponse: { status: 'Pending', request_id: requestId } });
       startWebappPolling(id, requestId, ek);
     } catch (err) {
       showError(err.message || '提交失败');
@@ -442,7 +474,19 @@ export function WebappScreen() {
               const ref = comboRefs.current[key];
               if (ref) {
                 ref.measure((x, y, width, height, pageX, pageY) => {
-                  setComboLayout({ x: pageX, y: pageY + height, width });
+                  // 问题4：边界检测 — 空间不足时向上展开，避免下拉框超出屏幕底部
+                  const screenHeight = Dimensions.get('window').height;
+                  const DROPDOWN_MAX = 220;
+                  const MARGIN = 8;
+                  const spaceBelow = screenHeight - pageY - height;
+                  const showBelow = spaceBelow >= DROPDOWN_MAX + MARGIN;
+                  setComboLayout({
+                    x: pageX,
+                    y: pageY + height,
+                    bottomY: screenHeight - pageY,
+                    width,
+                    showBelow,
+                  });
                   setComboExpanded(comboExpanded === key ? null : key);
                   setComboOptions(fieldOpts.values || []);
                 });
@@ -683,7 +727,12 @@ export function WebappScreen() {
       {/* Combo 就地下拉 Modal */}
       <Modal visible={comboExpanded !== null} transparent animationType="fade" onRequestClose={() => setComboExpanded(null)}>
         <Pressable style={styles.comboOverlay} onPress={() => setComboExpanded(null)}>
-          <View style={[styles.comboDropdown, { top: comboLayout.y, left: comboLayout.x, width: comboLayout.width }]}>
+          <View style={[
+            styles.comboDropdown,
+            comboLayout.showBelow
+              ? { top: comboLayout.y, left: comboLayout.x, width: comboLayout.width }
+              : { bottom: comboLayout.bottomY, left: comboLayout.x, width: comboLayout.width },
+          ]}>
             <ScrollView nestedScrollEnabled style={styles.comboDropdownScroll}>
               {comboOptions.map(item => (
                 <Pressable
@@ -745,7 +794,7 @@ const createStyles = (colors) => {
   container: { flex: 1, backgroundColor: colors.bg },
 
   // 二级头部（编辑模式）
-  secondaryHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, backgroundColor: colors.card, borderBottomWidth: 0.5, borderBottomColor: colors.separator },
+  secondaryHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, paddingVertical: Spacing.sm, backgroundColor: colors.card, borderBottomWidth: 0.5, borderBottomColor: colors.separator },
   backButton: { padding: Spacing.xs },
   secondaryHeaderTitle: { fontSize: Typography.fontSize.body, fontWeight: Typography.fontWeight.semibold, color: colors.textPrimary },
   headerSaveBtn: { padding: Spacing.xs },
@@ -767,8 +816,8 @@ const createStyles = (colors) => {
   },
   listContent: { paddingHorizontal: Spacing.lg, paddingBottom: Spacing.xxl },
   gridRow: { gap: Spacing.md, marginBottom: Spacing.md },
-  gridCard: { flex: 1, backgroundColor: colors.card, borderRadius: Radius.md, borderCurve: 'continuous', overflow: 'hidden' },
-  gridCoverWrapper: { position: 'relative', aspectRatio: 1, backgroundColor: colors.background },
+  gridCard: { flex: 1, backgroundColor: colors.card, borderRadius: Radius.md, borderCurve: 'continuous', ...Shadow.sm },
+  gridCoverWrapper: { position: 'relative', aspectRatio: 1, backgroundColor: colors.bg, overflow: 'hidden', borderTopLeftRadius: Radius.md, borderTopRightRadius: Radius.md },
   gridCover: { width: '100%', height: '100%' },
   gridCoverPlaceholder: { width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center' },
   gridDeleteBtn: { position: 'absolute', top: Spacing.xs, right: Spacing.xs, width: 28, height: 28, borderRadius: 14, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center' },
@@ -794,7 +843,7 @@ const createStyles = (colors) => {
   },
 
   // 编辑模式
-  scrollContent: { paddingTop: Spacing.sm, paddingRight: Spacing.md, paddingBottom: Spacing.xxl, paddingLeft: Spacing.md },
+  scrollContent: { paddingTop: Spacing.sm, paddingHorizontal: Spacing.lg, paddingBottom: Spacing.xxl },
   card: shared.card,
   labelRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, marginBottom: Spacing.sm },
   label: shared.label,

@@ -1,3 +1,5 @@
+import { Platform } from 'react-native';
+
 // ── Light Color Palette ──
 export const LightColors = {
   primary: '#007AFF',
@@ -139,9 +141,21 @@ export const Typography = {
 };
 
 export const Shadow = {
-  sm: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 },
-  md: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 8, elevation: 5 },
-  lg: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 12, elevation: 8 },
+  sm: Platform.select({
+    ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 4 },
+    android: { elevation: 2 },
+    default: { boxShadow: '0 1px 4px rgba(0,0,0,0.10)' },
+  }),
+  md: Platform.select({
+    ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 8 },
+    android: { elevation: 5 },
+    default: { boxShadow: '0 2px 8px rgba(0,0,0,0.15)' },
+  }),
+  lg: Platform.select({
+    ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 12 },
+    android: { elevation: 8 },
+    default: { boxShadow: '0 4px 12px rgba(0,0,0,0.20)' },
+  }),
 };
 
 export const ButtonVariants = {
@@ -201,6 +215,7 @@ export function createTheme(mode) {
       Saving: colors.purple,
       Success: colors.success,
       Failed: colors.error,
+      Canceled: colors.textTertiary,
     },
     STATUS_BG: {
       Pending: colors.warningBg,
@@ -210,6 +225,7 @@ export function createTheme(mode) {
       Saving: colors.purpleBg,
       Success: colors.successBg,
       Failed: colors.errorBg,
+      Canceled: colors.disabledBg,
     },
   };
 }

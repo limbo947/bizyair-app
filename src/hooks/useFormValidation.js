@@ -3,6 +3,9 @@ import { ENV_API_KEY } from '../constants/models';
 
 const NO_PROMPT_REQUIRED_TYPES = ['dreamactor', 'birefnet', 'seedvr2', 'flux-klein', 'ace-step'];
 
+// 需要上传图片的 paramType（即使无 prompt 也需要图片）
+const IMAGE_REQUIRED_TYPES = ['birefnet', 'seedvr2', 'flux-klein', 'vision-g', 'joycaption'];
+
 export function useFormValidation({ state, paramType, mode, apiKey }) {
   const errors = useMemo(() => {
     const result = {};
@@ -42,6 +45,11 @@ export function useFormValidation({ state, paramType, mode, apiKey }) {
       if (!state.imageUrls || state.imageUrls.length === 0 || !state.videoUrls || state.videoUrls.length === 0) {
         result.imageUrls = '请上传人物图片和参考视频';
       }
+    }
+
+    // 视觉理解类模型需要上传图片
+    if (IMAGE_REQUIRED_TYPES.includes(paramType) && (!state.imageUrls || state.imageUrls.length === 0)) {
+      result.imageUrls = '请至少上传一张图片';
     }
 
     // API 密钥校验

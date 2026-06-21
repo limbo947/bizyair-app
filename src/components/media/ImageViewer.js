@@ -15,15 +15,18 @@ import { Ionicons } from '@expo/vector-icons';
 import { Spacing, Typography, pressedOpacity } from '../../constants/theme';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { useTheme } from '../../context/ThemeContext';
+import { useToastContext } from '../../context/ToastContext';
 import { triggerDownload, triggerBatchDownload } from '../../utils/download';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const MIN_SCALE = 1;
 const MAX_SCALE = 5;
 const DOUBLE_TAP_SCALE = 2.5;
-const SLIDE_THRESHOLD = 0.2;
+const SLIDE_THRESHOLD = 0.15;
 const DISMISS_THRESHOLD = 100;
 const DISMISS_VELOCITY = 0.5;
+const DOUBLE_TAP_INTERVAL = 250;
+const SNAP_POINTS = [1, 1.5, 2, 2.5, 3, 4];
 
 /* ════════════════════════════════════════════════════════
    ImageViewerContent — 图片预览内容（key 驱动 remount 复位）
@@ -34,10 +37,12 @@ const DISMISS_VELOCITY = 0.5;
  * 通过 key prop 在每次 Modal 打开时强制 remount，自动复位所有状态，
  * 无需在 effect 中手动 setState。
  */
-function ImageViewerContent({ urls, totalCount, prompt, onClose, colors, styles }) {
+function ImageViewerContent({ urls, totalCount, prompt, onClose, colors, styles, showToast }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showInfo, setShowInfo] = useState(true);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [zoomIndicator, setZoomIndicator] = useState(null);
+  const zoomIndicatorTimer = useRef(null);
 
   /* ── 动画值 ── */
   const [scale] = useState(() => new Animated.Value(1));
@@ -83,6 +88,7 @@ function ImageViewerContent({ urls, totalCount, prompt, onClose, colors, styles 
       panY.removeListener(ids[2]);
       slideDelta.removeListener(ids[3]);
       dismissY.removeListener(ids[4]);
+      if (zoomIndicatorTimer.current) clearTimeout(zoomIndicatorTimer.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -170,15 +176,23 @@ function ImageViewerContent({ urls, totalCount, prompt, onClose, colors, styles 
     if (isDownloading) return;
     setIsDownloading(true);
     try {
+      let result;
       if (urls.length > 1) {
-        await triggerBatchDownload(urls);
+        result = await triggerBatchDownload(urls);
       } else if (urls[0]) {
-        await triggerDownload(urls[0]);
+        result = await triggerDownload(urls[0]);
+      }
+      if (result?.success) {
+        showToast(urls.length > 1 ? `${urls.length} 张图片已保存` : '图片已保存', 'success');
+      } else if (result?.errorType === 'permission') {
+        showToast('需要存储权限才能保存文件', 'error');
+      } else if (result) {
+        showToast(result.message || '下载失败', 'error');
       }
     } finally {
       setIsDownloading(false);
     }
-  }, [isDownloading, urls]);
+  }, [isDownloading, urls, showToast]);
 
   /* ── PanResponder ── */
   // eslint-disable-next-line react-hooks/refs
@@ -247,11 +261,12 @@ function ImageViewerContent({ urls, totalCount, prompt, onClose, colors, styles 
         }
       },
       onPanResponderRelease: (evt) => {
+        const wasPinching = lastDistance.current > 0;
         lastDistance.current = 0;
 
         if (!gestureMoved.current) {
           const now = Date.now();
-          if (now - lastTapTime.current < 300) {
+          if (now - lastTapTime.current < DOUBLE_TAP_INTERVAL) {
             doubleTapRef.current();
             lastTapTime.current = 0;
           } else {
@@ -302,8 +317,8 @@ function ImageViewerContent({ urls, totalCount, prompt, onClose, colors, styles 
                 velocity,
                 useNativeDriver: true,
                 overshootClamping: true,
-                friction: 26,
-                tension: 180,
+                friction: 18,
+                tension: 140,
               }).start(() => {
                 slideDelta.setValue(0);
                 panX.setValue(0);
@@ -331,6 +346,24 @@ function ImageViewerContent({ urls, totalCount, prompt, onClose, colors, styles 
               Animated.spring(panY, { toValue: clampedY, useNativeDriver: true, friction: 7 }),
             ]).start();
           }
+        }
+
+        // 问题3：双指缩放释放后吸附到就近的整数缩放值，增加惯性感
+        if (wasPinching && baseScale.current > 1.05 && baseScale.current < MAX_SCALE) {
+          const closest = SNAP_POINTS.reduce((prev, curr) =>
+            Math.abs(curr - baseScale.current) < Math.abs(prev - baseScale.current) ? curr : prev
+          );
+          if (Math.abs(closest - baseScale.current) < 0.35) {
+            Animated.spring(scale, { toValue: closest, useNativeDriver: true, friction: 7 }).start();
+            baseScale.current = closest;
+          }
+        }
+
+        // 问题8：缩放结束后显示缩放比例指示器
+        if (wasPinching || baseScale.current > 1.05) {
+          setZoomIndicator(`${baseScale.current.toFixed(1)}x`);
+          if (zoomIndicatorTimer.current) clearTimeout(zoomIndicatorTimer.current);
+          zoomIndicatorTimer.current = setTimeout(() => setZoomIndicator(null), 1000);
         }
       },
       onPanResponderTerminate: () => {
@@ -405,9 +438,10 @@ function ImageViewerContent({ urls, totalCount, prompt, onClose, colors, styles 
           <View style={styles.topBar} pointerEvents="box-none">
             <Pressable
               style={({ pressed }) => [styles.iconBtn, pressed && pressedOpacity()]}
+              hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
               onPress={onClose}
             >
-              <Ionicons name="chevron-down" size={24} color={colors.textOnOverlay} />
+              <Ionicons name="close" size={24} color={colors.textOnOverlay} />
             </Pressable>
             {showNav ? (
               <View style={styles.pageIndicator}>
@@ -418,6 +452,7 @@ function ImageViewerContent({ urls, totalCount, prompt, onClose, colors, styles 
             ) : null}
             <Pressable
               style={({ pressed }) => [styles.iconBtn, pressed && pressedOpacity()]}
+              hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
               onPress={handleDownload}
               disabled={isDownloading}
             >
@@ -434,6 +469,7 @@ function ImageViewerContent({ urls, totalCount, prompt, onClose, colors, styles 
               {currentIndex > 0 ? (
                 <Pressable
                   style={({ pressed }) => [styles.navBtn, pressed && pressedOpacity()]}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                   onPress={() => goToIndex(currentIndex - 1)}
                 >
                   <Ionicons name="chevron-back" size={28} color={colors.textOnOverlay} />
@@ -442,11 +478,21 @@ function ImageViewerContent({ urls, totalCount, prompt, onClose, colors, styles 
               {currentIndex < totalCount - 1 ? (
                 <Pressable
                   style={({ pressed }) => [styles.navBtn, pressed && pressedOpacity()]}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                   onPress={() => goToIndex(currentIndex + 1)}
                 >
                   <Ionicons name="chevron-forward" size={28} color={colors.textOnOverlay} />
                 </Pressable>
               ) : <View style={styles.navBtnPlaceholder} />}
+            </View>
+          ) : null}
+
+          {/* 问题8：缩放比例指示器 */}
+          {zoomIndicator ? (
+            <View style={styles.zoomIndicator} pointerEvents="none">
+              <View style={styles.zoomIndicatorBadge}>
+                <Text style={styles.zoomIndicatorText}>{zoomIndicator}</Text>
+              </View>
             </View>
           ) : null}
 
@@ -457,7 +503,7 @@ function ImageViewerContent({ urls, totalCount, prompt, onClose, colors, styles 
           ) : null}
 
           {showNav ? (
-            <View style={styles.thumbnailStrip} pointerEvents="box-none">
+            <View style={[styles.thumbnailStrip, prompt && { bottom: 110 }]} pointerEvents="box-none">
               <View style={styles.thumbnailList}>
                 {urls.map((url, idx) => (
                   <Pressable
@@ -472,6 +518,7 @@ function ImageViewerContent({ urls, totalCount, prompt, onClose, colors, styles 
                     <Image source={{ uri: url }} style={styles.thumbnailImage}
                       contentFit="cover" cachePolicy="memory-disk"
                       recyclingKey={`thumb_${idx}`}
+                      transition={200}
                     />
                   </Pressable>
                 ))}
@@ -501,6 +548,7 @@ function ImageViewerContent({ urls, totalCount, prompt, onClose, colors, styles 
 export function ImageViewer({ visible, imageUrl, imageUrls, prompt, onClose }) {
   const styles = useThemedStyles(createStyles);
   const { colors } = useTheme();
+  const { showToast } = useToastContext();
 
   const urls = useMemo(
     () => imageUrls?.length > 0 ? imageUrls : (imageUrl ? [imageUrl] : []),
@@ -539,6 +587,7 @@ export function ImageViewer({ visible, imageUrl, imageUrls, prompt, onClose }) {
         onClose={onClose}
         colors={colors}
         styles={styles}
+        showToast={showToast}
       />
     </Modal>
   );
@@ -668,6 +717,7 @@ const createStyles = (colors) => ({
     overflow: 'hidden',
     borderWidth: 2,
     borderColor: 'transparent',
+    backgroundColor: colors.overlayLight,
   },
   thumbnailItemActive: {
     borderColor: colors.textOnOverlay,
@@ -675,5 +725,26 @@ const createStyles = (colors) => ({
   thumbnailImage: {
     width: '100%',
     height: '100%',
+  },
+  zoomIndicator: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  zoomIndicatorBadge: {
+    backgroundColor: colors.overlayMedium,
+    borderRadius: 8,
+    borderCurve: 'continuous',
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+  },
+  zoomIndicatorText: {
+    color: colors.textOnOverlay,
+    fontSize: Typography.fontSize.body,
+    fontWeight: Typography.fontWeight.semibold,
   },
 });

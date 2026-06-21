@@ -12,18 +12,19 @@ import { ENV_API_KEY } from '../constants/models';
  * @param {string} options.apiKey - 当前 API 密钥
  * @param {function} options.setShowApiKeyInput - 设置API密钥输入框显示状态
  * @param {function} options.setError - 设置错误信息
- * @param {function} options.setIsUploading - 设置上传中状态
+ * @param {function} options.setUploadField - 设置当前上传字段 (field | null)
+ * @param {string} options.field - 当前上传对应的字段名
  * @param {function} options.setUrls - 设置URL列表（函数式更新）
  * @param {number} [options.maxRetries=2] - 上传失败最大重试次数
  */
-async function pickAndUpload({ mimeType, uploadFn, apiKey, setShowApiKeyInput, setError, setIsUploading, setUrls, maxRetries = 2 }) {
+async function pickAndUpload({ mimeType, uploadFn, apiKey, setShowApiKeyInput, setError, setUploadField, field, setUrls, maxRetries = 2 }) {
   const ek = apiKey.trim() || ENV_API_KEY;
   if (!ek) {
     setShowApiKeyInput(true);
     setError('请先配置API密钥');
     return;
   }
-  setIsUploading(true);
+  setUploadField(field);
   setError('');
   try {
     const pickerOpts = {
@@ -35,7 +36,7 @@ async function pickAndUpload({ mimeType, uploadFn, apiKey, setShowApiKeyInput, s
     }
     const result = await DocumentPicker.getDocumentAsync(pickerOpts);
     if (result.canceled || !result.assets?.length) {
-      setIsUploading(false);
+      setUploadField(null);
       return;
     }
     const file = result.assets[0];
@@ -83,7 +84,7 @@ async function pickAndUpload({ mimeType, uploadFn, apiKey, setShowApiKeyInput, s
   } catch (err) {
     setError(err.message || '上传失败');
   } finally {
-    setIsUploading(false);
+    setUploadField(null);
   }
 }
 
@@ -93,7 +94,7 @@ async function pickAndUpload({ mimeType, uploadFn, apiKey, setShowApiKeyInput, s
  * @param {string} options.apiKey - 当前 API 密钥
  * @param {function} options.setShowApiKeyInput - 设置API密钥输入框显示状态
  * @param {function} options.setError - 设置错误信息
- * @param {function} options.setIsUploading - 设置上传中状态
+ * @param {function} options.setUploadField - 设置当前上传字段 (field | null)
  * @param {function} options.setImageUrls - 设置图片URL列表
  * @param {function} options.setLastFrameUrls - 设置尾帧URL列表
  * @param {function} options.setVideoUrls - 设置视频URL列表
@@ -102,7 +103,7 @@ export function useFileUpload({
   apiKey,
   setShowApiKeyInput,
   setError,
-  setIsUploading,
+  setUploadField,
   setImageUrls,
   setLastFrameUrls,
   setVideoUrls,
@@ -117,10 +118,11 @@ export function useFileUpload({
       apiKey,
       setShowApiKeyInput,
       setError,
-      setIsUploading,
+      setUploadField,
+      field: 'imageUrls',
       setUrls: setImageUrls,
     });
-  }, [apiKey, setShowApiKeyInput, setError, setIsUploading, setImageUrls]);
+  }, [apiKey, setShowApiKeyInput, setError, setUploadField, setImageUrls]);
 
   const handleLastFrameSelect = useCallback(async () => {
     await pickAndUpload({
@@ -129,10 +131,11 @@ export function useFileUpload({
       apiKey,
       setShowApiKeyInput,
       setError,
-      setIsUploading,
+      setUploadField,
+      field: 'lastFrameUrls',
       setUrls: setLastFrameUrls,
     });
-  }, [apiKey, setShowApiKeyInput, setError, setIsUploading, setLastFrameUrls]);
+  }, [apiKey, setShowApiKeyInput, setError, setUploadField, setLastFrameUrls]);
 
   const handleVideoSelect = useCallback(async () => {
     await pickAndUpload({
@@ -141,10 +144,11 @@ export function useFileUpload({
       apiKey,
       setShowApiKeyInput,
       setError,
-      setIsUploading,
+      setUploadField,
+      field: 'videoUrls',
       setUrls: setVideoUrls,
     });
-  }, [apiKey, setShowApiKeyInput, setError, setIsUploading, setVideoUrls]);
+  }, [apiKey, setShowApiKeyInput, setError, setUploadField, setVideoUrls]);
 
   const handleRefImageSelect = useCallback(async () => {
     await pickAndUpload({
@@ -153,10 +157,11 @@ export function useFileUpload({
       apiKey,
       setShowApiKeyInput,
       setError,
-      setIsUploading,
+      setUploadField,
+      field: 'refImages',
       setUrls: setRefImages,
     });
-  }, [apiKey, setShowApiKeyInput, setError, setIsUploading, setRefImages]);
+  }, [apiKey, setShowApiKeyInput, setError, setUploadField, setRefImages]);
 
   const handleFirstClipSelect = useCallback(async () => {
     await pickAndUpload({
@@ -165,10 +170,11 @@ export function useFileUpload({
       apiKey,
       setShowApiKeyInput,
       setError,
-      setIsUploading,
+      setUploadField,
+      field: 'firstClipUrls',
       setUrls: setFirstClipUrls,
     });
-  }, [apiKey, setShowApiKeyInput, setError, setIsUploading, setFirstClipUrls]);
+  }, [apiKey, setShowApiKeyInput, setError, setUploadField, setFirstClipUrls]);
 
   const handleFirstFrameSelect = useCallback(async () => {
     await pickAndUpload({
@@ -177,10 +183,11 @@ export function useFileUpload({
       apiKey,
       setShowApiKeyInput,
       setError,
-      setIsUploading,
+      setUploadField,
+      field: 'firstFrameUrls',
       setUrls: setFirstFrameUrls,
     });
-  }, [apiKey, setShowApiKeyInput, setError, setIsUploading, setFirstFrameUrls]);
+  }, [apiKey, setShowApiKeyInput, setError, setUploadField, setFirstFrameUrls]);
 
   return { handleFileSelect, handleLastFrameSelect, handleVideoSelect, handleRefImageSelect, handleFirstClipSelect, handleFirstFrameSelect };
 }

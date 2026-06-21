@@ -36,7 +36,7 @@ export const SIZE_PRESETS = [
   { label: '2:3', width: 1024, height: 1536 },
 ];
 
-export const STATUS_LABELS = { Pending: '排队中', Queuing: '排队中', Preparing: '准备中', Running: '生成中', Saving: '转存中', Success: '已完成', Failed: '失败' };
+export const STATUS_LABELS = { Pending: '排队中', Queuing: '排队中', Preparing: '准备中', Running: '生成中', Saving: '转存中', Success: '已完成', Failed: '失败', Canceled: '已取消' };
 export const QUALITY_LABELS = { low: '低', medium: '中', high: '高' };
 
 export const TAB_HOME = 'home';

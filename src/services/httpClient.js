@@ -3,6 +3,7 @@ import {
   MAX_RETRIES,
   RETRY_DELAY_MS,
 } from '../constants/models';
+import { classifyError, ERROR_CODES } from '../utils/errorMessages';
 
 /**
  * 带超时和重试的请求封装。
@@ -27,7 +28,11 @@ async function request(url, options = {}) {
 
     if (!response.ok) {
       const body = await response.text().catch(() => '');
-      throw new Error(`[${response.status}] ${body || response.statusText}`);
+      // 抛出带状态码和错误码的错误，便于上层转换用户友好提示
+      const err = new Error(`[${response.status}] ${body || response.statusText}`);
+      err.status = response.status;
+      err.code = classifyError(err);
+      throw err;
     }
 
     const result = await response.json();
@@ -36,17 +41,22 @@ async function request(url, options = {}) {
     clearTimeout(timeoutId);
 
     if (err.name === 'AbortError') {
-      throw new Error('请求超时，请检查网络连接后重试');
+      const timeoutErr = new Error('请求超时，请检查网络连接后重试');
+      timeoutErr.code = ERROR_CODES.TIMEOUT;
+      throw timeoutErr;
+    }
+
+    // 如果已分类（来自 !response.ok 分支），保留 code
+    if (!err.code) {
+      err.code = classifyError(err);
     }
 
     const isRetryable =
       retries < MAX_RETRIES &&
-      (err.message.includes('超时') ||
-       err.message.startsWith('[5') ||
-       err.message === 'Network request failed' ||
-       err.message === 'Failed to fetch' ||
-       err.message === 'fetch failed' ||
-       (err.name === 'TypeError' && err.message.includes('fetch')));
+      (err.code === ERROR_CODES.TIMEOUT ||
+       err.code === ERROR_CODES.SERVER ||
+       err.code === ERROR_CODES.NETWORK ||
+       err.code === ERROR_CODES.RATE_LIMIT);
 
     if (isRetryable) {
       await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS * Math.pow(2, retries)));

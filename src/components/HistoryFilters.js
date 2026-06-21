@@ -24,7 +24,7 @@ const createStyles = (colors) => ({
   searchBar: { backgroundColor: colors.card, paddingHorizontal: Spacing.lg, paddingTop: Spacing.md, paddingBottom: Spacing.sm, borderBottomWidth: 0.5, borderBottomColor: colors.separator },
   searchInputWrap: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.bg, borderRadius: Radius.sm, borderCurve: 'continuous', paddingHorizontal: Spacing.md, height: 40, gap: Spacing.sm },
   searchInput: { flex: 1, fontSize: Typography.fontSize.subheadline, color: colors.textPrimary, paddingVertical: 0 },
-  clearSearch: { fontSize: Typography.fontSize.callout, color: colors.textTertiary, paddingHorizontal: 4 },
+  clearSearch: { fontSize: Typography.fontSize.callout, color: colors.textTertiary, width: 28, height: 28, textAlign: 'center', textAlignVertical: 'center' },
   filterBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.card, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, borderBottomWidth: 0.5, borderBottomColor: colors.separator },
   filterScrollContent: { gap: Spacing.sm, paddingRight: Spacing.sm },
   filterChip: { paddingHorizontal: Spacing.md, paddingVertical: Spacing.xs + 1, borderRadius: Radius.full, borderCurve: 'continuous', backgroundColor: colors.bg },
@@ -52,16 +52,19 @@ const createStyles = (colors) => ({
   batchDeleteText: { color: colors.error },
   batchDownloadBtn: { backgroundColor: colors.successBg },
   batchDownloadText: { color: colors.success },
-  statsBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.card, paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md, borderBottomWidth: 0.5, borderBottomColor: colors.separator },
-  statItem: { alignItems: 'center', flex: 1 },
-  statValue: { fontSize: Typography.fontSize.body, fontWeight: Typography.fontWeight.bold, color: colors.primary },
-  statLabel: { fontSize: 10, color: colors.textTertiary, marginTop: Spacing.xs },
-  statDivider: { width: 0.5, height: 24, backgroundColor: colors.separator },
+  statsBar: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', backgroundColor: colors.card, paddingHorizontal: Spacing.lg, paddingVertical: Spacing.xs + 1, borderBottomWidth: 0.5, borderBottomColor: colors.separator, gap: Spacing.xs },
+  statSummary: { fontSize: Typography.fontSize.caption1, color: colors.textTertiary },
+  statSummaryActive: { color: colors.primary, fontWeight: Typography.fontWeight.semibold },
+  statSummarySuccess: { color: colors.success, fontWeight: Typography.fontWeight.semibold },
+  statSummaryError: { color: colors.error, fontWeight: Typography.fontWeight.semibold },
+  statSummaryWarning: { color: colors.warning, fontWeight: Typography.fontWeight.semibold },
+  statDivider: { fontSize: Typography.fontSize.caption1, color: colors.disabled },
 });
 
 export function HistoryFilters({
   topInset,
   history,
+  filteredCount,
   searchText,
   filterBy,
   sortBy,
@@ -97,7 +100,7 @@ export function HistoryFilters({
           <Ionicons name="search" size={18} color={colors.textTertiary} />
           <TextInput style={styles.searchInput} placeholder="搜索提示词、模型、模式..." value={searchText} onChangeText={onSearchChange} placeholderTextColor={colors.textPlaceholder} />
           {searchText.length > 0 ? (
-            <Pressable style={({ pressed }) => pressed && pressedOpacity()} onPress={() => onSearchChange('')}><Text style={styles.clearSearch}>✕</Text></Pressable>
+            <Pressable hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={({ pressed }) => pressed && pressedOpacity()} onPress={() => onSearchChange('')}><Text style={styles.clearSearch}>✕</Text></Pressable>
           ) : null}
         </View>
       </View>
@@ -135,7 +138,7 @@ export function HistoryFilters({
           ))}
         </ScrollView>
         <Pressable style={({ pressed }) => [styles.sortButton, pressed && pressedOpacity()]} onPress={onSortPress}>
-          <Ionicons name="funnel-outline" size={18} color={colors.textSecondary} />
+          <Ionicons name="swap-vertical" size={18} color={colors.textSecondary} />
         </Pressable>
       </View>
 
@@ -157,7 +160,7 @@ export function HistoryFilters({
             <View style={styles.batchActions}>
               <Pressable style={({ pressed }) => [styles.batchActionButton, pressed && pressedOpacity()]} onPress={onSelectAll}><Text style={styles.batchActionText}>全选</Text></Pressable>
               <Pressable style={({ pressed }) => [styles.batchActionButton, pressed && pressedOpacity()]} onPress={onDeselectAll}><Text style={styles.batchActionText}>取消</Text></Pressable>
-              <Text style={styles.batchCount}>已选 {selectedIds.size}/{history.length}</Text>
+              <Text style={styles.batchCount}>已选 {selectedIds.size}/{filteredCount}</Text>
               <Pressable style={({ pressed }) => [styles.batchActionButton, styles.batchDeleteButton, pressed && pressedOpacity()]} onPress={onBatchDeletePress} disabled={selectedIds.size === 0}>
                 <Text style={[styles.batchActionText, styles.batchDeleteText]}>删除({selectedIds.size})</Text>
               </Pressable>
@@ -169,15 +172,19 @@ export function HistoryFilters({
         </View>
       ) : null}
 
-      <View style={styles.statsBar}>
-        <View style={styles.statItem}><Text style={styles.statValue}>{activeCount}</Text><Text style={styles.statLabel}>进行中</Text></View>
-        <View style={styles.statDivider} />
-        <View style={styles.statItem}><Text style={[styles.statValue, { color: colors.success }]}>{successCount}</Text><Text style={styles.statLabel}>已完成</Text></View>
-        <View style={styles.statDivider} />
-        <View style={styles.statItem}><Text style={[styles.statValue, { color: colors.error }]}>{failedCount}</Text><Text style={styles.statLabel}>失败</Text></View>
-        <View style={styles.statDivider} />
-        <View style={styles.statItem}><Text style={[styles.statValue, { color: colors.warning }]}>{totalCoinsSpent}</Text><Text style={styles.statLabel}>总金币</Text></View>
-      </View>
+      {history.length > 0 ? (
+        <View style={styles.statsBar}>
+          <Text style={styles.statSummary}>共 <Text style={styles.statSummaryActive}>{history.length}</Text> 条</Text>
+          <Text style={styles.statDivider}>|</Text>
+          <Text style={styles.statSummary}><Text style={styles.statSummaryActive}>{activeCount}</Text> 进行中</Text>
+          <Text style={styles.statDivider}>|</Text>
+          <Text style={styles.statSummary}><Text style={styles.statSummarySuccess}>{successCount}</Text> 已完成</Text>
+          <Text style={styles.statDivider}>|</Text>
+          <Text style={styles.statSummary}><Text style={styles.statSummaryError}>{failedCount}</Text> 失败</Text>
+          <Text style={styles.statDivider}>|</Text>
+          <Text style={styles.statSummary}><Text style={styles.statSummaryWarning}>{totalCoinsSpent}</Text> 金币</Text>
+        </View>
+      ) : null}
     </View>
   );
 }
