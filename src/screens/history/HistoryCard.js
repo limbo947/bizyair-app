@@ -171,16 +171,39 @@ export const HistoryCard = React.memo(function HistoryCard({
       ) : null}
       <Pressable
         style={({ pressed }) => [styles.historyCardInner, pressed && { opacity: batchMode ? 0.6 : 0.7 }]} onPress={() => {
-          if (batchMode) toggleSelect(item.id);
-          else if (item.outputType === 'video' && videoUrl) {
-            setVideoPreview({ visible: true, url: videoUrl });
-          } else if (item.outputType === 'text' && item.textResult) {
-            setTextPreview({ visible: true, text: item.textResult });
-          } else if (item.outputType === 'audio' && audioUrl) {
-            setAudioPreview({ visible: true, url: audioUrl });
-          } else if (imageUrl) {
-            setPreviewImage({ url: imageUrl, prompt: item.prompt });
-            setPreviewImageUrls(imageUrls || null);
+          if (batchMode) {
+            toggleSelect(item.id);
+            return;
+          }
+          // 收集所有可预览的产物类型（修复：同一任务可能包含多种类型产物）
+          const types = [];
+          if (videoUrl) types.push('video');
+          if (audioUrl) types.push('audio');
+          if (item.textResult) types.push('text');
+          if (imageUrl) types.push('image');
+
+          const openPreview = (type) => {
+            if (type === 'video') setVideoPreview({ visible: true, url: videoUrl });
+            else if (type === 'audio') setAudioPreview({ visible: true, url: audioUrl });
+            else if (type === 'text') setTextPreview({ visible: true, text: item.textResult });
+            else if (type === 'image') {
+              setPreviewImage({ url: imageUrl, prompt: item.prompt });
+              setPreviewImageUrls(imageUrls || null);
+            }
+          };
+
+          // 单一类型：直接打开；多类型：让用户选择
+          if (types.length <= 1) {
+            openPreview(types[0]);
+          } else {
+            const labels = { video: '视频', audio: '音频', text: '文本', image: '图片' };
+            Alert.alert(
+              '选择预览类型',
+              '该任务包含多种产物',
+              types
+                .map((t) => ({ text: labels[t], onPress: () => openPreview(t) }))
+                .concat({ text: '取消', style: 'cancel' })
+            );
           }
         }}
         disabled={batchMode ? false : !(imageUrl || videoUrl || item.textResult || audioUrl)}
@@ -251,7 +274,7 @@ export const HistoryCard = React.memo(function HistoryCard({
               <Text style={styles.historyPrice}>{isTokenPricedModel(item.modelId) ? '按量计费' : `${item.price} 金币`}</Text>
             ) : <View />}
             <View style={styles.historyActions}>
-              {((imageUrl && !batchMode) || (item.outputType === 'video' && videoUrl && !batchMode) || (item.outputType === 'audio' && audioUrl && !batchMode)) ? (
+              {((imageUrl || videoUrl || audioUrl) && !batchMode) ? (
                 <Pressable style={({ pressed }) => [styles.iconButton, styles.iconButtonSuccess, pressed && pressedOpacity()]} onPress={() => handleDownload(item)}>
                   <Ionicons name="download" size={18} color={colors.success} />
                 </Pressable>

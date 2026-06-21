@@ -9,7 +9,8 @@ import { Pressable, Text,
   FlatList,
   KeyboardAvoidingView,
   Platform,
-  Dimensions, } from 'react-native';
+  Dimensions,
+  BackHandler, } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
@@ -354,6 +355,17 @@ export function WebappScreen() {
       backToList();
     }
   }, [isDirty, backToList]);
+
+  // 侧滑返回/系统返回键拦截：编辑模式下返回到列表，而非退出页面
+  useEffect(() => {
+    if (mode !== 'edit') return;
+    const handler = () => {
+      handleBack();
+      return true; // 拦截默认返回行为
+    };
+    const sub = BackHandler.addEventListener('hardwareBackPress', handler);
+    return () => sub.remove();
+  }, [mode, handleBack]);
 
   // 确认放弃修改
   const confirmDiscardAndBack = useCallback(() => {
