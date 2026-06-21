@@ -9,6 +9,7 @@ import {
   PanResponder,
   Dimensions,
   StatusBar,
+  ScrollView,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
@@ -43,6 +44,10 @@ function ImageViewerContent({ urls, totalCount, prompt, onClose, colors, styles,
   const [isDownloading, setIsDownloading] = useState(false);
   const [zoomIndicator, setZoomIndicator] = useState(null);
   const zoomIndicatorTimer = useRef(null);
+  const thumbScrollRef = useRef(null);
+  const thumbLayouts = useRef([]);
+  const thumbScrollOffset = useRef(0);
+  const isScrollingToThumb = useRef(false);
 
   /* ── 动画值 ── */
   const [scale] = useState(() => new Animated.Value(1));
@@ -64,6 +69,8 @@ function ImageViewerContent({ urls, totalCount, prompt, onClose, colors, styles,
   const isZoomedAtStart = useRef(false);
   const touchStart = useRef({ x: 0, y: 0 });
   const lastTapTime = useRef(0);
+  const activeTouchCount = useRef(0);
+  const pinchStarted = useRef(false);
 
   /* ── JS 侧动画值快照 ── */
   const currentIndexRef = useRef(0);
@@ -74,6 +81,21 @@ function ImageViewerContent({ urls, totalCount, prompt, onClose, colors, styles,
   const scaleValue = useRef(1);
 
   useEffect(() => { currentIndexRef.current = currentIndex; }, [currentIndex]);
+
+  /* ── 自动滚动缩略图条到当前项 ── */
+  useEffect(() => {
+    if (totalCount <= 1) return;
+    const targetLayout = thumbLayouts.current[currentIndex];
+    if (!targetLayout || !thumbScrollRef.current) return;
+    isScrollingToThumb.current = true;
+    const screenWidth = Dimensions.get('window').width;
+    const targetCenter = targetLayout.x + targetLayout.width / 2;
+    const scrollTo = Math.max(0, targetCenter - screenWidth / 2);
+    thumbScrollRef.current.scrollTo({ x: scrollTo, animated: true });
+    // 标记结束（动画时长约 200ms）
+    const t = setTimeout(() => { isScrollingToThumb.current = false; }, 250);
+    return () => clearTimeout(t);
+  }, [currentIndex, totalCount]);
 
   useEffect(() => {
     const ids = [];
@@ -204,11 +226,10 @@ function ImageViewerContent({ urls, totalCount, prompt, onClose, colors, styles,
           || (evt.nativeEvent.touches && evt.nativeEvent.touches.length >= 2);
       },
       onPanResponderGrant: (evt) => {
-        lastScale.current = baseScale.current;
+        // 仅在首次触点时重置单指状态，不重置捏合状态
         lastPanX.current = panXValue.current;
         lastPanY.current = panYValue.current;
         lastSlideDelta.current = slideDeltaValue.current;
-        lastDistance.current = 0;
         gestureMoved.current = false;
         isZoomedAtStart.current = baseScale.current > 1.05;
 
@@ -216,24 +237,30 @@ function ImageViewerContent({ urls, totalCount, prompt, onClose, colors, styles,
         if (t0) {
           touchStart.current = { x: t0.pageX, y: t0.pageY };
         }
-        if (evt.nativeEvent.touches && evt.nativeEvent.touches.length >= 2) {
-          const t1 = evt.nativeEvent.touches[1];
-          const dx = t1.pageX - t0.pageX;
-          const dy = t1.pageY - t0.pageY;
-          lastDistance.current = Math.sqrt(dx * dx + dy * dy);
-        }
       },
       onPanResponderMove: (evt, gestureState) => {
         if (Math.abs(gestureState.dx) > 8 || Math.abs(gestureState.dy) > 8) {
           gestureMoved.current = true;
         }
         const touches = evt.nativeEvent.touches;
+        const numTouches = touches?.length || 0;
 
-        if (touches && touches.length >= 2) {
+        if (numTouches >= 2) {
           // 双指捏合缩放
+          gestureMoved.current = true;
           const dx = touches[1].pageX - touches[0].pageX;
           const dy = touches[1].pageY - touches[0].pageY;
           const distance = Math.sqrt(dx * dx + dy * dy);
+
+          // 检测从单指到双指的过渡，初始化捏合基准值
+          if (!pinchStarted.current) {
+            pinchStarted.current = true;
+            lastScale.current = baseScale.current;
+            lastDistance.current = distance;
+            activeTouchCount.current = 2;
+            return;
+          }
+
           if (lastDistance.current > 0) {
             const newScale = lastScale.current * (distance / lastDistance.current);
             const clamped = Math.max(MIN_SCALE, Math.min(newScale, MAX_SCALE));
@@ -241,13 +268,25 @@ function ImageViewerContent({ urls, totalCount, prompt, onClose, colors, styles,
             scale.setValue(clamped);
           }
           lastDistance.current = distance;
-        } else if (touches && touches.length === 1) {
+          activeTouchCount.current = numTouches;
+        } else if (numTouches === 1) {
+          // 从双指回到单指：更新单指基准值
+          if (pinchStarted.current) {
+            pinchStarted.current = false;
+            lastPanX.current = panXValue.current;
+            lastPanY.current = panYValue.current;
+            lastSlideDelta.current = slideDeltaValue.current;
+            isZoomedAtStart.current = baseScale.current > 1.05;
+          }
+          activeTouchCount.current = 1;
+
           if (isZoomedAtStart.current || baseScale.current > 1.05) {
             panX.setValue(lastPanX.current + gestureState.dx);
             panY.setValue(lastPanY.current + gestureState.dy);
           } else if (totalCount > 1) {
             slideDelta.setValue(lastSlideDelta.current + gestureState.dx);
-            if (gestureState.dy > 0 && Math.abs(gestureState.dx) < 50) {
+            // 仅当垂直位移明显大于水平位移时才触发下滑关闭
+            if (gestureState.dy > 0 && Math.abs(gestureState.dy) > Math.abs(gestureState.dx)) {
               dismissY.setValue(gestureState.dy);
               dismissOpacity.setValue(Math.max(0.3, 1 - gestureState.dy / (SCREEN_HEIGHT * 0.5)));
             }
@@ -261,7 +300,9 @@ function ImageViewerContent({ urls, totalCount, prompt, onClose, colors, styles,
         }
       },
       onPanResponderRelease: (evt) => {
-        const wasPinching = lastDistance.current > 0;
+        const wasPinching = pinchStarted.current;
+        pinchStarted.current = false;
+        activeTouchCount.current = 0;
         lastDistance.current = 0;
 
         if (!gestureMoved.current) {
@@ -279,42 +320,27 @@ function ImageViewerContent({ urls, totalCount, prompt, onClose, colors, styles,
           return;
         }
 
-        // Vertical dismiss detection
-        const dismissVelocity = evt.nativeEvent.velocityY || 0;
-        const currentDismissY = dismissYValue.current;
-        if (baseScale.current <= 1.05 && currentDismissY > 0) {
-          if (currentDismissY > DISMISS_THRESHOLD || dismissVelocity > DISMISS_VELOCITY) {
-            Animated.parallel([
-              Animated.timing(dismissY, { toValue: SCREEN_HEIGHT, duration: 200, useNativeDriver: true }),
-              Animated.timing(dismissOpacity, { toValue: 0, duration: 200, useNativeDriver: true }),
-            ]).start(() => {
-              dismissY.setValue(0);
-              dismissOpacity.setValue(1);
-              onClose();
-            });
-            return;
-          }
-          Animated.parallel([
-            Animated.spring(dismissY, { toValue: 0, useNativeDriver: true, friction: 7 }),
-            Animated.spring(dismissOpacity, { toValue: 1, useNativeDriver: true, friction: 7 }),
-          ]).start();
-          return;
-        }
-
         if (baseScale.current <= 1.05) {
           const currentSlide = slideDeltaValue.current;
           const threshold = SCREEN_WIDTH * SLIDE_THRESHOLD;
-          const velocity = evt.nativeEvent.velocityX || 0;
-          const fastSwipe = Math.abs(velocity) > 0.5;
+          const velocityX = evt.nativeEvent.velocityX || 0;
+          const fastSwipe = Math.abs(velocityX) > 0.5;
+          const hasHorizontalSlide = totalCount > 1 && (Math.abs(currentSlide) > threshold || fastSwipe);
 
-          if (totalCount > 1 && (Math.abs(currentSlide) > threshold || fastSwipe)) {
-            const direction = (currentSlide > 0 || velocity > 0) ? -1 : 1;
+          if (hasHorizontalSlide) {
+            // 水平滑动优先：切换到上/下一张
+            const direction = (currentSlide > 0 || velocityX > 0) ? -1 : 1;
             const targetIdx = currentIndexRef.current + direction;
 
             if (targetIdx >= 0 && targetIdx < totalCount) {
+              // 同时复位可能存在的 dismiss 偏移
+              if (dismissYValue.current > 0) {
+                dismissY.setValue(0);
+                dismissOpacity.setValue(1);
+              }
               Animated.spring(slideDelta, {
                 toValue: (direction === -1 ? 1 : -1) * SCREEN_WIDTH,
-                velocity,
+                velocity: velocityX,
                 useNativeDriver: true,
                 overshootClamping: true,
                 friction: 18,
@@ -326,10 +352,30 @@ function ImageViewerContent({ urls, totalCount, prompt, onClose, colors, styles,
                 setCurrentIndex(targetIdx);
               });
             } else {
-              Animated.spring(slideDelta, { toValue: 0, velocity, useNativeDriver: true, friction: 7 }).start();
+              Animated.spring(slideDelta, { toValue: 0, velocity: velocityX, useNativeDriver: true, friction: 7 }).start();
             }
           } else {
-            Animated.spring(slideDelta, { toValue: 0, velocity, useNativeDriver: true, friction: 7 }).start();
+            // 无明显水平滑动：检查垂直下滑关闭
+            const dismissVelocity = evt.nativeEvent.velocityY || 0;
+            const currentDismissY = dismissYValue.current;
+            if (currentDismissY > 0) {
+              if (currentDismissY > DISMISS_THRESHOLD || dismissVelocity > DISMISS_VELOCITY) {
+                Animated.parallel([
+                  Animated.timing(dismissY, { toValue: SCREEN_HEIGHT, duration: 200, useNativeDriver: true }),
+                  Animated.timing(dismissOpacity, { toValue: 0, duration: 200, useNativeDriver: true }),
+                ]).start(() => {
+                  dismissY.setValue(0);
+                  dismissOpacity.setValue(1);
+                  onClose();
+                });
+                return;
+              }
+              Animated.parallel([
+                Animated.spring(dismissY, { toValue: 0, useNativeDriver: true, friction: 7 }),
+                Animated.spring(dismissOpacity, { toValue: 1, useNativeDriver: true, friction: 7 }),
+              ]).start();
+            }
+            Animated.spring(slideDelta, { toValue: 0, velocity: velocityX, useNativeDriver: true, friction: 7 }).start();
           }
         } else {
           const curScale = baseScale.current;
@@ -504,10 +550,21 @@ function ImageViewerContent({ urls, totalCount, prompt, onClose, colors, styles,
 
           {showNav ? (
             <View style={[styles.thumbnailStrip, prompt && { bottom: 110 }]} pointerEvents="box-none">
-              <View style={styles.thumbnailList}>
+              <ScrollView
+                ref={thumbScrollRef}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.thumbnailList}
+                onScroll={(e) => {
+                  // 记录滚动偏移，用于后续 layout 校正
+                  thumbScrollOffset.current = e.nativeEvent.contentOffset.x;
+                }}
+                scrollEventThrottle={16}
+              >
                 {urls.map((url, idx) => (
                   <Pressable
                     key={`${idx}_${url}`}
+                    onLayout={(e) => { thumbLayouts.current[idx] = e.nativeEvent.layout; }}
                     style={({ pressed }) => [
                       styles.thumbnailItem,
                       idx === currentIndex && styles.thumbnailItemActive,
@@ -522,7 +579,7 @@ function ImageViewerContent({ urls, totalCount, prompt, onClose, colors, styles,
                     />
                   </Pressable>
                 ))}
-              </View>
+              </ScrollView>
             </View>
           ) : null}
         </>
@@ -701,7 +758,6 @@ const createStyles = (colors) => ({
     alignItems: 'center',
   },
   thumbnailList: {
-    flexDirection: 'row',
     gap: 6,
     paddingHorizontal: Spacing.md,
     paddingVertical: 6,

@@ -100,6 +100,66 @@ export const HistoryCard = React.memo(function HistoryCard({
   const audioUrl = resolveUrl(item.localAudioUrl, item.audioUrl);
   const imageUrls = (item.localImageUrls?.length > 0 ? item.localImageUrls : item.imageUrls) || item.imageUrls;
 
+  const renderImageGrid = () => {
+    const total = imageUrls.length;
+    const hasMore = total > 4;
+    const visibleUrls = imageUrls.slice(0, 4);
+
+    const renderCell = (url, idx, extraStyle) => (
+      <View key={`${item.id}_thumb_${idx}`} style={[styles.thumbGridCell, extraStyle]}>
+        <Image
+          source={{ uri: url }}
+          style={styles.thumbGridImage}
+          contentFit="cover"
+          cachePolicy="memory-disk"
+          recyclingKey={`${item.id}_thumb_${idx}`}
+          transition={200}
+        />
+        {hasMore && idx === 3 ? (
+          <View style={styles.thumbGridOverlay}>
+            <Text style={styles.thumbGridOverlayText}>+{total - 4}</Text>
+          </View>
+        ) : null}
+      </View>
+    );
+
+    // 2 张：左右均分
+    if (total === 2) {
+      return (
+        <View style={styles.thumbGrid}>
+          {imageUrls.map((url, idx) => renderCell(url, idx, styles.thumbGridItem2))}
+        </View>
+      );
+    }
+
+    // 3 张：左侧大图 + 右侧两张上下堆叠
+    if (total === 3) {
+      return (
+        <View style={[styles.thumbGrid, styles.thumbGrid3Container]}>
+          {renderCell(imageUrls[0], 0, styles.thumbGrid3Main)}
+          <View style={styles.thumbGrid3Side}>
+            {renderCell(imageUrls[1], 1, styles.thumbGrid3SideItem)}
+            {renderCell(imageUrls[2], 2, styles.thumbGrid3SideItem)}
+          </View>
+        </View>
+      );
+    }
+
+    // 4 张及以上：2x2 网格，第 4 张显示 +N 遮罩
+    return (
+      <View style={[styles.thumbGrid, styles.thumbGrid4Container]}>
+        <View style={styles.thumbGrid4Row}>
+          {renderCell(visibleUrls[0], 0, styles.thumbGrid4Item)}
+          {renderCell(visibleUrls[1], 1, styles.thumbGrid4Item)}
+        </View>
+        <View style={styles.thumbGrid4Row}>
+          {renderCell(visibleUrls[2], 2, styles.thumbGrid4Item)}
+          {renderCell(visibleUrls[3], 3, styles.thumbGrid4Item)}
+        </View>
+      </View>
+    );
+  };
+
   return (
     <View style={styles.historyCard}>
       {batchMode ? (
@@ -154,28 +214,7 @@ export const HistoryCard = React.memo(function HistoryCard({
             </View>
           ) : imageUrl ? (
             imageUrls && imageUrls.length > 1 ? (
-              <View style={styles.thumbGrid}>
-                {imageUrls.slice(0, 4).map((url, idx) => (
-                  <Image
-                    key={`${item.id}_thumb_${idx}`}
-                    source={{ uri: url }}
-                    style={[
-                      styles.thumbGridItem,
-                      imageUrls.length === 2 && styles.thumbGridItem2,
-                      imageUrls.length === 3 && idx === 0 && styles.thumbGridItem3First,
-                    ]}
-                    contentFit="cover"
-                    cachePolicy="memory-disk"
-                    recyclingKey={`${item.id}_thumb_${idx}`}
-                    transition={200}
-                  />
-                ))}
-                {imageUrls.length > 4 ? (
-                  <View style={styles.thumbGridOverlay}>
-                    <Text style={styles.thumbGridOverlayText}>+{imageUrls.length - 4}</Text>
-                  </View>
-                ) : null}
-              </View>
+              renderImageGrid()
             ) : (
               <Image source={{ uri: imageUrl }} style={styles.historyThumb} contentFit="cover" cachePolicy="memory-disk" recyclingKey={`${item.id}_thumb`} transition={200} />
             )
@@ -301,36 +340,55 @@ const createStyles = (colors) => ({
     width: '100%',
     flex: 1,
     flexDirection: 'row',
-    flexWrap: 'wrap',
     borderRadius: Radius.xs,
     borderCurve: 'continuous',
     overflow: 'hidden',
     gap: 2,
     backgroundColor: colors.bg,
   },
-  thumbGridItem: {
+  thumbGridCell: {
     flex: 1,
-    aspectRatio: 1,
-    borderRadius: 2,
-    borderCurve: 'continuous',
-    resizeMode: 'cover',
-    minWidth: 0,
+    overflow: 'hidden',
+    position: 'relative',
   },
-  thumbGridItem2: {
-    flex: 1,
+  thumbGridImage: {
+    width: '100%',
     height: '100%',
   },
-  thumbGridItem3First: {
-    flexBasis: '100%',
-    aspectRatio: 2,
+  thumbGridItem2: {
+    height: '100%',
+  },
+  thumbGrid3Container: {
+    flexDirection: 'row',
+  },
+  thumbGrid3Main: {
+    height: '100%',
+  },
+  thumbGrid3Side: {
+    flex: 1,
+    flexDirection: 'column',
+    gap: 2,
+  },
+  thumbGrid3SideItem: {
+    flex: 1,
+    width: '100%',
+  },
+  thumbGrid4Container: {
+    flexDirection: 'column',
+  },
+  thumbGrid4Row: {
+    flex: 1,
+    flexDirection: 'row',
+    gap: 2,
+  },
+  thumbGrid4Item: {
+    flex: 1,
   },
   thumbGridOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: colors.overlayMedium,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: Radius.xs,
-    borderCurve: 'continuous',
   },
   thumbGridOverlayText: {
     color: colors.textOnOverlay,

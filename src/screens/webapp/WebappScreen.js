@@ -48,6 +48,8 @@ export function WebappScreen() {
   // 模式：'list' | 'edit'
   const [mode, setMode] = useState('list');
   const [editingAppId, setEditingAppId] = useState(null); // 正在编辑的已保存应用 ID（null=新增）
+  // 编辑页返回目标：'list' 从 AI 应用列表进入，'square' 从应用广场进入
+  const [editSource, setEditSource] = useState('list');
 
   // 已保存应用列表
   const [savedApps, setSavedApps] = useState([]);
@@ -173,6 +175,7 @@ export function WebappScreen() {
   // 从应用广场选择应用后，进入编辑模式并自动加载详情
   const handleSelectFromSquare = useCallback(async (item) => {
     skipDirtyRef.current = true;
+    setEditSource('square');
     setEditingAppId(null);
     setApiCodeText('');
     setWebAppId(null);
@@ -297,6 +300,7 @@ export function WebappScreen() {
   // 进入编辑模式
   const enterEditMode = useCallback((app = null) => {
     skipDirtyRef.current = true;
+    setEditSource('list');
     if (app) {
       setEditingAppId(app.id);
       setApiCodeText(app.apiCodeText || '');
@@ -334,21 +338,29 @@ export function WebappScreen() {
     setPendingDeleteId(null);
   }, [pendingDeleteId, savedApps]);
 
-  // 返回列表（带未保存修改提示）
+  // 返回列表/应用广场（带未保存修改提示）
+  const backToList = useCallback(() => {
+    if (editSource === 'square') {
+      setSquareVisible(true);
+    }
+    setEditSource('list');
+    setMode('list');
+  }, [editSource]);
+
   const handleBack = useCallback(() => {
     if (isDirty) {
       setShowBackConfirm(true);
     } else {
-      setMode('list');
+      backToList();
     }
-  }, [isDirty]);
+  }, [isDirty, backToList]);
 
   // 确认放弃修改
   const confirmDiscardAndBack = useCallback(() => {
     setShowBackConfirm(false);
     setIsDirty(false);
-    setMode('list');
-  }, []);
+    backToList();
+  }, [backToList]);
 
   // 编辑模式提交任务
   const handleSubmit = useCallback(async () => {

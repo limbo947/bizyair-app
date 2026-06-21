@@ -11,6 +11,16 @@ import {
 import { useApiKeyContext } from '../ApiKeyContext';
 import { HistoryListContext, HomeStateContext, PollingContext, DEFAULT_HOME_STATE, MAX_POLL_FAILS, ACTIVE_STATUSES, getPollingInterval, extractTaskResult, extractWebappResult } from './contexts';
 import { cacheTaskResults, deleteCachedFiles } from '../../utils/resultCache';
+import { ERROR_CODES } from '../../utils/errorMessages';
+
+/** 判断是否为"任务未找到"类的暂时性错误（服务端尚未就绪） */
+function isTaskNotFoundError(err) {
+  if (err.code === ERROR_CODES.NOT_FOUND) return true;
+  const msg = err.message || '';
+  // 匹配 [404]{"code":30009,...} 或包含 30009 的错误
+  if (/\[404\]/.test(msg) || /"code"\s*:\s*30009/.test(msg)) return true;
+  return false;
+}
 
 export function HistoryProvider({ children }) {
   const { apiKey } = useApiKeyContext();
@@ -139,7 +149,12 @@ export function HistoryProvider({ children }) {
           return;
         }
       } catch (err) {
-        failCount++;
+        // "任务未找到"是暂时性错误（服务端尚未就绪），不计入失败次数
+        if (isTaskNotFoundError(err)) {
+          console.warn('[HistoryProvider] 任务尚未就绪，继续轮询:', err.message);
+        } else {
+          failCount++;
+        }
         if (failCount >= MAX_POLL_FAILS) {
           delete pollingRef.current[id];
           updateHistoryItem(id, {
@@ -222,7 +237,12 @@ export function HistoryProvider({ children }) {
         // 非终态才更新中间状态
         updateHistoryItem(id, { status: mappedStatus, lastResponse: detail });
       } catch (err) {
-        failCount++;
+        // "任务未找到"是暂时性错误（服务端尚未就绪），不计入失败次数
+        if (isTaskNotFoundError(err)) {
+          console.warn('[HistoryProvider] Webapp任务尚未就绪，继续轮询:', err.message);
+        } else {
+          failCount++;
+        }
         if (failCount >= MAX_POLL_FAILS) {
           delete pollingRef.current[id];
           updateHistoryItem(id, {
@@ -273,6 +293,11 @@ export function HistoryProvider({ children }) {
         });
       }
     } catch (err) {
+      // "任务未找到"是暂时性错误，保持当前状态不标记失败，等轮询继续查询
+      if (isTaskNotFoundError(err)) {
+        console.warn('[HistoryProvider] 查询任务未找到，保持当前状态:', err.message);
+        return;
+      }
       updateHistoryItem(item.id, {
         status: 'Failed',
         errorMessage: err.message || '轮询请求失败',
