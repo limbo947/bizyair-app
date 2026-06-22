@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback, useMemo, useLayoutEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import {
   Pressable,
   StyleSheet,
@@ -81,19 +81,6 @@ function ImageViewerContent({ urls, totalCount, prompt, onClose, colors, styles,
   const scaleValue = useRef(1);
 
   useEffect(() => { currentIndexRef.current = currentIndex; }, [currentIndex]);
-
-  /* ── 复位滑动偏移（在 currentIndex 变化后、绘制前执行） ──
-     修复：滑动切换图片后 ~500ms 闪烁前一张图。
-     原因：原实现在动画回调中同步 setValue(0) 再异步 setCurrentIndex，
-     导致 setValue 生效时仍显示旧 URL 的中心图，造成 1-2 帧闪烁。
-     改为在 useLayoutEffect 中（currentIndex 变化触发 re-render 后、
-     浏览器绘制前）复位 slideDelta/panX/panY，确保 URL 切换与位置复位在同一帧生效。 */
-  useLayoutEffect(() => {
-    slideDelta.setValue(0);
-    panX.setValue(0);
-    panY.setValue(0);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentIndex]);
 
   /* ── 自动滚动缩略图条到当前项 ── */
   useEffect(() => {
@@ -351,17 +338,23 @@ function ImageViewerContent({ urls, totalCount, prompt, onClose, colors, styles,
                 dismissY.setValue(0);
                 dismissOpacity.setValue(1);
               }
-              Animated.spring(slideDelta, {
-                toValue: (direction === -1 ? 1 : -1) * SCREEN_WIDTH,
-                velocity: velocityX,
+              // 淡入淡出切换：useNativeDriver 下 setValue 与 React 状态更新
+              // 无法原子执行，spring 到边缘后复位会闪烁（黑色/前图闪现），
+              // 改为淡出 → 复位位置+URL → 淡入，彻底消除闪烁
+              Animated.timing(fadeOpacity, {
+                toValue: 0,
+                duration: 80,
                 useNativeDriver: true,
-                overshootClamping: true,
-                friction: 18,
-                tension: 140,
               }).start(() => {
-                // slideDelta/panX/panY 复位已移至 useLayoutEffect，
-                // 确保 URL 切换与位置复位在同一帧生效，消除闪烁
+                slideDelta.setValue(0);
+                panX.setValue(0);
+                panY.setValue(0);
                 setCurrentIndex(targetIdx);
+                Animated.timing(fadeOpacity, {
+                  toValue: 1,
+                  duration: 100,
+                  useNativeDriver: true,
+                }).start();
               });
             } else {
               Animated.spring(slideDelta, { toValue: 0, velocity: velocityX, useNativeDriver: true, friction: 7 }).start();
