@@ -32,45 +32,96 @@ export function extractTaskResult(result) {
   const outputs = result.outputs;
   if (!outputs) return {};
 
+  // 收集所有类型的产物（修复：同一任务可能包含多种类型产物）
+  const taskResult = {};
+
   if (outputs.videos?.length > 0) {
-    return { outputType: 'video', videoUrl: outputs.videos[0], videoUrls: outputs.videos, resultUrl: outputs.videos[0] };
+    taskResult.videoUrl = outputs.videos[0];
+    taskResult.videoUrls = outputs.videos;
   }
   if (outputs.audios?.length > 0) {
-    return { outputType: 'audio', audioUrl: outputs.audios[0], resultUrl: outputs.audios[0] };
+    taskResult.audioUrl = outputs.audios[0];
   }
   if (outputs.texts?.length > 0) {
-    return { outputType: 'text', textResult: outputs.texts[0], resultUrl: null };
+    taskResult.textResult = outputs.texts[0];
   }
   if (outputs.images?.length > 0) {
-    return {
-      outputType: 'image',
-      imageUrl: outputs.images[0],
-      imageUrls: outputs.images,
-      resultUrl: outputs.images[0],
-    };
+    taskResult.imageUrl = outputs.images[0];
+    taskResult.imageUrls = outputs.images;
   }
-  return {};
+
+  // 设置主产物类型（优先级：video > audio > text > image），用于缩略图展示
+  if (taskResult.videoUrl) {
+    taskResult.outputType = 'video';
+    taskResult.resultUrl = taskResult.videoUrl;
+  } else if (taskResult.audioUrl) {
+    taskResult.outputType = 'audio';
+    taskResult.resultUrl = taskResult.audioUrl;
+  } else if (taskResult.textResult) {
+    taskResult.outputType = 'text';
+    taskResult.resultUrl = null;
+  } else if (taskResult.imageUrl) {
+    taskResult.outputType = 'image';
+    taskResult.resultUrl = taskResult.imageUrl;
+  }
+
+  return taskResult;
 }
 
 export function extractWebappResult(outputs) {
   if (!Array.isArray(outputs) || outputs.length === 0) return {};
+
+  const VIDEO_EXTS = ['.mp4', '.mov', '.avi', '.webm'];
+  const AUDIO_EXTS = ['.mp3', '.wav', '.ogg', '.flac', '.aac'];
+  const IMAGE_EXTS = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp'];
+
+  // 收集所有类型的产物（修复：同一任务可能包含多种类型产物）
+  const taskResult = {};
+  const videoUrls = [];
+  const audioUrls = [];
+  const imageUrls = [];
+
+  for (const o of outputs) {
+    const ext = (o.output_ext || '').toLowerCase();
+    const url = o.object_url || '';
+    if (!url) continue;
+    if (VIDEO_EXTS.includes(ext)) videoUrls.push(url);
+    else if (AUDIO_EXTS.includes(ext)) audioUrls.push(url);
+    else if (IMAGE_EXTS.includes(ext)) imageUrls.push(url);
+    else imageUrls.push(url); // 未知扩展名默认按图片处理
+  }
+
+  if (videoUrls.length > 0) {
+    taskResult.videoUrl = videoUrls[0];
+    taskResult.videoUrls = videoUrls;
+  }
+  if (audioUrls.length > 0) {
+    taskResult.audioUrl = audioUrls[0];
+  }
+  if (imageUrls.length > 0) {
+    taskResult.imageUrl = imageUrls[0];
+    taskResult.imageUrls = imageUrls;
+  }
+
+  // 主产物类型按首个产物的扩展名决定，用于缩略图展示
   const first = outputs[0];
-  const ext = (first.output_ext || '').toLowerCase();
-  const url = first.object_url || '';
-  if (['.mp4', '.mov', '.avi', '.webm'].includes(ext)) {
-    const videoUrls = outputs.filter(o => ['.mp4', '.mov', '.avi', '.webm'].includes((o.output_ext || '').toLowerCase())).map(o => o.object_url);
-    return { outputType: 'video', videoUrl: url, resultUrl: url, videoUrls };
+  const firstExt = (first.output_ext || '').toLowerCase();
+  if (VIDEO_EXTS.includes(firstExt) && taskResult.videoUrl) {
+    taskResult.outputType = 'video';
+    taskResult.resultUrl = taskResult.videoUrl;
+  } else if (AUDIO_EXTS.includes(firstExt) && taskResult.audioUrl) {
+    taskResult.outputType = 'audio';
+    taskResult.resultUrl = taskResult.audioUrl;
+  } else if (taskResult.imageUrl) {
+    taskResult.outputType = 'image';
+    taskResult.resultUrl = taskResult.imageUrl;
+  } else if (taskResult.videoUrl) {
+    taskResult.outputType = 'video';
+    taskResult.resultUrl = taskResult.videoUrl;
+  } else if (taskResult.audioUrl) {
+    taskResult.outputType = 'audio';
+    taskResult.resultUrl = taskResult.audioUrl;
   }
-  if (['.mp3', '.wav', '.ogg', '.flac', '.aac'].includes(ext)) {
-    return { outputType: 'audio', audioUrl: url, resultUrl: url };
-  }
-  if (['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp'].includes(ext)) {
-    const imageUrls = outputs.filter(o => ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp'].includes((o.output_ext || '').toLowerCase())).map(o => o.object_url);
-    return { outputType: 'image', imageUrl: url, imageUrls, resultUrl: url };
-  }
-  if (url) {
-    const imageUrls = outputs.map(o => o.object_url).filter(Boolean);
-    return { outputType: 'image', imageUrl: url, imageUrls, resultUrl: url };
-  }
-  return {};
+
+  return taskResult;
 }
