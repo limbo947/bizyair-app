@@ -3,7 +3,7 @@ import {
   WEBAPP_DETAIL_URL,
   COMMUNITY_API_BASE,
   DICT_API_URL,
-} from '../constants/models';
+} from '../constants/apiConfig';
 import { request } from './httpClient';
 
 /**

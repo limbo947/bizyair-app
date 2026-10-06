@@ -56,6 +56,13 @@ export function CommunityAppSquare({ visible, onClose, onSelectApp, onSavedAppsC
 
   const searchTimer = useRef(null);
   const filterStateRef = useRef({ keyword: '', sort: 'Recently', baseModel: '' });
+  // 列表请求序号：搜索防抖与筛选切换会产生并发请求，慢的旧响应必须丢弃
+  const loadSeqRef = useRef(0);
+
+  // 卸载时清理防抖定时器，避免关闭广场后仍发起请求
+  useEffect(() => () => {
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+  }, []);
 
   // 同步筛选状态到 ref（供防抖回调读取最新值）
   useEffect(() => {
@@ -64,6 +71,7 @@ export function CommunityAppSquare({ visible, onClose, onSelectApp, onSavedAppsC
 
   // 加载应用列表
   const loadApps = useCallback(async (page = 1, reset = false, overrideFilter) => {
+    const seq = ++loadSeqRef.current;
     if (page === 1) setLoading(true);
     else setLoadingMore(true);
     try {
@@ -75,14 +83,19 @@ export function CommunityAppSquare({ visible, onClose, onSelectApp, onSavedAppsC
         sort: f.sort,
         baseModel: f.baseModel || undefined,
       });
+      // 已有更新的请求发出，本次结果过期，直接丢弃（loading 由最新请求收尾）
+      if (seq !== loadSeqRef.current) return;
       setApps(prev => reset ? result.list : [...prev, ...result.list]);
       setCurrent(result.current);
       setTotal(result.total);
     } catch (err) {
+      if (seq !== loadSeqRef.current) return;
       showToast(err.message || '加载失败', 'error');
     } finally {
-      setLoading(false);
-      setLoadingMore(false);
+      if (seq === loadSeqRef.current) {
+        setLoading(false);
+        setLoadingMore(false);
+      }
     }
   }, [showToast]);
 

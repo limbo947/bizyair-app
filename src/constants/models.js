@@ -39,14 +39,6 @@ export {
 } from './pricing';
 
 export {
-  API_HOST, API_BASE, WEBAPP_API_BASE, WEBAPP_DETAIL_URL,
-  COMMUNITY_API_BASE, DICT_API_URL,
-  UPLOAD_TOKEN_URL, COMMIT_RESOURCE_URL, USER_METADATA_URL, WALLET_BALANCE_URL, ENV_API_KEY,
-  REQUEST_TIMEOUT_MS, MAX_RETRIES, RETRY_DELAY_MS, POLLING_INTERVAL_MS,
-  TAB_FADE_OUT_MS, TAB_FADE_IN_MS,
-} from './apiConfig';
-
-export {
   HISTORY_KEY, API_KEY_STORAGE_KEY, API_KEYS_STORAGE_KEY, ACTIVE_KEY_ID_KEY,
   ACTIVE_TAB_KEY, HOME_STATE_KEY, MODEL_STATES_KEY, TOTAL_COINS_KEY,
 } from './storageKeys';
@@ -478,7 +470,6 @@ export const MODELS = {
     category: 'reference-to-video',
     paramType: 'kling-o3-4k',
     modes: ['reference-to-video'],
-    endpoint: 'kling-o3-4k-base/reference-to-video',
     priceCalculator: calcKlingO3_4KPrice,
     videoRatios: ['16:9', '9:16', '1:1'],
     maxPromptLength: 2500,
@@ -1042,7 +1033,6 @@ export const MODELS = {
     maxImages: 1,
     supportsImageToImage: true,
     noPromptRequired: true,
-    endpoint: 'seedvr2/upscale/image',
   },
   'z-image-base': {
     name: 'Z-Image Base',
@@ -1072,7 +1062,6 @@ export const MODELS = {
     maxImages: 1,
     supportsImageToImage: true,
     noPromptRequired: true,
-    endpoint: 'flux-klein/watermarker-remover/image-to-image',
   },
   'kontext-dev-lora': {
     name: 'Kontext LoRA',

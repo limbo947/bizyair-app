@@ -20,7 +20,11 @@ export function usePresets() {
 
   const persistPresets = useCallback(async (updated) => {
     setPresets(updated);
-    await AsyncStorage.setItem(PRESETS_KEY, JSON.stringify(updated));
+    try {
+      await AsyncStorage.setItem(PRESETS_KEY, JSON.stringify(updated));
+    } catch (e) {
+      console.error('保存预设失败:', e);
+    }
   }, []);
 
   const savePreset = useCallback(async (name, modelId, mode, params) => {
@@ -32,15 +36,24 @@ export function usePresets() {
       params,
       createdAt: Date.now(),
     };
-    const updated = [entry, ...presets].slice(0, MAX_PRESETS);
+    // 函数式更新读取最新列表，避免快速连续保存时闭包中的旧 presets 覆盖前一次保存
+    let updated;
+    setPresets((prev) => {
+      updated = [entry, ...prev].slice(0, MAX_PRESETS);
+      return updated;
+    });
     await persistPresets(updated);
     return entry;
-  }, [presets, persistPresets]);
+  }, [persistPresets]);
 
   const deletePreset = useCallback(async (id) => {
-    const updated = presets.filter((p) => p.id !== id);
+    let updated;
+    setPresets((prev) => {
+      updated = prev.filter((p) => p.id !== id);
+      return updated;
+    });
     await persistPresets(updated);
-  }, [presets, persistPresets]);
+  }, [persistPresets]);
 
   return { presets, savePreset, deletePreset };
 }

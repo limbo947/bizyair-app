@@ -22,7 +22,7 @@ const ModelCard = React.memo(function ModelCard({ model, isSelected, isEditMode,
         styles.modelCard,
         isSelected && styles.modelCardActive,
         pressed && pressedOpacity(),
-      ]} onPress={onPress} >
+      ]} onPress={() => onPress(model.id)} >
       <View style={styles.modelCardHeader}>
         <Ionicons
           name={model.icon.name}
@@ -131,21 +131,21 @@ export function ModelSelectScreen({ currentModelId, onSelectModel, onBack }) {
     setShowManufacturerPicker(false);
   };
 
-  const handleModelPress = (modelId, category) => {
+  // 用 useCallback + 函数式 setSelectedModels 保持引用稳定：
+  // 打开 Picker、勾选模型等无关 state 变化时避免数百个 memo 卡片全量重渲染
+  const handleModelPress = useCallback((modelId) => {
     if (isEditMode) {
-      if (selectedModels.includes(modelId)) {
-        setSelectedModels(selectedModels.filter((id) => id !== modelId));
-      } else {
-        setSelectedModels([...selectedModels, modelId]);
-      }
+      setSelectedModels((prev) => prev.includes(modelId)
+        ? prev.filter((id) => id !== modelId)
+        : [...prev, modelId]);
     } else {
       // 传递当前分类，以便 HomeScreen 自动切换到对应模式
       // 将 UI category 映射为 API mode
-      let apiMode = category && category !== 'all' && category !== 'favorite' ? category : undefined;
+      let apiMode = selectedCategory && selectedCategory !== 'all' && selectedCategory !== 'favorite' ? selectedCategory : undefined;
       if (apiMode === 'language') apiMode = 'large-language-models';
       onSelectModel(modelId, apiMode);
     }
-  };
+  }, [isEditMode, selectedCategory, onSelectModel]);
 
   const handleSaveFavorites = () => {
     saveFavorites([...selectedModels]);
@@ -179,13 +179,12 @@ export function ModelSelectScreen({ currentModelId, onSelectModel, onBack }) {
         model={model}
         isSelected={isSelected}
         isEditMode={isEditMode}
-        onPress={() => handleModelPress(model.id, selectedCategory)}
+        onPress={handleModelPress}
         colors={colors}
         styles={styles}
       />
     );
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isEditMode, selectedModels, currentModelId, selectedCategory, styles, colors, handleModelPress]);
+  }, [isEditMode, selectedModels, currentModelId, styles, colors, handleModelPress]);
 
   return (
     <View style={styles.container}>

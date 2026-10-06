@@ -477,6 +477,7 @@ function HomeParamControlsInner({
           setEnableSearch={s('enableSearch')}
           enableThinkingRequired={currentModel.enableThinkingRequired}
           enableSearchRequired={currentModel.enableSearchRequired}
+          maxTokensMax={currentModel.maxTokens}
         />
       );
     case 'vision-g':

@@ -1,7 +1,7 @@
 import {
   USER_METADATA_URL,
   WALLET_BALANCE_URL,
-} from '../constants/models';
+} from '../constants/apiConfig';
 import { request } from './httpClient';
 
 /**

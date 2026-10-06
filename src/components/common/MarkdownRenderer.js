@@ -1,12 +1,14 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import Markdown from 'react-native-markdown-display';
 import { Radius, Spacing, Typography } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
 
-export function MarkdownRenderer({ content, style }) {
+// memo：markdown 解析 AST 开销大，父组件无关渲染不应触发重新解析
+const MarkdownRenderer = React.memo(function MarkdownRenderer({ content, style }) {
   const { colors } = useTheme();
 
-  const markdownStyle = {
+  // 样式对象仅随主题变化重建，避免每次渲染新引用导致 Markdown 内部重渲染
+  const markdownStyle = useMemo(() => ({
     body: {
       color: colors.textPrimary,
       fontSize: Typography.fontSize.subheadline,
@@ -185,11 +187,13 @@ export function MarkdownRenderer({ content, style }) {
       marginBottom: Spacing.xs,
       lineHeight: Typography.lineHeight.normal,
     },
-  };
+  }), [colors]);
 
   return (
     <Markdown style={markdownStyle} mergeStyle>
       {content}
     </Markdown>
   );
-}
+});
+
+export { MarkdownRenderer };

@@ -93,11 +93,14 @@ export function FavoriteModelsLayer({
   const styles = useThemedStyles(createStyles);
   const { colors } = useTheme();
 
-  const favoriteModels = useMemo(() => favorites.map((modelId) => ({
-    id: modelId,
-    ...MODELS[modelId],
-    manufacturerInfo: MANUFACTURERS[MODELS[modelId]?.manufacturer],
-  })).filter(Boolean), [favorites]);
+  // 先过滤掉 MODELS 中已下线/不存在的收藏 id，避免渲染时 model.icon 为 undefined 导致整个浮层崩溃
+  const favoriteModels = useMemo(() => favorites
+    .filter((modelId) => MODELS[modelId])
+    .map((modelId) => ({
+      id: modelId,
+      ...MODELS[modelId],
+      manufacturerInfo: MANUFACTURERS[MODELS[modelId].manufacturer],
+    })), [favorites]);
 
   return (
     <DropdownModal

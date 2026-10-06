@@ -45,7 +45,7 @@
 ├── src/
 │   ├── context/              # 全局状态管理（Provider 链：ApiKey → History → Favorites）
 │   │   ├── history/          # 历史记录子模块
-│   │   │   ├── HistoryProvider.js  # 历史记录、轮询、homeState
+│   │   │   ├── HistoryProvider.js  # 历史记录、轮询、homeState（持久化防抖 + 卸载兜底 flush）
 │   │   │   ├── contexts.js        # 历史相关 Context 定义
 │   │   │   ├── hooks.js           # 历史相关自定义 Hooks
 │   │   │   └── index.js           # 统一导出
@@ -64,12 +64,15 @@
 │   │   │   ├── HistoryCard.js    # 历史卡片（React.memo + DurationDisplay 独立定时器）
 │   │   │   └── DurationDisplay.js # 运行时长显示组件
 │   │   ├── webapp/          # AI 应用子模块
-│   │   │   ├── WebappScreen.js   # AI 应用（field_type 驱动参数渲染：combo/slider/number/hidden/string）
-│   │   │   ├── WebappListItem.js # 应用列表项（React.memo）
-│   │   │   ├── storage.js        # Webapp 本地存储
-│   │   │   └── utils.js          # Webapp 工具函数
+│   │   │   ├── WebappScreen.js       # AI 应用（field_type 驱动参数渲染：combo/slider/number/hidden/string）
+│   │   │   ├── WebappListItem.js     # 应用列表项（React.memo）
+│   │   │   ├── CommunityAppSquare.js # 社区应用广场（搜索/筛选/分页，请求序号防乱序）
+│   │   │   ├── CommunityAppCard.js   # 社区应用卡片
+│   │   │   ├── CommunityAppPreview.js # 社区应用预览（详情查看/收藏）
+│   │   │   ├── storage.js            # Webapp 本地存储
+│   │   │   └── utils.js              # Webapp 工具函数
 │   │   └── ModelSelectScreen.js # 模型选择（FlatList 虚拟化 + ModelCard memo + 左侧分类栏）
-│   ├── components/           # UI 组件（按功能分组，共 30 个）
+│   ├── components/           # UI 组件（按功能分组，共 31 个）
 │   │   │
 │   │   │ # 参数控件（params/，12 个，由 HomeParamControls.js 按 paramType 路由分发）
 │   │   ├── params/
@@ -109,17 +112,18 @@
 │   │   │   ├── TextResultView.js      # 文本结果展示（复制按钮 + 滚动查看）
 │   │   │   └── MarkdownRenderer.js    # Markdown 渲染（react-native-markdown-display）
 │   │   │
-│   │   │ # 页面辅助组件（4 个，仍在 components/ 根层级）
+│   │   │ # 页面辅助组件（5 个，仍在 components/ 根层级）
 │   │   ├── HistoryFilters.js      # 历史筛选（类型/状态/日期多条件筛选）
 │   │   ├── HistoryModals.js       # 历史弹窗（日志查看 / 详情 / 操作确认）
 │   │   ├── ModelSelector.js       # 模型选择器（首页顶部下拉按钮）
 │   │   ├── NetworkStatusBar.js    # 网络状态栏（离线时顶部红色提示条）
 │   │   └── ParamPresetBar.js      # 参数预设栏（保存/加载/删除参数预设）
 │   ├── constants/            # 常量定义
-│   │   ├── models.js         # MODELS 对象 + paramType + re-export（向后兼容）
+│   │   ├── models.js         # MODELS 对象（61 个模型：paramType/modes/价格/UI 参数，不含 API 配置）
 │   │   ├── pricing.js        # 价格常量 + 计算函数
 │   │   ├── modelMeta.js      # CATEGORIES / MANUFACTURERS / FAVORITES_MAX_COUNT
-│   │   ├── apiConfig.js      # API 端点 + 超时配置
+│   │   ├── apiConfig.js      # API 集中配置（端点/密钥/OSS域名/上传代理/超时重试轮询，更换 API 服务只改此文件）
+│   │   ├── modelEndpoints.js # 模型端点注册表（官网 slug 与 MODELS key 不一致时的覆盖映射）
 │   │   ├── storageKeys.js    # AsyncStorage 键名
 │   │   ├── uiConstants.js    # UI 常量
 │   │   ├── theme.js          # Design Token：Radius / Spacing / Typography / Shadow / ButtonVariants / STATUS_COLORS
@@ -133,15 +137,16 @@
 │   │   ├── useFormValidation.js  # 表单校验 Hook（提示词/图片/首尾帧/视频等校验）
 │   │   ├── useNetworkStatus.js   # 网络状态 Hook（NetInfo 监听连接/可达性）
 │   │   └── usePresets.js         # 参数预设 Hook（保存/加载/删除预设，AsyncStorage 持久化）
-│   ├── utils/                # 纯函数工具（5 个）
+│   ├── utils/                # 纯函数工具（6 个）
 │   │   ├── modelHelpers.js   # 价格计算 / 模型过滤 / 参数默认值
 │   │   ├── payloadBuilder.js # 参数映射（camelCase → snake_case）+ 请求体构建
 │   │   ├── helpers.js        # 通用辅助函数（时间格式化 / 字符串处理）
 │   │   ├── download.js       # 文件下载（expo-file-system + MediaLibrary）
-│   │   └── resultCache.js    # 结果缓存（expo-file-system OOP API，按 historyId 缓存）
+│   │   ├── errorMessages.js  # 错误分类（classifyError / ERROR_CODES / 用户友好提示）
+│   │   └── resultCache.js    # 结果缓存（expo-file-system OOP API，按 historyId+类型 缓存）
 │   └── services/             # API 服务层
-│       ├── httpClient.js     # 核心 HTTP 请求（15s 超时 / 指数退避重试 / 错误分类）
-│       ├── taskApi.js        # 任务 API（提交/查询/取消）
+│       ├── httpClient.js     # 核心 HTTP 请求（15s 超时 / 幂等方法指数退避重试 / 错误分类）
+│       ├── taskApi.js        # 任务 API（提交/查询/取消，端点经 modelEndpoints 注册表解析）
 │       ├── uploadApi.js      # 上传 API（OSS STS 凭证 + 直传 + 确认）
 │       ├── userApi.js        # 用户 API（余额查询）
 │       ├── webappApi.js      # AI 应用 API（Combo 列表/详情）
@@ -162,6 +167,8 @@
 - **关注点分离**：组件不写 API 调用，服务文件不写 UI 代码，常量文件不定义函数
 - 修改和新增功能优先复用现有模块
 - 修改代码时遵循最小改动原则，尽量保持原有接口不变
+- **一次性创建的闭包（PanResponder/定时器回调）不得直接引用 render 作用域的 state**：必须走 latest-ref 模式（`xxxRef.current` + useEffect 同步），否则闭包捕获首帧过期值导致交互失效（AudioPlayer/VideoPlayer 进度条拖拽曾因此完全失效）
+- **异步请求需防乱序**：搜索/筛选等可并发触发的请求应带自增序号，响应返回后比对序号再 setState，丢弃过期响应
 - 单文件有效代码行数（不含空行/注释）不得超过 **800 行**，*新建代码文件*或*修改后的代码文件* 预估超 **700 行** 时即拆分为多个文件
 - **UI 设计相关规则**（Design Token / 主题响应式 / ErrorBoundary / Pressable 反馈 / React.memo 等）详见 [Design.md](./Design.md)
 
@@ -186,9 +193,9 @@ AppProvider = ApiKeyProvider → HistoryProvider → FavoritesProvider
 2. `params/HomeParamControls.js` 根据模型的 `paramType` 路由到对应控件组件渲染表单。
 3. `useFormValidation` 校验必填项（提示词/图片/首尾帧/视频等），不通过则 Toast 提示。
 4. `payloadBuilder.js` 将前端 camelCase 参数映射为 API snake_case 请求体。
-5. `taskApi.js` 调用 `submitTask()` 提交，返回 `requestId`。
-6. `HistoryProvider` 添加历史记录（Pending/Running），`startPolling()` 每 3 秒轮询状态。
-7. 轮询成功后提取输出 URL，`resultCache.js` 缓存结果文件到本地；连续 5 次失败标记 Failed。启动时 `resumeRunningPolling()` 自动恢复。
+5. `taskApi.js` 调用 `submitTask()` 提交：URL 经 `resolvePath()` 解析（默认 `modelId/mode`，`modelEndpoints.js` 注册表中的例外模型按登记覆盖），返回 `requestId`。
+6. `HistoryProvider` 添加历史记录（Pending/Running，立即落盘），`startPolling()` 每 3 秒轮询状态（间隔随耗时退避 3s→15s）。
+7. 轮询成功后提取输出 URL，`resultCache.js` 缓存结果文件到本地；连续 5 次失败标记 Failed。启动时 `resumeRunningPolling()` 自动恢复。轮询期间的状态更新经 800ms 防抖持久化（新增/删除历史仍立即落盘）。
 
 ### paramType 驱动
 `constants/models.js` 中每个模型定义 `paramType`，驱动三处逻辑：
@@ -206,7 +213,9 @@ AppProvider = ApiKeyProvider → HistoryProvider → FavoritesProvider
 4. `uploadApi.js` → `commitResource()` 通知服务端确认
 
 ### API 请求封装
-`httpClient.js` 的 `request()` 统一封装：15 秒超时（AbortController）、指数退避重试（最多 3 次）、错误分类（超时/服务端/客户端）。`apiClient.js` 作为统一入口 re-export 各子模块，保持向后兼容。
+`httpClient.js` 的 `request()` 统一封装：15 秒超时（AbortController）、**仅幂等方法（GET/PUT/HEAD）自动重试**（指数退避，最多 3 次；POST 不重试，防止任务重复提交/重复扣费）、错误分类（超时/服务端/客户端）。`apiClient.js` 作为统一入口 re-export 各子模块，保持向后兼容。
+
+**更换 API 服务**（换域名/端点/OSS/密钥）只需修改 `src/constants/apiConfig.js` 一个文件；模型端点 slug 与 key 不一致的例外集中在 `src/constants/modelEndpoints.js` 注册表。
 
 ### 网络状态检测
 `useNetworkStatus` Hook 基于 `@react-native-community/netinfo` 监听网络连接状态，`NetworkStatusBar` 组件在离线时显示顶部红色提示条。轮询失败后网络恢复时自动续轮（`resumeRunningPolling()`）。
@@ -215,7 +224,7 @@ AppProvider = ApiKeyProvider → HistoryProvider → FavoritesProvider
 `usePresets` Hook 提供参数预设的保存/加载/删除功能，持久化到 AsyncStorage（键名 `bizyair_param_presets`，上限 20 条）。`ParamPresetBar` 组件提供 UI 入口，按 `modelId + mode` 过滤预设。
 
 ### 结果缓存
-`resultCache.js` 基于 expo-file-system OOP API（File/Paths），按 `historyId + index` 缓存结果文件到 `{document}/bizyair_results/` 目录，避免重复下载远程结果。
+`resultCache.js` 基于 expo-file-system OOP API（File/Paths），按 `historyId + 类型前缀（img/vid/aud）+ index` 缓存结果文件到 `{document}/bizyair_results/` 目录，避免重复下载远程结果，也防止无扩展名 URL 的不同类型产物互相覆盖。
 
 ### 常见 UI 模式
 > 详见 [Design.md — 常见 UI 模式](./Design.md#7-常见-ui-模式)
@@ -233,12 +242,13 @@ AppProvider = ApiKeyProvider → HistoryProvider → FavoritesProvider
 ## 新增模型检查清单
 添加新模型时需同步修改：
 1. `src/constants/models.js` — `MODELS` 对象中添加模型配置（paramType、modes）
-2. `src/constants/pricing.js` — 添加价格常量和计算函数（若新计费方式）
-3. `src/constants/modelMeta.js` — `MODEL_MANUFACTURERS` 映射中添加条目
-4. `src/components/params/` — 若新的 paramType，创建控件组件并在 `HomeParamControls.js` 中添加 import + case 分支；若复用已有 paramType 则跳过
-5. `src/utils/payloadBuilder.js` — 若新的 paramType，添加 switch-case
-6. `src/utils/modelHelpers.js` — 若新计费方式，添加计算函数
-7. `src/screens/home/homeReducer.js` — `initialState` 中添加模型的默认参数值；若参数较多，考虑按 paramType 拆分初始状态
+2. `src/constants/modelEndpoints.js` — 若官网端点 slug 与 MODELS key 不一致，在 `MODEL_ENDPOINTS` 注册表中登记覆盖（默认端点为 `key/mode`，无需登记）
+3. `src/constants/pricing.js` — 添加价格常量和计算函数（若新计费方式）
+4. `src/constants/modelMeta.js` — `MODEL_MANUFACTURERS` 映射中添加条目
+5. `src/components/params/` — 若新的 paramType，创建控件组件并在 `HomeParamControls.js` 中添加 import + case 分支；若复用已有 paramType 则跳过
+6. `src/utils/payloadBuilder.js` — 若新的 paramType，添加 switch-case
+7. `src/utils/modelHelpers.js` — 若新计费方式，添加计算函数
+8. `src/screens/home/homeReducer.js` — `initialState` 中添加模型的默认参数值；若参数较多，考虑按 paramType 拆分初始状态
 
 ## 新增 UI 组件检查清单
 > 详见 [Design.md — UI 组件检查清单](./Design.md#9-ui-组件检查清单)

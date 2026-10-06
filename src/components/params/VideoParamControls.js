@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Pressable, Text, View, TextInput, Switch } from 'react-native';
 import { Radius, Spacing, Typography } from '../../constants/theme';
 import { createSharedStyles } from '../../constants/sharedStyles';
@@ -568,6 +568,13 @@ export function HailuoVideoControls({
     ? (resolutionDurationMap[resolution] || durationOptions)
     : durationOptions;
   const validDuration = allowedDurations.includes(duration) ? duration : allowedDurations[0];
+  // 跨模型切换残留的非法 duration 同步回当前分辨率允许的合法值，
+  // 否则 UI 高亮显示合法值但实际提交的仍是旧值
+  useEffect(() => {
+    if (validDuration !== undefined && validDuration !== duration) {
+      setDuration(validDuration);
+    }
+  }, [validDuration, duration, setDuration]);
   return (
     <>
       <View style={styles.card}>

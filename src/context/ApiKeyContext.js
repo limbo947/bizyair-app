@@ -1,8 +1,8 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { fetchUserInfo, fetchWalletBalance } from '../services/apiClient';
+import { ENV_API_KEY } from '../constants/apiConfig';
 import {
-  ENV_API_KEY,
   API_KEY_STORAGE_KEY,
   API_KEYS_STORAGE_KEY,
   ACTIVE_KEY_ID_KEY,
@@ -18,15 +18,20 @@ export function ApiKeyProvider({ children }) {
   const [activeApiKeyId, setActiveApiKeyId] = useState(null);
   const [userInfo, setUserInfo] = useState(null);
   const [walletBalance, setWalletBalance] = useState(null);
+  // 快速连续切换密钥时防止慢的旧请求覆盖新密钥的信息
+  const refreshSeqRef = useRef(0);
 
   const refreshUserInfo = useCallback(async (key) => {
     const ak = key || apiKey || ENV_API_KEY;
     if (!ak) return false;
+    const seq = ++refreshSeqRef.current;
     try {
       const [info, balance] = await Promise.allSettled([
         fetchUserInfo(ak),
         fetchWalletBalance(ak),
       ]);
+      // 已有更新的刷新请求发出，丢弃本次过期响应
+      if (seq !== refreshSeqRef.current) return false;
       if (info.status === 'fulfilled') setUserInfo(info.value);
       if (balance.status === 'fulfilled') setWalletBalance(balance.value);
       if (info.status === 'fulfilled' || balance.status === 'fulfilled') {
@@ -102,6 +107,13 @@ export function ApiKeyProvider({ children }) {
   }, [refreshUserInfo]);
 
   const addApiKey = useCallback(async (key, name) => {
+    // 同一密钥已存在时直接切换激活，避免列表出现重复条目
+    const existing = apiKeys.find((k) => k.key === key);
+    if (existing) {
+      await saveApiKeys(apiKeys, existing.id);
+      await refreshUserInfo(key);
+      return;
+    }
     const id = generateKeyId();
     const newKeys = [...apiKeys, { id, key, name: name || `密钥 ${apiKeys.length + 1}` }];
     await saveApiKeys(newKeys, id);

@@ -325,7 +325,9 @@ export const HistoryCard = React.memo(function HistoryCard({
   return prevProps.item.id === nextProps.item.id &&
     prevProps.item.status === nextProps.item.status &&
     prevProps.item.imageUrl === nextProps.item.imageUrl &&
+    prevProps.item.imageUrls === nextProps.item.imageUrls &&
     prevProps.item.videoUrl === nextProps.item.videoUrl &&
+    prevProps.item.videoUrls === nextProps.item.videoUrls &&
     prevProps.item.audioUrl === nextProps.item.audioUrl &&
     prevProps.item.localImageUrl === nextProps.item.localImageUrl &&
     prevProps.item.localVideoUrl === nextProps.item.localVideoUrl &&

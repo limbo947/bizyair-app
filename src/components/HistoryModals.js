@@ -145,10 +145,14 @@ export function HistoryModals({
     }
     const text = parts.join('\n\n');
     if (!text) return;
-    await Clipboard.setStringAsync(text);
-    setCopied(true);
-    showToast('日志已复制到剪贴板', 'success');
-    setTimeout(() => setCopied(false), 1500);
+    try {
+      await Clipboard.setStringAsync(text);
+      setCopied(true);
+      showToast('日志已复制到剪贴板', 'success');
+      setTimeout(() => setCopied(false), 1500);
+    } catch (e) {
+      showToast('复制失败，请重试', 'error');
+    }
   }, [logModal, requestParams, showToast]);
 
   return (

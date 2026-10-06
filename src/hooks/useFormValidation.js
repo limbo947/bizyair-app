@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { ENV_API_KEY } from '../constants/models';
+import { ENV_API_KEY } from '../constants/apiConfig';
 
 const NO_PROMPT_REQUIRED_TYPES = ['dreamactor', 'birefnet', 'seedvr2', 'flux-klein', 'ace-step'];
 

@@ -2,7 +2,7 @@ import {
   REQUEST_TIMEOUT_MS,
   MAX_RETRIES,
   RETRY_DELAY_MS,
-} from '../constants/models';
+} from '../constants/apiConfig';
 import { classifyError, ERROR_CODES } from '../utils/errorMessages';
 
 /**
@@ -51,7 +51,12 @@ async function request(url, options = {}) {
       err.code = classifyError(err);
     }
 
+    // 仅对幂等方法自动重试：POST（任务提交等）在超时/5xx 时服务端可能已受理，
+    // 自动重试会造成重复提交与重复扣费，因此直接抛出由上层或用户决定是否重发
+    const method = (fetchOptions.method || 'GET').toUpperCase();
+    const isRetryableMethod = method === 'GET' || method === 'PUT' || method === 'HEAD';
     const isRetryable =
+      isRetryableMethod &&
       retries < MAX_RETRIES &&
       (err.code === ERROR_CODES.TIMEOUT ||
        err.code === ERROR_CODES.SERVER ||

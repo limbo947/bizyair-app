@@ -1,5 +1,158 @@
 [
   {
+    "id": 1204,
+    "display_name": "漫画生图【摩尔线程算力】",
+    "category": "Text to Image",
+    "model_name": "comic-model",
+    "function": "text-to-image",
+    "endpoint": "comic-model/text-to-image",
+    "manufacturer": "硅基流动",
+    "url": "https://bizyair.cn/llms/modelzoo/comic-model/text-to-image?lang=javascript",
+    "price": "0 金币/1次",
+    "price_url": "https://bizyair.cn/modelzoo/comic-model/text-to-image?tab=price",
+    "benefit": {
+      "rpd": 200,
+      "rph": 60,
+      "rpm": -1
+    }
+  },
+  {
+    "id": 1203,
+    "display_name": "通用图片X.Quality-图生图-渠道版",
+    "category": "Image to Image",
+    "model_name": "bza-image-x-quality-base",
+    "function": "image-to-image",
+    "endpoint": "bza-image-x-quality-base/image-to-image",
+    "manufacturer": "XAI",
+    "url": "https://bizyair.cn/llms/modelzoo/bza-image-x-quality-base/image-to-image?lang=javascript",
+    "price": "1k: 540 金币/1次 | 2k: 690 金币/1次",
+    "price_url": "https://bizyair.cn/modelzoo/bza-image-x-quality-base/image-to-image?tab=price",
+    "benefit": {
+      "rpd": 200,
+      "rph": 60,
+      "rpm": -1
+    }
+  },
+  {
+    "id": 1202,
+    "display_name": "通用图片X.Quality-文生图-渠道版",
+    "category": "Text to Image",
+    "model_name": "bza-image-x-quality-base",
+    "function": "text-to-image",
+    "endpoint": "bza-image-x-quality-base/text-to-image",
+    "manufacturer": "XAI",
+    "url": "https://bizyair.cn/llms/modelzoo/bza-image-x-quality-base/text-to-image?lang=javascript",
+    "price": "1k: 460 金币/1次 | 2k: 620 金币/1次",
+    "price_url": "https://bizyair.cn/modelzoo/bza-image-x-quality-base/text-to-image?tab=price",
+    "benefit": {
+      "rpd": 200,
+      "rph": 60,
+      "rpm": -1
+    }
+  },
+  {
+    "id": 1201,
+    "display_name": "通用图片X-图生图-渠道版",
+    "category": "Image to Image",
+    "model_name": "bza-image-x-base",
+    "function": "image-to-image",
+    "endpoint": "bza-image-x-base/image-to-image",
+    "manufacturer": "XAI",
+    "url": "https://bizyair.cn/llms/modelzoo/bza-image-x-base/image-to-image?lang=javascript",
+    "price": "未知",
+    "price_url": "https://bizyair.cn/modelzoo/bza-image-x-base/image-to-image?tab=price",
+    "benefit": {
+      "rpd": 200,
+      "rph": 60,
+      "rpm": -1
+    }
+  },
+  {
+    "id": 1200,
+    "display_name": "通用图片X-文生图-渠道版",
+    "category": "Text to Image",
+    "model_name": "bza-image-x-base",
+    "function": "text-to-image",
+    "endpoint": "bza-image-x-base/text-to-image",
+    "manufacturer": "XAI",
+    "url": "https://bizyair.cn/llms/modelzoo/bza-image-x-base/text-to-image?lang=javascript",
+    "price": "未知",
+    "price_url": "https://bizyair.cn/modelzoo/bza-image-x-base/text-to-image?tab=price",
+    "benefit": {
+      "rpd": 200,
+      "rph": 60,
+      "rpm": -1
+    }
+  },
+  {
+    "id": 1199,
+    "display_name": "通用图片X.2-文生图-渠道版",
+    "category": "Text to Image",
+    "model_name": "bza-image-x2-base",
+    "function": "text-to-image",
+    "endpoint": "bza-image-x2-base/text-to-image",
+    "manufacturer": "XAI",
+    "url": "https://bizyair.cn/llms/modelzoo/bza-image-x2-base/text-to-image?lang=javascript",
+    "price": "未知",
+    "price_url": "https://bizyair.cn/modelzoo/bza-image-x2-base/text-to-image?tab=price",
+    "benefit": {
+      "rpd": 200,
+      "rph": 60,
+      "rpm": -1
+    }
+  },
+  {
+    "id": 1198,
+    "display_name": "Ideogram-4-文生图",
+    "category": "Text to Image",
+    "model_name": "ideogram-4",
+    "function": "text-to-image",
+    "endpoint": "ideogram-4/text-to-image",
+    "manufacturer": "硅基流动",
+    "url": "https://bizyair.cn/llms/modelzoo/ideogram-4/text-to-image?lang=javascript",
+    "price": "未知",
+    "price_url": "https://bizyair.cn/modelzoo/ideogram-4/text-to-image?tab=price",
+    "benefit": {
+      "rpd": 200,
+      "rph": 60,
+      "rpm": -1
+    }
+  },
+  {
+    "id": 1197,
+    "display_name": "通用3D.T.H3.1-官方版",
+    "category": "Image to 3D",
+    "model_name": "bza-3d-t-h3-1-official",
+    "function": "image-to-3d",
+    "endpoint": "bza-3d-t-h3-1-official/image-to-3d",
+    "manufacturer": "",
+    "url": "https://bizyair.cn/llms/modelzoo/bza-3d-t-h3-1-official/image-to-3d?lang=javascript",
+    "price": "true, standard, standard, true: 1950 金币/1次 | true, standard, standard, false: 1550 金币/1次 | true, standard, detailed, true: 3500 金币/1次 | true, standard, detailed, false: 3100 金币/1次 | true, detailed, standard, true: 1950 金币/1次 | true, detailed, standard, false: 2350 金币/1次 | true, detailed, detailed, true: 4300 金币/1次 | true, detailed, detailed, false: 3900 金币/1次 | false, standard, standard, true: 1170 金币/1次 | false, standard, standard, false: 770 金币/1次 | false, standard, detailed, true: 2720 金币/1次 | false, standard, detailed, false: 2320 金币/1次 | false, detailed, standard, true: 1170 金币/1次 | false, detailed, standard, false: 770 金币/1次 | false, detailed, detailed, true: 2720 金币/1次 | false, detailed, detailed, false: 2320 金币/1次",
+    "price_url": "https://bizyair.cn/modelzoo/bza-3d-t-h3-1-official/image-to-3d?tab=price",
+    "benefit": {
+      "rpd": 200,
+      "rph": 60,
+      "rpm": -1
+    }
+  },
+  {
+    "id": 1196,
+    "display_name": "通用3D.P-官方版",
+    "category": "Image to 3D",
+    "model_name": "bza-3d-p-official",
+    "function": "image-to-3d",
+    "endpoint": "bza-3d-p-official/image-to-3d",
+    "manufacturer": "-",
+    "url": "https://bizyair.cn/llms/modelzoo/bza-3d-p-official/image-to-3d?lang=javascript",
+    "price": "1024: 2300 金币/1次 | 1536: 3250 金币/1次",
+    "price_url": "https://bizyair.cn/modelzoo/bza-3d-p-official/image-to-3d?tab=price",
+    "benefit": {
+      "rpd": 200,
+      "rph": 60,
+      "rpm": -1
+    }
+  },
+  {
     "id": 1195,
     "display_name": "BiRefNet-精细抠图",
     "category": "Image to Image",
@@ -238,6 +391,244 @@
     }
   },
   {
+    "id": 1181,
+    "display_name": "Mureka-歌词续写-官方版",
+    "category": "Text to Lyrics",
+    "model_name": "mureka-official",
+    "function": "text-to-text/lyrics-extend",
+    "endpoint": "mureka-official/text-to-text/lyrics-extend",
+    "manufacturer": "昆仑万维",
+    "url": "https://bizyair.cn/llms/modelzoo/mureka-official/text-to-text/lyrics-extend?lang=javascript",
+    "price": "未知",
+    "price_url": "https://bizyair.cn/modelzoo/mureka-official/text-to-text/lyrics-extend?tab=price",
+    "benefit": {
+      "rpd": 200,
+      "rph": 60,
+      "rpm": -1
+    }
+  },
+  {
+    "id": 1180,
+    "display_name": "Mureka-歌词生成-官方版",
+    "category": "Large Language Models",
+    "model_name": "mureka-official",
+    "function": "text-to-text/lyrics-generation",
+    "endpoint": "mureka-official/text-to-text/lyrics-generation",
+    "manufacturer": "昆仑万维",
+    "url": "https://bizyair.cn/llms/modelzoo/mureka-official/text-to-text/lyrics-generation?lang=javascript",
+    "price": "未知",
+    "price_url": "https://bizyair.cn/modelzoo/mureka-official/text-to-text/lyrics-generation?tab=price",
+    "benefit": {
+      "rpd": 200,
+      "rph": 60,
+      "rpm": -1
+    }
+  },
+  {
+    "id": 1179,
+    "display_name": "Mureka-V9-纯音乐生成-官方版",
+    "category": "Text to Audio",
+    "model_name": "mureka-v9-official",
+    "function": "text-to-audio/bgm-generation",
+    "endpoint": "mureka-v9-official/text-to-audio/bgm-generation",
+    "manufacturer": "昆仑万维",
+    "url": "https://bizyair.cn/llms/modelzoo/mureka-v9-official/text-to-audio/bgm-generation?lang=javascript",
+    "price": "未知",
+    "price_url": "https://bizyair.cn/modelzoo/mureka-v9-official/text-to-audio/bgm-generation?tab=price",
+    "benefit": {
+      "rpd": 200,
+      "rph": 60,
+      "rpm": -1
+    }
+  },
+  {
+    "id": 1175,
+    "display_name": "Mureka-多轨分离-官方版",
+    "category": "Audio to Audio",
+    "model_name": "mureka-official",
+    "function": "audio-to-audio/song-stem",
+    "endpoint": "mureka-official/audio-to-audio/song-stem",
+    "manufacturer": "昆仑万维",
+    "url": "https://bizyair.cn/llms/modelzoo/mureka-official/audio-to-audio/song-stem?lang=javascript",
+    "price": "未知",
+    "price_url": "https://bizyair.cn/modelzoo/mureka-official/audio-to-audio/song-stem?tab=price",
+    "benefit": {
+      "rpd": 200,
+      "rph": 60,
+      "rpm": -1
+    }
+  },
+  {
+    "id": 1173,
+    "display_name": "Mureka-歌曲理解-官方版",
+    "category": "Speech to Text",
+    "model_name": "mureka-official",
+    "function": "audio-to-text/song-describe",
+    "endpoint": "mureka-official/audio-to-text/song-describe",
+    "manufacturer": "昆仑万维",
+    "url": "https://bizyair.cn/llms/modelzoo/mureka-official/audio-to-text/song-describe?lang=javascript",
+    "price": "未知",
+    "price_url": "https://bizyair.cn/modelzoo/mureka-official/audio-to-text/song-describe?tab=price",
+    "benefit": {
+      "rpd": 200,
+      "rph": 60,
+      "rpm": -1
+    }
+  },
+  {
+    "id": 1172,
+    "display_name": "Mureka-V7.6-歌曲识别-官方版",
+    "category": "Speech to Text",
+    "model_name": "mureka-v7-6-official",
+    "function": "audio-to-text/song-recognition",
+    "endpoint": "mureka-v7-6-official/audio-to-text/song-recognition",
+    "manufacturer": "昆仑万维",
+    "url": "https://bizyair.cn/llms/modelzoo/mureka-v7-6-official/audio-to-text/song-recognition?lang=javascript",
+    "price": "未知",
+    "price_url": "https://bizyair.cn/modelzoo/mureka-v7-6-official/audio-to-text/song-recognition?tab=price",
+    "benefit": {
+      "rpd": 200,
+      "rph": 60,
+      "rpm": -1
+    }
+  },
+  {
+    "id": 1171,
+    "display_name": "Mureka-V8-歌曲续写-官方版",
+    "category": "Audio to Audio",
+    "model_name": "mureka-v8-official",
+    "function": "audio-to-audio/song-extend",
+    "endpoint": "mureka-v8-official/audio-to-audio/song-extend",
+    "manufacturer": "昆仑万维",
+    "url": "https://bizyair.cn/llms/modelzoo/mureka-v8-official/audio-to-audio/song-extend?lang=javascript",
+    "price": "未知",
+    "price_url": "https://bizyair.cn/modelzoo/mureka-v8-official/audio-to-audio/song-extend?tab=price",
+    "benefit": {
+      "rpd": 200,
+      "rph": 60,
+      "rpm": -1
+    }
+  },
+  {
+    "id": 1169,
+    "display_name": "Skyreels-V3-视频切镜延长-官方版",
+    "category": "Video Extend",
+    "model_name": "skyreels-official",
+    "function": "video-extend/cutshot",
+    "endpoint": "skyreels-official/video-extend/cutshot",
+    "manufacturer": "昆仑万维",
+    "url": "https://bizyair.cn/llms/modelzoo/skyreels-official/video-extend/cutshot?lang=javascript",
+    "price": "未知",
+    "price_url": "https://bizyair.cn/modelzoo/skyreels-official/video-extend/cutshot?tab=price",
+    "benefit": {
+      "rpd": 200,
+      "rph": 60,
+      "rpm": -1
+    }
+  },
+  {
+    "id": 1168,
+    "display_name": "Skyreels-V3-视频扩展-官方版",
+    "category": "Video Extend",
+    "model_name": "skyreels-official",
+    "function": "video-extend",
+    "endpoint": "skyreels-official/video-extend",
+    "manufacturer": "昆仑万维",
+    "url": "https://bizyair.cn/llms/modelzoo/skyreels-official/video-extend?lang=javascript",
+    "price": "未知",
+    "price_url": "https://bizyair.cn/modelzoo/skyreels-official/video-extend?tab=price",
+    "benefit": {
+      "rpd": 200,
+      "rph": 60,
+      "rpm": -1
+    }
+  },
+  {
+    "id": 1166,
+    "display_name": "Skyreels-V4-全能参考生视频-官方版",
+    "category": "Reference to Video",
+    "model_name": "skyreels-v4-official",
+    "function": "reference-to-video",
+    "endpoint": "skyreels-v4-official/reference-to-video",
+    "manufacturer": "昆仑万维",
+    "url": "https://bizyair.cn/llms/modelzoo/skyreels-v4-official/reference-to-video?lang=javascript",
+    "price": "480p, fast, 有: 1160 金币/1秒 | 480p, std, 有: 1390 金币/1秒 | 720p, fast, 有: 1540 金币/1秒 | 720p, std, 有: 1930 金币/1秒 | 1080p, fast, 有: 3850 金币/1秒 | 1080p, std, 有: 4810 金币/1秒 | 480p, fast, 无: 620 金币/1秒 | 480p, std, 无: 850 金币/1秒 | 720p, fast, 无: 850 金币/1秒 | 720p, std, 无: 1080 金币/1秒 | 1080p, fast, 无: 2120 金币/1秒 | 1080p, std, 无: 2700 金币/1秒",
+    "price_url": "https://bizyair.cn/modelzoo/skyreels-v4-official/reference-to-video?tab=price",
+    "benefit": {
+      "rpd": 200,
+      "rph": 60,
+      "rpm": -1
+    }
+  },
+  {
+    "id": 1165,
+    "display_name": "Skyreels-V3-参考生视频-官方版",
+    "category": "Reference to Video",
+    "model_name": "skyreels-v3-official",
+    "function": "reference-to-video",
+    "endpoint": "skyreels-v3-official/reference-to-video",
+    "manufacturer": "昆仑万维",
+    "url": "https://bizyair.cn/llms/modelzoo/skyreels-v3-official/reference-to-video?lang=javascript",
+    "price": "未知",
+    "price_url": "https://bizyair.cn/modelzoo/skyreels-v3-official/reference-to-video?tab=price",
+    "benefit": {
+      "rpd": 200,
+      "rph": 60,
+      "rpm": -1
+    }
+  },
+  {
+    "id": 1164,
+    "display_name": "Skyreels-V4-首尾帧生视频-官方版",
+    "category": "FLF to Video",
+    "model_name": "skyreels-v4-official",
+    "function": "image-to-video",
+    "endpoint": "skyreels-v4-official/image-to-video",
+    "manufacturer": "昆仑万维",
+    "url": "https://bizyair.cn/llms/modelzoo/skyreels-v4-official/image-to-video?lang=javascript",
+    "price": "480p, fast: 620 金币/1秒 | 480p, std: 850 金币/1秒 | 720p, fast: 850 金币/1秒 | 720p, std: 1080 金币/1秒 | 1080p, fast: 2120 金币/1秒 | 1080p, std: 2700 金币/1秒",
+    "price_url": "https://bizyair.cn/modelzoo/skyreels-v4-official/image-to-video?tab=price",
+    "benefit": {
+      "rpd": 200,
+      "rph": 60,
+      "rpm": -1
+    }
+  },
+  {
+    "id": 1163,
+    "display_name": "Skyreels-V4-文生视频-官方版",
+    "category": "Text to Video",
+    "model_name": "skyreels-v4-official",
+    "function": "text-to-video",
+    "endpoint": "skyreels-v4-official/text-to-video",
+    "manufacturer": "昆仑万维",
+    "url": "https://bizyair.cn/llms/modelzoo/skyreels-v4-official/text-to-video?lang=javascript",
+    "price": "480p, fast: 620 金币/1秒 | 480p, std: 850 金币/1秒 | 720p, fast: 850 金币/1秒 | 720p, std: 1080 金币/1秒 | 1080p, fast: 2120 金币/1秒 | 1080p, std: 2700 金币/1秒",
+    "price_url": "https://bizyair.cn/modelzoo/skyreels-v4-official/text-to-video?tab=price",
+    "benefit": {
+      "rpd": 200,
+      "rph": 60,
+      "rpm": -1
+    }
+  },
+  {
+    "id": 1159,
+    "display_name": "Mureka-V9-歌曲生成-官方版",
+    "category": "Text to Audio",
+    "model_name": "mureka-v9-official",
+    "function": "text-to-audio/song-generation",
+    "endpoint": "mureka-v9-official/text-to-audio/song-generation",
+    "manufacturer": "昆仑万维",
+    "url": "https://bizyair.cn/llms/modelzoo/mureka-v9-official/text-to-audio/song-generation?lang=javascript",
+    "price": "未知",
+    "price_url": "https://bizyair.cn/modelzoo/mureka-v9-official/text-to-audio/song-generation?tab=price",
+    "benefit": {
+      "rpd": 200,
+      "rph": 60,
+      "rpm": -1
+    }
+  },
+  {
     "id": 1158,
     "display_name": "通义Qwen-Image-文生图",
     "category": "Text to Image",
@@ -248,40 +639,6 @@
     "url": "https://bizyair.cn/llms/modelzoo/qwen-image/text-to-image?lang=javascript",
     "price": "100 金币/1次",
     "price_url": "https://bizyair.cn/modelzoo/qwen-image/text-to-image?tab=price",
-    "benefit": {
-      "rpd": 200,
-      "rph": 60,
-      "rpm": -1
-    }
-  },
-  {
-    "id": 1083,
-    "display_name": "HappyHorse-1.0-图生视频-官方版-基于首帧",
-    "category": "Image to Video",
-    "model_name": "happyhorse-1-0-official",
-    "function": "image-to-video",
-    "endpoint": "happyhorse-1-0-official/image-to-video",
-    "manufacturer": "阿里",
-    "url": "https://bizyair.cn/llms/modelzoo/happyhorse-1-0-official/image-to-video?lang=javascript",
-    "price": "720P: 900 金币/1秒 | 1080P: 1600 金币/1秒",
-    "price_url": "https://bizyair.cn/modelzoo/happyhorse-1-0-official/image-to-video?tab=price",
-    "benefit": {
-      "rpd": 200,
-      "rph": 60,
-      "rpm": -1
-    }
-  },
-  {
-    "id": 1111,
-    "display_name": "HappyHorse-1.0-视频编辑-官方版",
-    "category": "Video Edit",
-    "model_name": "happyhorse-1-0-official",
-    "function": "video-edit",
-    "endpoint": "happyhorse-1-0-official/video-edit",
-    "manufacturer": "阿里",
-    "url": "https://bizyair.cn/llms/modelzoo/happyhorse-1-0-official/video-edit?lang=javascript",
-    "price": "720P: 900 金币/1秒 | 1080P: 1600 金币/1秒",
-    "price_url": "https://bizyair.cn/modelzoo/happyhorse-1-0-official/video-edit?tab=price",
     "benefit": {
       "rpd": 200,
       "rph": 60,
@@ -316,6 +673,40 @@
     "url": "https://bizyair.cn/llms/modelzoo/happyhorse-1-0-official/text-to-video?lang=javascript",
     "price": "720P: 900 金币/1秒 | 1080P: 1600 金币/1秒",
     "price_url": "https://bizyair.cn/modelzoo/happyhorse-1-0-official/text-to-video?tab=price",
+    "benefit": {
+      "rpd": 200,
+      "rph": 60,
+      "rpm": -1
+    }
+  },
+  {
+    "id": 1083,
+    "display_name": "HappyHorse-1.0-图生视频-官方版-基于首帧",
+    "category": "Image to Video",
+    "model_name": "happyhorse-1-0-official",
+    "function": "image-to-video",
+    "endpoint": "happyhorse-1-0-official/image-to-video",
+    "manufacturer": "阿里",
+    "url": "https://bizyair.cn/llms/modelzoo/happyhorse-1-0-official/image-to-video?lang=javascript",
+    "price": "720P: 900 金币/1秒 | 1080P: 1600 金币/1秒",
+    "price_url": "https://bizyair.cn/modelzoo/happyhorse-1-0-official/image-to-video?tab=price",
+    "benefit": {
+      "rpd": 200,
+      "rph": 60,
+      "rpm": -1
+    }
+  },
+  {
+    "id": 1111,
+    "display_name": "HappyHorse-1.0-视频编辑-官方版",
+    "category": "Video Edit",
+    "model_name": "happyhorse-1-0-official",
+    "function": "video-edit",
+    "endpoint": "happyhorse-1-0-official/video-edit",
+    "manufacturer": "阿里",
+    "url": "https://bizyair.cn/llms/modelzoo/happyhorse-1-0-official/video-edit?lang=javascript",
+    "price": "720P: 900 金币/1秒 | 1080P: 1600 金币/1秒",
+    "price_url": "https://bizyair.cn/modelzoo/happyhorse-1-0-official/video-edit?tab=price",
     "benefit": {
       "rpd": 200,
       "rph": 60,
@@ -960,7 +1351,7 @@
     "endpoint": "seedance-2-0-fast-official/reference-to-video",
     "manufacturer": "字节",
     "url": "https://bizyair.cn/llms/modelzoo/seedance-2-0-fast-official/reference-to-video?lang=javascript",
-    "price": "480p, 无输入视频: 340 金币/1秒 | 720p, 无输入视频: 750 金币/1秒 | 480p, 有输入视频: 670 金币/1秒 | 720p, 有输入视频: 1510 金币/1秒",
+    "price": "480p, 无输入视频: 340 金币/1秒 | 720p, 无输入视频: 750 金币/1秒 | 480p, 有输入视频: 680 金币/1秒 | 720p, 有输入视频: 1500 金币/1秒",
     "price_url": "https://bizyair.cn/modelzoo/seedance-2-0-fast-official/reference-to-video?tab=price",
     "benefit": {
       "rpd": 200,
@@ -1011,7 +1402,7 @@
     "endpoint": "seedance-2-0-official/reference-to-video",
     "manufacturer": "字节",
     "url": "https://bizyair.cn/llms/modelzoo/seedance-2-0-official/reference-to-video?lang=javascript",
-    "price": "480p, 无输入视频: 420 金币/1秒 | 720p, 无输入视频: 940 金币/1秒 | 1080p, 无输入视频: 2120 金币/1秒 | 480p, 有输入视频: 840 金币/1秒 | 720p, 有输入视频: 1890 金币/1秒 | 1080p, 有输入视频: 4250 金币/1秒",
+    "price": "480p, 无输入视频: 420 金币/1秒 | 720p, 无输入视频: 940 金币/1秒 | 1080p, 无输入视频: 2120 金币/1秒 | 480p, 有输入视频: 840 金币/1秒 | 720p, 有输入视频: 1880 金币/1秒 | 1080p, 有输入视频: 4240 金币/1秒",
     "price_url": "https://bizyair.cn/modelzoo/seedance-2-0-official/reference-to-video?tab=price",
     "benefit": {
       "rpd": 200,
@@ -1768,108 +2159,6 @@
     }
   },
   {
-    "id": 1155,
-    "display_name": "通用图片F.K.Max-图生图-渠道版",
-    "category": "Image to Image",
-    "model_name": "bza-image-f-k-max-base",
-    "function": "image-to-image",
-    "endpoint": "bza-image-f-k-max-base/image-to-image",
-    "manufacturer": "黑森林",
-    "url": "https://bizyair.cn/llms/modelzoo/bza-image-f-k-max-base/image-to-image?lang=javascript",
-    "price": "140 金币/1次",
-    "price_url": "https://bizyair.cn/modelzoo/bza-image-f-k-max-base/image-to-image?tab=price",
-    "benefit": {
-      "rpd": 200,
-      "rph": 60,
-      "rpm": -1
-    }
-  },
-  {
-    "id": 1148,
-    "display_name": "Seedream 4.0-文生图-官方版",
-    "category": "Text to Image",
-    "model_name": "seedream-4-0-official",
-    "function": "text-to-image",
-    "endpoint": "seedream-4-0-official/text-to-image",
-    "manufacturer": "字节",
-    "url": "https://bizyair.cn/llms/modelzoo/seedream-4-0-official/text-to-image?lang=javascript",
-    "price": "150 金币/1次",
-    "price_url": "https://bizyair.cn/modelzoo/seedream-4-0-official/text-to-image?tab=price",
-    "benefit": {
-      "rpd": 200,
-      "rph": 60,
-      "rpm": -1
-    }
-  },
-  {
-    "id": 1149,
-    "display_name": "Seedream 4.0-图生图-官方版",
-    "category": "Image to Image",
-    "model_name": "seedream-4-0-official",
-    "function": "image-to-image",
-    "endpoint": "seedream-4-0-official/image-to-image",
-    "manufacturer": "字节",
-    "url": "https://bizyair.cn/llms/modelzoo/seedream-4-0-official/image-to-image?lang=javascript",
-    "price": "150 金币/1次",
-    "price_url": "https://bizyair.cn/modelzoo/seedream-4-0-official/image-to-image?tab=price",
-    "benefit": {
-      "rpd": 200,
-      "rph": 60,
-      "rpm": -1
-    }
-  },
-  {
-    "id": 1150,
-    "display_name": "Seedream 4.5-文生图-官方版",
-    "category": "Text to Image",
-    "model_name": "seedream-4-5-official",
-    "function": "text-to-image",
-    "endpoint": "seedream-4-5-official/text-to-image",
-    "manufacturer": "字节",
-    "url": "https://bizyair.cn/llms/modelzoo/seedream-4-5-official/text-to-image?lang=javascript",
-    "price": "250 金币/1次",
-    "price_url": "https://bizyair.cn/modelzoo/seedream-4-5-official/text-to-image?tab=price",
-    "benefit": {
-      "rpd": 200,
-      "rph": 60,
-      "rpm": -1
-    }
-  },
-  {
-    "id": 1151,
-    "display_name": "Seedream 4.5-图生图-官方版",
-    "category": "Image to Image",
-    "model_name": "seedream-4-5-official",
-    "function": "image-to-image",
-    "endpoint": "seedream-4-5-official/image-to-image",
-    "manufacturer": "字节",
-    "url": "https://bizyair.cn/llms/modelzoo/seedream-4-5-official/image-to-image?lang=javascript",
-    "price": "250 金币/1次",
-    "price_url": "https://bizyair.cn/modelzoo/seedream-4-5-official/image-to-image?tab=price",
-    "benefit": {
-      "rpd": 200,
-      "rph": 60,
-      "rpm": -1
-    }
-  },
-  {
-    "id": 1152,
-    "display_name": "通用图片F.K.Pro-文生图-渠道版",
-    "category": "Text to Image",
-    "model_name": "flux-kontext-pro-base",
-    "function": "text-to-image",
-    "endpoint": "flux-kontext-pro-base/text-to-image",
-    "manufacturer": "黑森林",
-    "url": "https://bizyair.cn/llms/modelzoo/flux-kontext-pro-base/text-to-image?lang=javascript",
-    "price": "70 金币/1次",
-    "price_url": "https://bizyair.cn/modelzoo/flux-kontext-pro-base/text-to-image?tab=price",
-    "benefit": {
-      "rpd": 200,
-      "rph": 60,
-      "rpm": -1
-    }
-  },
-  {
     "id": 1153,
     "display_name": "通用图片F.K.Pro-图生图-渠道版",
     "category": "Image to Image",
@@ -1897,6 +2186,108 @@
     "url": "https://bizyair.cn/llms/modelzoo/bza-image-f-k-max-base/text-to-image?lang=javascript",
     "price": "140 金币/1次",
     "price_url": "https://bizyair.cn/modelzoo/bza-image-f-k-max-base/text-to-image?tab=price",
+    "benefit": {
+      "rpd": 200,
+      "rph": 60,
+      "rpm": -1
+    }
+  },
+  {
+    "id": 1155,
+    "display_name": "通用图片F.K.Max-图生图-渠道版",
+    "category": "Image to Image",
+    "model_name": "bza-image-f-k-max-base",
+    "function": "image-to-image",
+    "endpoint": "bza-image-f-k-max-base/image-to-image",
+    "manufacturer": "黑森林",
+    "url": "https://bizyair.cn/llms/modelzoo/bza-image-f-k-max-base/image-to-image?lang=javascript",
+    "price": "140 金币/1次",
+    "price_url": "https://bizyair.cn/modelzoo/bza-image-f-k-max-base/image-to-image?tab=price",
+    "benefit": {
+      "rpd": 200,
+      "rph": 60,
+      "rpm": -1
+    }
+  },
+  {
+    "id": 1152,
+    "display_name": "通用图片F.K.Pro-文生图-渠道版",
+    "category": "Text to Image",
+    "model_name": "flux-kontext-pro-base",
+    "function": "text-to-image",
+    "endpoint": "flux-kontext-pro-base/text-to-image",
+    "manufacturer": "黑森林",
+    "url": "https://bizyair.cn/llms/modelzoo/flux-kontext-pro-base/text-to-image?lang=javascript",
+    "price": "70 金币/1次",
+    "price_url": "https://bizyair.cn/modelzoo/flux-kontext-pro-base/text-to-image?tab=price",
+    "benefit": {
+      "rpd": 200,
+      "rph": 60,
+      "rpm": -1
+    }
+  },
+  {
+    "id": 1151,
+    "display_name": "Seedream 4.5-图生图-官方版",
+    "category": "Image to Image",
+    "model_name": "seedream-4-5-official",
+    "function": "image-to-image",
+    "endpoint": "seedream-4-5-official/image-to-image",
+    "manufacturer": "字节",
+    "url": "https://bizyair.cn/llms/modelzoo/seedream-4-5-official/image-to-image?lang=javascript",
+    "price": "250 金币/1次",
+    "price_url": "https://bizyair.cn/modelzoo/seedream-4-5-official/image-to-image?tab=price",
+    "benefit": {
+      "rpd": 200,
+      "rph": 60,
+      "rpm": -1
+    }
+  },
+  {
+    "id": 1150,
+    "display_name": "Seedream 4.5-文生图-官方版",
+    "category": "Text to Image",
+    "model_name": "seedream-4-5-official",
+    "function": "text-to-image",
+    "endpoint": "seedream-4-5-official/text-to-image",
+    "manufacturer": "字节",
+    "url": "https://bizyair.cn/llms/modelzoo/seedream-4-5-official/text-to-image?lang=javascript",
+    "price": "250 金币/1次",
+    "price_url": "https://bizyair.cn/modelzoo/seedream-4-5-official/text-to-image?tab=price",
+    "benefit": {
+      "rpd": 200,
+      "rph": 60,
+      "rpm": -1
+    }
+  },
+  {
+    "id": 1149,
+    "display_name": "Seedream 4.0-图生图-官方版",
+    "category": "Image to Image",
+    "model_name": "seedream-4-0-official",
+    "function": "image-to-image",
+    "endpoint": "seedream-4-0-official/image-to-image",
+    "manufacturer": "字节",
+    "url": "https://bizyair.cn/llms/modelzoo/seedream-4-0-official/image-to-image?lang=javascript",
+    "price": "150 金币/1次",
+    "price_url": "https://bizyair.cn/modelzoo/seedream-4-0-official/image-to-image?tab=price",
+    "benefit": {
+      "rpd": 200,
+      "rph": 60,
+      "rpm": -1
+    }
+  },
+  {
+    "id": 1148,
+    "display_name": "Seedream 4.0-文生图-官方版",
+    "category": "Text to Image",
+    "model_name": "seedream-4-0-official",
+    "function": "text-to-image",
+    "endpoint": "seedream-4-0-official/text-to-image",
+    "manufacturer": "字节",
+    "url": "https://bizyair.cn/llms/modelzoo/seedream-4-0-official/text-to-image?lang=javascript",
+    "price": "150 金币/1次",
+    "price_url": "https://bizyair.cn/modelzoo/seedream-4-0-official/text-to-image?tab=price",
     "benefit": {
       "rpd": 200,
       "rph": 60,

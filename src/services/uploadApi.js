@@ -3,7 +3,9 @@ import { Platform } from 'react-native';
 import {
   UPLOAD_TOKEN_URL,
   COMMIT_RESOURCE_URL,
-} from '../constants/models';
+  UPLOAD_PROXY_URL,
+  REQUEST_TIMEOUT_MS,
+} from '../constants/apiConfig';
 import { request } from './httpClient';
 
 /**
@@ -84,12 +86,24 @@ async function uploadViaProxy(apiKey, file) {
     throw new Error('上传失败: 文件内容为空');
   }
 
-  const proxyUrl = (typeof process !== 'undefined' && process.env && process.env.EXPO_PUBLIC_UPLOAD_PROXY_URL) || 'http://localhost:3001';
-  const resp = await fetch(`${proxyUrl}/api/upload`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ apiKey, fileName, fileData: fileBase64 }),
-  });
+  const proxyUrl = UPLOAD_PROXY_URL;
+  // 代理走本地/局域网 fetch（不经过 httpClient），手动加超时避免无限挂起
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS * 4);
+  let resp;
+  try {
+    resp = await fetch(`${proxyUrl}/api/upload`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ apiKey, fileName, fileData: fileBase64 }),
+      signal: controller.signal,
+    });
+  } catch (err) {
+    if (err.name === 'AbortError') throw new Error('上传代理请求超时');
+    throw err;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   if (!resp.ok) {
     const text = await resp.text().catch(() => '');

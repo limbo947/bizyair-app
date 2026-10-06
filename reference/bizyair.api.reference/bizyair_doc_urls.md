@@ -1,9 +1,16 @@
 # BizyAir 模型 JavaScript 文档地址汇总
 
-> 共 112 个文档地址
+> 共 135 个文档地址
 
 
-## FLF to Video (14 个)
+## Audio to Audio (2 个)
+
+| 模型名称 | 功能 | 价格 | 文档地址 |
+|---------|------|------|---------|
+| Mureka-V8-歌曲续写-官方版 | audio-to-audio/song-extend | 未知 | [打开](https://bizyair.cn/llms/modelzoo/mureka-v8-official/audio-to-audio/song-extend?lang=javascript) |
+| Mureka-多轨分离-官方版 | audio-to-audio/song-stem | 未知 | [打开](https://bizyair.cn/llms/modelzoo/mureka-official/audio-to-audio/song-stem?lang=javascript) |
+
+## FLF to Video (15 个)
 
 | 模型名称 | 功能 | 价格 | 文档地址 |
 |---------|------|------|---------|
@@ -11,6 +18,7 @@
 | Seedance-2.0-首尾帧-渠道版 | 首尾帧生视频 | 480p: 600 金币/1秒 | 720p: 1200 金币/1秒 | native1080p: 3000 金币/1秒 | 1080p: 1480 金币/1秒 | 2k: 1620 金币/1秒 | 4k: 1830 金币/1秒 | [打开](https://bizyair.cn/llms/modelzoo/seedance-2-0-base/flf-to-video?lang=javascript) |
 | Seedance-2.0.Fast-首尾帧-官方版 | 首尾帧生视频 | 4, 480p: 1360 金币/1次 | 4, 720p: 3000 金币/1次 | 5, 480p: 1700 金币/1次 | 5, 720p: 3750 金币/1次 | 6, 480p: 2040 金币/1次 | 6, 720p: 4500 金币/1次 | 7, 480p: 2380 金币/1次 | 7, 720p: 5250 金币/1次 | 8, 480p: 2720 金币/1次 | 8, 720p: 6000 金币/1次 | 9, 480p: 3060 金币/1次 | 9, 720p: 6750 金币/1次 | 10, 480p: 3400 金币/1次 | 10, 720p: 7500 金币/1次 | 11, 480p: 3740 金币/1次 | 11, 720p: 8250 金币/1次 | 12, 480p: 4080 金币/1次 | 12, 720p: 9000 金币/1次 | 13, 480p: 4420 金币/1次 | 13, 720p: 9750 金币/1次 | 14, 480p: 4760 金币/1次 | 14, 720p: 10500 金币/1次 | 15, 480p: 5100 金币/1次 | 15, 720p: 11250 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/seedance-2-0-fast-official/flf-to-video?lang=javascript) |
 | Seedance-2.0.Fast-首尾帧-渠道版 | 首尾帧生视频 | 480p: 600 金币/1秒 | 720p: 1200 金币/1秒 | 1080p: 1480 金币/1秒 | 2k: 1620 金币/1秒 | 4k: 1830 金币/1秒 | [打开](https://bizyair.cn/llms/modelzoo/seedance-2-0-fast-base/flf-to-video?lang=javascript) |
+| Skyreels-V4-首尾帧生视频-官方版 | 图生视频 | 480p, fast: 620 金币/1秒 | 480p, std: 850 金币/1秒 | 720p, fast: 850 金币/1秒 | 720p, std: 1080 金币/1秒 | 1080p, fast: 2120 金币/1秒 | 1080p, std: 2700 金币/1秒 | [打开](https://bizyair.cn/llms/modelzoo/skyreels-v4-official/image-to-video?lang=javascript) |
 | Vidu Q3.Pro-首尾帧-官方版 | 首尾帧生视频 | 540P: 438 金币/1秒 | 720P: 938 金币/1秒 | 1080P: 1000 金币/1秒 | [打开](https://bizyair.cn/llms/modelzoo/vidu-q3-pro-official/flf-to-video?lang=javascript) |
 | Vidu Q3.Pro-首尾帧-渠道版 | 首尾帧生视频 | 540P: 350 金币/1秒 | 720P: 700 金币/1秒 | 1080P: 750 金币/1秒 | [打开](https://bizyair.cn/llms/modelzoo/vidu-q3-pro-base/flf-to-video?lang=javascript) |
 | Vidu Q3.Turbo-首尾帧-官方版 | 首尾帧生视频 | 540P: 250 金币/1秒 | 720P: 375 金币/1秒 | 1080P: 500 金币/1秒 | [打开](https://bizyair.cn/llms/modelzoo/vidu-q3-turbo-official/flf-to-video?lang=javascript) |
@@ -22,7 +30,14 @@
 | 通用视频V.3.1.Fast-首尾帧-渠道版 | 首尾帧生视频 | 720p: 200 金币/1次 | 1080p: 250 金币/1次 | 4k: 500 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/bza-video-v3-1-fast-base/flf-to-video?lang=javascript) |
 | 通用视频V.3.1.Pro-首尾帧-渠道版 | 首尾帧生视频 | 720p: 800 金币/1次 | 1080p: 1000 金币/1次 | 4k: 1400 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/bza-video-v3-1-pro-base/flf-to-video?lang=javascript) |
 
-## Image to Image (17 个)
+## Image to 3D (2 个)
+
+| 模型名称 | 功能 | 价格 | 文档地址 |
+|---------|------|------|---------|
+| 通用3D.P-官方版 | image-to-3d | 1024: 2300 金币/1次 | 1536: 3250 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/bza-3d-p-official/image-to-3d?lang=javascript) |
+| 通用3D.T.H3.1-官方版 | image-to-3d | true, standard, standard, true: 1950 金币/1次 | true, standard, standard, false: 1550 金币/1次 | true, standard, detailed, true: 3500 金币/1次 | true, standard, detailed, false: 3100 金币/1次 | true, detailed, standard, true: 1950 金币/1次 | true, detailed, standard, false: 2350 金币/1次 | true, detailed, detailed, true: 4300 金币/1次 | true, detailed, detailed, false: 3900 金币/1次 | false, standard, standard, true: 1170 金币/1次 | false, standard, standard, false: 770 金币/1次 | false, standard, detailed, true: 2720 金币/1次 | false, standard, detailed, false: 2320 金币/1次 | false, detailed, standard, true: 1170 金币/1次 | false, detailed, standard, false: 770 金币/1次 | false, detailed, detailed, true: 2720 金币/1次 | false, detailed, detailed, false: 2320 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/bza-3d-t-h3-1-official/image-to-3d?lang=javascript) |
+
+## Image to Image (19 个)
 
 | 模型名称 | 功能 | 价格 | 文档地址 |
 |---------|------|------|---------|
@@ -43,6 +58,8 @@
 | 通用图片F.K.Pro-图生图-渠道版 | 图生图 | 70 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/bza-image-f-k-pro-base/image-to-image?lang=javascript) |
 | 通用图片O.2-图生图-官方版 | 图生图 | , high, >2560*1440, : 3486 金币/1次 | , high, <=2560*1440 且 >1920*1080 , : 2149 金币/1次 | , high, <=1920*1080, : 1120 金币/1次 | , medium, >2560*1440, : 966 金币/1次 | , medium, >1920*1080 且 <=2560*1440, : 630 金币/1次 | , medium, <=1920*1080, : 378 金币/1次 | , low, >2560*1440 , : 224 金币/1次 | , low, >1920*1080 且 <=2560*1440, : 182 金币/1次 | , low, <=1920*1080, : 161 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/bza-image-o2-official/image-to-image?lang=javascript) |
 | 通用图片O.2-图生图-渠道版 | 图生图 | 1K: 100 金币/1次 | 2K: 100 金币/1次 | 4K: 100 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/bza-image-o2-base/image-to-image?lang=javascript) |
+| 通用图片X-图生图-渠道版 | 图生图 | 未知 | [打开](https://bizyair.cn/llms/modelzoo/bza-image-x-base/image-to-image?lang=javascript) |
+| 通用图片X.Quality-图生图-渠道版 | 图生图 | 1k: 540 金币/1次 | 2k: 690 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/bza-image-x-quality-base/image-to-image?lang=javascript) |
 
 ## Image to Video (19 个)
 
@@ -68,51 +85,65 @@
 | 通用视频X-图生视频-官方版 | 图生视频 | 6: 1900 金币/1次 | 10: 3150 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/bza-video-x-official/image-to-video?lang=javascript) |
 | 通用视频X-图生视频-渠道版 | 图生视频 | 未知 | [打开](https://bizyair.cn/llms/modelzoo/bza-video-x-base/image-to-video?lang=javascript) |
 
-## Large Language Models (3 个)
+## Large Language Models (4 个)
 
 | 模型名称 | 功能 | 价格 | 文档地址 |
 |---------|------|------|---------|
+| Mureka-歌词生成-官方版 | text-to-text/lyrics-generation | 未知 | [打开](https://bizyair.cn/llms/modelzoo/mureka-official/text-to-text/lyrics-generation?lang=javascript) |
 | 通用对话G.3.1.Flash-Lite-文本-官方版 | 大语言模型 | 未知 | [打开](https://bizyair.cn/llms/modelzoo/bza-chat-g3-1-flash-lite-official/large-language-models?lang=javascript) |
 | 通用对话G.3.1.Pro-文本-官方版 | 大语言模型 | 未知 | [打开](https://bizyair.cn/llms/modelzoo/bza-chat-g3-1-pro-official/large-language-models?lang=javascript) |
 | 通用对话G.3.Flash-文本-官方版 | 大语言模型 | 未知 | [打开](https://bizyair.cn/llms/modelzoo/bza-chat-g3-flash-official/large-language-models?lang=javascript) |
 
-## Reference to Video (8 个)
+## Reference to Video (10 个)
 
 | 模型名称 | 功能 | 价格 | 文档地址 |
 |---------|------|------|---------|
 | DreamActor-2.0-参考生视频-渠道版 | 参考生视频 | 350 金币/1秒 | [打开](https://bizyair.cn/llms/modelzoo/dreamactor-2-0-base/reference-to-video?lang=javascript) |
 | HappyHorse-1.0-参考生视频-官方版 | 参考生视频 | 720P: 900 金币/1秒 | 1080P: 1600 金币/1秒 | [打开](https://bizyair.cn/llms/modelzoo/happyhorse-1-0-official/reference-to-video?lang=javascript) |
-| Seedance-2.0-参考生视频-官方版 | 参考生视频 | 480p, 无输入视频: 420 金币/1秒 | 720p, 无输入视频: 940 金币/1秒 | 1080p, 无输入视频: 2120 金币/1秒 | 480p, 有输入视频: 840 金币/1秒 | 720p, 有输入视频: 1890 金币/1秒 | 1080p, 有输入视频: 4250 金币/1秒 | [打开](https://bizyair.cn/llms/modelzoo/seedance-2-0-official/reference-to-video?lang=javascript) |
+| Seedance-2.0-参考生视频-官方版 | 参考生视频 | 480p, 无输入视频: 420 金币/1秒 | 720p, 无输入视频: 940 金币/1秒 | 1080p, 无输入视频: 2120 金币/1秒 | 480p, 有输入视频: 840 金币/1秒 | 720p, 有输入视频: 1880 金币/1秒 | 1080p, 有输入视频: 4240 金币/1秒 | [打开](https://bizyair.cn/llms/modelzoo/seedance-2-0-official/reference-to-video?lang=javascript) |
 | Seedance-2.0-参考生视频-渠道版 | 参考生视频 | 480p / 无参考视频, 模型原生直出的分辨率。: 600 金币/1秒 | 720p / 无参考视频, 模型原生直出的分辨率。: 1200 金币/1秒 | 1080p / 无参考视频, 基于 720p 原生生成后进行画质放大。: 1480 金币/1秒 | 2k / 无参考视频, 基于 720p 原生生成后进行画质放大。: 1620 金币/1秒 | 4k / 无参考视频, 基于 720p 原生生成后进行画质放大。: 1830 金币/1秒 | 480p / 有参考视频, 模型原生直出的分辨率。: 400 金币/1秒 | 720p / 有参考视频, 模型原生直出的分辨率。: 800 金币/1秒 | 1080p / 有参考视频, 基于 720p 原生生成后进行画质放大。
 计费秒数 = 取 [输入视频时长 + 生成视频时长] 与 [最低计费时长] 中的最大值；: 基础: 800/秒  附加: 280 金币/1秒 | 2k / 有参考视频, 基于 720p 原生生成后进行画质放大。
 计费秒数 = 取 [输入视频时长 + 生成视频时长] 与 [最低计费时长] 中的最大值；: 基础: 800/秒  附加: 420 金币/1秒 | 4k / 有参考视频, 基于 720p 原生生成后进行画质放大。
 计费秒数 = 取 [输入视频时长 + 生成视频时长] 与 [最低计费时长] 中的最大值；: 基础: 800/秒  附加: 630 金币/1秒 | 1080p原生 / 无参考视频, 模型原生直出的分辨率。: 3000 金币/1秒 | 1080p原生 / 有参考视频, 模型原生直出的分辨率。
 计费秒数 = 取 [输入视频时长 + 生成视频时长] 与 [最低计费时长] 中的最大值；: 2000 金币/1秒 | [打开](https://bizyair.cn/llms/modelzoo/seedance-2-0-base/reference-to-video?lang=javascript) |
-| Seedance-2.0.Fast-参考生视频-官方版 | 参考生视频 | 480p, 无输入视频: 340 金币/1秒 | 720p, 无输入视频: 750 金币/1秒 | 480p, 有输入视频: 670 金币/1秒 | 720p, 有输入视频: 1510 金币/1秒 | [打开](https://bizyair.cn/llms/modelzoo/seedance-2-0-fast-official/reference-to-video?lang=javascript) |
+| Seedance-2.0.Fast-参考生视频-官方版 | 参考生视频 | 480p, 无输入视频: 340 金币/1秒 | 720p, 无输入视频: 750 金币/1秒 | 480p, 有输入视频: 680 金币/1秒 | 720p, 有输入视频: 1500 金币/1秒 | [打开](https://bizyair.cn/llms/modelzoo/seedance-2-0-fast-official/reference-to-video?lang=javascript) |
 | Seedance-2.0.Fast-参考生视频-渠道版 | 参考生视频 | 480p / 无参考视频, 模型原生直出的分辨率。: 500 金币/1秒 | 720p / 无参考视频, 模型原生直出的分辨率。: 1000 金币/1秒 | 1080p / 无参考视频, 基于 720p 原生生成后进行画质放大。: 1280 金币/1秒 | 2k / 无参考视频, 基于 720p 原生生成后进行画质放大。: 1420 金币/1秒 | 4k / 无参考视频, 基于 720p 原生生成后进行画质放大。: 1630 金币/1秒 | 480p / 有参考视频, 模型原生直出的分辨率。
 计费秒数 = 取 [输入视频时长 + 生成视频时长] 与 [最低计费时长] 中的最大值；: 300 金币/1秒 | 720p / 有参考视频, 模型原生直出的分辨率。
 计费秒数 = 取 [输入视频时长 + 生成视频时长] 与 [最低计费时长] 中的最大值；: 600 金币/1秒 | 1080p / 有参考视频, 基于 720p 原生生成后进行画质放大。
 基础计费秒数 = 取 [输入视频时长 + 生成视频时长] 与 [最低计费时长] 中的最大值；: 基础: 600  附加: 280 金币/1秒 | 2k / 有参考视频, 基于 720p 原生生成后进行画质放大。
 基础计费秒数 = 取 [输入视频时长 + 生成视频时长] 与 [最低计费时长] 中的最大值；: 基础: 600  附加: 420 金币/1秒 | 4k / 有参考视频, 基于 720p 原生生成后进行画质放大。
 基础计费秒数 = 取 [输入视频时长 + 生成视频时长] 与 [最低计费时长] 中的最大值；: 基础: 600  附加: 630 金币/1秒 | [打开](https://bizyair.cn/llms/modelzoo/seedance-2-0-fast-base/reference-to-video?lang=javascript) |
+| Skyreels-V3-参考生视频-官方版 | 参考生视频 | 未知 | [打开](https://bizyair.cn/llms/modelzoo/skyreels-v3-official/reference-to-video?lang=javascript) |
+| Skyreels-V4-全能参考生视频-官方版 | 参考生视频 | 480p, fast, 有: 1160 金币/1秒 | 480p, std, 有: 1390 金币/1秒 | 720p, fast, 有: 1540 金币/1秒 | 720p, std, 有: 1930 金币/1秒 | 1080p, fast, 有: 3850 金币/1秒 | 1080p, std, 有: 4810 金币/1秒 | 480p, fast, 无: 620 金币/1秒 | 480p, std, 无: 850 金币/1秒 | 720p, fast, 无: 850 金币/1秒 | 720p, std, 无: 1080 金币/1秒 | 1080p, fast, 无: 2120 金币/1秒 | 1080p, std, 无: 2700 金币/1秒 | [打开](https://bizyair.cn/llms/modelzoo/skyreels-v4-official/reference-to-video?lang=javascript) |
 | 万相2.7-参考生视频-官方版 | 参考生视频 | 720P: 600 金币/1秒 | 1080P: 1000 金币/1秒 | 480p: 300 金币/1秒 | [打开](https://bizyair.cn/llms/modelzoo/wan-2-7-official/reference-to-video?lang=javascript) |
 | 可灵O3.4K-参考生视频-渠道版 | 参考生视频 | true: 700 金币/1秒 | false: 550 金币/1秒 | [打开](https://bizyair.cn/llms/modelzoo/kling-o3-4k-base/reference-to-video?lang=javascript) |
 
-## Text to Audio (1 个)
+## Speech to Text (2 个)
+
+| 模型名称 | 功能 | 价格 | 文档地址 |
+|---------|------|------|---------|
+| Mureka-V7.6-歌曲识别-官方版 | audio-to-text/song-recognition | 未知 | [打开](https://bizyair.cn/llms/modelzoo/mureka-v7-6-official/audio-to-text/song-recognition?lang=javascript) |
+| Mureka-歌曲理解-官方版 | audio-to-text/song-describe | 未知 | [打开](https://bizyair.cn/llms/modelzoo/mureka-official/audio-to-text/song-describe?lang=javascript) |
+
+## Text to Audio (3 个)
 
 | 模型名称 | 功能 | 价格 | 文档地址 |
 |---------|------|------|---------|
 | ACE Step 文生音乐 | 文生语音 | 音乐时长: 1 金币/5秒 | [打开](https://bizyair.cn/llms/modelzoo/ace-step/text-to-audio?lang=javascript) |
+| Mureka-V9-歌曲生成-官方版 | text-to-audio/song-generation | 未知 | [打开](https://bizyair.cn/llms/modelzoo/mureka-v9-official/text-to-audio/song-generation?lang=javascript) |
+| Mureka-V9-纯音乐生成-官方版 | text-to-audio/bgm-generation | 未知 | [打开](https://bizyair.cn/llms/modelzoo/mureka-v9-official/text-to-audio/bgm-generation?lang=javascript) |
 
-## Text to Image (16 个)
+## Text to Image (21 个)
 
 | 模型名称 | 功能 | 价格 | 文档地址 |
 |---------|------|------|---------|
+| Ideogram-4-文生图 | 文生图 | 未知 | [打开](https://bizyair.cn/llms/modelzoo/ideogram-4/text-to-image?lang=javascript) |
 | Seedream 4.0-文生图-官方版 | 文生图 | 150 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/seedream-4-0-official/text-to-image?lang=javascript) |
 | Seedream 4.5-文生图-官方版 | 文生图 | 250 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/seedream-4-5-official/text-to-image?lang=javascript) |
 | Seedream 5.0-文生图-官方版 | 文生图 | 220 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/seedream-5-0-official/text-to-image?lang=javascript) |
 | 万相2.7-文生图-官方版 | 文生图 | 200 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/wan-2-7-image-official/text-to-image?lang=javascript) |
 | 万相2.7.Pro-文生图-官方版 | 文生图 | 500 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/wan-2-7-image-pro-offcial/text-to-image?lang=javascript) |
+| 漫画生图【摩尔线程算力】 | 文生图 | 0 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/comic-model/text-to-image?lang=javascript) |
 | 通义Qwen-Image-文生图 | 文生图 | 100 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/qwen-image/text-to-image?lang=javascript) |
 | 通义Z-Image.Base-文生图 | 文生图 | 0 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/z-image-base/text-to-image?lang=javascript) |
 | 通义Z-Image.Turbo-文生图 | 文生图 | 未知 | [打开](https://bizyair.cn/llms/modelzoo/z-image-turbo/text-to-image?lang=javascript) |
@@ -124,6 +155,15 @@
 | 通用图片F.K.Pro-文生图-渠道版 | 文生图 | 70 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/flux-kontext-pro-base/text-to-image?lang=javascript) |
 | 通用图片O.2-文生图-官方版 | 文生图 | , high, >2560*1440, : 3486 金币/1次 | , high, <=2560*1440 且 >1920*1080 , : 2149 金币/1次 | , high, <=1920*1080, : 1120 金币/1次 | , medium, >2560*1440, : 966 金币/1次 | , medium, >1920*1080 且 <=2560*1440, : 630 金币/1次 | , medium, <=1920*1080, : 378 金币/1次 | , low, >2560*1440 , : 224 金币/1次 | , low, >1920*1080 且 <=2560*1440, : 182 金币/1次 | , low, <=1920*1080, : 161 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/bza-image-o2-official/text-to-image?lang=javascript) |
 | 通用图片O.2-文生图-渠道版 | 文生图 | 1K: 100 金币/1次 | 2K: 100 金币/1次 | 4K: 100 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/bza-image-o2-base/text-to-image?lang=javascript) |
+| 通用图片X-文生图-渠道版 | 文生图 | 未知 | [打开](https://bizyair.cn/llms/modelzoo/bza-image-x-base/text-to-image?lang=javascript) |
+| 通用图片X.2-文生图-渠道版 | 文生图 | 未知 | [打开](https://bizyair.cn/llms/modelzoo/bza-image-x2-base/text-to-image?lang=javascript) |
+| 通用图片X.Quality-文生图-渠道版 | 文生图 | 1k: 460 金币/1次 | 2k: 620 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/bza-image-x-quality-base/text-to-image?lang=javascript) |
+
+## Text to Lyrics (1 个)
+
+| 模型名称 | 功能 | 价格 | 文档地址 |
+|---------|------|------|---------|
+| Mureka-歌词续写-官方版 | text-to-text/lyrics-extend | 未知 | [打开](https://bizyair.cn/llms/modelzoo/mureka-official/text-to-text/lyrics-extend?lang=javascript) |
 
 ## Text to Speech (1 个)
 
@@ -131,7 +171,7 @@
 |---------|------|------|---------|
 | 通义Qwen3-TTS-文生语音 | 文生语音 | 100 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/qwen3tts-custom-voice/text-to-audio?lang=javascript) |
 
-## Text to Video (25 个)
+## Text to Video (26 个)
 
 | 模型名称 | 功能 | 价格 | 文档地址 |
 |---------|------|------|---------|
@@ -141,6 +181,7 @@
 | Seedance-2.0-文生视频-渠道版 | 文生视频 | 480p: 600 金币/1秒 | 720p: 1200 金币/1秒 | native1080p: 3000 金币/1秒 | 1080p: 1480 金币/1秒 | 2k: 1620 金币/1秒 | 4k: 1830 金币/1秒 | [打开](https://bizyair.cn/llms/modelzoo/seedance-2-0-base/text-to-video?lang=javascript) |
 | Seedance-2.0.Fast-文生视频-官方版 | 文生视频 | 4, 480p: 1360 金币/1次 | 4, 720p: 3000 金币/1次 | 5, 480p: 1700 金币/1次 | 5, 720p: 3750 金币/1次 | 6, 480p: 2040 金币/1次 | 6, 720p: 4500 金币/1次 | 7, 480p: 2380 金币/1次 | 7, 720p: 5250 金币/1次 | 8, 480p: 2720 金币/1次 | 8, 720p: 6000 金币/1次 | 9, 480p: 3060 金币/1次 | 9, 720p: 6750 金币/1次 | 10, 480p: 3400 金币/1次 | 10, 720p: 7500 金币/1次 | 11, 480p: 3740 金币/1次 | 11, 720p: 8250 金币/1次 | 12, 480p: 4080 金币/1次 | 12, 720p: 9000 金币/1次 | 13, 480p: 4420 金币/1次 | 13, 720p: 9750 金币/1次 | 14, 480p: 4760 金币/1次 | 14, 720p: 10500 金币/1次 | 15, 480p: 5100 金币/1次 | 15, 720p: 11250 金币/1次 | [打开](https://bizyair.cn/llms/modelzoo/seedance-2-0-fast-official/text-to-video?lang=javascript) |
 | Seedance-2.0.Fast-文生视频-渠道版 | 文生视频 | 480p: 500 金币/1秒 | 720p: 1000 金币/1秒 | 1080p: 1200 金币/1秒 | 2k: 1420 金币/1秒 | 4k: 1630 金币/1秒 | [打开](https://bizyair.cn/llms/modelzoo/seedance-2-0-fast-base/text-to-video?lang=javascript) |
+| Skyreels-V4-文生视频-官方版 | 文生视频 | 480p, fast: 620 金币/1秒 | 480p, std: 850 金币/1秒 | 720p, fast: 850 金币/1秒 | 720p, std: 1080 金币/1秒 | 1080p, fast: 2120 金币/1秒 | 1080p, std: 2700 金币/1秒 | [打开](https://bizyair.cn/llms/modelzoo/skyreels-v4-official/text-to-video?lang=javascript) |
 | Vidu Q3.Pro-文生视频-官方版 | 文生视频 | 540P: 438 金币/1秒 | 720P: 938 金币/1秒 | 1080P: 1000 金币/1秒 | [打开](https://bizyair.cn/llms/modelzoo/vidu-q3-pro-official/text-to-video?lang=javascript) |
 | Vidu Q3.Pro-文生视频-渠道版 | 文生视频 | 540P: 310 金币/1秒 | 720P: 660 金币/1秒 | 1080P: 700 金币/1秒 | [打开](https://bizyair.cn/llms/modelzoo/vidu-q3-pro-base/text-to-video?lang=javascript) |
 | Vidu Q3.Turbo-文生视频-官方版 | 文生视频 | 540P: 250 金币/1秒 | 720P: 375 金币/1秒 | 1080P: 500 金币/1秒 | [打开](https://bizyair.cn/llms/modelzoo/vidu-q3-turbo-official/text-to-video?lang=javascript) |
@@ -169,10 +210,12 @@
 | 万相2.7-视频编辑-官方版 | 视频编辑 | 720P: 600 金币/1秒 | 1080P: 1000 金币/1秒 | 480p: 300 金币/1秒 | [打开](https://bizyair.cn/llms/modelzoo/wan-2-7-official/video-edit?lang=javascript) |
 | 通用视频X-视频编辑-官方版 | 视频编辑 | 450 金币/1秒 | [打开](https://bizyair.cn/llms/modelzoo/bza-video-x-official/video-edit?lang=javascript) |
 
-## Video Extend (1 个)
+## Video Extend (3 个)
 
 | 模型名称 | 功能 | 价格 | 文档地址 |
 |---------|------|------|---------|
+| Skyreels-V3-视频切镜延长-官方版 | video-extend/cutshot | 未知 | [打开](https://bizyair.cn/llms/modelzoo/skyreels-official/video-extend/cutshot?lang=javascript) |
+| Skyreels-V3-视频扩展-官方版 | 视频延长 | 未知 | [打开](https://bizyair.cn/llms/modelzoo/skyreels-official/video-extend?lang=javascript) |
 | 万相2.7-视频延长-官方版 | 视频延长 | 720P: 600 金币/1秒 | 1080P: 1000 金币/1秒 | 480p: 300 金币/1秒 | [打开](https://bizyair.cn/llms/modelzoo/wan-2-7-offcial/video-extend?lang=javascript) |
 
 ## Vision (4 个)
@@ -184,7 +227,7 @@
 | 通用视觉G.3.1.Pro-视觉-官方版 | 视觉 | 未知 | [打开](https://bizyair.cn/llms/modelzoo/bza-vision-g3-1-pro-official/vision?lang=javascript) |
 | 通用视觉G.3.Flash-视觉-官方版 | 视觉 | 未知 | [打开](https://bizyair.cn/llms/modelzoo/bza-vision-g3-flash-official/vision?lang=javascript) |
 
-## 多功能模型汇总 (36 个)
+## 多功能模型汇总 (42 个)
 
 | 模型标识 | 支持功能数 |
 |---------|-----------|
@@ -195,6 +238,8 @@
 | `bza-image-f-k-max-base` | 2 |
 | `bza-image-o2-base` | 2 |
 | `bza-image-o2-official` | 2 |
+| `bza-image-x-base` | 2 |
+| `bza-image-x-quality-base` | 2 |
 | `bza-video-g-omni-flash-base` | 2 |
 | `bza-video-v3-1-fast-base` | 3 |
 | `bza-video-v3-1-fast-official` | 2 |
@@ -211,6 +256,8 @@
 | `kling-o3-pro-base` | 2 |
 | `kling-o3-std-base` | 2 |
 | `ltx-2-3` | 2 |
+| `mureka-official` | 4 |
+| `mureka-v9-official` | 2 |
 | `seedance-2-0-base` | 3 |
 | `seedance-2-0-fast-base` | 3 |
 | `seedance-2-0-fast-official` | 3 |
@@ -218,6 +265,8 @@
 | `seedream-4-0-official` | 2 |
 | `seedream-4-5-official` | 2 |
 | `seedream-5-0-official` | 2 |
+| `skyreels-official` | 2 |
+| `skyreels-v4-official` | 3 |
 | `vidu-q3-pro-base` | 3 |
 | `vidu-q3-pro-official` | 3 |
 | `vidu-q3-turbo-base` | 3 |

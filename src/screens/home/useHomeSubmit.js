@@ -4,7 +4,7 @@ import { submitImageTask, submitVideoTask, submitLLMTask, submitVisionTask, subm
 import { calculatePrice, getActualResolution, getOutputType } from '../../utils/modelHelpers';
 import { buildPayload } from '../../utils/payloadBuilder';
 import { generateId } from '../../utils/helpers';
-import { ENV_API_KEY } from '../../constants/models';
+import { ENV_API_KEY } from '../../constants/apiConfig';
 
 const toRemoteUrls = (urls) => (urls || []).map((u) => (typeof u === 'object' && u.remoteUrl) ? u.remoteUrl : u);
 

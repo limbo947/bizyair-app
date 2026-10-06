@@ -1,8 +1,24 @@
+import { MODEL_ENDPOINTS } from '../constants/modelEndpoints';
 import {
   API_BASE,
   ENV_API_KEY,
-} from '../constants/models';
+} from '../constants/apiConfig';
 import { request } from './httpClient';
+
+/**
+ * 解析模型的真实请求路径。
+ * 默认端点为 `${modelId}/${mode}`；官网端点 slug 与 MODELS key 不一致的
+ * 模型（见 modelEndpoints.js 注册表）按其登记的字符串或按 mode 的对象覆盖。
+ * @param {string} modelId - 模型ID（MODELS 的 key）
+ * @param {string} mode - 调用模式
+ * @returns {string} 相对 API_BASE 的请求路径
+ */
+function resolvePath(modelId, mode) {
+  const endpoint = MODEL_ENDPOINTS[modelId];
+  if (typeof endpoint === 'string') return endpoint;
+  if (endpoint && typeof endpoint === 'object' && endpoint[mode]) return endpoint[mode];
+  return `${modelId}/${mode}`;
+}
 
 /**
  * 提交任务到 BizyAir API。
@@ -14,7 +30,7 @@ import { request } from './httpClient';
  * @throws {Error} 提交失败或未返回任务ID时抛出
  */
 async function submitTask(apiKey, modelId, mode, payload) {
-  const url = `${API_BASE}/${modelId}/${mode}`;
+  const url = `${API_BASE}/${resolvePath(modelId, mode)}`;
   const result = await request(url, {
     method: 'POST',
     headers: {

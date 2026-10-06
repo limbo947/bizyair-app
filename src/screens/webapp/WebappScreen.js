@@ -21,7 +21,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useToastContext } from '../../context/ToastContext';
 import { submitWebappTask, uploadImageFile, uploadVideoFile, fetchWebappDetail } from '../../services/apiClient';
 import { generateId } from '../../utils/helpers';
-import { ENV_API_KEY } from '../../constants/models';
+import { ENV_API_KEY } from '../../constants/apiConfig';
 import { Radius, Spacing, Typography, ButtonVariants, Shadow, pressedOpacity } from '../../constants/theme';
 import { createSharedStyles } from '../../constants/sharedStyles';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
@@ -397,9 +397,10 @@ export function WebappScreen() {
       startedAt: now, completedAt: null,
       date: new Date(now).toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }),
     };
-    await addToHistory(entry);
-    await refreshUserInfo().catch((e) => console.warn('提交后刷新用户信息失败:', e?.message || e));
+    // addToHistory 一并纳入 try：若 reject 而 finally 不覆盖，提交按钮会永久卡在"提交中"
     try {
+      await addToHistory(entry);
+      await refreshUserInfo().catch((e) => console.warn('提交后刷新用户信息失败:', e?.message || e));
       const requestId = await submitWebappTask(ek, webAppId, cleanInputValues);
       // 存储真实 API 请求体（与 submitWebappTask 发送的结构一致）
       const requestPayload = {

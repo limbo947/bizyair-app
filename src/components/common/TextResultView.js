@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Pressable, View, Text, ScrollView, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
@@ -28,14 +28,25 @@ export function TextResultView({ visible, text, onClose }) {
   const [copied, setCopied] = useState(false);
   const [fontScale, setFontScale] = useState(1);
   const scrollRef = useRef(null);
+  const copiedTimerRef = useRef(null);
 
   const handleCopy = useCallback(async () => {
     if (!text) return;
-    await Clipboard.setStringAsync(text);
-    setCopied(true);
-    showToast('文本已复制到剪贴板', 'success');
-    setTimeout(() => setCopied(false), 1500);
+    try {
+      await Clipboard.setStringAsync(text);
+      setCopied(true);
+      showToast('文本已复制到剪贴板', 'success');
+      if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
+      copiedTimerRef.current = setTimeout(() => setCopied(false), 1500);
+    } catch (e) {
+      showToast('复制失败，请重试', 'error');
+    }
   }, [text, showToast]);
+
+  // 卸载时清理"恢复复制按钮"定时器
+  useEffect(() => () => {
+    if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
+  }, []);
 
   // 问题7：双击切换字体大小（1x → 1.25x → 1.5x → 1x）
   const handleDoubleTap = useCallback(() => {

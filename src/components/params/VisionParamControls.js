@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Pressable, Text, View, TextInput, Switch, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Radius, Spacing, Typography } from '../../constants/theme';
@@ -137,12 +137,18 @@ export function VisionGControls({
   const [showAddPreset, setShowAddPreset] = useState(false);
   const [newPresetName, setNewPresetName] = useState('');
   const [newPresetPrompt, setNewPresetPrompt] = useState('');
+  // 本控件随模型切换即卸载：仅存储加载完成后的真实变更才持久化，
+  // 避免 mount 时 save effect 先用初始空数组覆盖已存预设
+  const hydratedRef = useRef(false);
 
   useEffect(() => {
-    loadCustomPresets().then(setCustomPresets);
+    loadCustomPresets().then((presets) => {
+      setCustomPresets(presets);
+      hydratedRef.current = true;
+    });
   }, []);
 
-  useEffect(() => { saveCustomPresets(customPresets); }, [customPresets]);
+  useEffect(() => { if (hydratedRef.current) saveCustomPresets(customPresets); }, [customPresets]);
 
   const allPresets = [...VISION_PROMPT_PRESETS, ...customPresets];
 

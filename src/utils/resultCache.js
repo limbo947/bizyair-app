@@ -18,10 +18,11 @@ function getExt(url) {
 
 /**
  * 生成缓存文件路径
- * 格式: {document}/bizyair_results/{historyId}_{index}.{ext}
+ * 格式: {document}/bizyair_results/{historyId}_{kind}_{index}.{ext}
+ * kind 为产物类型前缀，避免同任务不同类型产物在无扩展名 URL（统一落 .bin）时互相覆盖
  */
-function cachePath(historyId, index, ext) {
-  return new File(Paths.document, `${CACHE_DIR}/${historyId}_${index}.${ext}`);
+function cachePath(historyId, kind, index, ext) {
+  return new File(Paths.document, `${CACHE_DIR}/${historyId}_${kind}_${index}.${ext}`);
 }
 
 /**
@@ -48,12 +49,12 @@ async function ensureCacheDir() {
  * @param {number} index - 文件序号
  * @returns {string|null} 本地文件 URI，失败返回 null
  */
-export async function cacheRemoteFile(url, historyId, index) {
+export async function cacheRemoteFile(url, historyId, index, kind = 'img') {
   if (!url || Platform.OS === 'web') return null;
 
   try {
     const ext = getExt(url);
-    const dest = cachePath(historyId, index, ext);
+    const dest = cachePath(historyId, kind, index, ext);
 
     // 已缓存则直接返回
     if (await dest.exists()) return dest.uri;
@@ -81,12 +82,12 @@ export async function cacheTaskResults(taskResult, historyId) {
   // 图片
   if (taskResult.imageUrls?.length > 0) {
     const paths = await Promise.all(
-      taskResult.imageUrls.map((url, i) => cacheRemoteFile(url, historyId, i))
+      taskResult.imageUrls.map((url, i) => cacheRemoteFile(url, historyId, i, 'img'))
     );
     result.localImageUrls = paths.filter(Boolean);
     if (paths[0]) result.localImageUrl = paths[0];
   } else if (taskResult.imageUrl) {
-    const local = await cacheRemoteFile(taskResult.imageUrl, historyId, 0);
+    const local = await cacheRemoteFile(taskResult.imageUrl, historyId, 0, 'img');
     if (local) {
       result.localImageUrl = local;
       result.localImageUrls = [local];
@@ -96,38 +97,22 @@ export async function cacheTaskResults(taskResult, historyId) {
   // 视频
   if (taskResult.videoUrls?.length > 0) {
     const paths = await Promise.all(
-      taskResult.videoUrls.map((url, i) => cacheRemoteFile(url, historyId, i))
+      taskResult.videoUrls.map((url, i) => cacheRemoteFile(url, historyId, i, 'vid'))
     );
     result.localVideoUrls = paths.filter(Boolean);
     if (paths[0]) result.localVideoUrl = paths[0];
   } else if (taskResult.videoUrl) {
-    const local = await cacheRemoteFile(taskResult.videoUrl, historyId, 0);
+    const local = await cacheRemoteFile(taskResult.videoUrl, historyId, 0, 'vid');
     if (local) result.localVideoUrl = local;
   }
 
   // 音频
   if (taskResult.audioUrl) {
-    const local = await cacheRemoteFile(taskResult.audioUrl, historyId, 0);
+    const local = await cacheRemoteFile(taskResult.audioUrl, historyId, 0, 'aud');
     if (local) result.localAudioUrl = local;
   }
 
   return result;
-}
-
-/**
- * 获取已缓存的本地路径（不触发下载）
- * @param {string} historyId - 历史记录 ID
- * @param {string} url - 远程 URL
- * @param {number} index - 文件序号
- * @returns {string|null} 本地 URI 或 null
- */
-export async function getCachedPath(historyId, index, ext) {
-  if (Platform.OS === 'web') return null;
-  try {
-    const file = cachePath(historyId, index, ext);
-    if (await file.exists()) return file.uri;
-  } catch { /* ignore */ }
-  return null;
 }
 
 /**

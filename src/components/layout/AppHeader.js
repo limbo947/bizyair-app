@@ -5,7 +5,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useApiKeyContext } from '../../context/ApiKeyContext';
 import { useToastContext } from '../../context/ToastContext';
 import { useTheme } from '../../context/ThemeContext';
-import { ENV_API_KEY } from '../../constants/models';
+import { ENV_API_KEY } from '../../constants/apiConfig';
 import { Radius, Spacing, Typography, pressedOpacity } from '../../constants/theme';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { ApiKeyDropdown } from './ApiKeyDropdown';

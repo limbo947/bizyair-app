@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { Platform } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import { uploadImageFile, uploadVideoFile } from '../services/apiClient';
-import { ENV_API_KEY } from '../constants/models';
+import { ENV_API_KEY } from '../constants/apiConfig';
 
 /**
  * 通用文件选择+上传逻辑。

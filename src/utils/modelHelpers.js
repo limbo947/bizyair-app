@@ -102,6 +102,11 @@ export function getModelModes(modelId) {
  * @returns {ModelConfig} 模型配置对象
  */
 export function getModelInfo(modelId) {
+  // 回退默认模型时给出告警：无效 id 常来自收藏/历史中的已下线模型，
+  // 静默回退会用错误配置构建 payload 与价格，掩盖问题
+  if (!MODELS[modelId]) {
+    console.warn(`[modelHelpers] 未找到模型 "${modelId}"，回退默认模型 bza-image-b2-base`);
+  }
   return MODELS[modelId] || MODELS['bza-image-b2-base'];
 }
 

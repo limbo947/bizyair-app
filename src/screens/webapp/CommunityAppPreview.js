@@ -59,8 +59,8 @@ export function CommunityAppPreview({ app, isFavorite, onClose, onSelect, onTogg
       const existing = await loadSavedApps();
       // 检查是否已存在（按 bizyModelId 去重）
       if (existing.some(a => a.bizyModelId === app.id)) {
+        // 已收藏：仅提示，不切换图标（本地存储并未删除，切换会造成 UI 与存储不一致）
         showToast('该应用已在收藏列表中', 'info');
-        onToggleFavorite(app);
         return;
       }
       // 从 input_nodes 生成默认参数值（与 applyAppDetail 逻辑一致）

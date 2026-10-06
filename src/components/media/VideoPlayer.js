@@ -80,7 +80,7 @@ function WebVideoPlayer({ visible, videoUrl, onClose }) {
   }, [visible, videoUrl]);
 
   /* ---- controls ---------------------------------------------------------- */
-  const togglePlay = () => { if (!vidRef.current) return; if (vidRef.current.paused) { vidRef.current.play(); } else { vidRef.current.pause(); } };
+  const togglePlay = () => { if (!vidRef.current) return; if (vidRef.current.paused) { vidRef.current.play().catch(() => setIsPlaying(false)); } else { vidRef.current.pause(); } };
 
   const toggleMute = () => {
     if (!vidRef.current) return;
@@ -241,6 +241,10 @@ function NativeVideoPlayer({ visible, videoUrl, onClose }) {
   // eslint-disable-next-line react-hooks/immutability -- expo-video imperative API: currentTime is a writable property for seeking
   const seek = useCallback((frac) => { if (!duration) return; player.currentTime = frac * duration; }, [duration]);
 
+  // PanResponder 只创建一次，handler 闭包会过期，通过 ref 始终调用最新的 seek
+  const seekRef = useRef(seek);
+  useEffect(() => { seekRef.current = seek; }, [seek]);
+
   const pct = duration > 0 ? (currentTime / duration) * 100 : 0;
   const volPct = isMuted ? 0 : playerVolume * 100;
 
@@ -266,17 +270,17 @@ function NativeVideoPlayer({ visible, videoUrl, onClose }) {
 
   // 问题5：进度条拖拽支持（PanResponder）
   const progWidthRef = useRef(1);
-  // eslint-disable-next-line react-hooks/refs, react-hooks/immutability -- PanResponder created once, seek modifies player only in handlers
+  // eslint-disable-next-line react-hooks/refs -- PanResponder created once, seek called via latest-ref
   const [progPanResponder] = useState(() => PanResponder.create({
     onStartShouldSetPanResponder: () => true,
     onMoveShouldSetPanResponder: (_, gs) => Math.abs(gs.dx) > 2,
     onPanResponderGrant: (evt) => {
       const frac = Math.max(0, Math.min(1, evt.nativeEvent.locationX / progWidthRef.current));
-      seek(frac);
+      seekRef.current(frac);
     },
     onPanResponderMove: (evt) => {
       const frac = Math.max(0, Math.min(1, evt.nativeEvent.locationX / progWidthRef.current));
-      seek(frac);
+      seekRef.current(frac);
     },
   }));
 
@@ -288,11 +292,12 @@ function NativeVideoPlayer({ visible, videoUrl, onClose }) {
     onMoveShouldSetPanResponder: (_, gs) => Math.abs(gs.dx) > 2,
     onPanResponderGrant: (evt) => {
       const v = Math.max(0, Math.min(1, evt.nativeEvent.locationX / volWidthRef.current));
-      player.volume = v; if (v > 0 && isMuted) setIsMuted(false);
+      // 拖到 0 视为静音、离开 0 取消静音；不读过期闭包里的 isMuted
+      player.volume = v; setIsMuted(v === 0);
     },
     onPanResponderMove: (evt) => {
       const v = Math.max(0, Math.min(1, evt.nativeEvent.locationX / volWidthRef.current));
-      player.volume = v; if (v > 0 && isMuted) setIsMuted(false);
+      player.volume = v; setIsMuted(v === 0);
     },
   }));
 

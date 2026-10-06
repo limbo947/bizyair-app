@@ -1,6 +1,6 @@
 # Bizyair Assistant
 
-基于 Expo SDK 56 的多模态 AI 助手，接入 BizyAir 平台 48 个模型，覆盖文生图、图生图、文生视频、图生视频、首尾帧、参考视频、视频编辑、视频延长、大语言模型、视觉理解、语音合成等 11 种功能模式。
+基于 Expo SDK 56 的多模态 AI 助手，接入 BizyAir 平台 61 个模型，覆盖文生图、图生图、文生视频、图生视频、首尾帧、参考视频、视频编辑、视频延长、大语言模型、视觉理解、语音合成/音乐生成等 11 种功能模式。
 
 ## APK安装包
 - https://github.com/limbo947/bizyair-app/releases
@@ -57,18 +57,20 @@ npx eas build --platform android --profile preview --local
 
 ### 核心能力
 
-- **11 种功能模式**：文生图、图生图、文生视频、图生视频、首尾帧、参考视频、视频编辑、视频延长、大语言模型、视觉理解、语音合成
+- **11 种功能模式**：文生图、图生图、文生视频、图生视频、首尾帧、参考视频、视频编辑、视频延长、大语言模型、视觉理解、语音合成/音乐生成
 - **模型选择页**：按分类/厂商筛选，选择模型后自动切换到对应功能模式；支持收藏管理
+- **AI 应用 & 社区应用广场**：内置 AI 应用工作流，社区广场支持搜索、排序、分类筛选与应用收藏
 - **系统提示词预设**：LLM 和视觉理解模型内置 6 个 Markdown 格式预设（200-300字），支持自定义新增/删除
+- **参数预设**：保存/加载/删除当前模型参数组合（每模型+模式独立，上限 20 条）
 - **暗色模式**：亮色/暗色主题一键切换，选择持久化
 - **Markdown 渲染**：LLM/Vision 返回结果自动渲染为富文本（标题、列表、代码块等）
-- **TTS 试听**：语音合成结果支持应用内在线播放（播放/暂停/进度跳转）
-- **底部导航**：主页 / AI应用 / 历史 三标签切换，进行中任务角标显示
-- **异步任务模式**：提交后立即加入历史列表，后台轮询状态（排队中 → 生成中 → 转存中 → 完成/失败）
+- **媒体查看器**：图片双指缩放/多图左右切换/双击缩放，音视频播放（进度拖拽/音量/静音），支持下载到本地
+- **异步任务模式**：提交后立即加入历史列表，后台轮询状态（排队中 → 生成中 → 转存中 → 完成/失败），间隔随耗时自动退避
 - **动态价格计算**：根据模型和参数实时计算金币消耗，显示在生成按钮上
 - **图片/视频上传**：通过阿里云 OSS STS 凭证直传，支持选择本地文件
-- **历史记录**：搜索、筛选、排序、批量操作、分页加载、日志查看
-- **API 密钥管理**：支持 .env 配置和运行时输入两种方式，多密钥切换
+- **历史记录**：搜索、筛选、排序、批量操作、分页加载、日志查看、任务重提交
+- **API 密钥管理**：支持 .env 配置和运行时输入两种方式，多密钥切换、余额显示
+- **离线检测**：网络断开时顶部提示条，恢复后自动续轮进行中任务
 
 ## 技术栈
 
@@ -83,6 +85,10 @@ npx eas build --platform android --profile preview --local
 - expo-audio（音频播放）+ expo-video（视频播放）
 - react-native-markdown-display（Markdown 渲染）
 - 目标平台：Android arm64-v8a / Web
+
+## 更换 API 服务
+
+所有 API 相关配置（服务地址、端点、默认密钥、OSS 域名特征、上传代理、超时/重试/轮询参数）集中在 `src/constants/apiConfig.js`，更换 API 服务只需修改这一个文件；模型端点 slug 与内部 key 不一致的例外统一登记在 `src/constants/modelEndpoints.js`。
 
 ## 项目结构
 
@@ -115,30 +121,30 @@ npx eas build --platform android --profile preview --local
 │   │   ├── HomeScreen.js    # 主页
 │   │   ├── home/            # 主页子模块（homeReducer + useHomeSubmit）
 │   │   ├── history/         # 历史页子模块（HistoryScreen + HistoryCard + DurationDisplay）
-│   │   ├── webapp/          # AI 应用子模块（WebappScreen + WebappListItem + utils + storage）
+│   │   ├── webapp/          # AI 应用子模块（WebappScreen + 社区广场三件套 + utils + storage）
 │   │   └── ModelSelectScreen.js # 模型选择
-│   ├── components/           # UI 组件（按功能分组）
+│   ├── components/           # UI 组件（按功能分组，共 31 个）
 │   │   ├── params/          # 参数控件（12 个：HomeParamControls、VideoParamControls 等）
 │   │   ├── media/           # 媒体组件（4 个：ImageViewer、VideoPlayer、AudioPlayer、UploadCard）
 │   │   ├── layout/          # 布局组件（5 个：AppHeader、Toast、ErrorBoundary 等）
-│   │   ├── common/          # 通用组件（3 个：ResizableTextInput、MarkdownRenderer、TextResultView）
-│   │   ├── HistoryFilters.js
-│   │   ├── HistoryModals.js
-│   │   └── ModelSelector.js
+│   │   ├── common/          # 通用组件（5 个：DropdownModal、PickerModal、MarkdownRenderer 等）
+│   │   ├── HistoryFilters.js / HistoryModals.js / ModelSelector.js
+│   │   └── NetworkStatusBar.js / ParamPresetBar.js
 │   ├── constants/            # 常量定义
-│   │   ├── models.js        # MODELS 对象 + re-export（向后兼容）
+│   │   ├── models.js        # MODELS 对象（61 个模型配置）
+│   │   ├── modelEndpoints.js # 模型端点注册表（slug 与 key 不一致的例外）
 │   │   ├── pricing.js       # 价格常量 + 计算函数
-│   │   ├── apiConfig.js     # API 端点 + 超时配置
+│   │   ├── apiConfig.js     # API 集中配置（端点/密钥/OSS域名/上传代理/超时重试轮询）
 │   │   ├── storageKeys.js   # AsyncStorage 键名
 │   │   ├── uiConstants.js   # UI 常量
 │   │   ├── modelMeta.js / ratios.js / theme.js / sharedStyles.js
-│   ├── hooks/                # 自定义 Hooks（useFileUpload、useThemedStyles、useDownload、useModelSwitch）
-│   ├── utils/                # 工具函数（helpers、modelHelpers、payloadBuilder、download）
+│   ├── hooks/                # 自定义 Hooks（7 个：useFileUpload、useFormValidation、usePresets 等）
+│   ├── utils/                # 工具函数（modelHelpers、payloadBuilder、errorMessages、resultCache 等 6 个）
 │   └── services/             # API 服务层
-│       ├── httpClient.js     # 核心 HTTP 请求
+│       ├── httpClient.js     # 核心 HTTP 请求（15s 超时 / 幂等方法重试 / 错误分类）
 │       ├── taskApi.js / uploadApi.js / userApi.js / webappApi.js
 │       └── apiClient.js      # 统一入口（re-export，向后兼容）
 ├── assets/                   # 图标资源
-├── reference/                # 参考文档
+├── reference/                # 参考文档（BizyAir API 文档）
 └── .env.example              # 环境变量模板
 ```

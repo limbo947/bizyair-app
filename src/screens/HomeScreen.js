@@ -37,13 +37,14 @@ import { useFormValidation } from '../hooks/useFormValidation';
 import { ParamPresetBar } from '../components/ParamPresetBar';
 import { getUserMessage } from '../utils/errorMessages';
 
+// 启用 Android LayoutAnimation（iOS 默认启用）——模块级执行一次，
+// 放在组件 render 内属于 render 副作用
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
 export function HomeScreen({ onOpenModelSelect }) {
   const insets = useSafeAreaInsets();
-
-  // 启用 Android LayoutAnimation（iOS 默认启用）
-  if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-    UIManager.setLayoutAnimationEnabledExperimental(true);
-  }
 
   const {
     apiKey,
@@ -252,6 +253,11 @@ export function HomeScreen({ onOpenModelSelect }) {
     }, 500);
     return () => {
       clearTimeout(timer);
+      // 同时清理"恢复 idle"定时器，避免卸载后仍对已卸载组件 setState
+      if (idleTimerRef.current) {
+        clearTimeout(idleTimerRef.current);
+        idleTimerRef.current = null;
+      }
     };
   }, [state, saveHomeState]);
 

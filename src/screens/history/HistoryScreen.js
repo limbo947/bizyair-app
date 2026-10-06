@@ -378,8 +378,7 @@ export function HistoryScreen() {
       return null;
     }
     return <View style={styles.footerLoading}><ActivityIndicator color={colors.primary} /><Text style={styles.footerLoadingText}>加载更多...</Text></View>;
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- styles/colors only change on theme switch
-  }, [hasMore, filteredHistory.length]);
+  }, [hasMore, filteredHistory.length, colors.primary, styles]);
 
   const renderEmpty = useCallback(() => {
     const histLen = Array.isArray(history) ? history.length : 0;

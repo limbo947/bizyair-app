@@ -62,14 +62,8 @@ export function Toast({ message, type = 'info' }) {
       useNativeDriver: true,
     });
     fadeIn.start();
-    return () => {
-      fadeIn.stop();
-      Animated.timing(opacity, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: true,
-      }).start();
-    };
+    // 卸载时组件即将移除，此处启动淡出动画不可能被渲染（原死代码已删除）
+    return () => { fadeIn.stop(); };
   }, [opacity]);
 
   const typeStyleKey = TYPE_STYLE_KEYS[type] || 'typeInfo';

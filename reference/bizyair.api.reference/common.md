@@ -1,4 +1,5 @@
-# BizyAir API 公共章节
+# BizyAir API 公共文档
+> 以下内容在所有模型文档中完全一致，无需重复查看各模型文档。
 
 ## 一. 开始使用
 
@@ -18,6 +19,122 @@
 
 **请妥善保存您的 API Key**，它将参与接下来的每一步操作。
 
+## 二. 提交请求
+
+您现在可以提交 API 请求了。
+
+### 1. 请求示例
+
+> ⚠️ **代码块**因模型类型不同而有差异，请查看各模型文档。
+
+### 2. 请求参数说明
+
+> ⚠️ **参数表**因模型类型不同而有差异，请查看各模型文档。
+
+> 为保护您的业务敏感信息（如 prompt 设计等），我们支持对 API 调用记录中的指定字段进行脱敏处理。脱敏后的字段在查询调用记录时将显示为 `[调用方要求隐藏]`，但不影响实际请求的执行和计费准确性。
+>
+> **使用方法**：在请求头中携带 `X-BizyAir-Log-Mask-Fields`，指定需要脱敏的字段，多个字段用英文逗号分隔。
+>
+> ```http
+> Content-Type: application/json
+> Authorization: Bearer ${BIZYAIR_API_KEY}
+> X-BizyAir-Log-Mask-Fields: prompt, image_urls
+> ```
+
+### 3. 响应示例
+
+在成功提交请求后，您会收到类似的信息反馈。
+
+这是一个**异步任务提交的成功回执**，作用是告诉你：“请求已接收，任务正在排队执行中”。
+
+如果您收到了其他的信息反馈，可以结合下文【**4. 响应字段说明**】进一步了解详情。
+
+```json
+{
+  "request_id": "4569bb94-1d30-417a-a987-9715de1e2633"
+}
+```
+
+### 4. 响应字段说明
+
+您可以阅读下方的【**响应字段说明**】，了解各字段含义与取值说明。
+
+| 参数名 | 类型 | 说明 |
+| :--- | :--- | :--- |
+| request_id | string | 请求ID，用于后续查询任务状态。 |
+
+## 三. 查询结果
+
+在这个阶段，您可以通过刚才产生的**任务单号（request_id）**，去主动查询任务是否完成，以及获取最终结果。
+
+### 1. 请求示例
+
+请您分别将下方的 `${BIZYAIR_API_KEY}`、`${REQUEST_ID}`，
+
+更换成您的 **API Key** 以及您的**任务单号（request_id）**，
+
+这样可以为您提供任务最新状态，包括是否成功以及结果资源地址。
+
+```javascript
+async function queryTaskStatus(requestId) {
+  const url = `https://api.bizyair.cn/x/v1/modelzoo/tasks/openapi/${requestId}`;
+
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': 'Bearer ${BIZYAIR_API_KEY}'
+      }
+    });
+
+    const result = await response.json();
+    console.log('Task Status:', result);
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+queryTaskStatus('${REQUEST_ID}');
+```
+
+### 2. 响应示例
+
+这是一个通过调用 **BizyAir 查询接口**，在任务生成完成、成功生成内容之后，服务器最终返回的结果回执。
+
+也是整个 AI 生图流程的【**最终结果**】。通过浏览这段信息，您可以了解到上述所有操作的最终结果。
+
+如果您收到了其他的信息反馈，可以结合下文【**3. 响应字段说明**】进一步了解详情。
+
+```json
+{
+  "request_id": "4569bb94-1d30-417a-a987-9715de1e2633",
+  "status": "Success",
+  "message": null,
+  "executed_at": "2026-04-15 13:32:32",
+  "ended_at": "2026-04-15 13:42:32",
+  "outputs": {
+    "archives": [
+      "https://storage.bizyair.cn/outputs_examples/afdf6045-82e3-4714-b2fd-3ec1a8824f55.zip",
+      "https://storage.bizyair.cn/outputs_examples/29b3cb1d-68ec-43ed-b4aa-b72723f5e236.zip"
+    ]
+  }
+}
+```
+
+> ⚠️ **JSON 响应体**因模型输出类型不同而有差异，请查看各模型文档。
+
+### 3. 响应字段说明
+
+| 参数名 | 类型 | 说明 |
+| :--- | :--- | :--- |
+| request_id | string | 请求ID，用于后续查询任务状态。 |
+| status | string | 任务状态，可能的值为：Pending（排队中）、Running（运行中）、Saving（转存中）、Success（完成）、Failed（失败）。 |
+| message | string | 任务状态为 Failed 时，错误的具体信息。 |
+| executed_at | string | 任务开始运行的时间。 |
+| ended_at | string | 当任务成功或失败时，任务结束的时间。 |
+| outputs | array | 生成结果（非“完成”状态时，为null或[]）。 |
+
+> ⚠️ `outputs` 下的具体字段（如 `outputs.images` / `outputs.videos` / `outputs.audios` / `outputs.texts`）因模型输出类型不同而有差异，请查看各模型文档。
 
 ## 四. 文件上传
 
@@ -133,4 +250,3 @@ async function listInputs() {
 
 listInputs();
 ```
-

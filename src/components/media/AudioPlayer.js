@@ -67,7 +67,10 @@ function WebAudioPlayer({ visible, audioUrl, onClose }) {
 
   const togglePlay = () => {
     if (!audioRef.current) return;
-    if (audioRef.current.paused) { audioRef.current.play(); } else { audioRef.current.pause(); }
+    if (audioRef.current.paused) {
+      // 浏览器自动播放策略可能拒绝播放，catch 避免未处理 rejection
+      audioRef.current.play().catch(() => setIsPlaying(false));
+    } else { audioRef.current.pause(); }
   };
 
   const toggleMute = () => {
@@ -184,6 +187,10 @@ function NativeAudioPlayer({ visible, audioUrl, onClose }) {
     player.seekTo(frac * duration);
   }, [duration]);
 
+  // PanResponder 只创建一次，handler 闭包会过期，通过 ref 始终调用最新的 seek
+  const seekRef = useRef(seek);
+  useEffect(() => { seekRef.current = seek; }, [seek]);
+
   const toggleMute = useCallback(() => {
     // eslint-disable-next-line react-hooks/immutability -- expo-audio imperative API: volume is a writable property
     if (isMuted) { player.volume = mutedVolume; setVolume(mutedVolume); setIsMuted(false); }
@@ -215,11 +222,11 @@ function NativeAudioPlayer({ visible, audioUrl, onClose }) {
     onMoveShouldSetPanResponder: (_, gs) => Math.abs(gs.dx) > 2,
     onPanResponderGrant: (evt) => {
       const frac = Math.max(0, Math.min(1, evt.nativeEvent.locationX / progWidthRef.current));
-      seek(frac);
+      seekRef.current(frac);
     },
     onPanResponderMove: (evt) => {
       const frac = Math.max(0, Math.min(1, evt.nativeEvent.locationX / progWidthRef.current));
-      seek(frac);
+      seekRef.current(frac);
     },
   }));
 
@@ -231,11 +238,12 @@ function NativeAudioPlayer({ visible, audioUrl, onClose }) {
     onMoveShouldSetPanResponder: (_, gs) => Math.abs(gs.dx) > 2,
     onPanResponderGrant: (evt) => {
       const v = Math.max(0, Math.min(1, evt.nativeEvent.locationX / volWidthRef.current));
-      player.volume = v; setVolume(v); if (v > 0 && isMuted) setIsMuted(false);
+      // 拖到 0 视为静音、离开 0 取消静音；不读过期闭包里的 isMuted
+      player.volume = v; setVolume(v); setIsMuted(v === 0);
     },
     onPanResponderMove: (evt) => {
       const v = Math.max(0, Math.min(1, evt.nativeEvent.locationX / volWidthRef.current));
-      player.volume = v; setVolume(v); if (v > 0 && isMuted) setIsMuted(false);
+      player.volume = v; setVolume(v); setIsMuted(v === 0);
     },
   }));
 

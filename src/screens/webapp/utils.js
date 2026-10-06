@@ -1,9 +1,8 @@
+import { OSS_INPUT_URL_PATTERNS } from '../../constants/apiConfig';
+
 /** 判断字符串值是否为 bizyair 上传文件 URL */
 export function isBizyairFileUrl(val) {
-  return typeof val === 'string' && (
-    val.includes('bizyair-prod.oss-cn-shanghai.aliyuncs.com/inputs/') ||
-    val.includes('storage.bizyair.cn/inputs/')
-  );
+  return typeof val === 'string' && OSS_INPUT_URL_PATTERNS.some((p) => val.includes(p));
 }
 
 /** 根据 node_type 判断媒体类型：image / video / audio / file / null */

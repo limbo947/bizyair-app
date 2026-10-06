@@ -3,7 +3,8 @@ import { Text } from 'react-native';
 import { Typography } from '../../constants/theme';
 
 export function DurationDisplay({ startedAt, completedAt, isFinal, isActive, colors, status }) {
-  const [now, setNow] = useState(completedAt || 0);
+  // 进行中任务初始取当前时间，避免首帧 end=0、ms<0 显示 "--"
+  const [now, setNow] = useState(() => completedAt || Date.now());
 
   useEffect(() => {
     if (!isActive || isFinal) return;

@@ -25,7 +25,10 @@ const MAX_SCALE = 5;
 const DOUBLE_TAP_SCALE = 2.5;
 const SLIDE_THRESHOLD = 0.15;
 const DISMISS_THRESHOLD = 100;
-const DISMISS_VELOCITY = 0.5;
+// RN velocity 单位为 points/second，正常手指滑动在 100~2000 pt/s，
+// 阈值过低（0.5）会导致任何移动都被判为快甩，多图时垂直下滑关闭永远走不到
+const FAST_SWIPE_VELOCITY = 500;
+const DISMISS_VELOCITY = 500;
 const DOUBLE_TAP_INTERVAL = 250;
 const SNAP_POINTS = [1, 1.5, 2, 2.5, 3, 4];
 
@@ -321,6 +324,9 @@ function ImageViewerContent({ urls, totalCount, prompt, onClose, colors, styles,
         if (!gestureMoved.current) {
           const now = Date.now();
           if (now - lastTapTime.current < DOUBLE_TAP_INTERVAL) {
+            // 双击成立：第一击已触发过一次信息栏切换，再补偿一次抵消，
+            // 避免双击缩放附带切换信息栏（不引入单击延迟）
+            singleTapRef.current();
             doubleTapRef.current();
             lastTapTime.current = 0;
           } else {
@@ -337,7 +343,7 @@ function ImageViewerContent({ urls, totalCount, prompt, onClose, colors, styles,
           const currentSlide = slideDeltaValue.current;
           const threshold = SCREEN_WIDTH * SLIDE_THRESHOLD;
           const velocityX = evt.nativeEvent.velocityX || 0;
-          const fastSwipe = Math.abs(velocityX) > 0.5;
+          const fastSwipe = Math.abs(velocityX) > FAST_SWIPE_VELOCITY;
           const hasHorizontalSlide = totalCount > 1 && (Math.abs(currentSlide) > threshold || fastSwipe);
 
           if (hasHorizontalSlide) {

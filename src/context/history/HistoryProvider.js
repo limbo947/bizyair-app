@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { queryTaskResult, queryWebappTaskDetail, queryWebappTaskOutputs, cancelWebappTask, interruptWebappTask } from '../../services/apiClient';
+import { ENV_API_KEY, POLLING_INTERVAL_MS } from '../../constants/apiConfig';
 import {
-  ENV_API_KEY,
   HISTORY_KEY,
   HOME_STATE_KEY,
   TOTAL_COINS_KEY,
-  POLLING_INTERVAL_MS,
 } from '../../constants/models';
 import { useApiKeyContext } from '../ApiKeyContext';
 import { HistoryListContext, HomeStateContext, PollingContext, DEFAULT_HOME_STATE, MAX_POLL_FAILS, ACTIVE_STATUSES, getPollingInterval, extractTaskResult, extractWebappResult } from './contexts';
@@ -55,18 +54,48 @@ export function HistoryProvider({ children }) {
     homeStateRef.current = homeState;
   }, [homeState]);
 
-  const persistHistory = useCallback(async (updated) => {
-    try {
-      await AsyncStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
-    } catch (e) {
-      console.error('保存历史记录失败:', e);
+  // 轮询高频更新（每任务每 3 秒）时的防抖持久化：避免每次状态变化
+  // 都全量 JSON.stringify 整个历史数组写存储；pending 数据存 ref 供卸载时兜底 flush
+  const persistTimerRef = useRef(null);
+  const pendingHistoryRef = useRef(null);
+  const flushHistory = useCallback(() => {
+    if (persistTimerRef.current) {
+      clearTimeout(persistTimerRef.current);
+      persistTimerRef.current = null;
     }
+    const data = pendingHistoryRef.current;
+    if (data) {
+      pendingHistoryRef.current = null;
+      return AsyncStorage.setItem(HISTORY_KEY, JSON.stringify(data)).catch(
+        (e) => console.error('保存历史记录失败:', e)
+      );
+    }
+    return Promise.resolve();
   }, []);
+
+  const persistHistory = useCallback((updated, immediate = false) => {
+    pendingHistoryRef.current = updated;
+    if (persistTimerRef.current) clearTimeout(persistTimerRef.current);
+    // 新增/删除等低频关键操作立即落盘；轮询状态高频更新走防抖
+    if (immediate) {
+      flushHistory();
+      return;
+    }
+    persistTimerRef.current = setTimeout(() => {
+      persistTimerRef.current = null;
+      flushHistory();
+    }, 800);
+  }, [flushHistory]);
+
+  // 卸载兜底：防抖窗口内未落盘的最后一次变更立即写入
+  useEffect(() => {
+    return () => { flushHistory(); };
+  }, [flushHistory]);
 
   const addToHistory = useCallback(async (entry) => {
     setHistory((prev) => {
       const updated = [entry, ...(prev ?? [])];
-      persistHistory(updated);
+      persistHistory(updated, true);
       return updated;
     });
   }, [persistHistory]);
@@ -85,7 +114,7 @@ export function HistoryProvider({ children }) {
       });
       // 异步清理已删除项的本地缓存
       removed.forEach((item) => deleteCachedFiles(item.id));
-      persistHistory(updated);
+      persistHistory(updated, true);
       return updated;
     });
   }, [persistHistory]);
@@ -400,8 +429,9 @@ export function HistoryProvider({ children }) {
       try {
         const result = await apiFn(ak, requestId);
         if (result.code === 20000) {
+          // 只提示取消中，不强制回写 status：轮询保留用于收尾最终状态，
+          // 且避免竞态下把恰好已进入终态的任务打回 Pending
           updateHistoryItem(id, {
-            status: 'Pending',
             errorMessage: '取消中...',
           });
           return;
