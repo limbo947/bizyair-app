@@ -7,6 +7,7 @@ import { useToastContext } from '../../context/ToastContext';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { fetchWebappDetail } from '../../services/apiClient';
 import { persistSavedApps, loadSavedApps } from './storage';
+import { normalizeAppDetail } from './utils';
 import { Radius, Spacing, Typography, pressedOpacity } from '../../constants/theme';
 
 /**
@@ -33,7 +34,8 @@ export function CommunityAppPreview({ app, isFavorite, onClose, onSelect, onTogg
     if (!app) return;
     setLoading(true);
     try {
-      const data = await fetchWebappDetail(app.id);
+      // 国际版详情字段兼容（intro 回填 / 节点排序），与 WebappScreen 保存路径共用
+      const data = normalizeAppDetail(await fetchWebappDetail(app.id));
       setDetail(data);
     } catch (err) {
       showToast(err.message || '加载详情失败', 'error');
@@ -64,7 +66,7 @@ export function CommunityAppPreview({ app, isFavorite, onClose, onSelect, onTogg
         return;
       }
       // 从 input_nodes 生成默认参数值（与 applyAppDetail 逻辑一致）
-      const sortedNodes = [...(detail.input_nodes || [])].sort((a, b) => (a.sort ?? -1) - (b.sort ?? -1));
+      const sortedNodes = [...(detail.input_nodes || [])].sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0));
       const inputValues = {};
       const originalTypes = {};
       for (const node of sortedNodes) {

@@ -5,6 +5,7 @@ import {
   COMMIT_RESOURCE_URL,
   UPLOAD_PROXY_URL,
   REQUEST_TIMEOUT_MS,
+  UPLOAD_FILE_TYPE,
 } from '../constants/apiConfig';
 import { request } from './httpClient';
 
@@ -15,7 +16,7 @@ import { request } from './httpClient';
  * @returns {Promise<object>} 上传凭证信息（含 file 和 storage 字段）
  */
 async function getUploadToken(apiKey, fileName) {
-  const params = new URLSearchParams({ file_name: fileName, file_type: 'inputs' });
+  const params = new URLSearchParams({ file_name: fileName, file_type: UPLOAD_FILE_TYPE });
   const url = `${UPLOAD_TOKEN_URL}?${params}`;
   const raw = await request(url, {
     headers: { 'Authorization': `Bearer ${apiKey}` },
@@ -167,8 +168,10 @@ async function uploadDirectToOSS(apiKey, file) {
     throw new Error(`OSS上传失败: ${response.status} - ${errText}`);
   }
 
-  await commitResource(apiKey, fileName, objectKey);
-  return uploadUrl;
+  // 官方流程：commit 返回的 data.url（storage.bizyair.ai/inputs_temp/...）才是传给任务的输入值；
+  // token 响应稳定含 access_url（v6.1 实测），原始 OSS URL 作最后兜底，三者都能被 OSS_INPUT_URL_PATTERNS 识别
+  const committed = await commitResource(apiKey, fileName, objectKey);
+  return committed?.url || uploadInfo.access_url || uploadUrl;
 }
 
 async function uploadImageFile(apiKey, file) {

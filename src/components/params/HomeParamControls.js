@@ -223,8 +223,6 @@ function HomeParamControlsInner({
           setDuration={s('duration')}
           sound={state.sound}
           setSound={s('sound')}
-          keepOriginalSound={state.keepOriginalSound}
-          setKeepOriginalSound={s('keepOriginalSound')}
           multiShot={state.multiShot}
           setMultiShot={s('multiShot')}
           shotType={state.shotType}
@@ -471,12 +469,6 @@ function HomeParamControlsInner({
           setTemperature={s('temperature')}
           maxTokens={state.maxTokens}
           setMaxTokens={s('maxTokens')}
-          enableThinking={state.enableThinking}
-          setEnableThinking={s('enableThinking')}
-          enableSearch={state.enableSearch}
-          setEnableSearch={s('enableSearch')}
-          enableThinkingRequired={currentModel.enableThinkingRequired}
-          enableSearchRequired={currentModel.enableSearchRequired}
           maxTokensMax={currentModel.maxTokens}
         />
       );
@@ -489,11 +481,6 @@ function HomeParamControlsInner({
           setTemperature={s('temperature')}
           maxTokens={state.maxTokens}
           setMaxTokens={s('maxTokens')}
-          detail={state.detail}
-          setDetail={s('detail')}
-          enableThinking={state.enableThinking}
-          setEnableThinking={s('enableThinking')}
-          detailOptions={currentModel.detailOptions}
           maxSystemPromptLength={currentModel.maxSystemPromptLength}
         />
       );
@@ -504,18 +491,8 @@ function HomeParamControlsInner({
           setCaptionType={s('captionType')}
           captionLength={state.captionLength}
           setCaptionLength={s('captionLength')}
-          temperature={state.temperature}
-          setTemperature={s('temperature')}
-          maxTokens={state.maxTokens}
-          setMaxTokens={s('maxTokens')}
-          doSample={state.doSample}
-          setDoSample={s('doSample')}
           extraOptions={state.extraOptions}
           setExtraOptions={s('extraOptions')}
-          nameInput={state.nameInput}
-          setNameInput={s('nameInput')}
-          customPrompt={state.customPrompt}
-          setCustomPrompt={s('customPrompt')}
           captionTypes={currentModel.captionTypes}
           captionLengths={currentModel.captionLengths}
         />

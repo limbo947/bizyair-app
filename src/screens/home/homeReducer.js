@@ -13,11 +13,11 @@ const MODE_LABELS = {
 };
 
 const initialState = {
-  modelId: 'bza-image-b2-base',
+  modelId: 'nano-banana-2-channel',
   mode: 'text-to-image',
   prompt: '',
   imageUrls: [],
-  resolution: '2K',
+  resolution: '2k',
   aspectRatio: '4:3',
   quality: 'medium',
   sizePreset: 0,

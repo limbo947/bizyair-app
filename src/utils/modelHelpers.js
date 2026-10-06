@@ -24,7 +24,6 @@ import { MODELS } from '../constants/models';
  * @property {boolean} [supportsPromptExtend] - 是否支持提示词扩展
  * @property {boolean} [supportsWatermark] - 是否支持水印
  * @property {boolean} [supportsNegativePrompt] - 是否支持反向提示词
- * @property {boolean} [supportsOffPeak] - 是否支持闲时模式
  * @property {boolean} [supportsPromptOptimizer] - 是否支持提示词优化
  * @property {string[]} [voices] - TTS 语音列表
  * @property {string[]} [formats] - TTS 输出格式列表
@@ -105,9 +104,9 @@ export function getModelInfo(modelId) {
   // 回退默认模型时给出告警：无效 id 常来自收藏/历史中的已下线模型，
   // 静默回退会用错误配置构建 payload 与价格，掩盖问题
   if (!MODELS[modelId]) {
-    console.warn(`[modelHelpers] 未找到模型 "${modelId}"，回退默认模型 bza-image-b2-base`);
+    console.warn(`[modelHelpers] 未找到模型 "${modelId}"，回退默认模型 nano-banana-2-channel`);
   }
-  return MODELS[modelId] || MODELS['bza-image-b2-base'];
+  return MODELS[modelId] || MODELS['nano-banana-2-channel'];
 }
 
 /**
@@ -144,8 +143,10 @@ export function calculatePrice(modelId, params) {
 
   if (model.prices && model.paramType !== 'width-height-quality' && model.paramType !== 'width-height') {
     if (model.prices.input_per_1k_tokens !== undefined) {
+      // 国际版 LLM 按 M Tokens input/output 分列；提交前无法预知输出 token 数，按 output 单价保守估算
+      const rate = model.prices.output_per_1k_tokens || model.prices.input_per_1k_tokens;
       const tokens = Math.max(100, (params.userPrompt || params.prompt || '').length);
-      return model.prices.input_per_1k_tokens * Math.ceil(tokens / 1000);
+      return rate * Math.ceil(tokens / 1000);
     }
     const res = params.resolution === 'Custom' ? '2K' : params.resolution;
     return model.prices[res] || Object.values(model.prices)[0] || 0;
@@ -203,7 +204,6 @@ const PARAM_TYPE_PLACEHOLDERS = {
   },
   'width-height-quality': { 'text-to-image': '描述你想生成的图片...' },
   'size-only': { 'text-to-image': '描述你想生成的图片...' },
-  'flux-kontext': { 'image-to-image': '描述你想生成的图片...' },
   'wan-size': {
     'text-to-image': '描述你想生成的图片...',
     'image-to-image': '描述你想生成的图片...',
@@ -221,45 +221,45 @@ const PARAM_TYPE_PLACEHOLDERS = {
     'flf-to-video': '描述你想生成的视频...',
   },
   'kling-o3-4k': {
-    'text-to-video': '描述你想生成的视频...',
-    'image-to-video': '描述你想生成的视频...',
+    'reference-to-video': '描述视频内容...',
   },
   'vidu-video': {
     'text-to-video': '描述你想生成的视频...',
     'image-to-video': '描述你想生成的视频...',
-    'reference-to-video': '描述参考视频效果...',
-    'video-edit': '描述视频编辑效果...',
+    'flf-to-video': '描述你想生成的视频...',
   },
   'wan-video': {
     'text-to-video': '描述你想生成的视频...',
-    'image-to-video': '描述你想生成的视频...',
-    'flf-to-video': '描述你想生成的视频...',
     'reference-to-video': '描述参考视频效果...',
     'video-edit': '描述视频编辑效果...',
-    'video-extend': '描述视频延长效果（可选）...',
   },
-  'wan-i2v': { 'image-to-video': '描述你想生成的视频...' },
   'hailuo-video': {
-    'text-to-video': '描述你想生成的视频...',
     'image-to-video': '描述你想生成的视频...',
   },
   'happyhorse-video': {
     'text-to-video': '描述你想生成的视频...',
     'image-to-video': '描述你想生成的视频...',
+    'reference-to-video': '描述参考视频效果...',
     'video-edit': '描述视频编辑效果...',
   },
-  'ltx-video': { 'text-to-video': '描述你想生成的视频...' },
   'bza-video-x': {
     'text-to-video': '描述你想生成的视频...',
     'image-to-video': '描述你想生成的视频...',
+    'video-edit': '描述视频编辑效果...',
   },
   'bza-video-v3': {
+    'text-to-video': '描述你想生成的视频...',
+    'flf-to-video': '描述你想生成的视频...',
+  },
+  'bza-video-g': {
     'text-to-video': '描述你想生成的视频...',
     'image-to-video': '描述你想生成的视频...',
   },
   'dreamactor': { 'reference-to-video': '描述视频内容...' },
-  'llm-chat': { 'large-language-models': '输入你的问题...' },
-  'vision-g': { 'vision': '描述你想了解的图片内容...' },
+  'vision-g': {
+    'large-language-models': '输入你的问题...',
+    'vision': '描述你想了解的图片内容...',
+  },
   'joycaption': { 'vision': '描述你想了解的图片内容...' },
   'tts': { 'text-to-audio': '输入要合成的文本...' },
 };

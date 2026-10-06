@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Pressable, Text, View, TextInput, Switch, Alert } from 'react-native';
+import { Pressable, Text, View, TextInput, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Radius, Spacing, Typography } from '../../constants/theme';
 import { createSharedStyles } from '../../constants/sharedStyles';
@@ -104,10 +104,6 @@ export function LLMChatControls({
   systemPrompt, setSystemPrompt,
   temperature, setTemperature,
   maxTokens, setMaxTokens,
-  enableThinking, setEnableThinking,
-  enableSearch, setEnableSearch,
-  enableThinkingRequired,
-  enableSearchRequired,
   maxTokensMax,
 }) {
   const styles = useThemedStyles(createStyles);
@@ -238,28 +234,6 @@ export function LLMChatControls({
           placeholder="32768"
           placeholderTextColor={colors.textPlaceholder}
         />
-      </View>
-      <View style={styles.card}>
-        <Pressable style={styles.switchRow} onPress={() => setEnableThinking(!enableThinking)}>
-          <Text style={styles.label}>思考模式{enableThinkingRequired ? <Text style={styles.required}> *</Text> : <Text style={styles.optional}> (可选)</Text>}</Text>
-          <Switch
-            value={enableThinking}
-            onValueChange={setEnableThinking}
-            trackColor={{ false: colors.disabled, true: colors.primary }}
-            pointerEvents="none"
-          />
-        </Pressable>
-      </View>
-      <View style={styles.card}>
-        <Pressable style={styles.switchRow} onPress={() => setEnableSearch(!enableSearch)}>
-          <Text style={styles.label}>联网搜索{enableSearchRequired ? <Text style={styles.required}> *</Text> : <Text style={styles.optional}> (可选)</Text>}</Text>
-          <Switch
-            value={enableSearch}
-            onValueChange={setEnableSearch}
-            trackColor={{ false: colors.disabled, true: colors.primary }}
-            pointerEvents="none"
-          />
-        </Pressable>
       </View>
     </>
   );

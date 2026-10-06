@@ -6,14 +6,18 @@ import {
   HISTORY_KEY,
   HOME_STATE_KEY,
   TOTAL_COINS_KEY,
+  MODELS,
 } from '../../constants/models';
+import { MODEL_ID_MIGRATIONS } from '../../constants/modelIdMigrations';
 import { useApiKeyContext } from '../ApiKeyContext';
-import { HistoryListContext, HomeStateContext, PollingContext, DEFAULT_HOME_STATE, MAX_POLL_FAILS, ACTIVE_STATUSES, getPollingInterval, extractTaskResult, extractWebappResult } from './contexts';
+import { HistoryListContext, HomeStateContext, PollingContext, DEFAULT_HOME_STATE, MAX_POLL_FAILS, MAX_NOT_FOUND_RETRIES, ACTIVE_STATUSES, getPollingInterval, extractTaskResult, extractWebappResult } from './contexts';
 import { cacheTaskResults, deleteCachedFiles } from '../../utils/resultCache';
 import { ERROR_CODES } from '../../utils/errorMessages';
 
 /** 判断是否为"任务未找到"类的暂时性错误（服务端尚未就绪） */
 function isTaskNotFoundError(err) {
+  // httpClient 挂载 apiCode 后优先读业务码，message 正则保留作兜底
+  if (err?.apiCode === 30009 || err?.apiCode === 20011) return true;
   if (err.code === ERROR_CODES.NOT_FOUND) return true;
   const msg = err.message || '';
   // 匹配 [404]{"code":30009,...} 或包含 30009 的错误
@@ -32,6 +36,18 @@ export function HistoryProvider({ children }) {
   const historyRef = useRef(history);
   const resumeTimerRef = useRef(null);
   const homeStateRef = useRef(homeState);
+
+  // "任务未找到"共享计数 map：三处轮询分支（modelzoo 轮询 / webapp 轮询 / 单次查询）
+  // 共用一份上限逻辑，避免各写一份计数导致行为漂移（迁移方案 §3.9）
+  const notFoundCountsRef = useRef({});
+  const recordNotFound = useCallback((taskId) => {
+    const counts = notFoundCountsRef.current;
+    counts[taskId] = (counts[taskId] || 0) + 1;
+    return counts[taskId];
+  }, []);
+  const clearNotFound = useCallback((taskId) => {
+    delete notFoundCountsRef.current[taskId];
+  }, []);
 
   /* eslint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
@@ -147,6 +163,7 @@ export function HistoryProvider({ children }) {
       try {
         const result = await queryTaskResult(ak, requestId);
         failCount = 0;
+        clearNotFound(id);
         updateHistoryItem(id, { status: result.status, lastResponse: result });
 
         if (result.status === 'Success') {
@@ -176,16 +193,40 @@ export function HistoryProvider({ children }) {
             lastResponse: result,
           });
           return;
+        } else if (result.status === 'Canceled') {
+          // 服务端侧取消/超时或共享 Key 的他端操作可产生 Canceled 终态，
+          // 不补分支会永久轮询（官方 quickstart 通用终态枚举）
+          delete pollingRef.current[id];
+          updateHistoryItem(id, {
+            status: 'Canceled',
+            errorMessage: '任务已取消',
+            completedAt: Date.now(),
+            lastResponse: result,
+          });
+          return;
         }
       } catch (err) {
-        // "任务未找到"是暂时性错误（服务端尚未就绪），不计入失败次数
+        // "任务未找到"是暂时性错误（服务端尚未就绪），但必须有上限：
+        // URL 形态错误会让 404 永久返回，超限标记 Failed 避免静默死循环
         if (isTaskNotFoundError(err)) {
+          if (recordNotFound(id) >= MAX_NOT_FOUND_RETRIES) {
+            delete pollingRef.current[id];
+            clearNotFound(id);
+            updateHistoryItem(id, {
+              status: 'Failed',
+              errorMessage: '任务不存在或接口不匹配，已停止轮询',
+              completedAt: Date.now(),
+              lastResponse: { status: 'Failed', error: err.message },
+            });
+            return;
+          }
           console.warn('[HistoryProvider] 任务尚未就绪，继续轮询:', err.message);
         } else {
           failCount++;
         }
         if (failCount >= MAX_POLL_FAILS) {
           delete pollingRef.current[id];
+          clearNotFound(id);
           updateHistoryItem(id, {
             status: 'Failed',
             errorMessage: `连续${MAX_POLL_FAILS}次轮询失败: ${err.message || '网络异常'}`,
@@ -201,7 +242,7 @@ export function HistoryProvider({ children }) {
     };
 
     pollingRef.current[id] = setTimeout(pollOnce, POLLING_INTERVAL_MS);
-  }, [updateHistoryItem]);
+  }, [updateHistoryItem, recordNotFound, clearNotFound]);
 
   const startWebappPolling = useCallback((id, requestId, ak) => {
     if (pollingRef.current[id]) return;
@@ -219,11 +260,13 @@ export function HistoryProvider({ children }) {
       try {
         const detail = await queryWebappTaskDetail(ak, requestId);
         failCount = 0;
+        clearNotFound(id);
         const rawStatus = detail.status;
         const mappedStatus = mapStatus(rawStatus);
 
         if (rawStatus === 'Success') {
           delete pollingRef.current[id];
+          clearNotFound(id);
           // 先尝试获取产物，再一次性更新状态+产物，避免中间态"已完成但无产物"
           try {
             const outputData = await queryWebappTaskOutputs(ak, requestId);
@@ -253,6 +296,7 @@ export function HistoryProvider({ children }) {
           return;
         } else if (rawStatus === 'Failed' || rawStatus === 'Canceled') {
           delete pollingRef.current[id];
+          clearNotFound(id);
           const isCanceled = rawStatus === 'Canceled' || mappedStatus === 'Canceled';
           updateHistoryItem(id, {
             status: isCanceled ? 'Canceled' : mappedStatus,
@@ -266,14 +310,27 @@ export function HistoryProvider({ children }) {
         // 非终态才更新中间状态
         updateHistoryItem(id, { status: mappedStatus, lastResponse: detail });
       } catch (err) {
-        // "任务未找到"是暂时性错误（服务端尚未就绪），不计入失败次数
+        // "任务未找到"是暂时性错误（服务端尚未就绪），但必须有上限：
+        // URL 形态错误会让 404 永久返回，超限标记 Failed 避免静默死循环
         if (isTaskNotFoundError(err)) {
+          if (recordNotFound(id) >= MAX_NOT_FOUND_RETRIES) {
+            delete pollingRef.current[id];
+            clearNotFound(id);
+            updateHistoryItem(id, {
+              status: 'Failed',
+              errorMessage: '任务不存在或接口不匹配，已停止轮询',
+              completedAt: Date.now(),
+              lastResponse: { status: 'Failed', error: err.message },
+            });
+            return;
+          }
           console.warn('[HistoryProvider] Webapp任务尚未就绪，继续轮询:', err.message);
         } else {
           failCount++;
         }
         if (failCount >= MAX_POLL_FAILS) {
           delete pollingRef.current[id];
+          clearNotFound(id);
           updateHistoryItem(id, {
             status: 'Failed',
             errorMessage: `连续${MAX_POLL_FAILS}次轮询失败: ${err.message || '网络异常'}`,
@@ -289,7 +346,7 @@ export function HistoryProvider({ children }) {
     };
 
     pollingRef.current[id] = setTimeout(pollOnce, POLLING_INTERVAL_MS);
-  }, [updateHistoryItem]);
+  }, [updateHistoryItem, recordNotFound, clearNotFound]);
 
   const querySingleTask = useCallback(async (item, key) => {
     const ak = key || apiKey || ENV_API_KEY;
@@ -298,6 +355,7 @@ export function HistoryProvider({ children }) {
       const result = await queryTaskResult(ak, item.requestId);
       updateHistoryItem(item.id, { status: result.status, lastResponse: result });
       if (result.status === 'Success') {
+        clearNotFound(item.id);
         const taskResult = extractTaskResult(result);
         updateHistoryItem(item.id, {
           status: 'Success',
@@ -320,10 +378,29 @@ export function HistoryProvider({ children }) {
           completedAt: Date.now(),
           lastResponse: result,
         });
+      } else if (result.status === 'Canceled') {
+        // 与 startPolling 同理：Canceled 为通用终态，避免每次刷新都重复查询
+        updateHistoryItem(item.id, {
+          status: 'Canceled',
+          errorMessage: '任务已取消',
+          completedAt: Date.now(),
+          lastResponse: result,
+        });
       }
     } catch (err) {
-      // "任务未找到"是暂时性错误，保持当前状态不标记失败，等轮询继续查询
+      // "任务未找到"是暂时性错误，保持当前状态不标记失败，等轮询继续查询；
+      // 但与轮询分支共享同一计数上限，超限说明任务确实不存在（或接口形态错误）
       if (isTaskNotFoundError(err)) {
+        if (recordNotFound(item.id) >= MAX_NOT_FOUND_RETRIES) {
+          clearNotFound(item.id);
+          updateHistoryItem(item.id, {
+            status: 'Failed',
+            errorMessage: '任务不存在或接口不匹配，已停止追踪',
+            completedAt: Date.now(),
+            lastResponse: { status: 'Failed', error: err.message },
+          });
+          return;
+        }
         console.warn('[HistoryProvider] 查询任务未找到，保持当前状态:', err.message);
         return;
       }
@@ -334,7 +411,7 @@ export function HistoryProvider({ children }) {
         lastResponse: { status: 'Failed', error: err.message },
       });
     }
-  }, [apiKey, updateHistoryItem]);
+  }, [apiKey, updateHistoryItem, recordNotFound, clearNotFound]);
 
   const resumeRunningPolling = useCallback((historyItems) => {
     const items = historyItems || historyRef.current;
@@ -405,6 +482,7 @@ export function HistoryProvider({ children }) {
       return;
     }
 
+    // 局部 MAX_RETRIES（取消前重查/重试上限，=5）与 apiConfig.js 的 MAX_RETRIES（HTTP 重试，=3）同名异义
     const MAX_RETRIES = 5;
     let lastError = null;
 
@@ -483,6 +561,8 @@ export function HistoryProvider({ children }) {
 
   const resubmitTask = useCallback(async (historyItem) => {
     if (!historyItem) return false;
+    // 下架模型禁止重跑（重跑会命中 404/60014 等错误）：历史可查看，但参数不可恢复（§5.8）
+    if (!historyItem.modelId || !MODELS[historyItem.modelId]) return false;
 
     const updates = {
       modelId: historyItem.modelId,
@@ -544,6 +624,9 @@ export function HistoryProvider({ children }) {
             firstClipUrls: Array.isArray(parsed.firstClipUrls) ? parsed.firstClipUrls : [],
             refImages: Array.isArray(parsed.refImages) ? parsed.refImages : [],
           };
+          // 存量 homeState 的 modelId 过一次迁移表（如 bza-image-b2-base → nano-banana-2-channel），
+          // 与收藏列表共用同一张表；否则持久化的旧默认模型不会自愈
+          normalized.modelId = MODEL_ID_MIGRATIONS[normalized.modelId] || normalized.modelId;
           setHomeState({ ...DEFAULT_HOME_STATE, ...normalized });
         } else {
           console.warn('主页状态数据异常，已重置');

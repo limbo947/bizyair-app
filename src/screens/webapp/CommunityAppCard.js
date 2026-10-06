@@ -18,7 +18,8 @@ export const CommunityAppCard = React.memo(function CommunityAppCard({
   const version = item.versions?.[0] || {};
   const coverUrl = version.cover_urls?.[0];
   const isVideo = typeof coverUrl === 'string' && coverUrl.endsWith('.mp4');
-  const usedCount = item.counter?.used_count ?? 0;
+  // 国际版列表项顶层 counter 为空对象，used_count 实际在 versions[0].counter（v6 实测）
+  const usedCount = item.counter?.used_count ?? item.versions?.[0]?.counter?.used_count ?? 0;
 
   return (
     <Pressable

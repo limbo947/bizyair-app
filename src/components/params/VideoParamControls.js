@@ -177,7 +177,7 @@ export function KlingVideoControls({
 
 export function KlingO34KControls({
   videoRatios, aspectRatio, setAspectRatio, duration, setDuration,
-  sound, setSound, keepOriginalSound, setKeepOriginalSound,
+  sound, setSound,
   multiShot, setMultiShot, shotType, setShotType,
   multiPrompt, setMultiPrompt,
   maxDuration, minDuration, supportsMultiShot,
@@ -213,12 +213,6 @@ export function KlingO34KControls({
         <Pressable style={styles.switchRow} onPress={() => setSound(!sound)}>
           <ParamLabel label="添加音效" required style={{ marginBottom: 0 }} />
           <Switch value={sound} trackColor={{ false: colors.disabled, true: colors.primary }} pointerEvents="none" />
-        </Pressable>
-      </View>
-      <View style={styles.card}>
-        <Pressable style={styles.switchRow} onPress={() => setKeepOriginalSound(!keepOriginalSound)}>
-          <ParamLabel label="保留原始声音" required style={{ marginBottom: 0 }} />
-          <Switch value={keepOriginalSound} trackColor={{ false: colors.disabled, true: colors.primary }} pointerEvents="none" />
         </Pressable>
       </View>
       {supportsMultiShot && (
@@ -268,7 +262,8 @@ export function ViduVideoControls({
 
   // 根据文档判断各参数必选/可选
   // base 版本有 style/movement_amplitude，official 版本有 off_peak/is_rec/seed
-  const hasStyle = styleOptions && styleOptions.length > 0;
+  // style 国际文档仅 t2v 声明，i2v/flf 不渲染（payload 同规则门控）
+  const hasStyle = mode === 'text-to-video' && styleOptions && styleOptions.length > 0;
   const isBase = hasStyle || supportsMovementAmplitude;
 
   // resolution: 所有模式必选

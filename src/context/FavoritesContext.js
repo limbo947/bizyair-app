@@ -2,15 +2,11 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MODELS } from '../constants/models';
 import { STORAGE_KEYS } from '../constants/modelMeta';
+import { MODEL_ID_MIGRATIONS } from '../constants/modelIdMigrations';
 
 const FavoritesContext = createContext(null);
 
-const DEFAULT_FAVORITES = ['bza-image-b2-base', 'bza-image-b-pro-official', 'bza-image-o2-official'];
-
-const MODEL_ID_MIGRATIONS = {
-  'wan-2-7-image-pro-offcial': 'wan-2-7-image-pro-official',
-  'wan-2-7-offcial': 'wan-2-7-extend-official',
-};
+const DEFAULT_FAVORITES = ['nano-banana-2-channel', 'bza-image-b-pro-official', 'bza-image-o2-official'];
 
 function migrateModelIds(ids) {
   let changed = false;

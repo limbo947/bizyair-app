@@ -6,6 +6,7 @@ import { useApiKeyContext } from '../../context/ApiKeyContext';
 import { useToastContext } from '../../context/ToastContext';
 import { useTheme } from '../../context/ThemeContext';
 import { ENV_API_KEY } from '../../constants/apiConfig';
+import { getAuthErrorMessage } from '../../utils/errorMessages';
 import { Radius, Spacing, Typography, pressedOpacity } from '../../constants/theme';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { ApiKeyDropdown } from './ApiKeyDropdown';
@@ -47,8 +48,9 @@ export function AppHeader({ paddingTop, showAllModelsButton, onAllModelsPress })
     setIsSaving(true);
     try {
       await saveApiKey(apiKey);
-    } catch (_e) {
-      showToast('密钥保存失败', 'error');
+    } catch (e) {
+      // 与 ApiKeyContext.refreshUserInfo 共用同一文案来源，透出真实失败原因（如密钥须重新签发）
+      showToast(getAuthErrorMessage(e), 'error');
     } finally {
       setIsSaving(false);
     }
@@ -64,20 +66,27 @@ export function AppHeader({ paddingTop, showAllModelsButton, onAllModelsPress })
               <Image source={{ uri: userInfo.avatar }} style={styles.headerAvatar} contentFit="cover" cachePolicy="memory-disk" transition={200} />
               <View style={styles.headerUserInfo}>
                 <View style={styles.headerNameRow}>
-                  <Text style={styles.headerUserName}>{userInfo.name}</Text>
-                  {userInfo.user_level_str ? (
+                  {/* 国际版 user/info 无 name，实测为 nick_name（v6.1） */}
+                  <Text style={styles.headerUserName}>{userInfo.name ?? userInfo.nick_name}</Text>
+                  {(userInfo.user_level_str ?? userInfo.level_display_name) ? (
                     <MaterialCommunityIcons name="crown" size={14} color={colors.warning} style={{ marginLeft: Spacing.xs }} />
                   ) : null}
                 </View>
                 <View style={styles.headerBalances}>
                   <MaterialCommunityIcons name="gold" size={14} color={colors.warning} style={{ paddingRight: Spacing.xs }} />
+                  {/* 国际版 wallet 仅返回 gift_balance（无 charge_balance_amount），主余额位取其兜底 */}
                   <Text style={[styles.headerBalanceText, { paddingLeft: Spacing.xs, paddingTop: 2 }]}>
-                    {walletBalance?.charge_balance_amount ?? '--'}
+                    {walletBalance?.charge_balance_amount ?? walletBalance?.gift_balance ?? '--'}
                   </Text>
-                  <MaterialCommunityIcons name="gold" size={14} color={colors.textTertiary} style={{ marginLeft: Spacing.md, paddingRight: Spacing.xs }} />
-                  <Text style={[styles.headerBalanceText, { paddingLeft: Spacing.xs, paddingTop: 2 }]}>
-                    {walletBalance?.gift_balance_amount ?? '--'}
-                  </Text>
+                  {/* 赠送位字段不存在则整体隐藏，避免恒显 '--' */}
+                  {walletBalance?.gift_balance_amount != null ? (
+                    <>
+                      <MaterialCommunityIcons name="gold" size={14} color={colors.textTertiary} style={{ marginLeft: Spacing.md, paddingRight: Spacing.xs }} />
+                      <Text style={[styles.headerBalanceText, { paddingLeft: Spacing.xs, paddingTop: 2 }]}>
+                        {walletBalance.gift_balance_amount}
+                      </Text>
+                    </>
+                  ) : null}
                 </View>
               </View>
             </Pressable>

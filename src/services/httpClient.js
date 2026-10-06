@@ -27,10 +27,29 @@ async function request(url, options = {}) {
     clearTimeout(timeoutId);
 
     if (!response.ok) {
-      const body = await response.text().catch(() => '');
+      const text = await response.text().catch(() => '');
+      // 国际版把业务错误改挂在真实 HTTP 状态码上（401/402/404/429 等），
+      // 业务码不再保证经 200+body.code 路径到达上层，须在此解析挂载供文案层查表
+      let apiCode;
+      let apiMessage = text;
+      try {
+        const body = JSON.parse(text);
+        if (body && typeof body === 'object') {
+          // 官方文档示例中 code 可能是字符串（如 "20052"），统一转数值
+          apiCode = Number(body.code) || undefined;
+          apiMessage = body.message || text;
+        } else if (typeof body === 'string') {
+          // JSON.parse('"Token is invalid"') 得到字符串，用于去引号
+          apiMessage = body;
+        }
+      } catch {
+        // 非 JSON 纯文本响应（如 401 的 "Token is invalid"）保留原文
+      }
       // 抛出带状态码和错误码的错误，便于上层转换用户友好提示
-      const err = new Error(`[${response.status}] ${body || response.statusText}`);
+      const err = new Error(`[${response.status}] ${apiMessage || response.statusText}`);
       err.status = response.status;
+      err.apiCode = apiCode;
+      err.apiMessage = apiMessage;
       err.code = classifyError(err);
       throw err;
     }

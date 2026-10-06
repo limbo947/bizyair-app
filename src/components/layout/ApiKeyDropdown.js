@@ -106,18 +106,26 @@ export function ApiKeyDropdown({
                     selectTextOnFocus
                   />
                 ) : (
-                  <Text
-                    style={[
-                      styles.itemKeyText,
-                      activeApiKeyId === keyItem.id && styles.itemKeyTextActive,
-                    ]}
-                    numberOfLines={1}
-                  >
-                    {keyItem.name || `密钥 ${index + 1}`}
-                    <Text style={styles.itemKeySubtext}>
-                      {keyItem.key.slice(0, 8)}●●●●{keyItem.key.slice(-4)}
+                  <View>
+                    <Text
+                      style={[
+                        styles.itemKeyText,
+                        activeApiKeyId === keyItem.id && styles.itemKeyTextActive,
+                      ]}
+                      numberOfLines={1}
+                    >
+                      {keyItem.name || `密钥 ${index + 1}`}
+                      <Text style={styles.itemKeySubtext}>
+                        {keyItem.key.slice(0, 8)}●●●●{keyItem.key.slice(-4)}
+                      </Text>
                     </Text>
-                  </Text>
+                    {/* 存量国内版密钥一次性迁移标记（§3.6）：入口处直接可见，避免逐个踩 401 才发现 */}
+                    {keyItem.invalid ? (
+                      <Text style={styles.itemInvalidText}>
+                        失效（{keyItem.invalidReason || '国内版签发'}）· 请到 www.bizyair.ai 重新签发
+                      </Text>
+                    ) : null}
+                  </View>
                 )}
               </View>
               <Pressable
@@ -250,6 +258,11 @@ const createStyles = (colors) => ({
     color: colors.textTertiary,
     fontFamily: 'monospace',
     marginLeft: Spacing.md,
+  },
+  itemInvalidText: {
+    fontSize: Typography.fontSize.caption1,
+    color: colors.error,
+    marginTop: 1,
   },
   renameInput: {
     fontSize: Typography.fontSize.footnote,

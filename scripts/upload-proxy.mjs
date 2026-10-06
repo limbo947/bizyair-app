@@ -1,7 +1,9 @@
 import { createServer } from 'http';
 import jsSHA from 'jssha';
 
-const API_HOST = 'https://api.bizyair.cn';
+// 国际版双主机：upload token 走 api，commit 走 meta（api 主机上 commit 是 404）
+const API_HOST = 'https://api.bizyair.ai';
+const META_HOST = 'https://meta.bizyair.ai';
 const PORT = 3001;
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -44,8 +46,8 @@ async function handleUpload(rawBody) {
 
   console.log(`[upload] ${fileName}, base64 length=${fileData.length}`);
 
-  const params = new URLSearchParams({ file_name: fileName, file_type: 'inputs' });
-  const tokenResult = await apiGet(`${API_HOST}/x/v1/upload/token?${params}`, apiKey);
+  const params = new URLSearchParams({ file_name: fileName, file_type: 'inputs_temp' });
+  const tokenResult = await apiGet(`${API_HOST}/v1/upload/token?${params}`, apiKey);
   const uploadInfo = tokenResult.data || tokenResult;
   const fileInfo = uploadInfo.file;
   const storageInfo = uploadInfo.storage;
@@ -89,12 +91,13 @@ async function handleUpload(rawBody) {
 
   console.log(`[upload] OSS PUT success, committing...`);
 
-  const commitResult = await apiPost(`${API_HOST}/x/v1/input_resource/commit`, apiKey, { name: fileName, object_key: objectKey });
+  const commitResult = await apiPost(`${META_HOST}/v1/input_resource/commit`, apiKey, { name: fileName, object_key: objectKey });
   const commitData = commitResult.data || commitResult;
+  // 修既有 bug：finalUrl（commit url 优先）才是传给任务的输入值，此前误返回原始 OSS URL
   const finalUrl = commitData.url || uploadUrl;
 
   console.log(`[upload] done, commitUrl=${commitData.url}, ossUrl=${uploadUrl}`);
-  return { status: 200, body: { url: uploadUrl } };
+  return { status: 200, body: { url: finalUrl } };
 }
 
 createServer(async (req, res) => {

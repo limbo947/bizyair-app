@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Pressable, Text, View, TextInput, Switch, Alert } from 'react-native';
+import { Pressable, Text, View, TextInput, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Radius, Spacing, Typography } from '../../constants/theme';
 import { createSharedStyles } from '../../constants/sharedStyles';
@@ -125,9 +125,6 @@ export function VisionGControls({
   systemPrompt, setSystemPrompt,
   temperature, setTemperature,
   maxTokens, setMaxTokens,
-  detail, setDetail,
-  enableThinking, setEnableThinking,
-  detailOptions,
   maxSystemPromptLength,
 }) {
   const styles = useThemedStyles(createStyles);
@@ -245,32 +242,6 @@ export function VisionGControls({
         />
       </View>
       <View style={styles.card}>
-        <Text style={styles.label}>细节程度<Text style={styles.required}> *</Text></Text>
-        <View style={styles.selectorRow}>
-          {(detailOptions || ['low', 'medium', 'high']).map((d) => (
-            <Pressable
-              key={d}
-              style={({ pressed }) => [styles.selectorButton, detail === d && styles.selectorButtonActive, pressed && styles.pressedStyle]} onPress={() => setDetail(d)}
-            >
-              <Text style={[styles.selectorText, detail === d && styles.selectorTextActive]}>
-                {{ low: '低', medium: '中', high: '高' }[d] || d}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-      </View>
-      <View style={styles.card}>
-        <Pressable style={styles.switchRow} onPress={() => setEnableThinking(!enableThinking)}>
-          <Text style={styles.label}>思考模式<Text style={styles.required}> *</Text></Text>
-          <Switch
-            value={enableThinking}
-            onValueChange={setEnableThinking}
-            trackColor={{ false: colors.disabled, true: colors.primary }}
-            pointerEvents="none"
-          />
-        </Pressable>
-      </View>
-      <View style={styles.card}>
         <Text style={styles.label}>最大 Tokens<Text style={styles.required}> *</Text></Text>
         <TextInput
           style={styles.dimInputFull}
@@ -289,12 +260,7 @@ export function VisionGControls({
 export function JoyCaptionControls({
   captionType, setCaptionType,
   captionLength, setCaptionLength,
-  temperature, setTemperature,
-  maxTokens, setMaxTokens,
-  doSample, setDoSample,
   extraOptions, setExtraOptions,
-  nameInput, setNameInput,
-  customPrompt, setCustomPrompt,
 }) {
   const captionTypes = ['Descriptive', 'Descriptive (Informal)', 'Training Prompt', 'MidJourney', 'Booru tag list', 'Booru-like tag list', 'Art Critic', 'Product Listing', 'Social Media Post'];
   const captionLengths = ['any', 'very short', 'short', 'medium-length', 'long', 'very long', '20', '30', '40', '50', '60', '70', '80', '90', '100', '110', '120', '130', '140', '150', '160', '170', '180', '190', '200', '210', '220', '230', '240', '250', '260'];
@@ -330,46 +296,6 @@ export function JoyCaptionControls({
         </View>
       </View>
       <View style={styles.card}>
-        <ParamLabel label="Temperature" required={false} />
-        <TextInput
-          style={styles.dimInputFull}
-          value={String(temperature)}
-          onChangeText={(t) => {
-            const val = parseFloat(t);
-            if (!isNaN(val) && val >= 0 && val <= 2) setTemperature(Math.round(val * 100) / 100);
-          }}
-          keyboardType="decimal-pad"
-          placeholder="0.5"
-          placeholderTextColor={colors.textPlaceholder}
-          selectTextOnFocus
-        />
-      </View>
-      <View style={styles.card}>
-        <Pressable style={styles.switchRow} onPress={() => setDoSample(!doSample)}>
-          <ParamLabel label="随机采样 (do_sample)" required={false} style={{ marginBottom: 0 }} />
-          <Switch
-            value={doSample}
-            onValueChange={setDoSample}
-            trackColor={{ false: colors.disabled, true: colors.primary }}
-            pointerEvents="none"
-          />
-        </Pressable>
-      </View>
-      <View style={styles.card}>
-        <ParamLabel label="最大 Tokens" required={false} />
-        <TextInput
-          style={styles.dimInputFull}
-          value={String(maxTokens)}
-          onChangeText={(t) => {
-            const val = parseInt(t) || 0;
-            if (val >= 16 && val <= 512) setMaxTokens(val);
-          }}
-          keyboardType="numeric"
-          placeholder="256"
-          placeholderTextColor={colors.textPlaceholder}
-        />
-      </View>
-      <View style={styles.card}>
         <ParamLabel label="额外选项 (extra_options)" required={false} />
         <TextInput
           style={styles.promptInput}
@@ -377,29 +303,6 @@ export function JoyCaptionControls({
           onChangeText={setExtraOptions}
           multiline
           placeholder="如: If there is a person in the image you must refer to them as {name}."
-          placeholderTextColor={colors.textPlaceholder}
-          maxLength={2500}
-        />
-      </View>
-      <View style={styles.card}>
-        <ParamLabel label="名称输入 (name_input)" required={false} />
-        <TextInput
-          style={styles.dimInputFull}
-          value={nameInput || ''}
-          onChangeText={setNameInput}
-          placeholder="如: Jack"
-          placeholderTextColor={colors.textPlaceholder}
-          maxLength={2500}
-        />
-      </View>
-      <View style={styles.card}>
-        <ParamLabel label="自定义 Prompt (custom_prompt)" required={false} />
-        <TextInput
-          style={styles.promptInput}
-          value={customPrompt || ''}
-          onChangeText={setCustomPrompt}
-          multiline
-          placeholder="自定义提示词，留空使用默认"
           placeholderTextColor={colors.textPlaceholder}
           maxLength={2500}
         />

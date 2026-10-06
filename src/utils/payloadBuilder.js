@@ -2,8 +2,10 @@ import { getModelInfo } from './modelHelpers';
 
 /**
  * 根据模型ID和模式，将前端 camelCase 参数映射为 API snake_case 请求体。
+ * 参数名以国际版 llms 文档为准（附录 C 矩阵冻结稿）；仅发送各模型文档声明的字段，
+ * 可选参数按 model 的 supports* flag 与 mode 门控，避免枚举外字段被服务端拒绝。
  * @param {string} modelId - 模型ID，用于查找 paramType
- * @param {string} mode - 当前模式（如 'text-to-image', 'flf-to-video', 'language' 等）
+ * @param {string} mode - 当前模式（如 'text-to-image', 'flf-to-video', 'vision' 等）
  * @param {object} params - 前端参数对象（camelCase 命名）
  * @returns {object} API 请求体（snake_case 命名）
  */
@@ -16,110 +18,94 @@ export function buildPayload(modelId, mode, params) {
       payload.prompt = params.prompt;
       payload.resolution = params.resolution;
       if (params.aspectRatio) payload.aspect_ratio = params.aspectRatio;
-      if (params.seed !== undefined && params.seed !== '') payload.seed = parseInt(params.seed);
-      if (params.webSearch !== undefined) payload.web_search = params.webSearch;
-      if (params.temperature !== undefined) payload.temperature = params.temperature;
-      if (params.topP !== undefined) payload.top_p = params.topP;
-      if (params.maxTokens !== undefined) payload.max_tokens = params.maxTokens;
+      if (model.supportsSeed && params.seed !== undefined && params.seed !== '') payload.seed = parseInt(params.seed);
+      if (model.supportsWebSearch && params.webSearch !== undefined) payload.web_search = params.webSearch;
       if (mode === 'image-to-image') payload[model.imageField] = params.imageUrls;
       break;
 
     case 'width-height-quality':
+      // GPT Image 2 官方版：宽高改 image_size 枚举档（"宽x高"），quality 必填
       payload.prompt = params.prompt;
-      payload.width = params.width;
-      payload.height = params.height;
-      payload.quality = params.quality;
+      payload.image_size = `${params.width || 1024}x${params.height || 1024}`;
+      payload.quality = params.quality || 'medium';
       if (mode === 'image-to-image') payload[model.imageField] = params.imageUrls;
       break;
 
     case 'size-only':
+      // Seedream 系：size 改 image_size（像素字符串），档位映射为方形容积
       payload.prompt = params.prompt;
-      payload.size = params.resolution;
-      if (mode === 'image-to-image') payload[model.imageField] = params.imageUrls;
-      break;
-
-    case 'flux-kontext':
-      payload.prompt = params.prompt;
-      if (params.aspectRatio) payload.aspect_ratio = params.aspectRatio;
+      payload.image_size = sizeOnlyImageSize(params.resolution);
       if (mode === 'image-to-image') payload[model.imageField] = params.imageUrls;
       break;
 
     case 'wan-size':
+      // 万相2.7 图像：custom_width/height、watermark、color_palette 等国际文档已无
       payload.prompt = params.prompt;
-      payload.size = params.resolution || model.defaultResolution || '2K';
-      if (params.resolution === 'Custom') {
-        payload.custom_width = parseInt(params.customWidth) || 2048;
-        payload.custom_height = parseInt(params.customHeight) || 2048;
-      }
-      if (params.enableSequential !== undefined) payload.enable_sequential = params.enableSequential;
-      if (mode !== 'image-to-image') {
-        if (params.thinkingMode !== undefined) payload.thinking_mode = params.thinkingMode;
-        else if (model.defaultThinkingMode !== undefined) payload.thinking_mode = model.defaultThinkingMode;
-      }
-      if (params.watermark !== undefined) payload.watermark = params.watermark;
-      else if (model.defaultWatermark !== undefined) payload.watermark = model.defaultWatermark;
-      if (params.colorPalette) payload.color_palette = params.colorPalette;
-      if (mode !== 'image-to-image' && params.seed !== undefined && params.seed !== '') payload.seed = parseInt(params.seed);
+      payload.image_size = sizeOnlyImageSize(params.resolution);
+      if (model.supportsThinkingMode) payload.enable_thinking = params.thinkingMode !== undefined ? params.thinkingMode : (model.defaultThinkingMode !== undefined ? model.defaultThinkingMode : true);
+      if (model.supportsSeed && params.seed !== undefined && params.seed !== '') payload.seed = parseInt(params.seed);
       if (mode === 'image-to-image') payload[model.imageField] = params.imageUrls;
-      if (mode === 'image-to-image' && params.bboxList) payload.bbox_list = params.bboxList;
       break;
 
     case 'width-height':
+      // Z-Image 系：width/height 改 image_size；steps 仅 Z-Image Base 必填
       payload.prompt = params.prompt;
-      payload.width = params.width;
-      payload.height = params.height;
-      if (params.steps !== undefined && params.steps !== '') payload.steps = parseInt(params.steps);
-      if (params.guidanceScale !== undefined && params.guidanceScale !== '') payload.guidance_scale = parseFloat(params.guidanceScale);
-      if (model.supportsBatchSize) payload.batch_size = params.batchSize || 1;
+      payload.image_size = `${parseInt(params.width) || 1024}x${parseInt(params.height) || 1024}`;
       if (params.negativePrompt) payload.negative_prompt = params.negativePrompt;
       if (params.seed !== undefined && params.seed !== '') payload.seed = parseInt(params.seed);
+      if (model.stepsRange) payload.steps = parseInt(params.steps) || model.defaultSteps;
+      if (model.guidanceScaleRange && params.guidanceScale !== undefined && params.guidanceScale !== '') payload.guidance_scale = parseFloat(params.guidanceScale);
       break;
 
-    case 'seedance-video':
+    case 'qwen-image':
+      payload.prompt = params.prompt;
+      payload.image_size = `${params.width || 1280}x${params.height || 1280}`;
+      if (params.negativePrompt) payload.negative_prompt = params.negativePrompt;
+      if (params.seed !== undefined && params.seed !== '') payload.seed = parseInt(params.seed);
+      payload.steps = parseInt(params.steps) || model.defaultSteps;
+      if (params.guidanceScale !== undefined && params.guidanceScale !== '') payload.guidance_scale = parseFloat(params.guidanceScale);
+      break;
+
+    case 'seedance-video': {
       payload.prompt = params.prompt;
       const ratioField = model.ratioField || 'aspect_ratio';
-      payload[ratioField] = params.aspectRatio || (ratioField === 'ratio' ? 'adaptive' : 'auto');
-      payload.resolution = params.resolution || '720p';
-      if (model.durationType === 'number') {
-        payload.duration = parseInt(params.duration) || 5;
-      } else {
-        payload.duration = params.duration || '5';
-      }
+      payload[ratioField] = params.aspectRatio || model.defaultAspectRatio || '16:9';
+      payload.resolution = params.resolution || model.defaultResolution || '720p';
+      payload.duration = parseInt(params.duration) || 5;
       if (model.supportsAudio) payload.generate_audio = params.generateAudio || false;
-      if (params.seed !== undefined && params.seed !== '') payload.seed = typeof params.seed === 'number' ? params.seed : parseInt(params.seed);
-      if (model.supportsWebSearch && mode === 'text-to-video' && params.webSearch !== undefined) payload.web_search = params.webSearch;
+      if (model.supportsWebSearch && params.webSearch !== undefined) payload.web_search = params.webSearch;
       if (model.supportsReturnLastFrame && params.returnLastFrame !== undefined) payload.return_last_frame = params.returnLastFrame;
+      if (model.supportsSeed && params.seed !== undefined && params.seed !== '') payload.seed = parseInt(params.seed);
       if (mode === 'flf-to-video') {
-        if (params.firstFrameUrls?.length) payload.first_frame_url = params.firstFrameUrls;
+        // 官方系首帧字段为 image_urls（尾帧 last_frame_url）；channel 系用 first_frame_url
+        if (model.flfFirstFrameUsesImageUrls) {
+          if (params.firstFrameUrls?.length) payload.image_urls = params.firstFrameUrls;
+        } else if (params.firstFrameUrls?.length) {
+          payload.first_frame_url = params.firstFrameUrls;
+        }
         if (params.lastFrameUrls?.length) payload.last_frame_url = params.lastFrameUrls;
       }
       if (mode === 'reference-to-video') {
-        if (params.imageUrls?.length) payload.image_urls = params.imageUrls;
-        if (params.videoUrls?.length) payload.video_urls = params.videoUrls;
-        if (params.audioUrls?.length) payload.audio_urls = params.audioUrls;
+        if (params.imageUrls?.length) payload.ref_images = params.imageUrls;
+        if (params.videoUrls?.length) payload.ref_videos = params.videoUrls;
       }
       break;
+    }
 
     case 'kling-video':
       payload.prompt = params.prompt;
       payload.duration = params.duration || 5;
       payload.sound = params.sound !== undefined ? params.sound : false;
-      if (params.aspectRatio) payload.aspect_ratio = params.aspectRatio;
-      if (model.supportsMultiShot) {
-        if (params.multiShot) payload.multi_shot = params.multiShot;
-        if (params.shotType) payload.shot_type = params.shotType;
-        if (params.multiPrompt) payload.multi_prompt = params.multiPrompt;
+      if (mode === 'text-to-video') {
+        if (model.aspectRatioRequired || params.aspectRatio) payload.aspect_ratio = params.aspectRatio || '16:9';
+      } else if (mode === 'flf-to-video' && model.flfAspectRatio) {
+        payload.aspect_ratio = params.aspectRatio || '16:9';
       }
-      if (params.seed !== undefined && params.seed !== null) payload.seed = params.seed;
+      if (model.supportsMultiShot && (model.multiShotRequired || params.multiShot)) payload.multi_shot = params.multiShot || false;
+      if (model.supportsShotType && params.shotType) payload.shot_type = params.shotType;
       if (mode === 'flf-to-video') {
-        if (model.flfUsesImageUrls) {
-          // kling-3.0 系列：首帧和尾帧合并到 image_urls 数组
-          const urls = [...(params.firstFrameUrls || []), ...(params.lastFrameUrls || [])];
-          if (urls.length) payload.image_urls = urls;
-        } else {
-          if (params.firstFrameUrls?.length) payload.first_frame_image = params.firstFrameUrls;
-          if (params.lastFrameUrls?.length) payload.last_frame_image = params.lastFrameUrls;
-        }
+        if (params.firstFrameUrls?.length) payload.first_frame_url = params.firstFrameUrls;
+        if (params.lastFrameUrls?.length) payload.last_frame_url = params.lastFrameUrls;
       }
       break;
 
@@ -127,43 +113,30 @@ export function buildPayload(modelId, mode, params) {
       payload.prompt = params.prompt;
       payload.duration = params.duration || 5;
       payload.sound = params.sound !== undefined ? params.sound : false;
-      payload.keep_original_sound = params.keepOriginalSound !== undefined ? params.keepOriginalSound : false;
-      if (params.imageUrls?.length) payload.image_urls = params.imageUrls;
-      if (params.videoUrls?.length) payload.video_urls = params.videoUrls;
+      if (params.imageUrls?.length) payload.ref_images = params.imageUrls;
       if (params.aspectRatio) payload.aspect_ratio = params.aspectRatio;
       if (params.multiShot) payload.multi_shot = params.multiShot;
       if (params.shotType) payload.shot_type = params.shotType;
-      if (params.multiPrompt) payload.multi_prompt = params.multiPrompt;
       break;
 
     case 'vidu-video':
       payload.prompt = params.prompt;
-      payload.resolution = params.resolution || '720P';
-      payload.aspect_ratio = params.aspectRatio || '16:9';
-      // base 版本 duration 为 string 枚举，official 版本为 number
-      if (model.supportsStyle || model.supportsMovementAmplitude) {
-        payload.duration = String(params.duration || 5);
-      } else {
-        payload.duration = parseInt(params.duration) || 5;
-      }
-      if (model.supportsAudio) payload.audio = params.audio !== undefined ? params.audio : false;
-      if (model.supportsStyle) payload.style = params.style || 'general';
-      if (model.supportsMovementAmplitude) payload.movement_amplitude = params.movementAmplitude || 'auto';
-      if (params.isRec) payload.is_rec = params.isRec;
-      if (params.offPeak) payload.off_peak = params.offPeak;
+      payload.resolution = params.resolution || '720p';
+      payload.duration = parseInt(params.duration) || 5;
+      // aspect_ratio 仅 t2v 声明（官方系可选、渠道系必填）
+      if (mode === 'text-to-video') payload.aspect_ratio = params.aspectRatio || '16:9';
+      if (model.supportsAudio) payload.generate_audio = params.generateAudio !== undefined ? params.generateAudio : false;
+      if (model.supportsStyle && mode === 'text-to-video') payload.style = params.style || 'general';
+      if (model.supportsMovementAmplitude && mode === 'flf-to-video') payload.movement_amplitude = params.movementAmplitude || 'auto';
+      if (model.supportsIsRec && params.isRec) payload.is_rec = params.isRec;
       if (model.supportsSeed && params.seed !== undefined && params.seed !== '') payload.seed = parseInt(params.seed) || -1;
       if (mode === 'image-to-video') {
-        if (params.imageUrls?.length) payload.image = params.imageUrls;
-        if (model.flfUsesFirstFrameImage && params.firstFrameUrls?.length) payload.first_frame_image = params.firstFrameUrls;
-        if (params.lastFrameUrls?.length) payload.last_frame_image = params.lastFrameUrls;
+        // 官方系字段为 images，渠道系为 image_urls
+        payload[model.i2vUsesImagesField ? 'images' : 'image_urls'] = params.imageUrls;
       }
       if (mode === 'flf-to-video') {
-        if (model.flfUsesFirstFrameImage) {
-          if (params.imageUrls?.length) payload.first_frame_image = params.imageUrls;
-        } else {
-          if (params.imageUrls?.length) payload.image = params.imageUrls;
-        }
-        if (params.lastFrameUrls?.length) payload.last_frame_image = params.lastFrameUrls;
+        if (params.imageUrls?.length) payload.first_frame_url = params.imageUrls;
+        if (params.lastFrameUrls?.length) payload.last_frame_url = params.lastFrameUrls;
       }
       break;
 
@@ -171,130 +144,64 @@ export function buildPayload(modelId, mode, params) {
       if (params.prompt) payload.prompt = params.prompt;
       payload.resolution = params.resolution || model.defaultResolution || '1080P';
       payload.duration = params.duration || model.defaultDuration || 5;
-      if (params.aspectRatio && (mode !== 'video-edit' || params.aspectRatio !== 'default')) {
-        payload.ratio = params.aspectRatio;
-      }
-      if (model.supportsPromptExtend) payload.prompt_extend = params.promptExtend !== undefined ? params.promptExtend : (model.defaultPromptExtend !== undefined ? model.defaultPromptExtend : true);
-      if (model.supportsWatermark) payload.watermark = params.watermark !== undefined ? params.watermark : (model.defaultWatermark !== undefined ? model.defaultWatermark : true);
+      if (params.aspectRatio) payload.aspect_ratio = params.aspectRatio;
+      if (model.supportsPromptExtend) payload.prompt_optimizer = params.promptExtend !== undefined ? params.promptExtend : (model.defaultPromptExtend !== undefined ? model.defaultPromptExtend : true);
       if (params.negativePrompt) payload.negative_prompt = params.negativePrompt;
-      if (params.audioUrl) payload.audio_url = params.audioUrl;
-      if (params.seed !== undefined && params.seed !== null) payload.seed = params.seed;
-      if (mode !== 'video-edit') {
-        if (params.firstFrameUrls?.length) payload.first_frame = params.firstFrameUrls;
-        if (params.firstClipUrls?.length) payload.first_clip = params.firstClipUrls;
-        if (params.lastFrameUrls?.length) payload.last_frame = params.lastFrameUrls;
-        if (mode === 'image-to-video' && params.drivingAudio) payload.driving_audio = params.drivingAudio;
-      }
-      if (mode === 'video-edit') {
-        if (params.videoUrls?.length) payload.video = params.videoUrls;
-        if (params.audioSetting) payload.audio_setting = params.audioSetting;
-        else if (model.defaultAudioSetting) payload.audio_setting = model.defaultAudioSetting;
-        if (params.refImages?.length) payload.ref_images = params.refImages;
-        if (params.firstFrameUrls?.length) payload.first_frame = params.firstFrameUrls;
-      }
+      if (params.seed !== undefined && params.seed !== null && params.seed !== '') payload.seed = params.seed;
+      if (mode === 'text-to-video' && params.audioUrl) payload.audio_urls = [params.audioUrl];
       if (mode === 'reference-to-video') {
         if (params.refImages?.length) payload.ref_images = params.refImages;
         if (params.refVideos?.length) payload.ref_videos = params.refVideos;
-        if (params.referenceVoice) payload.reference_voice = params.referenceVoice;
       }
-      if (mode === 'video-extend') {
-        if (params.firstClipUrls?.length) payload.first_clip = params.firstClipUrls;
-        if (params.drivingAudio) payload.driving_audio = params.drivingAudio;
-        if (params.lastFrameUrls?.length) payload.last_frame = params.lastFrameUrls;
+      if (mode === 'video-edit') {
+        if (params.videoUrls?.length) payload.video_urls = params.videoUrls;
+        if (params.refImages?.length) payload.ref_images = params.refImages;
+        if (model.supportsAudioSetting) payload.audio_setting = params.audioSetting || model.defaultAudioSetting || 'auto';
       }
-      break;
-
-    case 'wan-i2v':
-      payload.resolution = params.resolution || model.defaultResolution || '1080P';
-      payload.duration = params.duration || 5;
-      payload.prompt_extend = params.promptExtend !== undefined ? params.promptExtend : (model.defaultPromptExtend !== undefined ? model.defaultPromptExtend : true);
-      if (params.prompt) payload.prompt = params.prompt;
-      if (params.imageUrls?.length) payload.img_url = params.imageUrls;
-      if (params.audio !== undefined) payload.audio = params.audio;
-      else if (model.defaultAudio !== undefined) payload.audio = model.defaultAudio;
-      if (params.audioUrl) payload.audio_url = params.audioUrl;
       break;
 
     case 'hailuo-video':
       payload.prompt = params.prompt;
       payload.resolution = params.resolution || '768P';
       payload.duration = params.duration || 6;
-      if (model.supportsPromptOptimizer && params.promptOptimizer !== undefined) payload.prompt_optimizer = params.promptOptimizer;
-      if (model.supportsFastPretreatment && params.fastPretreatment !== undefined) payload.fast_pretreatment = params.fastPretreatment;
-      if (model.supportsWatermark && params.aigcWatermark !== undefined) payload.aigc_watermark = params.aigcWatermark;
-      if (mode === 'image-to-video' && params.imageUrls?.length) {
-        payload.first_frame_image = params.imageUrls;
-      }
+      if (mode === 'image-to-video' && params.imageUrls?.length) payload.image_urls = params.imageUrls;
       break;
 
     case 'happyhorse-video':
-      payload.prompt = params.prompt;
+      if (params.prompt) payload.prompt = params.prompt;
       payload.resolution = params.resolution || model.defaultResolution || '1080P';
-      if (mode !== 'video-edit') {
-        if (params.aspectRatio) payload.ratio = params.aspectRatio;
-        if (params.duration) payload.duration = params.duration;
-      }
-      if (model.supportsWatermark) payload.watermark = params.watermark !== undefined ? params.watermark : (model.defaultWatermark !== undefined ? model.defaultWatermark : true);
-      if (params.seed !== undefined && params.seed !== null && params.seed !== '') payload.seed = parseInt(params.seed);
-      if (mode === 'image-to-video' && params.imageUrls?.length) {
-        payload.first_frame = params.imageUrls;
-      }
-      if (mode === 'reference-to-video') {
-        const refMedia = params.mediaUrls?.length ? params.mediaUrls : params.imageUrls;
-        if (refMedia?.length) payload.media = refMedia;
-      }
+      if (mode !== 'video-edit') payload.duration = parseInt(params.duration) || 5;
+      if ((mode === 'text-to-video' || mode === 'reference-to-video') && params.aspectRatio) payload.aspect_ratio = params.aspectRatio;
+      if (model.supportsSeed && params.seed !== undefined && params.seed !== null && params.seed !== '') payload.seed = parseInt(params.seed);
+      if (mode === 'image-to-video' && params.imageUrls?.length) payload.first_frame_url = params.imageUrls;
+      if (mode === 'reference-to-video' && params.imageUrls?.length) payload.ref_images = params.imageUrls;
       if (mode === 'video-edit') {
-        const editMedia = params.mediaUrls?.length ? params.mediaUrls : params.videoUrls;
-        if (editMedia?.length) payload.media = editMedia;
-        if (params.refImages?.length) payload.reference_images = params.refImages;
+        if (params.videoUrls?.length) payload.video_urls = params.videoUrls;
+        if (params.refImages?.length) payload.ref_images = params.refImages;
         if (model.supportsAudioSetting) payload.audio_setting = params.audioSetting || model.defaultAudioSetting || 'auto';
-      }
-      break;
-
-    case 'ltx-video':
-      payload.prompt = params.prompt;
-      payload.resolution = params.resolution || '1080P';
-      payload.duration = 5;
-      if (params.display) payload.display = params.display;
-      if (params.seed !== undefined && params.seed !== null) payload.seed = params.seed;
-      if (mode === 'image-to-video' && params.imageUrls?.length) {
-        payload.image = params.imageUrls;
       }
       break;
 
     case 'bza-video-x':
       payload.prompt = params.prompt;
       payload.resolution = params.resolution || '720p';
-      if (mode !== 'video-edit') {
-        payload.duration = params.duration || 6;
-        payload.aspect_ratio = params.aspectRatio || '16:9';
-      }
-      if (mode === 'image-to-video' && params.imageUrls?.length) {
-        payload.image_urls = params.imageUrls;
-      }
-      if (mode === 'video-edit' && params.videoUrls?.length) {
-        payload.video_urls = params.videoUrls;
-      }
+      if (mode !== 'video-edit') payload.duration = parseInt(params.duration) || 6;
+      // official 的 i2v 无 aspect_ratio；channel 全 mode 必填
+      if (mode !== 'image-to-video' || model.aspectRatioRequired) payload.aspect_ratio = params.aspectRatio || '16:9';
+      if (mode === 'image-to-video' && params.imageUrls?.length) payload.image_urls = params.imageUrls;
+      if (mode === 'video-edit' && params.videoUrls?.length) payload.video_urls = params.videoUrls;
       break;
 
     case 'bza-video-v3':
       payload.prompt = params.prompt;
       payload.resolution = params.resolution || '720p';
       payload.aspect_ratio = params.aspectRatio || '16:9';
-      if (model.durationOptions) {
-        payload.duration = parseInt(params.duration) || model.durationOptions[0];
-      }
+      if (model.durationOptions) payload.duration = parseInt(params.duration) || model.durationOptions[0];
       if (model.supportsAudio) payload.generate_audio = params.generateAudio || false;
       if (model.supportsSeed && params.seed !== undefined && params.seed !== '') payload.seed = parseInt(params.seed);
-      if (model.supportsNegativePrompt && params.negativePrompt) payload.negative_prompt = params.negativePrompt;
-      if (mode === 'image-to-video' && params.imageUrls?.length) {
-        payload.image_urls = params.imageUrls;
-      }
       if (mode === 'flf-to-video') {
-        const firstField = model.usesFlfUrlFields ? 'first_frame_url' : 'first_frame_image';
-        const lastField = model.usesFlfUrlFields ? 'last_frame_url' : 'last_frame_image';
-        if (params.firstFrameUrls?.length) payload[firstField] = params.firstFrameUrls;
-        if (params.lastFrameUrls?.length) payload[lastField] = params.lastFrameUrls;
+        if (params.firstFrameUrls?.length) payload.first_frame_url = params.firstFrameUrls;
+        if (params.lastFrameUrls?.length) payload.last_frame_url = params.lastFrameUrls;
       }
       break;
 
@@ -303,59 +210,29 @@ export function buildPayload(modelId, mode, params) {
       payload.resolution = params.resolution || '720p';
       payload.duration = String(params.duration || 4);
       if (params.aspectRatio) payload.aspect_ratio = params.aspectRatio;
-      if (mode === 'image-to-video' && params.imageUrls?.length) {
-        payload.image_urls = params.imageUrls;
-      }
-      break;
-
-    case 'qwen-image':
-      payload.prompt = params.prompt;
-      payload.width = parseInt(params.width) || 1024;
-      payload.height = parseInt(params.height) || 1024;
-      if (params.negativePrompt) payload.negative_prompt = params.negativePrompt;
-      if (params.seed !== undefined && params.seed !== '') payload.seed = parseInt(params.seed);
-      if (params.steps !== undefined) payload.steps = parseInt(params.steps);
-      if (params.guidanceScale !== undefined) payload.guidance_scale = parseFloat(params.guidanceScale);
+      if (mode === 'image-to-video' && params.imageUrls?.length) payload.image_urls = params.imageUrls;
       break;
 
     case 'dreamactor':
-      if (params.videoUrls?.length) payload.video_urls = params.videoUrls;
-      if (params.imageUrls?.length) payload.image_urls = params.imageUrls;
-      break;
-
-    case 'llm-chat':
-      payload.system_prompt = params.systemPrompt || '';
-      payload.user_prompt = params.userPrompt || '';
-      payload.enable_thinking = params.enableThinking !== undefined ? params.enableThinking : true;
-      if (params.temperature !== undefined) payload.temperature = params.temperature;
-      else payload.temperature = 1;
-      if (params.maxTokens !== undefined) payload.max_tokens = params.maxTokens;
-      else payload.max_tokens = 32768;
-      payload.enable_search = params.enableSearch !== undefined ? params.enableSearch : false;
+      if (params.videoUrls?.length) payload.ref_videos = params.videoUrls;
+      if (params.imageUrls?.length) payload.ref_images = params.imageUrls;
       break;
 
     case 'vision-g':
-      payload.system_prompt = params.systemPrompt || '';
-      payload.user_prompt = params.userPrompt || '';
+      // Gemini flash 系（llm + vision 双 mode）：user_prompt 改 prompt，
+      // detail / enable_thinking 国际文档已无；vision 模式补必填 image_urls
+      payload.prompt = params.userPrompt || params.prompt || '';
+      if (params.systemPrompt) payload.system_prompt = params.systemPrompt;
       if (params.imageUrls?.length) payload.image_urls = params.imageUrls;
-      if (params.maxTokens !== undefined) payload.max_tokens = params.maxTokens;
-      else payload.max_tokens = 32768;
-      if (params.temperature !== undefined) payload.temperature = params.temperature;
-      else payload.temperature = 1;
-      payload.detail = params.detail || 'medium';
-      payload.enable_thinking = params.enableThinking !== undefined ? params.enableThinking : false;
+      payload.temperature = params.temperature !== undefined ? params.temperature : 1;
+      payload.max_tokens = Math.min(params.maxTokens !== undefined ? params.maxTokens : 32768, model.maxTokens || 65536);
       break;
 
     case 'joycaption':
-      if (params.imageUrls?.length) payload.image_input = params.imageUrls;
+      if (params.imageUrls?.length) payload.image_urls = params.imageUrls;
       if (params.captionType) payload.caption_type = params.captionType;
       if (params.captionLength) payload.caption_length = params.captionLength;
-      if (params.temperature !== undefined) payload.temperature = params.temperature;
-      if (params.maxTokens !== undefined) payload.max_tokens = params.maxTokens;
-      if (params.doSample !== undefined) payload.do_sample = params.doSample;
       if (params.extraOptions) payload.extra_options = params.extraOptions;
-      if (params.nameInput) payload.name_input = params.nameInput;
-      if (params.customPrompt) payload.custom_prompt = params.customPrompt;
       break;
 
     case 'tts':
@@ -364,33 +241,34 @@ export function buildPayload(modelId, mode, params) {
       if (params.responseFormat) payload.response_format = params.responseFormat;
       if (params.instructions) payload.instructions = params.instructions;
       if (params.language) payload.language = params.language;
-      if (params.speed !== undefined) payload.speed = params.speed;
+      payload.speed = params.speed !== undefined ? params.speed : 1;
       if (params.maxTokens !== undefined) payload.max_tokens = params.maxTokens;
       break;
 
     case 'birefnet':
-      if (params.imageUrls?.length) payload.image = params.imageUrls[0];
-      if (params.outputmask !== undefined) payload.outputmask = params.outputmask;
+      payload.image_urls = params.imageUrls;
+      payload.outputmask = params.outputmask !== undefined ? params.outputmask : false;
       break;
 
     case 'ace-step':
       payload.lyrics = params.lyrics || '';
-      if (params.tags) payload.tags = params.tags;
-      if (params.duration) payload.duration = parseInt(params.duration);
+      payload.tags = params.tags || '';
+      payload.duration = parseInt(params.duration) || 30;
       if (params.seed !== undefined && params.seed !== '') payload.seed = parseInt(params.seed);
       break;
 
     case 'seedvr2':
-      if (params.imageUrls?.length) payload.image = params.imageUrls[0];
+      payload.image_urls = params.imageUrls;
       payload.resolution = parseInt(params.resolution) || 1080;
+      if (model.supportsSeed && params.seed !== undefined && params.seed !== '') payload.seed = parseInt(params.seed);
       break;
 
     case 'flux-klein':
-      if (params.imageUrls?.length) payload.image = params.imageUrls[0];
+      payload.image_urls = params.imageUrls;
       break;
 
     case 'kontext-lora':
-      if (params.imageUrls?.length) payload.images = params.imageUrls;
+      payload.image_urls = params.imageUrls;
       payload.prompt = params.prompt;
       if (params.seed !== undefined && params.seed !== '') payload.seed = parseInt(params.seed);
       break;
@@ -403,4 +281,10 @@ export function buildPayload(modelId, mode, params) {
   }
 
   return payload;
+}
+
+/** 档位分辨率映射为 image_size 方形字符串（"1024x1024"），size-only / wan-size 共用 */
+function sizeOnlyImageSize(resolution) {
+  const base = { '1K': 1024, '2K': 2048, '4K': 4096 }[resolution] || 2048;
+  return `${base}x${base}`;
 }

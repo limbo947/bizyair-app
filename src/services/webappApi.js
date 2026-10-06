@@ -44,7 +44,7 @@ async function submitWebappTask(apiKey, webAppId, inputValues) {
  * @returns {Promise<object>} 任务状态详情
  */
 async function queryWebappTaskDetail(apiKey, requestId) {
-  const url = `${WEBAPP_API_BASE}/detail?requestId=${encodeURIComponent(requestId)}`;
+  const url = `${WEBAPP_API_BASE}/${encodeURIComponent(requestId)}`;
   const result = await request(url, {
     method: 'GET',
     headers: {
@@ -61,7 +61,7 @@ async function queryWebappTaskDetail(apiKey, requestId) {
  * @returns {Promise<object>} 任务结果数据（含 outputs 数组）
  */
 async function queryWebappTaskOutputs(apiKey, requestId) {
-  const url = `${WEBAPP_API_BASE}/outputs?requestId=${encodeURIComponent(requestId)}`;
+  const url = `${WEBAPP_API_BASE}/${encodeURIComponent(requestId)}/outputs`;
   const result = await request(url, {
     method: 'GET',
     headers: {
@@ -79,12 +79,14 @@ async function queryWebappTaskOutputs(apiKey, requestId) {
  * @throws {Error} 获取失败或应用不存在时抛出
  */
 async function fetchWebappDetail(id) {
-  const url = `${WEBAPP_DETAIL_URL}/${id}`;
+  const url = `${WEBAPP_DETAIL_URL}/${id}/detail`;
   const result = await request(url, { method: 'GET' });
   if (result.code !== 20000 || !result.data) {
+    // HTTP 200 + 业务码非 20000 的场景仍存在（非 2xx 已由 httpClient 抛错），
     // API 返回的 message 可能是编码乱码，使用友好提示
     const errorMessages = {
       20224: '应用不存在或已被下架',
+      20230: '应用不存在或已被下架',
       401: '无权访问该应用',
       403: '该应用为私有应用，无法访问',
     };
@@ -100,7 +102,7 @@ async function fetchWebappDetail(id) {
  * @returns {Promise<object>} 响应数据
  */
 async function cancelWebappTask(apiKey, requestId) {
-  const url = `${WEBAPP_API_BASE}/cancel?requestId=${encodeURIComponent(requestId)}`;
+  const url = `${WEBAPP_API_BASE}/${encodeURIComponent(requestId)}/cancel`;
   const result = await request(url, {
     method: 'PUT',
     headers: {
@@ -118,7 +120,7 @@ async function cancelWebappTask(apiKey, requestId) {
  * @returns {Promise<object>} 响应数据
  */
 async function interruptWebappTask(apiKey, requestId) {
-  const url = `${WEBAPP_API_BASE}/interrupt?requestId=${encodeURIComponent(requestId)}`;
+  const url = `${WEBAPP_API_BASE}/${encodeURIComponent(requestId)}/interrupt`;
   const result = await request(url, {
     method: 'PUT',
     headers: {
@@ -167,7 +169,8 @@ async function fetchCommunityApps({
     list: result.data.list || [],
     total: result.data.total || 0,
     current: result.data.current || current,
-    pageSize: result.data.pageSize || pageSize,
+    // 国际版分页字段为蛇形 page_size（v6 实测），保留驼峰兼容
+    pageSize: result.data.pageSize ?? result.data.page_size ?? pageSize,
   };
 }
 

@@ -35,6 +35,23 @@ if ($archMatch) {
 }
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  [1.5/8] 发行密钥隔离（迁移方案 §4.3，必须在 prebuild 之前）
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Write-Host "`n[1.5/8] Release key isolation..." -ForegroundColor Yellow
+
+# Expo 会自动加载 .env 并把 EXPO_PUBLIC_* 静态内联进 bundle，
+# 发行包存在密钥即泄露（官方 authentication 文档禁止端内打包 Key），故先断言后禁用
+if (-not [string]::IsNullOrEmpty($env:EXPO_PUBLIC_BIZYAIR_API_KEY)) {
+    Write-Host "  ERROR: EXPO_PUBLIC_BIZYAIR_API_KEY is set in this shell environment!" -ForegroundColor Red
+    Write-Host "  Release builds must not embed an API key (see doc/bizyair-intl-api-migration.md §4.3)." -ForegroundColor Red
+    Write-Host "  Unset it and retry:  Remove-Item Env:EXPO_PUBLIC_BIZYAIR_API_KEY" -ForegroundColor Yellow
+    exit 1
+}
+# 官方开关：禁用 Expo CLI/Metro 对 .env 的自动加载（prebuild 与 gradle 打包阶段均生效）
+$env:EXPO_NO_DOTENV = "1"
+Write-Host "  EXPO_PUBLIC_BIZYAIR_API_KEY empty; EXPO_NO_DOTENV=1  OK" -ForegroundColor Green
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #  [2/8] 自动递增版本号
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Write-Host "`n[2/8] Auto-incrementing version..." -ForegroundColor Yellow

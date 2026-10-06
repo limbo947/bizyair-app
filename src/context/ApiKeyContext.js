@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { fetchUserInfo, fetchWalletBalance } from '../services/apiClient';
 import { ENV_API_KEY } from '../constants/apiConfig';
+import { getAuthErrorMessage } from '../utils/errorMessages';
 import {
   API_KEY_STORAGE_KEY,
   API_KEYS_STORAGE_KEY,
@@ -9,6 +10,11 @@ import {
 } from '../constants/models';
 
 const USER_INFO_KEY = 'bizyair_cached_user_info';
+
+// 区域戳（迁移方案 §3.6）：记录已存密钥所属 API 区域。
+// 独立于 storageKeys 注册表本地定义——该键只被密钥迁移逻辑读写，注册表无需感知
+const API_REGION_STAMP_KEY = 'bizyair_api_region';
+const REGION_INTERNATIONAL = 'intl';
 
 const ApiKeyContext = createContext(null);
 
@@ -42,7 +48,15 @@ export function ApiKeyProvider({ children }) {
         })).catch(() => {});
       }
       if (info.status === 'rejected' && balance.status === 'rejected') {
-        throw new Error('密钥验证失败，请检查密钥是否正确');
+        // 固定文案"密钥验证失败"会掩盖 401 的真实原因（国内版密钥须到国际版重新签发），
+        // 改为与 getUserMessage 共用同一查表来源，并保留原始 status/apiCode 供下游复用
+        const reason = info.reason || balance.reason || {};
+        const message = getAuthErrorMessage(reason);
+        const wrapped = new Error(message);
+        wrapped.status = reason.status;
+        wrapped.apiCode = reason.apiCode;
+        wrapped.userMessage = message;
+        throw wrapped;
       }
       return true;
     } catch (e) {
@@ -89,6 +103,16 @@ export function ApiKeyProvider({ children }) {
         const legacyKey = await AsyncStorage.getItem(API_KEY_STORAGE_KEY);
         if (legacyKey) {
           keys = [{ id: 'default', key: legacyKey }];
+        }
+      }
+      // 存量密钥一次性迁移（§3.6）：写戳前保存的密钥必然为国内版签发（已永久停服），
+      // 批量标记失效而非清空，用户可自行删除；迁移后的新签发密钥不受影响
+      const stamp = await AsyncStorage.getItem(API_REGION_STAMP_KEY);
+      if (stamp !== REGION_INTERNATIONAL) {
+        keys = keys.map((k) => (k ? { ...k, invalid: true, invalidReason: '国内版签发' } : k));
+        await AsyncStorage.setItem(API_REGION_STAMP_KEY, REGION_INTERNATIONAL);
+        if (keys.length > 0) {
+          await AsyncStorage.setItem(API_KEYS_STORAGE_KEY, JSON.stringify(keys));
         }
       }
       setApiKeys(keys);

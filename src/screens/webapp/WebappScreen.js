@@ -28,7 +28,7 @@ import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { useFocusEffect } from 'expo-router';
 import { ResizableTextInput } from '../../components/common/ResizableTextInput';
 import { AppHeader } from '../../components/layout/AppHeader';
-import { isBizyairFileUrl, getMediaType, parseApiCode, parseFieldOptions } from './utils';
+import { isBizyairFileUrl, getMediaType, parseApiCode, parseFieldOptions, normalizeAppDetail } from './utils';
 import { WebappListItem } from './WebappListItem';
 import { CommunityAppSquare } from './CommunityAppSquare';
 import { loadSavedApps, persistSavedApps } from './storage';
@@ -140,7 +140,7 @@ export function WebappScreen() {
   const applyAppDetail = useCallback((data) => {
     setAppDetail(data);
     setWebAppId(data.id);
-    const sortedNodes = [...(data.input_nodes || [])].sort((a, b) => (a.sort ?? -1) - (b.sort ?? -1));
+    const sortedNodes = [...(data.input_nodes || [])].sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0));
     setInputNodes(sortedNodes);
     const values = {}, types = {};
     for (const node of sortedNodes) {
@@ -153,13 +153,13 @@ export function WebappScreen() {
 
   // 从输入中提取 URL 并调用 API
   const handleFetchApp = useCallback(async (input) => {
-    const urlMatch = input.match(/bizyair\.cn\/community\/app\/(\d+)/);
+    const urlMatch = input.match(/bizyair\.(?:cn|ai)\/community\/app\/(\d+)/);
     if (!urlMatch) return false;
     const id = urlMatch[1];
     setIsLoadingApp(true);
     setError('');
     try {
-      const data = await fetchWebappDetail(id);
+      const data = normalizeAppDetail(await fetchWebappDetail(id));
       applyAppDetail(data);
       return true;
     } catch (err) {
@@ -191,7 +191,7 @@ export function WebappScreen() {
     setMode('edit');
     setTimeout(() => { skipDirtyRef.current = false; }, 0);
     // 复用现有 handleFetchApp 逻辑，传入社区应用 URL
-    await handleFetchApp(`https://bizyair.cn/community/app/${item.id}`);
+    await handleFetchApp(`https://www.bizyair.ai/community/app/${item.id}`);
   }, [handleFetchApp]);
 
   const handleApiCodeChange = useCallback((text) => {

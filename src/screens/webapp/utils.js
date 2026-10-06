@@ -75,3 +75,20 @@ export function parseFieldOptions(optStr) {
   if (!optStr || typeof optStr !== 'string') return {};
   try { return JSON.parse(optStr); } catch { return {}; }
 }
+
+/**
+ * 应用详情字段兼容层（国际版 meta /v1/webapp/{id}/detail，迁移方案 §3.4）：
+ * 国际版无 intro 字段（有 description）、input_nodes 无 sort 字段——
+ * 须在两个 fetch 调用点（WebappScreen / CommunityAppPreview）统一套用，
+ * 使保存路径与渲染路径同时生效；ES2019 起 sort 稳定性为规范强制，缺 sort 时保持原序。
+ * @param {object} data - fetchWebappDetail 返回的详情数据
+ * @returns {object} 兼容后的详情（intro 回填、input_nodes 已按 sort 升序）
+ */
+export function normalizeAppDetail(data) {
+  if (!data || typeof data !== 'object') return data;
+  return {
+    ...data,
+    intro: data.intro ?? data.description ?? '',
+    input_nodes: [...(data.input_nodes || [])].sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0)),
+  };
+}

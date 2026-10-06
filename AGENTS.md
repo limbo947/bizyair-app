@@ -119,10 +119,11 @@
 │   │   ├── NetworkStatusBar.js    # 网络状态栏（离线时顶部红色提示条）
 │   │   └── ParamPresetBar.js      # 参数预设栏（保存/加载/删除参数预设）
 │   ├── constants/            # 常量定义
-│   │   ├── models.js         # MODELS 对象（61 个模型：paramType/modes/价格/UI 参数，不含 API 配置）
-│   │   ├── pricing.js        # 价格常量 + 计算函数
+│   │   ├── models/           # MODELS 按 800 行约束拆分（§5.6）：{image,video,llm-vision,audio,other}.js 数据 + index.js 聚合（49 个模型；兼容 re-export 存储键/UI 常量/价格常量，import 路径 '../constants/models' 不变）
+│   │   ├── pricing.js        # 价格常量 + 计算函数（国际价表：call/second/M Tokens 三类单位）
 │   │   ├── modelMeta.js      # CATEGORIES / MANUFACTURERS / FAVORITES_MAX_COUNT
-│   │   ├── apiConfig.js      # API 集中配置（端点/密钥/OSS域名/上传代理/超时重试轮询，更换 API 服务只改此文件）
+│   │   ├── modelIdMigrations.js # 旧模型 key → 新 key 迁移表（收藏/homeState 数据自愈共用）
+│   │   ├── apiConfig.js      # API 集中配置（api/meta 双主机端点/密钥/OSS域名/上传代理/超时重试轮询，更换 API 服务只改此文件）
 │   │   ├── modelEndpoints.js # 模型端点注册表（官网 slug 与 MODELS key 不一致时的覆盖映射）
 │   │   ├── storageKeys.js    # AsyncStorage 键名
 │   │   ├── uiConstants.js    # UI 常量
@@ -152,6 +153,7 @@
 │       ├── webappApi.js      # AI 应用 API（Combo 列表/详情）
 │       └── apiClient.js      # 统一入口（re-export，向后兼容）
 ├── assets/                   # 图标资源
+├── doc/                      # 方案文档（国际版 API 迁移方案等）
 ├── reference/                # 参考文档（API 文档 / 构建指南）
 ├── apk/                      # 构建产物（APK 安装包）
 ├── keystore-backup/          # 签名密钥备份
@@ -198,7 +200,7 @@ AppProvider = ApiKeyProvider → HistoryProvider → FavoritesProvider
 7. 轮询成功后提取输出 URL，`resultCache.js` 缓存结果文件到本地；连续 5 次失败标记 Failed。启动时 `resumeRunningPolling()` 自动恢复。轮询期间的状态更新经 800ms 防抖持久化（新增/删除历史仍立即落盘）。
 
 ### paramType 驱动
-`constants/models.js` 中每个模型定义 `paramType`，驱动三处逻辑：
+`constants/models/`（按类别拆分为 {image,video,llm-vision,audio,other}.js，聚合入口 index.js）中每个模型定义 `paramType`，驱动三处逻辑：
 
 | 层面 | 实现位置 | 说明 |
 |:---|:---|:---|
@@ -241,7 +243,7 @@ AppProvider = ApiKeyProvider → HistoryProvider → FavoritesProvider
 
 ## 新增模型检查清单
 添加新模型时需同步修改：
-1. `src/constants/models.js` — `MODELS` 对象中添加模型配置（paramType、modes）
+1. `src/constants/models/` — 按模型类别在 {image,video,llm-vision,audio,other}.js 中添加 `MODELS` 条目（paramType、modes；聚合入口 index.js）
 2. `src/constants/modelEndpoints.js` — 若官网端点 slug 与 MODELS key 不一致，在 `MODEL_ENDPOINTS` 注册表中登记覆盖（默认端点为 `key/mode`，无需登记）
 3. `src/constants/pricing.js` — 添加价格常量和计算函数（若新计费方式）
 4. `src/constants/modelMeta.js` — `MODEL_MANUFACTURERS` 映射中添加条目

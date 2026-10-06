@@ -2,12 +2,10 @@ import { useRef, useCallback, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getModelModes } from '../utils/modelHelpers';
 import { MODEL_STATES_KEY } from '../constants/models';
+// 与 FavoritesContext / HistoryProvider 共用同一迁移注册表，
+// 局部表会随模型库重建漂移（第三批曾漏 gemini 迁移）
+import { MODEL_ID_MIGRATIONS } from '../constants/modelIdMigrations';
 import { initialState } from '../screens/home/homeReducer';
-
-const MODEL_ID_MIGRATIONS = {
-  'wan-2-7-image-pro-offcial': 'wan-2-7-image-pro-official',
-  'wan-2-7-offcial': 'wan-2-7-extend-official',
-};
 
 export function useModelSwitch({ state, saveHomeState, stateDispatch }) {
   const stateRef = useRef(state);

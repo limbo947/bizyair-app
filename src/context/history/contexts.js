@@ -5,7 +5,7 @@ export const HomeStateContext = createContext(null);
 export const PollingContext = createContext(null);
 
 export const DEFAULT_HOME_STATE = {
-  modelId: 'bza-image-b2-base',
+  modelId: 'nano-banana-2-channel',
   mode: 'text-to-image',
   prompt: '',
   imageUrls: [],
@@ -18,6 +18,10 @@ export const DEFAULT_HOME_STATE = {
 };
 
 export const MAX_POLL_FAILS = 5;
+
+// "任务未找到"独立计数上限（与 MAX_POLL_FAILS 的网络失败计数互不影响）：
+// URL 形态错误会让 404 永久返回，无上限会导致静默死循环；20 次 ≈ 100-120 秒（按现有退避阶梯）
+export const MAX_NOT_FOUND_RETRIES = 20;
 
 export const ACTIVE_STATUSES = ['Pending', 'Running', 'Saving'];
 
